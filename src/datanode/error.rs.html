@@ -642,6 +642,8 @@
 <a href="#642" id="642">642</a>
 <a href="#643" id="643">643</a>
 <a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1067,11 +1069,13 @@
     },
 
     <span class="attr">#[snafu(display(
-        <span class="string">&quot;File Schema mismatch, expected table schema: {} but found :{}&quot;</span>,
+        <span class="string">&quot;File schema mismatch at index {}, expected table schema: {} but found: {}&quot;</span>,
+        index,
         table_schema,
         file_schema
     ))]
     </span>InvalidSchema {
+        index: usize,
         table_schema: String,
         file_schema: String,
     },
