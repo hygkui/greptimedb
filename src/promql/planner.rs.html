@@ -1907,6 +1907,13 @@
 <a href="#1907" id="1907">1907</a>
 <a href="#1908" id="1908">1908</a>
 <a href="#1909" id="1909">1909</a>
+<a href="#1910" id="1910">1910</a>
+<a href="#1911" id="1911">1911</a>
+<a href="#1912" id="1912">1912</a>
+<a href="#1913" id="1913">1913</a>
+<a href="#1914" id="1914">1914</a>
+<a href="#1915" id="1915">1915</a>
+<a href="#1916" id="1916">1916</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2209,7 +2216,7 @@
                 <span class="kw">let </span>matchers = <span class="self">self</span>.preprocess_label_matchers(matchers)<span class="question-mark">?</span>;
                 <span class="self">self</span>.setup_context().<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let </span>normalize = <span class="self">self
-                    </span>.selector_to_series_normalize_plan(offset, matchers)
+                    </span>.selector_to_series_normalize_plan(offset, matchers, <span class="bool-val">false</span>)
                     .<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let </span>manipulate = InstantManipulate::new(
                     <span class="self">self</span>.ctx.start,
@@ -2220,6 +2227,7 @@
                         .time_index_column
                         .clone()
                         .expect(<span class="string">&quot;time index should be set in `setup_context`&quot;</span>),
+                    <span class="self">self</span>.ctx.field_columns.get(<span class="number">0</span>).cloned(),
                     normalize,
                 );
                 LogicalPlan::Extension(Extension {
@@ -2241,7 +2249,7 @@
                 <span class="self">self</span>.ctx.range = <span class="prelude-val">Some</span>(range_ms);
 
                 <span class="kw">let </span>normalize = <span class="self">self
-                    </span>.selector_to_series_normalize_plan(offset, matchers)
+                    </span>.selector_to_series_normalize_plan(offset, matchers, <span class="bool-val">true</span>)
                     .<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let </span>manipulate = RangeManipulate::new(
                     <span class="self">self</span>.ctx.start,
@@ -2329,29 +2337,34 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         offset: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;Offset&gt;,
         label_matchers: Matchers,
+        is_range_selector: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
         <span class="kw">let </span>table_name = <span class="self">self</span>.ctx.table_name.clone().unwrap();
 
         <span class="comment">// make filter exprs
-        </span><span class="kw">let </span>offset_duration = -<span class="kw">match </span>offset {
+        </span><span class="kw">let </span>offset_duration = <span class="kw">match </span>offset {
             <span class="prelude-val">Some</span>(Offset::Pos(duration)) =&gt; duration.as_millis() <span class="kw">as </span>Millisecond,
             <span class="prelude-val">Some</span>(Offset::Neg(duration)) =&gt; -(duration.as_millis() <span class="kw">as </span>Millisecond),
             <span class="prelude-val">None </span>=&gt; <span class="number">0</span>,
         };
-        <span class="kw">let </span><span class="kw-2">mut </span>filters = <span class="self">self</span>.matchers_to_expr(label_matchers)<span class="question-mark">?</span>;
-        filters.push(<span class="self">self</span>.create_time_index_column_expr()<span class="question-mark">?</span>.gt_eq(DfExpr::Literal(
+        <span class="kw">let </span>range_ms = <span class="self">self</span>.ctx.range.unwrap_or_default();
+        <span class="kw">let </span><span class="kw-2">mut </span>scan_filters = <span class="self">self</span>.matchers_to_expr(label_matchers.clone())<span class="question-mark">?</span>;
+        scan_filters.push(<span class="self">self</span>.create_time_index_column_expr()<span class="question-mark">?</span>.gt_eq(DfExpr::Literal(
             ScalarValue::TimestampMillisecond(
-                <span class="prelude-val">Some</span>(<span class="self">self</span>.ctx.start - offset_duration - <span class="self">self</span>.ctx.lookback_delta),
+                <span class="prelude-val">Some</span>(<span class="self">self</span>.ctx.start - offset_duration - <span class="self">self</span>.ctx.lookback_delta - range_ms),
                 <span class="prelude-val">None</span>,
             ),
         )));
-        filters.push(<span class="self">self</span>.create_time_index_column_expr()<span class="question-mark">?</span>.lt_eq(DfExpr::Literal(
-            ScalarValue::TimestampMillisecond(<span class="prelude-val">Some</span>(<span class="self">self</span>.ctx.end - offset_duration), <span class="prelude-val">None</span>),
+        scan_filters.push(<span class="self">self</span>.create_time_index_column_expr()<span class="question-mark">?</span>.lt_eq(DfExpr::Literal(
+            ScalarValue::TimestampMillisecond(
+                <span class="prelude-val">Some</span>(<span class="self">self</span>.ctx.end - offset_duration + <span class="self">self</span>.ctx.lookback_delta),
+                <span class="prelude-val">None</span>,
+            ),
         )));
 
         <span class="comment">// make table scan with filter exprs
         </span><span class="kw">let </span><span class="kw-2">mut </span>table_scan = <span class="self">self
-            </span>.create_table_scan_plan(<span class="kw-2">&amp;</span>table_name, filters.clone())
+            </span>.create_table_scan_plan(<span class="kw-2">&amp;</span>table_name, scan_filters.clone())
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// make a projection plan if there is any `__field__` matcher
@@ -2423,10 +2436,15 @@
         }
 
         <span class="comment">// make filter and sort plan
-        </span><span class="kw">let </span>sort_plan = LogicalPlanBuilder::from(table_scan)
-            .filter(utils::conjunction(filters.into_iter()).unwrap())
-            .context(DataFusionPlanningSnafu)<span class="question-mark">?
-            </span>.sort(<span class="self">self</span>.create_tag_and_time_index_column_sort_exprs()<span class="question-mark">?</span>)
+        </span><span class="kw">let </span><span class="kw-2">mut </span>plan_builder = LogicalPlanBuilder::from(table_scan);
+        <span class="kw">let </span>accurate_filters = <span class="self">self</span>.matchers_to_expr(label_matchers)<span class="question-mark">?</span>;
+        <span class="kw">if </span>!accurate_filters.is_empty() {
+            plan_builder = plan_builder
+                .filter(utils::conjunction(accurate_filters).unwrap())
+                .context(DataFusionPlanningSnafu)<span class="question-mark">?</span>;
+        }
+        <span class="kw">let </span>sort_plan = plan_builder
+            .sort(<span class="self">self</span>.create_tag_and_time_index_column_sort_exprs()<span class="question-mark">?</span>)
             .context(DataFusionPlanningSnafu)<span class="question-mark">?
             </span>.build()
             .context(DataFusionPlanningSnafu)<span class="question-mark">?</span>;
@@ -2443,6 +2461,7 @@
                 .time_index_column
                 .clone()
                 .with_context(|| TimeIndexNotFoundSnafu { table: table_name })<span class="question-mark">?</span>,
+            is_range_selector,
             divide_plan,
         );
         <span class="kw">let </span>logical_plan = LogicalPlan::Extension(Extension {
@@ -3179,11 +3198,11 @@
             <span class="string">&quot;Filter: TEMPLATE(field_0) IS NOT NULL [timestamp:Timestamp(Millisecond, None), TEMPLATE(field_0):Float64;N, tag_0:Utf8]\
             \n  Projection: some_metric.timestamp, TEMPLATE(some_metric.field_0) AS TEMPLATE(field_0), some_metric.tag_0 [timestamp:Timestamp(Millisecond, None), TEMPLATE(field_0):Float64;N, tag_0:Utf8]\
             \n    PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n      PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n          Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            Filter: some_metric.tag_0 != Utf8(\&quot;bar\&quot;) AND some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n              TableScan: some_metric, unsupported_filters=[tag_0 != Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n            Filter: some_metric.tag_0 != Utf8(\&quot;bar\&quot;) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n              TableScan: some_metric, unsupported_filters=[tag_0 != Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>).replace(<span class="string">&quot;TEMPLATE&quot;</span>, plan_name);
 
         <span class="macro">assert_eq!</span>(plan.display_indent_schema().to_string(), expected);
@@ -3383,11 +3402,11 @@
             <span class="string">&quot;Sort: some_metric.tag_1 ASC NULLS LAST, some_metric.timestamp ASC NULLS LAST [tag_1:Utf8, timestamp:Timestamp(Millisecond, None), TEMPLATE(some_metric.field_0):Float64;N, TEMPLATE(some_metric.field_1):Float64;N]\
             \n  Aggregate: groupBy=[[some_metric.tag_1, some_metric.timestamp]], aggr=[[TEMPLATE(some_metric.field_0), TEMPLATE(some_metric.field_1)]] [tag_1:Utf8, timestamp:Timestamp(Millisecond, None), TEMPLATE(some_metric.field_0):Float64;N, TEMPLATE(some_metric.field_1):Float64;N]\
             \n    PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
-            \n      PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
+            \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
             \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;, \&quot;tag_1\&quot;] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
             \n          Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.tag_1 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
-            \n            Filter: some_metric.tag_0 != Utf8(\&quot;bar\&quot;) AND some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
-            \n              TableScan: some_metric, unsupported_filters=[tag_0 != Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]&quot;
+            \n            Filter: some_metric.tag_0 != Utf8(\&quot;bar\&quot;) [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
+            \n              TableScan: some_metric, unsupported_filters=[tag_0 != Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]&quot;
         </span>).replace(<span class="string">&quot;TEMPLATE&quot;</span>, plan_name);
         <span class="macro">assert_eq!</span>(
             plan.display_indent_schema().to_string(),
@@ -3408,11 +3427,11 @@
             <span class="string">&quot;Sort: some_metric.tag_0 ASC NULLS LAST, some_metric.timestamp ASC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), TEMPLATE(some_metric.field_0):Float64;N, TEMPLATE(some_metric.field_1):Float64;N]\
             \n  Aggregate: groupBy=[[some_metric.tag_0, some_metric.timestamp]], aggr=[[TEMPLATE(some_metric.field_0), TEMPLATE(some_metric.field_1)]] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), TEMPLATE(some_metric.field_0):Float64;N, TEMPLATE(some_metric.field_1):Float64;N]\
             \n    PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
-            \n      PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
+            \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
             \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;, \&quot;tag_1\&quot;] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
             \n          Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.tag_1 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
-            \n            Filter: some_metric.tag_0 != Utf8(\&quot;bar\&quot;) AND some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
-            \n              TableScan: some_metric, unsupported_filters=[tag_0 != Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]&quot;
+            \n            Filter: some_metric.tag_0 != Utf8(\&quot;bar\&quot;) [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]\
+            \n              TableScan: some_metric, unsupported_filters=[tag_0 != Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, tag_1:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N]&quot;
         </span>).replace(<span class="string">&quot;TEMPLATE&quot;</span>, plan_name);
         <span class="macro">assert_eq!</span>(plan.display_indent_schema().to_string(), expected_without);
     }
@@ -3530,17 +3549,17 @@
             \n  Inner Join: lhs.tag_0 = some_metric.tag_0, lhs.timestamp = some_metric.timestamp [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n    SubqueryAlias: lhs [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n      PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n        PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n        PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n          PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n            Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n              Filter: some_metric.tag_0 = Utf8(\&quot;foo\&quot;) AND some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n                TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;foo\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n              Filter: some_metric.tag_0 = Utf8(\&quot;foo\&quot;) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n                TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;foo\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n    PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n      PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n          Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            Filter: some_metric.tag_0 = Utf8(\&quot;bar\&quot;) AND some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n              TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n            Filter: some_metric.tag_0 = Utf8(\&quot;bar\&quot;) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n              TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>);
 
         <span class="macro">assert_eq!</span>(plan.display_indent_schema().to_string(), expected);
@@ -3572,11 +3591,11 @@
         <span class="kw">let </span>expected = String::from(
             <span class="string">&quot;Projection: some_metric.tag_0, some_metric.timestamp, Float64(1) + some_metric.field_0 AS Float64(1) + field_0 [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), Float64(1) + field_0:Float64;N]\
             \n  PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n    PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n    PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n      PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n          Filter: some_metric.tag_0 = Utf8(\&quot;bar\&quot;) AND some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n          Filter: some_metric.tag_0 = Utf8(\&quot;bar\&quot;) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n            TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;bar\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>);
 
         indie_query_plan_compare(query, expected).<span class="kw">await</span>;
@@ -3597,11 +3616,10 @@
         <span class="kw">let </span>expected = String::from(
             <span class="string">&quot;Projection: some_metric.tag_0, some_metric.timestamp, CAST(some_metric.field_0 != Float64(1.2345) AS Float64) AS field_0 != Float64(1.2345) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0 != Float64(1.2345):Float64;N]\
             \n  PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n    PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n    PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n      PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n          Filter: some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n          TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>);
 
         indie_query_plan_compare(query, expected).<span class="kw">await</span>;
@@ -3622,11 +3640,10 @@
         <span class="kw">let </span>expected = String::from(
             <span class="string">&quot;Projection: some_metric.tag_0, some_metric.timestamp, (- some_metric.field_0) AS (- field_0) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), (- field_0):Float64;N]\
             \n  PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n    PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n    PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n      PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n          Filter: some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n          TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>);
 
         indie_query_plan_compare(query, expected).<span class="kw">await</span>;
@@ -3639,11 +3656,10 @@
             <span class="string">&quot;Filter: prom_increase(timestamp_range,field_0,timestamp) IS NOT NULL [timestamp:Timestamp(Millisecond, None), prom_increase(timestamp_range,field_0,timestamp):Float64;N, tag_0:Utf8]\
             \n  Projection: some_metric.timestamp, prom_increase(timestamp_range, field_0, some_metric.timestamp) AS prom_increase(timestamp_range,field_0,timestamp), some_metric.tag_0 [timestamp:Timestamp(Millisecond, None), prom_increase(timestamp_range,field_0,timestamp):Float64;N, tag_0:Utf8]\
             \n    PromRangeManipulate: req range=[0..100000000], interval=[5000], eval range=[300000], time index=[timestamp], values=[\&quot;field_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Dictionary(Int64, Float64);N, timestamp_range:Dictionary(Int64, Timestamp(Millisecond, None))]\
-            \n      PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [true] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n          Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            Filter: some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n              TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n            TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-301000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>);
 
         indie_query_plan_compare(query, expected).<span class="kw">await</span>;
@@ -3655,11 +3671,10 @@
         <span class="kw">let </span>expected = String::from(
             <span class="string">&quot;Filter: some_metric.field_0 &lt; Float64(1.2345) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n  PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n    PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n    PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n      PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n          Filter: some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n          TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>);
 
         indie_query_plan_compare(query, expected).<span class="kw">await</span>;
@@ -3672,11 +3687,10 @@
             <span class="string">&quot;Filter: prom_count_over_time(timestamp_range,field_0) IS NOT NULL [timestamp:Timestamp(Millisecond, None), prom_count_over_time(timestamp_range,field_0):Float64;N, tag_0:Utf8]\
             \n  Projection: some_metric.timestamp, prom_count_over_time(timestamp_range, field_0) AS prom_count_over_time(timestamp_range,field_0), some_metric.tag_0 [timestamp:Timestamp(Millisecond, None), prom_count_over_time(timestamp_range,field_0):Float64;N, tag_0:Utf8]\
             \n    PromRangeManipulate: req range=[0..100000000], interval=[5000], eval range=[300000], time index=[timestamp], values=[\&quot;field_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Dictionary(Int64, Float64);N, timestamp_range:Dictionary(Int64, Timestamp(Millisecond, None))]\
-            \n      PromSeriesNormalize: offset=[0], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [true] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n          Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            Filter: some_metric.timestamp &gt;= TimestampMillisecond(-1000, None) AND some_metric.timestamp &lt;= TimestampMillisecond(100000000, None) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n              TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100000000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
+            \n            TableScan: some_metric, unsupported_filters=[timestamp &gt;= TimestampMillisecond(-301000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]&quot;
         </span>);
 
         indie_query_plan_compare(query, expected).<span class="kw">await</span>;
