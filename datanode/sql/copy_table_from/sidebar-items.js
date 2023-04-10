@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"opaque":[""]};
+window.SIDEBAR_ITEMS = {"fn":["batch_insert"],"opaque":[""]};

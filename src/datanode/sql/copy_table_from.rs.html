@@ -143,6 +143,22 @@
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -158,24 +174,25 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::future::Future;
 
 <span class="kw">use </span>async_compat::CompatExt;
+<span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_datasource::lister::{Lister, Source};
 <span class="kw">use </span>common_datasource::object_store::{build_backend, parse_url};
 <span class="kw">use </span>common_datasource::util::find_dir_and_filename;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::error::DataTypesSnafu;
 <span class="kw">use </span>datafusion::parquet::arrow::ParquetRecordBatchStreamBuilder;
-<span class="kw">use </span>datatypes::arrow::record_batch::RecordBatch;
-<span class="kw">use </span>datatypes::vectors::{Helper, VectorRef};
-<span class="kw">use </span>futures_util::TryStreamExt;
+<span class="kw">use </span>datatypes::vectors::Helper;
+<span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>regex::Regex;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>table::engine::TableReference;
 <span class="kw">use </span>table::requests::{CopyTableRequest, InsertRequest};
 <span class="kw">use </span>tokio::io::BufReader;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, ParseDataTypesSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::sql::SqlHandler;
 
 <span class="kw">impl </span>SqlHandler {
@@ -210,8 +227,15 @@
 
         <span class="kw">let </span>entries = lister.list().<span class="kw">await</span>.context(error::ListObjectsSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>buf: Vec&lt;RecordBatch&gt; = Vec::new();
+        <span class="kw">let </span>fields = table
+            .schema()
+            .arrow_schema()
+            .fields()
+            .iter()
+            .map(|f| f.name().to_string())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
+        <span class="kw">let </span><span class="kw-2">mut </span>rows_inserted = <span class="number">0</span>;
         <span class="kw">for </span>entry <span class="kw">in </span>entries.iter() {
             <span class="kw">let </span>path = entry.path();
             <span class="kw">let </span>reader = object_store
@@ -233,60 +257,68 @@
                 }
             );
 
-            <span class="kw">let </span>stream = builder
+            <span class="kw">let </span><span class="kw-2">mut </span>stream = builder
                 .build()
                 .context(error::BuildParquetRecordBatchStreamSnafu)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>chunk = stream
-                .try_collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                .<span class="kw">await
-                </span>.context(error::ReadParquetSnafu)<span class="question-mark">?</span>;
+            <span class="comment">// TODO(hl): make this configurable through options.
+            </span><span class="kw">let </span>pending_mem_threshold = ReadableSize::mb(<span class="number">32</span>).as_bytes();
+            <span class="kw">let </span><span class="kw-2">mut </span>pending_mem_size = <span class="number">0</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>pending = <span class="macro">vec!</span>[];
 
-            buf.extend(chunk.into_iter());
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = stream.next().<span class="kw">await </span>{
+                <span class="kw">let </span>record_batch = r.context(error::ReadParquetSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>vectors = Helper::try_into_vectors(record_batch.columns())
+                    .context(DataTypesSnafu)
+                    .context(ParseDataTypesSnafu)<span class="question-mark">?</span>;
+
+                pending_mem_size += vectors.iter().map(|v| v.memory_size()).sum::&lt;usize&gt;();
+
+                <span class="kw">let </span>columns_values = fields
+                    .iter()
+                    .cloned()
+                    .zip(vectors.into_iter())
+                    .collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
+
+                pending.push(table.insert(InsertRequest {
+                    catalog_name: req.catalog_name.to_string(),
+                    schema_name: req.schema_name.to_string(),
+                    table_name: req.table_name.to_string(),
+                    columns_values,
+                    <span class="comment">//TODO: support multi-regions
+                    </span>region_number: <span class="number">0</span>,
+                }));
+
+                <span class="kw">if </span>pending_mem_size <span class="kw">as </span>u64 &gt;= pending_mem_threshold {
+                    rows_inserted +=
+                        batch_insert(<span class="kw-2">&amp;mut </span>pending, <span class="kw-2">&amp;mut </span>pending_mem_size, <span class="kw-2">&amp;</span>req.table_name).<span class="kw">await</span><span class="question-mark">?</span>;
+                }
+            }
+
+            <span class="kw">if </span>!pending.is_empty() {
+                rows_inserted +=
+                    batch_insert(<span class="kw-2">&amp;mut </span>pending, <span class="kw-2">&amp;mut </span>pending_mem_size, <span class="kw-2">&amp;</span>req.table_name).<span class="kw">await</span><span class="question-mark">?</span>;
+            }
         }
 
-        <span class="kw">let </span>fields = table
-            .schema()
-            .arrow_schema()
-            .fields()
-            .iter()
-            .map(|f| f.name().to_string())
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-
-        <span class="comment">// Vec&lt;Columns&gt;
-        </span><span class="kw">let </span>column_chunks = buf
-            .into_iter()
-            .map(|c| Helper::try_into_vectors(c.columns()).context(DataTypesSnafu))
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-
-        <span class="kw">let </span><span class="kw-2">mut </span>futs = Vec::with_capacity(column_chunks.len());
-
-        <span class="kw">for </span>column_chunk <span class="kw">in </span>column_chunks.into_iter() {
-            <span class="kw">let </span>column_chunk = column_chunk.context(error::ParseDataTypesSnafu)<span class="question-mark">?</span>;
-            <span class="kw">let </span>columns_values = fields
-                .iter()
-                .cloned()
-                .zip(column_chunk.into_iter())
-                .collect::&lt;HashMap&lt;String, VectorRef&gt;&gt;();
-
-            futs.push(table.insert(InsertRequest {
-                catalog_name: req.catalog_name.to_string(),
-                schema_name: req.schema_name.to_string(),
-                table_name: req.table_name.to_string(),
-                columns_values,
-                <span class="comment">//TODO: support multi-regions
-                </span>region_number: <span class="number">0</span>,
-            }))
-        }
-
-        <span class="kw">let </span>result = futures::future::try_join_all(futs)
-            .<span class="kw">await
-            </span>.context(error::InsertSnafu {
-                table_name: req.table_name.to_string(),
-            })<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(result.iter().sum()))
+        <span class="prelude-val">Ok</span>(Output::AffectedRows(rows_inserted))
     }
+}
+
+<span class="doccomment">/// Executes all pending inserts all at once, drain pending requests and reset pending bytes.
+</span><span class="kw">async fn </span>batch_insert(
+    pending: <span class="kw-2">&amp;mut </span>Vec&lt;<span class="kw">impl </span>Future&lt;Output = table::error::Result&lt;usize&gt;&gt;&gt;,
+    pending_bytes: <span class="kw-2">&amp;mut </span>usize,
+    table_name: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
+    <span class="kw">let </span>batch = pending.drain(..);
+    <span class="kw">let </span>res: usize = futures::future::try_join_all(batch)
+        .<span class="kw">await
+        </span>.context(error::InsertSnafu { table_name })<span class="question-mark">?
+        </span>.iter()
+        .sum();
+    <span class="kw-2">*</span>pending_bytes = <span class="number">0</span>;
+    <span class="prelude-val">Ok</span>(res)
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="datanode" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
