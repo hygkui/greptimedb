@@ -781,6 +781,16 @@
 <a href="#781" id="781">781</a>
 <a href="#782" id="782">782</a>
 <a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -909,6 +919,16 @@
                     .collect())
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;Missing primary_key_indices or schema to create value_indices&quot;</span>.to_string()),
+        }
+    }
+
+    <span class="kw">pub fn </span>new_external_table() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            primary_key_indices: <span class="prelude-val">Some</span>(Vec::new()),
+            value_indices: <span class="prelude-val">Some</span>(Vec::new()),
+            region_numbers: <span class="prelude-val">Some</span>(Vec::new()),
+            next_column_id: <span class="prelude-val">Some</span>(<span class="number">0</span>),
+            ..Default::default()
         }
     }
 }
