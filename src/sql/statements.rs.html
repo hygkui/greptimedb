@@ -699,6 +699,7 @@
 <a href="#699" id="699">699</a>
 <a href="#700" id="700">700</a>
 <a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1188,15 +1189,16 @@
 
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_parse_datetime_literal() {
+        std::env::set_var(<span class="string">&quot;TZ&quot;</span>, <span class="string">&quot;Asia/Shanghai&quot;</span>);
         <span class="kw">let </span>value = sql_value_to_value(
             <span class="string">&quot;datetime_col&quot;</span>,
             <span class="kw-2">&amp;</span>ConcreteDataType::datetime_datatype(),
-            <span class="kw-2">&amp;</span>SqlValue::DoubleQuotedString(<span class="string">&quot;2022-02-22 00:01:03&quot;</span>.to_string()),
+            <span class="kw-2">&amp;</span>SqlValue::DoubleQuotedString(<span class="string">&quot;2022-02-22 00:01:03+0800&quot;</span>.to_string()),
         )
         .unwrap();
         <span class="macro">assert_eq!</span>(ConcreteDataType::datetime_datatype(), value.data_type());
         <span class="kw">if let </span>Value::DateTime(d) = value {
-            <span class="macro">assert_eq!</span>(<span class="string">&quot;2022-02-22 00:01:03&quot;</span>, d.to_string());
+            <span class="macro">assert_eq!</span>(<span class="string">&quot;2022-02-22 00:01:03+0800&quot;</span>, d.to_string());
         } <span class="kw">else </span>{
             <span class="macro">unreachable!</span>()
         }

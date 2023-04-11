@@ -616,7 +616,6 @@
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -635,7 +634,6 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>chrono::LocalResult;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::error::Result <span class="kw">as </span>RecordBatchResult;
 <span class="kw">use </span>common_recordbatch::RecordBatch;
@@ -797,7 +795,7 @@
             }
         }
         Value::Timestamp(v) =&gt; {
-            <span class="kw">if let </span>LocalResult::Single(datetime) = v.to_chrono_datetime() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(datetime) = v.to_chrono_datetime() {
                 builder.encode_field(<span class="kw-2">&amp;</span>datetime)
             } <span class="kw">else </span>{
                 <span class="prelude-val">Err</span>(PgWireError::ApiError(Box::new(Error::Internal {

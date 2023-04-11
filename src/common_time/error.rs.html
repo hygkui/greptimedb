@@ -65,6 +65,12 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -93,6 +99,9 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse string to date, raw: {}, source: {}&quot;</span>, raw, source))]
     </span>ParseDateStr { raw: String, source: ParseError },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid date string, raw: {}&quot;</span>, raw))]
+    </span>InvalidDateStr { raw: String, location: Location },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse a string into Timestamp, raw string: {}&quot;</span>, raw))]
     </span>ParseTimestamp { raw: String, location: Location },
 
@@ -113,7 +122,9 @@
                 StatusCode::InvalidArguments
             }
             Error::TimestampOverflow { .. } =&gt; StatusCode::Internal,
-            Error::ArithmeticOverflow { .. } =&gt; StatusCode::InvalidArguments,
+            Error::InvalidDateStr { .. } | Error::ArithmeticOverflow { .. } =&gt; {
+                StatusCode::InvalidArguments
+            }
         }
     }
 
@@ -127,6 +138,7 @@
             | Error::TimestampOverflow { location, .. }
             | Error::ArithmeticOverflow { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
             Error::ParseDateStr { .. } =&gt; <span class="prelude-val">None</span>,
+            Error::InvalidDateStr { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
         }
     }
 }
