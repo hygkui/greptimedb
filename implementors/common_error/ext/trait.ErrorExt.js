@@ -5,7 +5,7 @@
 "cmd":[["impl <a class=\"trait\" href=\"common_error/ext/trait.ErrorExt.html\" title=\"trait common_error::ext::ErrorExt\">ErrorExt</a> for <a class=\"enum\" href=\"cmd/error/enum.Error.html\" title=\"enum cmd::error::Error\">Error</a>"]],
 "common_base":[["impl ErrorExt for <a class=\"enum\" href=\"common_base/buffer/enum.Error.html\" title=\"enum common_base::buffer::Error\">Error</a>"]],
 "common_catalog":[["impl <a class=\"trait\" href=\"common_error/ext/trait.ErrorExt.html\" title=\"trait common_error::ext::ErrorExt\">ErrorExt</a> for <a class=\"enum\" href=\"common_catalog/error/enum.Error.html\" title=\"enum common_catalog::error::Error\">Error</a>"]],
-"common_datasource":[["impl ErrorExt for <a class=\"enum\" href=\"common_datasource/error/enum.Error.html\" title=\"enum common_datasource::error::Error\">Error</a>"]],
+"common_datasource":[["impl <a class=\"trait\" href=\"common_error/ext/trait.ErrorExt.html\" title=\"trait common_error::ext::ErrorExt\">ErrorExt</a> for <a class=\"enum\" href=\"common_datasource/error/enum.Error.html\" title=\"enum common_datasource::error::Error\">Error</a>"]],
 "common_error":[],
 "common_grpc":[["impl <a class=\"trait\" href=\"common_error/ext/trait.ErrorExt.html\" title=\"trait common_error::ext::ErrorExt\">ErrorExt</a> for <a class=\"enum\" href=\"common_grpc/error/enum.Error.html\" title=\"enum common_grpc::error::Error\">Error</a>"]],
 "common_grpc_expr":[["impl <a class=\"trait\" href=\"common_error/ext/trait.ErrorExt.html\" title=\"trait common_error::ext::ErrorExt\">ErrorExt</a> for <a class=\"enum\" href=\"common_grpc_expr/error/enum.Error.html\" title=\"enum common_grpc_expr::error::Error\">Error</a>"]],
