@@ -212,7 +212,7 @@
 
 <span class="kw">use </span>api::v1::meta::{HeartbeatRequest, HeartbeatResponse, NodeStat, Peer};
 <span class="kw">use </span>catalog::{datanode_stat, CatalogManagerRef};
-<span class="kw">use </span>common_telemetry::{error, info, warn};
+<span class="kw">use </span>common_telemetry::{error, info, trace, warn};
 <span class="kw">use </span>meta_client::client::{HeartbeatSender, MetaClient};
 <span class="kw">use </span>snafu::ResultExt;
 
@@ -278,7 +278,7 @@
     }
 
     <span class="kw">async fn </span>handle_response(resp: HeartbeatResponse) {
-        <span class="macro">info!</span>(<span class="string">&quot;heartbeat response: {:?}&quot;</span>, resp);
+        <span class="macro">trace!</span>(<span class="string">&quot;heartbeat response: {:?}&quot;</span>, resp);
     }
 
     <span class="doccomment">/// Start heartbeat task, spawn background task.
