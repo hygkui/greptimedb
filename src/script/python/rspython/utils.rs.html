@@ -222,21 +222,21 @@
         <span class="prelude-val">Ok</span>(pyv.as_vector_ref())
     } <span class="kw">else if </span>is_instance::&lt;PyInt&gt;(obj, vm) {
         <span class="kw">let </span>val = obj
-            .to_owned()
+            .clone()
             .try_into_value::&lt;i64&gt;(vm)
             .map_err(|e| format_py_error(e, vm))<span class="question-mark">?</span>;
         <span class="kw">let </span>ret = Int64Vector::from_iterator(std::iter::repeat(val).take(col_len));
         <span class="prelude-val">Ok</span>(Arc::new(ret) <span class="kw">as _</span>)
     } <span class="kw">else if </span>is_instance::&lt;PyFloat&gt;(obj, vm) {
         <span class="kw">let </span>val = obj
-            .to_owned()
+            .clone()
             .try_into_value::&lt;f64&gt;(vm)
             .map_err(|e| format_py_error(e, vm))<span class="question-mark">?</span>;
         <span class="kw">let </span>ret = Float64Vector::from_iterator(std::iter::repeat(val).take(col_len));
         <span class="prelude-val">Ok</span>(Arc::new(ret) <span class="kw">as _</span>)
     } <span class="kw">else if </span>is_instance::&lt;PyBool&gt;(obj, vm) {
         <span class="kw">let </span>val = obj
-            .to_owned()
+            .clone()
             .try_into_value::&lt;bool&gt;(vm)
             .map_err(|e| format_py_error(e, vm))<span class="question-mark">?</span>;
 
@@ -244,7 +244,7 @@
         <span class="prelude-val">Ok</span>(Arc::new(ret) <span class="kw">as _</span>)
     } <span class="kw">else if </span>is_instance::&lt;PyStr&gt;(obj, vm) {
         <span class="kw">let </span>val = obj
-            .to_owned()
+            .clone()
             .try_into_value::&lt;String&gt;(vm)
             .map_err(|e| format_py_error(e, vm))<span class="question-mark">?</span>;
 

@@ -1186,7 +1186,7 @@
             create_add_columns_operation(table_name, columns, table_meta)
         }
         AlterKind::DropColumns { names } =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(AlterOperation::DropColumns {
-            names: names.to_vec(),
+            names: names.clone(),
         })),
         <span class="comment">// No need to build alter operation when reaming tables.
         </span>AlterKind::RenameTable { .. } =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),

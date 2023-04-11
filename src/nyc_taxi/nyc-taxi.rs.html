@@ -590,7 +590,7 @@
         <span class="kw">let </span>(values, datatype) = build_values(array);
 
         <span class="kw">let </span>column = Column {
-            column_name: field.name().to_owned(),
+            column_name: field.name().clone(),
             values: <span class="prelude-val">Some</span>(values),
             null_mask: array
                 .data()
