@@ -250,6 +250,13 @@
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -398,7 +405,8 @@
     <span class="kw">use </span>std::assert_matches::assert_matches;
 
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
-    <span class="kw">use </span>query::parser::QueryLanguageParser;
+    <span class="kw">use </span>query::parser::{QueryLanguageParser, QueryStatement};
+    <span class="kw">use </span>query::query_engine::SqlStatementExecutor;
     <span class="kw">use </span>session::context::QueryContext;
     <span class="kw">use </span>sql::dialect::GenericDialect;
     <span class="kw">use </span>sql::parser::ParserContext;
@@ -483,20 +491,26 @@
                             TIME INDEX (ts),
                             PRIMARY KEY(host)
                         ) engine=mito with(regions=1);&quot;#</span>;
-        <span class="kw">let </span>stmt = QueryLanguageParser::parse_sql(sql).unwrap();
+        <span class="kw">let </span>stmt = <span class="kw">match </span>QueryLanguageParser::parse_sql(sql).unwrap() {
+            QueryStatement::Sql(sql) =&gt; sql,
+            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+        };
         <span class="kw">let </span>output = instance
             .inner()
-            .execute_stmt(stmt, QueryContext::arc())
+            .execute_sql(stmt, QueryContext::arc())
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">0</span>)));
 
         <span class="comment">// Alter table.
         </span><span class="kw">let </span>sql = <span class="string">r#&quot;alter table test_alter add column memory double&quot;#</span>;
-        <span class="kw">let </span>stmt = QueryLanguageParser::parse_sql(sql).unwrap();
+        <span class="kw">let </span>stmt = <span class="kw">match </span>QueryLanguageParser::parse_sql(sql).unwrap() {
+            QueryStatement::Sql(sql) =&gt; sql,
+            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+        };
         <span class="kw">let </span>output = instance
             .inner()
-            .execute_stmt(stmt, QueryContext::arc())
+            .execute_sql(stmt, QueryContext::arc())
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">0</span>)));
