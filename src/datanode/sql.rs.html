@@ -133,6 +133,8 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -189,7 +191,9 @@
 </span><span class="kw">pub struct </span>SqlHandler {
     table_engine_manager: TableEngineManagerRef,
     catalog_manager: CatalogManagerRef,
-    engine_procedure: TableEngineProcedureRef,
+    <span class="comment">// TODO(yingwen): Support multiple table engine. We need to add a method
+    // to TableEngineManagerRef to return engine procedure by engine name.
+    </span>engine_procedure: TableEngineProcedureRef,
     procedure_manager: <span class="prelude-ty">Option</span>&lt;ProcedureManagerRef&gt;,
 }
 

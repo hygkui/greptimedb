@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FIELDS","VARIANTS"],"enum":["AlterTableState","__Field"],"opaque":[""],"static":["CALLSITE","META"],"struct":["AlterTableData","AlterTableProcedure","__FieldVisitor","__Visitor"]};

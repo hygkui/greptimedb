@@ -42,7 +42,7 @@ var sourcesIndex = JSON.parse('{\
 "store_api":["",[["logstore",[],["entry.rs","entry_stream.rs","namespace.rs"]],["manifest",[],["action.rs","storage.rs"]],["storage",[],["chunk.rs","consts.rs","descriptors.rs","engine.rs","metadata.rs","region.rs","requests.rs","responses.rs","snapshot.rs","types.rs"]]],["lib.rs","logstore.rs","manifest.rs","storage.rs"]],\
 "substrait":["",[],["context.rs","df_expr.rs","df_logical.rs","error.rs","lib.rs","schema.rs","types.rs"]],\
 "table":["",[["engine",[],["manager.rs"]],["predicate",[],["stats.rs"]],["table",[],["adapter.rs","numbers.rs","scan.rs"]],["test_util",[],["empty_table.rs","memtable.rs","mock_engine.rs"]]],["engine.rs","error.rs","lib.rs","metadata.rs","predicate.rs","requests.rs","table.rs","test_util.rs"]],\
-"table_procedure":["",[],["create.rs","error.rs","lib.rs"]],\
+"table_procedure":["",[],["alter.rs","create.rs","error.rs","lib.rs"]],\
 "tests_integration":["",[],["lib.rs","test_util.rs"]]\
 }');
 createSourceSidebar();
