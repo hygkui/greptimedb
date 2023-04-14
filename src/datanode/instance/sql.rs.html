@@ -508,7 +508,7 @@
         promql: <span class="kw-2">&amp;</span>PromQuery,
         query_ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_HANDLE_PROMQL_ELAPSED);
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::HANDLE_PROMQL_ELAPSED);
 
         <span class="kw">let </span>stmt = QueryLanguageParser::parse_promql(promql).context(ExecuteSqlSnafu)<span class="question-mark">?</span>;
 

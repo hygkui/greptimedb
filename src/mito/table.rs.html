@@ -611,6 +611,8 @@
 <a href="#611" id="611">611</a>
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1091,6 +1093,8 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MitoTable&lt;R&gt;&gt; {
         <span class="kw">let </span>manifest = TableManifest::create(<span class="kw-2">&amp;</span>table_manifest_dir(table_dir), object_store);
 
+        <span class="kw">let </span>_timer =
+            <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::MITO_CREATE_TABLE_UPDATE_MANIFEST_ELAPSED);
         <span class="comment">// TODO(dennis): save manifest version into catalog?
         </span><span class="kw">let </span>_manifest_version = manifest
             .update(TableMetaActionList::with_action(TableMetaAction::Change(

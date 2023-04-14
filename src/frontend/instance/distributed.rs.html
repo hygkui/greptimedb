@@ -730,6 +730,9 @@
 <a href="#730" id="730">730</a>
 <a href="#731" id="731">731</a>
 <a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -825,6 +828,7 @@
         create_table: <span class="kw-2">&amp;mut </span>CreateTableExpr,
         partitions: <span class="prelude-ty">Option</span>&lt;Partitions&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;TableRef&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE);
         <span class="kw">let </span>table_name = TableName::new(
             <span class="kw-2">&amp;</span>create_table.catalog_name,
             <span class="kw-2">&amp;</span>create_table.schema_name,
@@ -921,6 +925,7 @@
                 create_table, datanode, create_expr_for_region.region_ids,
             );
 
+            <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE_IN_DATANODE);
             client
                 .create(create_expr_for_region)
                 .<span class="kw">await
@@ -1192,6 +1197,7 @@
         partitions: <span class="prelude-ty">Option</span>&lt;Partitions&gt;,
         table_info: <span class="kw-2">&amp;</span>RawTableInfo,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE_IN_META);
         <span class="kw">let </span><span class="kw-2">mut </span>catalog_name = create_table.catalog_name.clone();
         <span class="kw">if </span>catalog_name.is_empty() {
             catalog_name = DEFAULT_CATALOG_NAME.to_string();
