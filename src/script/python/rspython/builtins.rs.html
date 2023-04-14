@@ -1177,6 +1177,8 @@
 <a href="#1177" id="1177">1177</a>
 <a href="#1178" id="1178">1178</a>
 <a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1195,6 +1197,8 @@
 
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test;
+
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>datafusion_common::{DataFusionError, ScalarValue};
 <span class="kw">use </span>datafusion_expr::ColumnarValue <span class="kw">as </span>DFColValue;
@@ -1297,7 +1301,7 @@
             <span class="comment">// TODO(dennis): empty list, we set type as null.
             </span><span class="kw">return </span><span class="prelude-val">Ok</span>(DFColValue::Scalar(ScalarValue::List(
                 <span class="prelude-val">None</span>,
-                Box::new(new_item_field(ArrowDataType::Null)),
+                Arc::new(new_item_field(ArrowDataType::Null)),
             )));
         }
 
@@ -1310,7 +1314,7 @@
         }
         <span class="prelude-val">Ok</span>(DFColValue::Scalar(ScalarValue::List(
             <span class="prelude-val">Some</span>(ret),
-            Box::new(new_item_field(ty)),
+            Arc::new(new_item_field(ty)),
         )))
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(vm.new_type_error(<span class="macro">format!</span>(
