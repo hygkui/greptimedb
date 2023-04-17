@@ -5,7 +5,7 @@ var sourcesIndex = JSON.parse('{\
 "cmd":["",[["cli",[],["cmd.rs","helper.rs","repl.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","standalone.rs","toml_loader.rs"]],\
 "common_base":["",[],["bit_vec.rs","buffer.rs","bytes.rs","lib.rs","readable_size.rs"]],\
 "common_catalog":["",[],["consts.rs","error.rs","lib.rs"]],\
-"common_datasource":["",[["file_format",[],["csv.rs","json.rs","parquet.rs"]],["object_store",[],["fs.rs","s3.rs"]]],["compression.rs","error.rs","file_format.rs","lib.rs","lister.rs","object_store.rs","test_util.rs","util.rs"]],\
+"common_datasource":["",[["file_format",[],["csv.rs","json.rs","parquet.rs"]],["object_store",[],["fs.rs","s3.rs"]]],["compression.rs","error.rs","file_format.rs","lib.rs","lister.rs","object_store.rs","util.rs"]],\
 "common_error":["",[],["ext.rs","format.rs","lib.rs","mock.rs","status_code.rs"]],\
 "common_function":["",[["scalars",[["aggregate",[],["argmax.rs","argmin.rs","diff.rs","mean.rs","percentile.rs","polyval.rs","scipy_stats_norm_cdf.rs","scipy_stats_norm_pdf.rs"]],["expression",[],["binary.rs","ctx.rs","unary.rs"]],["math",[],["pow.rs","rate.rs"]],["numpy",[],["clip.rs","interp.rs"]],["timestamp",[],["to_unixtime.rs"]]],["aggregate.rs","expression.rs","function.rs","function_registry.rs","math.rs","numpy.rs","timestamp.rs","udf.rs"]]],["lib.rs","scalars.rs"]],\
 "common_function_macro":["",[],["lib.rs","range_fn.rs"]],\

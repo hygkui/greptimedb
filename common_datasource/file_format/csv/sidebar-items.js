@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CsvFormat"]};
+window.SIDEBAR_ITEMS = {"enum":["CsvConfigBuilderError"],"struct":["CsvConfig","CsvConfigBuilder","CsvFormat","CsvOpener"]};

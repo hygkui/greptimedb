@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["JsonFormat"]};
+window.SIDEBAR_ITEMS = {"struct":["JsonFormat","JsonOpener"]};
