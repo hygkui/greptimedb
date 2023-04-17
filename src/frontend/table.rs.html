@@ -1057,6 +1057,7 @@
 <a href="#1057" id="1057">1057</a>
 <a href="#1058" id="1058">1058</a>
 <a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1829,7 +1830,8 @@
                 options: SortOptions::default(),
             }],
             Arc::new(merge),
-        );
+        )
+        .with_fetch(<span class="prelude-val">None</span>);
         <span class="macro">assert_eq!</span>(sort.output_partitioning().partition_count(), <span class="number">1</span>);
 
         <span class="kw">let </span>session_ctx = SessionContext::new();

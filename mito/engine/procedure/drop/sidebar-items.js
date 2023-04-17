@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["FIELDS","VARIANTS"],"enum":["DropTableState","__Field"],"opaque":[""],"struct":["DropMitoTable","DropTableData","__FieldVisitor","__Visitor"]};
+window.SIDEBAR_ITEMS = {"enum":["DropTableState"],"opaque":[""],"struct":["DropMitoTable","DropTableData"]};
