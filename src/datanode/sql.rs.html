@@ -128,13 +128,6 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -169,8 +162,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::instance::sql::table_idents_to_full_name;
 
 <span class="kw">mod </span>alter;
-<span class="kw">mod </span>copy_table_from;
-<span class="kw">mod </span>copy_table_to;
 <span class="kw">mod </span>create;
 <span class="kw">mod </span>drop_table;
 <span class="kw">mod </span>flush_table;
@@ -183,7 +174,6 @@
     Alter(AlterTableRequest),
     DropTable(DropTableRequest),
     FlushTable(FlushTableRequest),
-    CopyTable(CopyTableRequest),
 }
 
 <span class="comment">// Handler to execute SQL except query
@@ -222,10 +212,6 @@
             SqlRequest::CreateDatabase(req) =&gt; <span class="self">self</span>.create_database(req, query_ctx.clone()).<span class="kw">await</span>,
             SqlRequest::Alter(req) =&gt; <span class="self">self</span>.alter(req).<span class="kw">await</span>,
             SqlRequest::DropTable(req) =&gt; <span class="self">self</span>.drop_table(req).<span class="kw">await</span>,
-            SqlRequest::CopyTable(req) =&gt; <span class="kw">match </span>req.direction {
-                CopyDirection::Export =&gt; <span class="self">self</span>.copy_table_to(req).<span class="kw">await</span>,
-                CopyDirection::Import =&gt; <span class="self">self</span>.copy_table_from(req).<span class="kw">await</span>,
-            },
             SqlRequest::FlushTable(req) =&gt; <span class="self">self</span>.flush_table(req).<span class="kw">await</span>,
         };
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="kw-2">&amp;</span>result {
