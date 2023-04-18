@@ -442,7 +442,7 @@
                     // so according to this issue:
                     // https://github.com/RustPython/RustPython/issues/4292
                     // add this line for stdlib, so rustpython can found stdlib&#39;s python part in bytecode format
-                    </span>vm.add_frozen(rustpython_pylib::frozen_stdlib());
+                    </span>vm.add_frozen(rustpython_pylib::FROZEN_STDLIB);
                     <span class="comment">// add our own custom datatype and module
                     </span>PyVector::make_class(<span class="kw-2">&amp;</span>vm.ctx);
                     PyQueryEngine::make_class(<span class="kw-2">&amp;</span>vm.ctx);

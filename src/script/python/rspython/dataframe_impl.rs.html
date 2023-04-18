@@ -363,6 +363,27 @@
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -393,8 +414,10 @@
     <span class="kw">use </span>datafusion::dataframe::DataFrame <span class="kw">as </span>DfDataFrame;
     <span class="kw">use </span>datafusion::execution::context::SessionContext;
     <span class="kw">use </span>datafusion_expr::Expr <span class="kw">as </span>DfExpr;
+    <span class="kw">use </span>rustpython_vm::convert::ToPyResult;
     <span class="kw">use </span>rustpython_vm::function::PyComparisonValue;
-    <span class="kw">use </span>rustpython_vm::types::{Comparable, PyComparisonOp};
+    <span class="kw">use </span>rustpython_vm::protocol::PyNumberMethods;
+    <span class="kw">use </span>rustpython_vm::types::{AsNumber, Comparable, PyComparisonOp};
     <span class="kw">use </span>rustpython_vm::{
         pyclass <span class="kw">as </span>rspyclass, PyObject, PyObjectRef, PyPayload, PyRef, PyResult, VirtualMachine,
     };
@@ -405,6 +428,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::python::rspython::builtins::greptime_builtin::{
         lit, query <span class="kw">as </span>get_query_engine, PyDataFrame,
     };
+    <span class="kw">use </span><span class="kw">crate</span>::python::rspython::utils::obj_cast_to;
     <span class="kw">use </span><span class="kw">crate</span>::python::utils::block_on_async;
 
     <span class="kw">impl </span>From&lt;DfDataFrame&gt; <span class="kw">for </span>PyDataFrame {
@@ -678,7 +702,20 @@
         }
     }
 
-    <span class="attr">#[rspyclass(with(Comparable))]
+    <span class="kw">impl </span>AsNumber <span class="kw">for </span>PyExpr {
+        <span class="kw">fn </span>as_number() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>PyNumberMethods {
+            <span class="kw">static </span>AS_NUMBER: PyNumberMethods = PyNumberMethods {
+                and: <span class="prelude-val">Some</span>(|a, b, vm| PyExpr::and(a.to_owned(), b.to_owned(), vm).to_pyresult(vm)),
+                or: <span class="prelude-val">Some</span>(|a, b, vm| PyExpr::or(a.to_owned(), b.to_owned(), vm).to_pyresult(vm)),
+                invert: <span class="prelude-val">Some</span>(|a, vm| PyExpr::invert((<span class="kw-2">*</span>a).to_owned(), vm).to_pyresult(vm)),
+
+                ..PyNumberMethods::NOT_IMPLEMENTED
+            };
+            <span class="kw-2">&amp;</span>AS_NUMBER
+        }
+    }
+
+    <span class="attr">#[rspyclass(with(Comparable, AsNumber))]
     </span><span class="kw">impl </span>PyExpr {
         <span class="kw">fn </span>richcompare(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -707,18 +744,23 @@
         }
 
         <span class="attr">#[pymethod(magic)]
-        </span><span class="kw">fn </span>and(<span class="kw-2">&amp;</span><span class="self">self</span>, other: PyExprRef) -&gt; PyResult&lt;PyExpr&gt; {
-            <span class="prelude-val">Ok</span>(<span class="self">self</span>.inner.clone().and(other.inner.clone()).into())
+        </span><span class="kw">fn </span>and(zelf: PyObjectRef, other: PyObjectRef, vm: <span class="kw-2">&amp;</span>VirtualMachine) -&gt; PyResult&lt;PyExpr&gt; {
+            <span class="kw">let </span>zelf = obj_cast_to::&lt;<span class="self">Self</span>&gt;(zelf, vm)<span class="question-mark">?</span>;
+            <span class="kw">let </span>other = obj_cast_to::&lt;<span class="self">Self</span>&gt;(other, vm)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(zelf.inner.clone().and(other.inner.clone()).into())
         }
         <span class="attr">#[pymethod(magic)]
-        </span><span class="kw">fn </span>or(<span class="kw-2">&amp;</span><span class="self">self</span>, other: PyExprRef) -&gt; PyResult&lt;PyExpr&gt; {
-            <span class="prelude-val">Ok</span>(<span class="self">self</span>.inner.clone().or(other.inner.clone()).into())
+        </span><span class="kw">fn </span>or(zelf: PyObjectRef, other: PyObjectRef, vm: <span class="kw-2">&amp;</span>VirtualMachine) -&gt; PyResult&lt;PyExpr&gt; {
+            <span class="kw">let </span>zelf = obj_cast_to::&lt;<span class="self">Self</span>&gt;(zelf, vm)<span class="question-mark">?</span>;
+            <span class="kw">let </span>other = obj_cast_to::&lt;<span class="self">Self</span>&gt;(other, vm)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(zelf.inner.clone().or(other.inner.clone()).into())
         }
 
         <span class="doccomment">/// `~` operator, return `!self`
         </span><span class="attr">#[pymethod(magic)]
-        </span><span class="kw">fn </span>invert(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PyResult&lt;PyExpr&gt; {
-            <span class="prelude-val">Ok</span>(<span class="self">self</span>.inner.clone().not().into())
+        </span><span class="kw">fn </span>invert(zelf: PyObjectRef, vm: <span class="kw-2">&amp;</span>VirtualMachine) -&gt; PyResult&lt;PyExpr&gt; {
+            <span class="kw">let </span>zelf = obj_cast_to::&lt;<span class="self">Self</span>&gt;(zelf, vm)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(zelf.inner.clone().not().into())
         }
 
         <span class="doccomment">/// sort ascending&amp;nulls_first
