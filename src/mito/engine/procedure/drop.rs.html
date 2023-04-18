@@ -226,6 +226,8 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -367,11 +369,13 @@
     </span><span class="kw">async fn </span>on_close_regions(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
         <span class="comment">// Remove the table from the engine to avoid further access from users.
         </span><span class="kw">let </span>table_ref = <span class="self">self</span>.data.table_ref();
-        <span class="self">self</span>.engine_inner
-            .tables
-            .write()
-            .unwrap()
-            .remove(<span class="kw-2">&amp;</span>table_ref.to_string());
+
+        <span class="kw">let </span>_lock = <span class="self">self
+            </span>.engine_inner
+            .table_mutex
+            .lock(table_ref.to_string())
+            .<span class="kw">await</span>;
+        <span class="self">self</span>.engine_inner.tables.remove(<span class="kw-2">&amp;</span>table_ref.to_string());
 
         <span class="comment">// Close the table to close all regions. Closing a region is idempotent.
         </span><span class="self">self</span>.table.close().<span class="kw">await</span>.map_err(Error::from_error_ext)<span class="question-mark">?</span>;
