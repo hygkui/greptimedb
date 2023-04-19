@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_SCHEMA_INFER_MAX_RECORD"],"fn":["open_with_decoder"],"mod":["csv","json","parquet"],"trait":["ArrowDecoder","FileFormat"]};
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_SCHEMA_INFER_MAX_RECORD","FORMAT_COMPRESSION_TYPE","FORMAT_DELIMTERL","FORMAT_HAS_HEADER","FORMAT_SCHEMA_INFER_MAX_RECORD"],"fn":["open_with_decoder"],"mod":["csv","json","parquet"],"trait":["ArrowDecoder","FileFormat"]};

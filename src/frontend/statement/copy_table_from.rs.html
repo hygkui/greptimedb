@@ -334,7 +334,7 @@
         <span class="kw">let </span>(_schema, _host, path) = parse_url(<span class="kw-2">&amp;</span>req.location).context(error::ParseUrlSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>object_store =
-            build_backend(<span class="kw-2">&amp;</span>req.location, req.connection).context(error::BuildBackendSnafu)<span class="question-mark">?</span>;
+            build_backend(<span class="kw-2">&amp;</span>req.location, <span class="kw-2">&amp;</span>req.connection).context(error::BuildBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(dir, filename) = find_dir_and_filename(<span class="kw-2">&amp;</span>path);
         <span class="kw">let </span>regex = req

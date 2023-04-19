@@ -120,6 +120,10 @@
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
 <a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -146,9 +150,8 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::task::Poll;
 
-<span class="kw">use </span>arrow::datatypes::SchemaRef;
 <span class="kw">use </span>arrow::record_batch::RecordBatch;
-<span class="kw">use </span>arrow_schema::ArrowError;
+<span class="kw">use </span>arrow_schema::{ArrowError, Schema};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>datafusion::error::{DataFusionError, <span class="prelude-ty">Result </span><span class="kw">as </span>DataFusionResult};
@@ -159,9 +162,14 @@
 <span class="kw">use </span><span class="kw">crate</span>::compression::CompressionType;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 
+<span class="kw">pub const </span>FORMAT_COMPRESSION_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;COMPRESSION_TYPE&quot;</span>;
+<span class="kw">pub const </span>FORMAT_DELIMTERL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;DELIMTERL&quot;</span>;
+<span class="kw">pub const </span>FORMAT_SCHEMA_INFER_MAX_RECORD: <span class="kw-2">&amp;</span>str = <span class="string">&quot;SCHEMA_INFER_MAX_RECORD&quot;</span>;
+<span class="kw">pub const </span>FORMAT_HAS_HEADER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;FORMAT_HAS_HEADER&quot;</span>;
+
 <span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>FileFormat: Send + Sync + std::fmt::Debug {
-    <span class="kw">async fn </span>infer_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>ObjectStore, path: String) -&gt; <span class="prelude-ty">Result</span>&lt;SchemaRef&gt;;
+    <span class="kw">async fn </span>infer_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>ObjectStore, path: String) -&gt; <span class="prelude-ty">Result</span>&lt;Schema&gt;;
 }
 
 <span class="kw">pub trait </span>ArrowDecoder: Send + <span class="lifetime">&#39;static </span>{

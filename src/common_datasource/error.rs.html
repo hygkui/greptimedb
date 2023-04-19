@@ -140,6 +140,23 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -231,6 +248,19 @@
         location: Location,
         source: tokio::task::JoinError,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse format {} with value: {}&quot;</span>, key, value))]
+    </span>ParseFormat {
+        key: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        value: String,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to merge schema: {}&quot;</span>, source))]
+    </span>MergeSchema {
+        source: arrow_schema::ArrowError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -251,7 +281,9 @@
             | InvalidPath { .. }
             | InferSchema { .. }
             | ReadParquetSnafu { .. }
-            | ParquetToSchema { .. } =&gt; StatusCode::InvalidArguments,
+            | ParquetToSchema { .. }
+            | ParseFormat { .. }
+            | MergeSchema { .. } =&gt; StatusCode::InvalidArguments,
 
             Decompression { .. } | JoinHandle { .. } =&gt; StatusCode::Unexpected,
         }
@@ -272,6 +304,8 @@
             ParquetToSchema { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
             Decompression { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
             JoinHandle { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
+            ParseFormat { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
+            MergeSchema { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
 
             UnsupportedBackendProtocol { .. }
             | EmptyHostPath { .. }
