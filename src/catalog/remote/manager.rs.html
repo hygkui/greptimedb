@@ -870,15 +870,6 @@
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
 <a href="#872" id="872">872</a>
-<a href="#873" id="873">873</a>
-<a href="#874" id="874">874</a>
-<a href="#875" id="875">875</a>
-<a href="#876" id="876">876</a>
-<a href="#877" id="877">877</a>
-<a href="#878" id="878">878</a>
-<a href="#879" id="879">879</a>
-<a href="#880" id="880">880</a>
-<a href="#881" id="881">881</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -901,9 +892,7 @@
 <span class="kw">use </span>arc_swap::ArcSwap;
 <span class="kw">use </span>async_stream::stream;
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>common_catalog::consts::{
-    DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MIN_USER_TABLE_ID, MITO_ENGINE,
-};
+<span class="kw">use </span>common_catalog::consts::{MIN_USER_TABLE_ID, MITO_ENGINE};
 <span class="kw">use </span>common_telemetry::{debug, error, info};
 <span class="kw">use </span>dashmap::DashMap;
 <span class="kw">use </span>futures::Stream;
@@ -1069,13 +1058,6 @@
     </span><span class="kw">async fn </span>initiate_catalogs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(HashMap&lt;String, CatalogProviderRef&gt;, TableId)&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashMap::new();
         <span class="kw">let </span>max_table_id = MIN_USER_TABLE_ID - <span class="number">1</span>;
-
-        <span class="comment">// initiate default catalog and schema
-        </span><span class="kw">let </span>default_catalog = <span class="self">self
-            </span>.create_catalog_and_schema(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-        res.insert(DEFAULT_CATALOG_NAME.to_string(), default_catalog);
-        <span class="macro">info!</span>(<span class="string">&quot;Default catalog and schema registered&quot;</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.iter_remote_catalogs().<span class="kw">await</span>;
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = catalogs.next().<span class="kw">await </span>{
