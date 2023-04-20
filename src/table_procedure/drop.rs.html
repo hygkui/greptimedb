@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/table-procedure/src/alter.rs`."><title>alter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e5308b57e507db71.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-d59023bfa12059d2.css"><link rel="stylesheet" disabled href="../../static.files/dark-1ca41bb1e10af075.css"><link rel="stylesheet" disabled href="../../static.files/ayu-18b4181a2f3fb862.css"><script src="../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-98a684e84ae5b08b.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../table_procedure/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/table-procedure/src/drop.rs`."><title>drop.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e5308b57e507db71.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-d59023bfa12059d2.css"><link rel="stylesheet" disabled href="../../static.files/dark-1ca41bb1e10af075.css"><link rel="stylesheet" disabled href="../../static.files/ayu-18b4181a2f3fb862.css"><script src="../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-98a684e84ae5b08b.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../table_procedure/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -307,41 +307,6 @@
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
 <a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -356,44 +321,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="doccomment">//! Procedure to alter a table.
+</span><span class="doccomment">//! Procedure to drop a table.
 
 </span><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>catalog::{CatalogManagerRef, RenameTableRequest};
+<span class="kw">use </span>catalog::{CatalogManagerRef, DeregisterTableRequest};
 <span class="kw">use </span>common_procedure::{
     Context, Error, LockKey, Procedure, ProcedureId, ProcedureManager, ProcedureState,
     ProcedureWithId, <span class="prelude-ty">Result</span>, Status,
 };
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>table::engine::{EngineContext, TableEngineProcedureRef, TableReference};
-<span class="kw">use </span>table::metadata::TableId;
-<span class="kw">use </span>table::requests::{AlterKind, AlterTableRequest};
+<span class="kw">use </span>table::requests::DropTableRequest;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    AccessCatalogSnafu, CatalogNotFoundSnafu, DeserializeProcedureSnafu, SchemaNotFoundSnafu,
-    SerializeProcedureSnafu, SubprocedureFailedSnafu, TableExistsSnafu, TableNotFoundSnafu,
+    AccessCatalogSnafu, DeserializeProcedureSnafu, SerializeProcedureSnafu,
+    SubprocedureFailedSnafu, TableNotFoundSnafu,
 };
 
-<span class="doccomment">/// Procedure to alter a table.
-</span><span class="kw">pub struct </span>AlterTableProcedure {
-    data: AlterTableData,
+<span class="doccomment">/// Procedure to drop a table.
+</span><span class="kw">pub struct </span>DropTableProcedure {
+    data: DropTableData,
     catalog_manager: CatalogManagerRef,
     engine_procedure: TableEngineProcedureRef,
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl </span>Procedure <span class="kw">for </span>AlterTableProcedure {
+</span><span class="kw">impl </span>Procedure <span class="kw">for </span>DropTableProcedure {
     <span class="kw">fn </span>type_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
         <span class="self">Self</span>::TYPE_NAME
     }
 
     <span class="kw">async fn </span>execute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
         <span class="kw">match </span><span class="self">self</span>.data.state {
-            AlterTableState::Prepare =&gt; <span class="self">self</span>.on_prepare().<span class="kw">await</span>,
-            AlterTableState::EngineAlterTable =&gt; <span class="self">self</span>.on_engine_alter_table(ctx).<span class="kw">await</span>,
-            AlterTableState::RenameInCatalog =&gt; <span class="self">self</span>.on_rename_in_catalog().<span class="kw">await</span>,
+            DropTableState::Prepare =&gt; <span class="self">self</span>.on_prepare().<span class="kw">await</span>,
+            DropTableState::RemoveFromCatalog =&gt; <span class="self">self</span>.on_remove_from_catalog().<span class="kw">await</span>,
+            DropTableState::EngineDropTable =&gt; <span class="self">self</span>.on_engine_drop_table(ctx).<span class="kw">await</span>,
         }
     }
 
@@ -405,35 +369,23 @@
     <span class="kw">fn </span>lock_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LockKey {
         <span class="comment">// We lock the whole table.
         </span><span class="kw">let </span>table_name = <span class="self">self</span>.data.table_ref().to_string();
-        <span class="comment">// If alter kind is rename, we also need to lock the renamed table.
-        </span><span class="kw">if let </span>AlterKind::RenameTable { new_table_name } = <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.alter_kind {
-            <span class="kw">let </span>new_table_name = TableReference {
-                catalog: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name,
-                schema: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
-                table: new_table_name,
-            }
-            .to_string();
-            LockKey::new([table_name, new_table_name])
-        } <span class="kw">else </span>{
-            LockKey::single(table_name)
-        }
+        LockKey::single(table_name)
     }
 }
 
-<span class="kw">impl </span>AlterTableProcedure {
-    <span class="kw">const </span>TYPE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table-procedure:AlterTableProcedure&quot;</span>;
+<span class="kw">impl </span>DropTableProcedure {
+    <span class="kw">const </span>TYPE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table-procedure::DropTableProcedure&quot;</span>;
 
-    <span class="doccomment">/// Returns a new [AlterTableProcedure].
+    <span class="doccomment">/// Returns a new [DropTableProcedure].
     </span><span class="kw">pub fn </span>new(
-        request: AlterTableRequest,
+        request: DropTableRequest,
         catalog_manager: CatalogManagerRef,
         engine_procedure: TableEngineProcedureRef,
-    ) -&gt; AlterTableProcedure {
-        AlterTableProcedure {
-            data: AlterTableData {
-                state: AlterTableState::Prepare,
+    ) -&gt; DropTableProcedure {
+        DropTableProcedure {
+            data: DropTableData {
+                state: DropTableState::Prepare,
                 request,
-                table_id: <span class="prelude-val">None</span>,
                 subprocedure_id: <span class="prelude-val">None</span>,
             },
             catalog_manager,
@@ -467,9 +419,9 @@
         catalog_manager: CatalogManagerRef,
         engine_procedure: TableEngineProcedureRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>data: AlterTableData = serde_json::from_str(json).context(DeserializeProcedureSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>data: DropTableData = serde_json::from_str(json).context(DeserializeProcedureSnafu)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(AlterTableProcedure {
+        <span class="prelude-val">Ok</span>(DropTableProcedure {
             data,
             catalog_manager,
             engine_procedure,
@@ -477,56 +429,65 @@
     }
 
     <span class="kw">async fn </span>on_prepare(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
-        <span class="comment">// Check whether catalog and schema exist.
-        </span><span class="kw">let </span>catalog = <span class="self">self
-            </span>.catalog_manager
-            .catalog(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name)
-            .context(AccessCatalogSnafu)<span class="question-mark">?
-            </span>.context(CatalogNotFoundSnafu {
-                name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name,
-            })<span class="question-mark">?</span>;
-        <span class="kw">let </span>schema = catalog
-            .schema(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name)
-            .context(AccessCatalogSnafu)<span class="question-mark">?
-            </span>.context(SchemaNotFoundSnafu {
-                name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
-            })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>table = schema
-            .table(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.table_name)
+        <span class="kw">let </span>request = <span class="kw-2">&amp;</span><span class="self">self</span>.data.request;
+        <span class="comment">// Ensure the table exists.
+        </span><span class="self">self</span>.catalog_manager
+            .table(
+                <span class="kw-2">&amp;</span>request.catalog_name,
+                <span class="kw-2">&amp;</span>request.schema_name,
+                <span class="kw-2">&amp;</span>request.table_name,
+            )
             .<span class="kw">await
             </span>.context(AccessCatalogSnafu)<span class="question-mark">?
             </span>.context(TableNotFoundSnafu {
-                name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.table_name,
+                name: <span class="kw-2">&amp;</span>request.table_name,
             })<span class="question-mark">?</span>;
-        <span class="kw">if let </span>AlterKind::RenameTable { new_table_name } = <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.alter_kind {
-            <span class="macro">ensure!</span>(
-                !schema
-                    .table_exist(new_table_name)
-                    .context(AccessCatalogSnafu)<span class="question-mark">?</span>,
-                TableExistsSnafu {
-                    name: new_table_name,
-                }
-            );
-        }
 
-        <span class="self">self</span>.data.state = AlterTableState::EngineAlterTable;
-        <span class="comment">// Assign procedure id to the subprocedure.
-        </span><span class="self">self</span>.data.subprocedure_id = <span class="prelude-val">Some</span>(ProcedureId::random());
-        <span class="comment">// Set the table id.
-        </span><span class="self">self</span>.data.table_id = <span class="prelude-val">Some</span>(table.table_info().ident.table_id);
+        <span class="self">self</span>.data.state = DropTableState::RemoveFromCatalog;
 
         <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
     }
 
-    <span class="kw">async fn </span>on_engine_alter_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
+    <span class="kw">async fn </span>on_remove_from_catalog(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
+        <span class="kw">let </span>request = <span class="kw-2">&amp;</span><span class="self">self</span>.data.request;
+        <span class="kw">let </span>has_table = <span class="self">self
+            </span>.catalog_manager
+            .table(
+                <span class="kw-2">&amp;</span>request.catalog_name,
+                <span class="kw-2">&amp;</span>request.schema_name,
+                <span class="kw-2">&amp;</span>request.table_name,
+            )
+            .<span class="kw">await
+            </span>.context(AccessCatalogSnafu)<span class="question-mark">?
+            </span>.is_some();
+        <span class="kw">if </span>has_table {
+            <span class="comment">// The table is still in the catalog.
+            </span><span class="kw">let </span>deregister_table_req = DeregisterTableRequest {
+                catalog: <span class="self">self</span>.data.request.catalog_name.clone(),
+                schema: <span class="self">self</span>.data.request.schema_name.clone(),
+                table_name: <span class="self">self</span>.data.request.table_name.clone(),
+            };
+            <span class="self">self</span>.catalog_manager
+                .deregister_table(deregister_table_req)
+                .<span class="kw">await
+                </span>.context(AccessCatalogSnafu)<span class="question-mark">?</span>;
+        }
+
+        <span class="self">self</span>.data.state = DropTableState::EngineDropTable;
+        <span class="comment">// Assign procedure id to the subprocedure.
+        </span><span class="self">self</span>.data.subprocedure_id = <span class="prelude-val">Some</span>(ProcedureId::random());
+
+        <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
+    }
+
+    <span class="kw">async fn </span>on_engine_drop_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
         <span class="comment">// Safety: subprocedure id is always set in this state.
         </span><span class="kw">let </span>sub_id = <span class="self">self</span>.data.subprocedure_id.unwrap();
 
         <span class="comment">// Query subprocedure state.
         </span><span class="kw">let </span><span class="prelude-val">Some</span>(sub_state) = ctx.provider.procedure_state(sub_id).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
             <span class="macro">logging::info!</span>(
-                <span class="string">&quot;On engine alter table {}, subprocedure not found, sub_id: {}&quot;</span>,
+                <span class="string">&quot;On engine drop table {}, subprocedure not found, sub_id: {}&quot;</span>,
                 <span class="self">self</span>.data.request.table_name,
                 sub_id
             );
@@ -535,7 +496,7 @@
             </span><span class="kw">let </span>engine_ctx = EngineContext::default();
             <span class="kw">let </span>procedure = <span class="self">self
                 </span>.engine_procedure
-                .alter_table_procedure(<span class="kw-2">&amp;</span>engine_ctx, <span class="self">self</span>.data.request.clone())
+                .drop_table_procedure(<span class="kw-2">&amp;</span>engine_ctx, <span class="self">self</span>.data.request.clone())
                 .map_err(Error::from_error_ext)<span class="question-mark">?</span>;
             <span class="kw">return </span><span class="prelude-val">Ok</span>(Status::Suspended {
                 subprocedures: <span class="macro">vec!</span>[ProcedureWithId {
@@ -553,19 +514,12 @@
             }),
             ProcedureState::Done =&gt; {
                 <span class="macro">logging::info!</span>(
-                    <span class="string">&quot;On engine alter table {}, done, sub_id: {}&quot;</span>,
+                    <span class="string">&quot;On engine drop table {}, done, sub_id: {}&quot;</span>,
                     <span class="self">self</span>.data.request.table_name,
                     sub_id
                 );
-                <span class="comment">// The sub procedure is done, we can execute next step.
-                </span><span class="kw">if </span><span class="self">self</span>.data.request.is_rename_table() {
-                    <span class="comment">// We also need to rename the table in the catalog.
-                    </span><span class="self">self</span>.data.state = AlterTableState::RenameInCatalog;
-                    <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
-                } <span class="kw">else </span>{
-                    <span class="comment">// If this isn&#39;t a rename operation, we are done.
-                    </span><span class="prelude-val">Ok</span>(Status::Done)
-                }
+
+                <span class="prelude-val">Ok</span>(Status::Done)
             }
             ProcedureState::Failed { .. } =&gt; {
                 <span class="comment">// Return error if the subprocedure is failed.
@@ -576,59 +530,34 @@
             </span>}
         }
     }
-
-    <span class="kw">async fn </span>on_rename_in_catalog(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
-        <span class="comment">// Safety: table id is available in this state.
-        </span><span class="kw">let </span>table_id = <span class="self">self</span>.data.table_id.unwrap();
-        <span class="kw">if let </span>AlterKind::RenameTable { new_table_name } = <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.alter_kind {
-            <span class="kw">let </span>rename_req = RenameTableRequest {
-                catalog: <span class="self">self</span>.data.request.catalog_name.clone(),
-                schema: <span class="self">self</span>.data.request.schema_name.clone(),
-                table_name: <span class="self">self</span>.data.request.table_name.clone(),
-                new_table_name: new_table_name.clone(),
-                table_id,
-            };
-
-            <span class="self">self</span>.catalog_manager
-                .rename_table(rename_req)
-                .<span class="kw">await
-                </span>.map_err(Error::from_error_ext)<span class="question-mark">?</span>;
-        }
-
-        <span class="prelude-val">Ok</span>(Status::Done)
-    }
 }
 
-<span class="doccomment">/// Represents each step while altering a table in the datanode.
+<span class="doccomment">/// Represents each step while dropping a table in the datanode.
 </span><span class="attr">#[derive(Debug, Serialize, Deserialize)]
-</span><span class="kw">enum </span>AlterTableState {
-    <span class="doccomment">/// Validate request and prepare to alter table.
+</span><span class="kw">enum </span>DropTableState {
+    <span class="doccomment">/// Validate request and prepare to drop table.
     </span>Prepare,
-    <span class="doccomment">/// Alter table in the table engine.
-    </span>EngineAlterTable,
-    <span class="doccomment">/// Rename the table in the catalog (optional).
-    </span>RenameInCatalog,
+    <span class="doccomment">/// Remove the table from the catalog.
+    </span>RemoveFromCatalog,
+    <span class="doccomment">/// Drop table in the table engine.
+    </span>EngineDropTable,
 }
 
-<span class="doccomment">/// Serializable data of [AlterTableProcedure].
+<span class="doccomment">/// Serializable data of [DropTableProcedure].
 </span><span class="attr">#[derive(Debug, Serialize, Deserialize)]
-</span><span class="kw">struct </span>AlterTableData {
+</span><span class="kw">struct </span>DropTableData {
     <span class="doccomment">/// Current state.
-    </span>state: AlterTableState,
-    <span class="doccomment">/// Request to alter this table.
-    </span>request: AlterTableRequest,
-    <span class="doccomment">/// Id of the table.
+    </span>state: DropTableState,
+    <span class="doccomment">/// Request to drop this table.
+    </span>request: DropTableRequest,
+    <span class="doccomment">/// Id of the subprocedure to drop this table from the engine.
     ///
-    /// Available after [AlterTableState::Prepare] state.
-    </span>table_id: <span class="prelude-ty">Option</span>&lt;TableId&gt;,
-    <span class="doccomment">/// Id of the subprocedure to alter this table in the engine.
-    ///
-    /// This id is `Some` while the procedure is in [AlterTableState::EngineAlterTable]
+    /// This id is `Some` while the procedure is in [DropTableState::EngineDropTable]
     /// state.
     </span>subprocedure_id: <span class="prelude-ty">Option</span>&lt;ProcedureId&gt;,
 }
 
-<span class="kw">impl </span>AlterTableData {
+<span class="kw">impl </span>DropTableData {
     <span class="kw">fn </span>table_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableReference {
         TableReference {
             catalog: <span class="kw-2">&amp;</span><span class="self">self</span>.request.catalog_name,
@@ -641,26 +570,22 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+    <span class="kw">use </span>table::engine::TableEngine;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::test_util::TestEnv;
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_alter_table_procedure_rename() {
-        <span class="kw">let </span>env = TestEnv::new(<span class="string">&quot;rename&quot;</span>);
-        <span class="kw">let </span>table_name = <span class="string">&quot;test_old&quot;</span>;
+    </span><span class="kw">async fn </span>test_drop_table_procedure() {
+        <span class="kw">let </span>env = TestEnv::new(<span class="string">&quot;drop&quot;</span>);
+        <span class="kw">let </span>table_name = <span class="string">&quot;test_drop&quot;</span>;
         env.create_table(table_name).<span class="kw">await</span>;
 
-        <span class="kw">let </span>new_table_name = <span class="string">&quot;test_new&quot;</span>;
-        <span class="kw">let </span>request = AlterTableRequest {
+        <span class="kw">let </span>request = DropTableRequest {
             catalog_name: DEFAULT_CATALOG_NAME.to_string(),
             schema_name: DEFAULT_SCHEMA_NAME.to_string(),
             table_name: table_name.to_string(),
-            alter_kind: AlterKind::RenameTable {
-                new_table_name: new_table_name.to_string(),
-            },
         };
-
         <span class="kw">let </span>TestEnv {
             dir: _dir,
             table_engine,
@@ -668,7 +593,7 @@
             catalog_manager,
         } = env;
         <span class="kw">let </span>procedure =
-            AlterTableProcedure::new(request, catalog_manager.clone(), table_engine.clone());
+            DropTableProcedure::new(request, catalog_manager.clone(), table_engine.clone());
         <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
 
         <span class="kw">let </span><span class="kw-2">mut </span>watcher = procedure_manager.submit(procedure_with_id).<span class="kw">await</span>.unwrap();
@@ -679,11 +604,16 @@
             .unwrap()
             .unwrap();
         <span class="kw">let </span>schema = catalog.schema(DEFAULT_SCHEMA_NAME).unwrap().unwrap();
-        <span class="kw">let </span>table = schema.table(new_table_name).<span class="kw">await</span>.unwrap().unwrap();
-        <span class="kw">let </span>table_info = table.table_info();
-        <span class="macro">assert_eq!</span>(new_table_name, table_info.name);
-
         <span class="macro">assert!</span>(schema.table(table_name).<span class="kw">await</span>.unwrap().is_none());
+        <span class="kw">let </span>ctx = EngineContext::default();
+        <span class="macro">assert!</span>(!table_engine.table_exists(
+            <span class="kw-2">&amp;</span>ctx,
+            <span class="kw-2">&amp;</span>TableReference {
+                catalog: DEFAULT_CATALOG_NAME,
+                schema: DEFAULT_SCHEMA_NAME,
+                table: table_name,
+            }
+        ));
     }
 }
 </code></pre></div>
