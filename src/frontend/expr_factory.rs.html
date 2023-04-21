@@ -259,18 +259,6 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -295,15 +283,16 @@
 <span class="kw">use </span>datatypes::schema::ColumnSchema;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
-<span class="kw">use </span>sql::ast::{ColumnDef, ColumnOption, SqlOption, TableConstraint, Value};
+<span class="kw">use </span>sql::ast::{ColumnDef, ColumnOption, TableConstraint};
 <span class="kw">use </span>sql::statements::column_def_to_schema;
 <span class="kw">use </span>sql::statements::create::{CreateTable, TIME_INDEX};
+<span class="kw">use </span>sql::util::to_lowercase_options_map;
 <span class="kw">use </span>table::requests::TableOptions;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, BuildCreateExprOnInsertionSnafu, ColumnDataTypeSnafu,
     ConvertColumnDefaultConstraintSnafu, IllegalPrimaryKeysDefSnafu, InvalidSqlSnafu,
-    ParseSqlSnafu, <span class="prelude-ty">Result</span>, UnrecognizedTableOptionSnafu,
+    ParseSqlSnafu, <span class="prelude-ty">Result</span>,
 };
 
 <span class="kw">pub type </span>CreateExprFactoryRef = Arc&lt;<span class="kw">dyn </span>CreateExprFactory + Send + Sync&gt;;
@@ -359,7 +348,10 @@
             .context(error::ExternalSnafu)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>time_index = find_time_index(<span class="kw-2">&amp;</span>create.constraints)<span class="question-mark">?</span>;
-    <span class="kw">let </span>table_options = HashMap::from(<span class="kw-2">&amp;</span>stmt_options_to_table_options(<span class="kw-2">&amp;</span>create.options)<span class="question-mark">?</span>);
+    <span class="kw">let </span>table_options = HashMap::from(
+        <span class="kw-2">&amp;</span>TableOptions::try_from(<span class="kw-2">&amp;</span>to_lowercase_options_map(<span class="kw-2">&amp;</span>create.options))
+            .context(error::UnrecognizedTableOptionSnafu)<span class="question-mark">?</span>,
+    );
     <span class="kw">let </span>expr = CreateTableExpr {
         catalog_name,
         schema_name,
@@ -500,22 +492,6 @@
             })
         })
         .collect()
-}
-
-<span class="comment">// TODO(hl): This function is intentionally duplicated with that one in src/datanode/src/sql/create.rs:261
-// since we are going to remove the statement parsing stuff from datanode.
-// Refer: https://github.com/GreptimeTeam/greptimedb/issues/1010
-</span><span class="kw">fn </span>stmt_options_to_table_options(opts: <span class="kw-2">&amp;</span>[SqlOption]) -&gt; error::Result&lt;TableOptions&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>map = HashMap::with_capacity(opts.len());
-    <span class="kw">for </span>SqlOption { name, value } <span class="kw">in </span>opts {
-        <span class="kw">let </span>value_str = <span class="kw">match </span>value {
-            Value::SingleQuotedString(s) | Value::DoubleQuotedString(s) =&gt; s.clone(),
-            <span class="kw">_ </span>=&gt; value.to_string(),
-        };
-        map.insert(name.value.clone(), value_str);
-    }
-    <span class="kw">let </span>options = TableOptions::try_from(<span class="kw-2">&amp;</span>map).context(UnrecognizedTableOptionSnafu)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(options)
 }
 
 <span class="attr">#[cfg(test)]
