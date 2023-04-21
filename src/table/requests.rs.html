@@ -319,6 +319,11 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -398,6 +403,7 @@
 
 <span class="kw">pub const </span>WRITE_BUFFER_SIZE_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;write_buffer_size&quot;</span>;
 <span class="kw">pub const </span>TTL_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;ttl&quot;</span>;
+<span class="kw">pub const </span>REGIONS_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;regions&quot;</span>;
 <span class="kw">pub const </span>COMPACTION_TIME_WINDOW_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;compaction_time_window&quot;</span>;
 
 <span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;&gt; <span class="kw">for </span>TableOptions {
@@ -442,7 +448,11 @@
             };
         }
         options.extra_options = HashMap::from_iter(value.iter().filter_map(|(k, v)| {
-            <span class="kw">if </span>k != WRITE_BUFFER_SIZE_KEY &amp;&amp; k != TTL_KEY &amp;&amp; k != COMPACTION_TIME_WINDOW_KEY {
+            <span class="kw">if </span>k != WRITE_BUFFER_SIZE_KEY
+                &amp;&amp; k != REGIONS_KEY
+                &amp;&amp; k != TTL_KEY
+                &amp;&amp; k != COMPACTION_TIME_WINDOW_KEY
+            {
                 <span class="prelude-val">Some</span>((k.clone(), v.clone()))
             } <span class="kw">else </span>{
                 <span class="prelude-val">None

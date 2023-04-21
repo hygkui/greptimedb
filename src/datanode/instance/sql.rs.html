@@ -292,6 +292,14 @@
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -398,6 +406,14 @@
                     .execute(SqlRequest::DropTable(req), query_ctx)
                     .<span class="kw">await
             </span>}
+            Statement::ShowCreateTable(show) =&gt; {
+                <span class="kw">let </span>(catalog, schema, table) =
+                    table_idents_to_full_name(<span class="kw-2">&amp;</span>show.table_name, query_ctx.clone())<span class="question-mark">?</span>;
+                <span class="kw">let </span>table_ref = TableReference::full(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>table);
+                <span class="kw">let </span>table = <span class="self">self</span>.sql_handler.get_table(<span class="kw-2">&amp;</span>table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
+
+                query::sql::show_create_table(table, <span class="prelude-val">None</span>).context(ExecuteStatementSnafu)
+            }
             <span class="kw">_ </span>=&gt; NotSupportSqlSnafu {
                 msg: <span class="macro">format!</span>(<span class="string">&quot;not supported to execute {stmt:?}&quot;</span>),
             }
