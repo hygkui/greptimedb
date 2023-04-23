@@ -124,6 +124,36 @@
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -146,6 +176,7 @@
 
 <span class="kw">pub const </span>DEFAULT_SCHEMA_INFER_MAX_RECORD: usize = <span class="number">1000</span>;
 
+<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::result;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::task::Poll;
@@ -159,13 +190,42 @@
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>object_store::ObjectStore;
 
+<span class="kw">use </span><span class="self">self</span>::csv::CsvFormat;
+<span class="kw">use </span><span class="self">self</span>::json::JsonFormat;
+<span class="kw">use </span><span class="self">self</span>::parquet::ParquetFormat;
 <span class="kw">use </span><span class="kw">crate</span>::compression::CompressionType;
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 
 <span class="kw">pub const </span>FORMAT_COMPRESSION_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;COMPRESSION_TYPE&quot;</span>;
 <span class="kw">pub const </span>FORMAT_DELIMTERL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;DELIMTERL&quot;</span>;
 <span class="kw">pub const </span>FORMAT_SCHEMA_INFER_MAX_RECORD: <span class="kw-2">&amp;</span>str = <span class="string">&quot;SCHEMA_INFER_MAX_RECORD&quot;</span>;
 <span class="kw">pub const </span>FORMAT_HAS_HEADER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;FORMAT_HAS_HEADER&quot;</span>;
+<span class="kw">pub const </span>FORMAT_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;FORMAT&quot;</span>;
+
+<span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>Format {
+    Csv(CsvFormat),
+    Json(JsonFormat),
+    Parquet(ParquetFormat),
+}
+
+<span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;&gt; <span class="kw">for </span>Format {
+    <span class="kw">type </span>Error = error::Error;
+
+    <span class="kw">fn </span>try_from(options: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>format = options
+            .get(FORMAT_TYPE)
+            .map(|format| format.to_ascii_uppercase())
+            .unwrap_or_else(|| <span class="string">&quot;PARQUET&quot;</span>.to_string());
+
+        <span class="kw">match </span>format.as_str() {
+            <span class="string">&quot;CSV&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Csv(CsvFormat::try_from(options)<span class="question-mark">?</span>)),
+            <span class="string">&quot;JSON&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Json(JsonFormat::try_from(options)<span class="question-mark">?</span>)),
+            <span class="string">&quot;PARQUET&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Parquet(ParquetFormat::default())),
+            <span class="kw">_ </span>=&gt; error::UnsupportedFormatSnafu { format: <span class="kw-2">&amp;</span>format }.fail(),
+        }
+    }
+}
 
 <span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>FileFormat: Send + Sync + std::fmt::Debug {
