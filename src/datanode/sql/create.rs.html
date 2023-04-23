@@ -574,6 +574,13 @@
 <a href="#574" id="574">574</a>
 <a href="#575" id="575">575</a>
 <a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -608,9 +615,10 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, CatalogNotFoundSnafu, CatalogSnafu, ConstraintNotSupportedSnafu, CreateTableSnafu,
-    IllegalPrimaryKeysDefSnafu, InsertSystemCatalogSnafu, KeyColumnNotFoundSnafu,
-    RegisterSchemaSnafu, <span class="prelude-ty">Result</span>, SchemaExistsSnafu, SchemaNotFoundSnafu, SubmitProcedureSnafu,
-    TableEngineNotFoundSnafu, UnrecognizedTableOptionSnafu, WaitProcedureSnafu,
+    EngineProcedureNotFoundSnafu, IllegalPrimaryKeysDefSnafu, InsertSystemCatalogSnafu,
+    KeyColumnNotFoundSnafu, RegisterSchemaSnafu, <span class="prelude-ty">Result</span>, SchemaExistsSnafu, SchemaNotFoundSnafu,
+    SubmitProcedureSnafu, TableEngineNotFoundSnafu, UnrecognizedTableOptionSnafu,
+    WaitProcedureSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::sql::SqlHandler;
 
@@ -726,11 +734,17 @@
                 .context(TableEngineNotFoundSnafu {
                     engine_name: <span class="kw-2">&amp;</span>req.engine,
                 })<span class="question-mark">?</span>;
+        <span class="kw">let </span>engine_procedure = <span class="self">self
+            </span>.table_engine_manager
+            .engine_procedure(<span class="kw-2">&amp;</span>req.engine)
+            .context(EngineProcedureNotFoundSnafu {
+                engine_name: <span class="kw-2">&amp;</span>req.engine,
+            })<span class="question-mark">?</span>;
         <span class="kw">let </span>procedure = CreateTableProcedure::new(
             req,
             <span class="self">self</span>.catalog_manager.clone(),
             table_engine.clone(),
-            <span class="self">self</span>.engine_procedure.clone(),
+            engine_procedure,
         );
         <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
         <span class="kw">let </span>procedure_id = procedure_with_id.id;

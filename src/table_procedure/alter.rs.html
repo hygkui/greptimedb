@@ -341,7 +341,6 @@
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -567,12 +566,11 @@
                     </span><span class="prelude-val">Ok</span>(Status::Done)
                 }
             }
-            ProcedureState::Failed { .. } =&gt; {
+            ProcedureState::Failed { error } =&gt; {
                 <span class="comment">// Return error if the subprocedure is failed.
-                </span>SubprocedureFailedSnafu {
+                </span><span class="prelude-val">Err</span>(error).context(SubprocedureFailedSnafu {
                     subprocedure_id: sub_id,
-                }
-                .fail()<span class="question-mark">?
+                })<span class="question-mark">?
             </span>}
         }
     }
