@@ -861,7 +861,7 @@
     PromJsonResponse::from_query_result(result, metric_name).<span class="kw">await
 </span>}
 
-<span class="kw">fn </span>retrieve_metric_name(promql: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>retrieve_metric_name(promql: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
     <span class="kw">let </span>promql_expr = promql_parser::parser::parse(promql).ok()<span class="question-mark">?</span>;
     promql_expr_to_metric_name(promql_expr)
 }
