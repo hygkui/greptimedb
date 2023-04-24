@@ -440,6 +440,10 @@
 <a href="#440" id="440">440</a>
 <a href="#441" id="441">441</a>
 <a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -783,7 +787,11 @@
                 table_id, table_info
             );
 
-            <span class="kw">let </span>table = Arc::new(ImmutableFileTable::new(table_info, metadata));
+            <span class="kw">let </span>table = Arc::new(
+                ImmutableFileTable::new(table_info, metadata)
+                    .map_err(BoxedError::new)
+                    .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>,
+            );
 
             <span class="self">self</span>.tables
                 .write()
