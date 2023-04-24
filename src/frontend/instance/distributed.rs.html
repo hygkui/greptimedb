@@ -835,6 +835,11 @@
 <a href="#835" id="835">835</a>
 <a href="#836" id="836">836</a>
 <a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1169,6 +1174,11 @@
             Statement::CreateTable(stmt) =&gt; {
                 <span class="kw">let </span>create_expr = <span class="kw-2">&amp;mut </span>expr_factory::create_to_expr(<span class="kw-2">&amp;</span>stmt, query_ctx)<span class="question-mark">?</span>;
                 <span class="kw">let _ </span>= <span class="self">self</span>.create_table(create_expr, stmt.partitions).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+            }
+            Statement::CreateExternalTable(stmt) =&gt; {
+                <span class="kw">let </span>create_expr = <span class="kw-2">&amp;mut </span>expr_factory::create_external_expr(stmt, query_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="self">self</span>.create_table(create_expr, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
             }
             Statement::Alter(alter_table) =&gt; {
@@ -1510,7 +1520,7 @@
         schema: raw_schema,
         primary_key_indices,
         value_indices: <span class="macro">vec!</span>[],
-        engine: <span class="string">&quot;mito&quot;</span>.to_string(),
+        engine: create_table.engine.clone(),
         next_column_id: column_schemas.len() <span class="kw">as </span>u32,
         region_numbers: <span class="macro">vec!</span>[],
         engine_options: HashMap::new(),

@@ -602,6 +602,20 @@
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1088,6 +1102,18 @@
         file_schema: String,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json, source: {}&quot;</span>, source))]
+    </span>EncodeJson {
+        source: serde_json::error::Error,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to prepare immutable table: {}&quot;</span>, source))]
+    </span>PrepareImmutableTable {
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: query::error::Error,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1108,7 +1134,8 @@
             | Error::MissingMetasrvOpts { .. }
             | Error::ColumnNoneDefaultValue { .. }
             | Error::BuildRegex { .. }
-            | Error::InvalidSchema { .. } =&gt; StatusCode::InvalidArguments,
+            | Error::InvalidSchema { .. }
+            | Error::PrepareImmutableTable { .. } =&gt; StatusCode::InvalidArguments,
 
             Error::NotSupported { .. } =&gt; StatusCode::Unsupported,
 
@@ -1145,7 +1172,8 @@
 
             Error::IllegalFrontendState { .. }
             | Error::IncompleteGrpcResult { .. }
-            | Error::ContextValueNotFound { .. } =&gt; StatusCode::Unexpected,
+            | Error::ContextValueNotFound { .. }
+            | Error::EncodeJson { .. } =&gt; StatusCode::Unexpected,
 
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::ColumnNotFound { .. } =&gt; StatusCode::TableColumnNotFound,

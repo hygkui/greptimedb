@@ -558,6 +558,19 @@
 <a href="#558" id="558">558</a>
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -587,6 +600,7 @@
 <span class="kw">use </span>common_procedure::store::state_store::ObjectStateStore;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::logging::info;
+<span class="kw">use </span>file_table_engine::engine::immutable::ImmutableFileTableEngine;
 <span class="kw">use </span>log_store::raft_engine::log_store::RaftEngineLogStore;
 <span class="kw">use </span>log_store::LogConfig;
 <span class="kw">use </span>meta_client::client::{MetaClient, MetaClientBuilder};
@@ -669,7 +683,7 @@
         <span class="kw">let </span>object_store = new_object_store(<span class="kw-2">&amp;</span>opts.storage.store).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>log_store = Arc::new(create_log_store(<span class="kw-2">&amp;</span>opts.wal).<span class="kw">await</span><span class="question-mark">?</span>);
 
-        <span class="kw">let </span>table_engine = Arc::new(DefaultEngine::new(
+        <span class="kw">let </span>mito_engine = Arc::new(DefaultEngine::new(
             TableEngineConfig::default(),
             EngineImpl::new(
                 StorageEngineConfig::from(opts),
@@ -677,19 +691,30 @@
                 object_store.clone(),
                 compaction_scheduler,
             ),
-            object_store,
+            object_store.clone(),
         ));
 
         <span class="kw">let </span><span class="kw-2">mut </span>engine_procedures = HashMap::with_capacity(<span class="number">2</span>);
         engine_procedures.insert(
-            table_engine.name().to_string(),
-            table_engine.clone() <span class="kw">as </span>TableEngineProcedureRef,
+            mito_engine.name().to_string(),
+            mito_engine.clone() <span class="kw">as </span>TableEngineProcedureRef,
         );
-        <span class="comment">// TODO(yingwen): Insert the file table engine into `engine_procedures`
-        // once #1372 is ready.
-        </span><span class="kw">let </span>engine_manager = Arc::new(
-            MemoryTableEngineManager::new(table_engine.clone())
-                .with_engine_procedures(engine_procedures),
+
+        <span class="kw">let </span>immutable_file_engine = Arc::new(ImmutableFileTableEngine::new(
+            file_table_engine::config::EngineConfig::default(),
+            object_store.clone(),
+        ));
+        engine_procedures.insert(
+            immutable_file_engine.name().to_string(),
+            immutable_file_engine.clone() <span class="kw">as </span>TableEngineProcedureRef,
+        );
+
+        <span class="kw">let </span>engine_manager = Arc::new(
+            MemoryTableEngineManager::with(<span class="macro">vec!</span>[
+                mito_engine.clone(),
+                immutable_file_engine.clone(),
+            ])
+            .with_engine_procedures(engine_procedures),
         );
 
         <span class="comment">// create remote catalog manager
@@ -758,12 +783,13 @@
         <span class="comment">// Register all procedures.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(procedure_manager) = <span class="kw-2">&amp;</span>procedure_manager {
             <span class="comment">// Register procedures of the mito engine.
-            </span>table_engine.register_procedure_loaders(<span class="kw-2">&amp;**</span>procedure_manager);
+            </span>mito_engine.register_procedure_loaders(<span class="kw-2">&amp;**</span>procedure_manager);
+            immutable_file_engine.register_procedure_loaders(<span class="kw-2">&amp;**</span>procedure_manager);
             <span class="comment">// Register procedures in table-procedure crate.
             </span>table_procedure::register_procedure_loaders(
                 catalog_manager.clone(),
-                table_engine.clone(),
-                table_engine.clone(),
+                mito_engine.clone(),
+                mito_engine.clone(),
                 <span class="kw-2">&amp;**</span>procedure_manager,
             );
             <span class="comment">// TODO(yingwen): Register procedures of the file table engine once #1372

@@ -170,6 +170,18 @@
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -244,6 +256,18 @@
         <span class="self">self</span>.engine_procedures = RwLock::new(engine_procedures);
         <span class="self">self
     </span>}
+
+    <span class="kw">pub fn </span>with(engines: Vec&lt;TableEngineRef&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>engines = engines
+            .into_iter()
+            .map(|engine| (engine.name().to_string(), engine))
+            .collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>engines = RwLock::new(engines);
+        MemoryTableEngineManager {
+            engines,
+            engine_procedures: RwLock::new(HashMap::new()),
+        }
+    }
 }
 
 <span class="attr">#[async_trait]
