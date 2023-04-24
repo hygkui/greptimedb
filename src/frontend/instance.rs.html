@@ -1279,7 +1279,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::expr_factory::{CreateExprFactoryRef, DefaultCreateExprFactory};
 <span class="kw">use </span><span class="kw">crate</span>::frontend::FrontendOptions;
 <span class="kw">use </span><span class="kw">crate</span>::instance::standalone::StandaloneGrpcQueryHandler;
-<span class="kw">use </span><span class="kw">crate</span>::metric;
+<span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::script::ScriptExecutor;
 <span class="kw">use </span><span class="kw">crate</span>::server::{start_server, ServerHandlers, Services};
 <span class="kw">use </span><span class="kw">crate</span>::statement::StatementExecutor;
@@ -1655,7 +1655,7 @@
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">async fn </span>do_query(<span class="kw-2">&amp;</span><span class="self">self</span>, query: <span class="kw-2">&amp;</span>str, query_ctx: QueryContextRef) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metric::METRIC_HANDLE_SQL_ELAPSED);
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_HANDLE_SQL_ELAPSED);
 
         <span class="kw">let </span>query_interceptor = <span class="self">self</span>.plugins.get::&lt;SqlQueryInterceptorRef&lt;Error&gt;&gt;();
         <span class="kw">let </span>query = <span class="kw">match </span>query_interceptor.pre_parsing(query, query_ctx.clone()) {
