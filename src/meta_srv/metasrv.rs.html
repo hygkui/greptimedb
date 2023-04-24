@@ -402,9 +402,9 @@
                                         <span class="macro">error!</span>(<span class="string">&quot;Failed to recover procedures, error: {e}&quot;</span>);
                                     }
                                 }
-                                LeaderChangeMessage::StepDown(<span class="kw">_</span>) =&gt; {
+                                LeaderChangeMessage::StepDown(leader) =&gt; {
                                     <span class="comment">// TODO(LFC): TBC
-                                    </span><span class="macro">unimplemented!</span>()
+                                    </span><span class="macro">error!</span>(<span class="string">&quot;Leader :{:?} step down&quot;</span>, leader);
                                 }
                             }
                         }
