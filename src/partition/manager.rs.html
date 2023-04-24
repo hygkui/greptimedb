@@ -516,7 +516,7 @@
             }
             target.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
         } <span class="kw">else </span>{
-            partition_rule.find_regions(<span class="kw-2">&amp;</span>[])<span class="question-mark">?
+            partition_rule.find_regions_by_exprs(<span class="kw-2">&amp;</span>[])<span class="question-mark">?
         </span>};
         <span class="macro">ensure!</span>(
             !regions.is_empty(),
@@ -556,7 +556,7 @@
                     }
                 })<span class="question-mark">?</span>;
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(partition_rule
-                    .find_regions(<span class="kw-2">&amp;</span>[PartitionExpr::new(column, op, value)])<span class="question-mark">?
+                    .find_regions_by_exprs(<span class="kw-2">&amp;</span>[PartitionExpr::new(column, op, value)])<span class="question-mark">?
                     </span>.into_iter()
                     .collect::&lt;HashSet&lt;RegionNumber&gt;&gt;());
             }
@@ -584,7 +584,7 @@
 
     <span class="comment">// Returns all regions for not supported partition expr as a safety hatch.
     </span><span class="prelude-val">Ok</span>(partition_rule
-        .find_regions(<span class="kw-2">&amp;</span>[])<span class="question-mark">?
+        .find_regions_by_exprs(<span class="kw-2">&amp;</span>[])<span class="question-mark">?
         </span>.into_iter()
         .collect::&lt;HashSet&lt;RegionNumber&gt;&gt;())
 }

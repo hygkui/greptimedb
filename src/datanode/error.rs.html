@@ -532,6 +532,13 @@
 <a href="#532" id="532">532</a>
 <a href="#533" id="533">533</a>
 <a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -816,6 +823,12 @@
         </span>source: common_grpc_expr::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert delete expr to request: {}&quot;</span>, source))]
+    </span>DeleteExprToRequest {
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: common_grpc_expr::error::Error,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL, source: {}&quot;</span>, source))]
     </span>ParseSql {
         <span class="attr">#[snafu(backtrace)]
@@ -987,6 +1000,7 @@
 
             AlterExprToRequest { source, .. }
             | CreateExprToRequest { source }
+            | DeleteExprToRequest { source }
             | InsertData { source } =&gt; source.status_code(),
 
             ConvertSchema { source, .. } | VectorComputation { source } =&gt; source.status_code(),
