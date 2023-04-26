@@ -534,7 +534,7 @@
 };
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::BoxedError;
-<span class="kw">use </span>common_telemetry::error;
+<span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>meta_client::rpc::TableName;
 <span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
@@ -769,7 +769,7 @@
                     <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = CatalogKey::parse(catalog_key.as_ref()) {
                         res.insert(key.catalog_name);
                     } <span class="kw">else </span>{
-                        <span class="macro">error!</span>(<span class="string">&quot;invalid catalog key: {:?}&quot;</span>, catalog_key);
+                        <span class="macro">warn!</span>(<span class="string">&quot;invalid catalog key: {:?}&quot;</span>, catalog_key);
                     }
                 }
                 <span class="prelude-val">Ok</span>(res.into_iter().collect())
