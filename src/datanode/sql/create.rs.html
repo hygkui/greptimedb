@@ -499,6 +499,7 @@
 <a href="#499" id="499">499</a>
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -550,7 +551,8 @@
         <span class="kw">if </span><span class="self">self
             </span>.catalog_manager
             .schema(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>schema)
-            .context(CatalogSnafu)<span class="question-mark">?
+            .<span class="kw">await
+            </span>.context(CatalogSnafu)<span class="question-mark">?
             </span>.is_some()
         {
             <span class="kw">return if </span>req.create_if_not_exists {

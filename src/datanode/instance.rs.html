@@ -559,6 +559,8 @@
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
 <a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -836,11 +838,13 @@
         <span class="kw">let </span>schema_list = <span class="self">self
             </span>.catalog_manager
             .catalog(DEFAULT_CATALOG_NAME)
-            .map_err(BoxedError::new)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
             .context(ShutdownInstanceSnafu)<span class="question-mark">?
             </span>.expect(<span class="string">&quot;Default schema not found&quot;</span>)
             .schema_names()
-            .map_err(BoxedError::new)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
             .context(ShutdownInstanceSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>flush_requests = schema_list
             .into_iter()
