@@ -317,6 +317,47 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -342,7 +383,8 @@
 <span class="kw">use </span>servers::Mode;
 <span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{Error, MissingConfigSnafu, <span class="prelude-ty">Result</span>, ShutdownDatanodeSnafu, StartDatanodeSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::error::{MissingConfigSnafu, <span class="prelude-ty">Result</span>, ShutdownDatanodeSnafu, StartDatanodeSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::options::{Options, TopLevelOptions};
 <span class="kw">use </span><span class="kw">crate</span>::toml_loader;
 
 <span class="kw">pub struct </span>Instance {
@@ -369,9 +411,13 @@
 }
 
 <span class="kw">impl </span>Command {
-    <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
-        <span class="self">self</span>.subcmd.build().<span class="kw">await
+    <span class="kw">pub async fn </span>build(<span class="self">self</span>, opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="self">self</span>.subcmd.build(opts).<span class="kw">await
     </span>}
+
+    <span class="kw">pub fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_opts: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
+        <span class="self">self</span>.subcmd.load_options(top_level_opts)
+    }
 }
 
 <span class="attr">#[derive(Parser)]
@@ -380,9 +426,15 @@
 }
 
 <span class="kw">impl </span>SubCommand {
-    <span class="kw">async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            SubCommand::Start(cmd) =&gt; cmd.build().<span class="kw">await</span>,
+            SubCommand::Start(cmd) =&gt; cmd.build(opts).<span class="kw">await</span>,
+        }
+    }
+
+    <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_opts: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            SubCommand::Start(cmd) =&gt; cmd.load_options(top_level_opts),
         }
     }
 }
@@ -414,45 +466,37 @@
 }
 
 <span class="kw">impl </span>StartCommand {
-    <span class="kw">async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
-        <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode start command: {:#?}&quot;</span>, <span class="self">self</span>);
-
-        <span class="kw">let </span>opts: DatanodeOptions = <span class="self">self</span>.try_into()<span class="question-mark">?</span>;
-
-        <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode options: {:#?}&quot;</span>, opts);
-
-        <span class="kw">let </span>datanode = Datanode::new(opts).<span class="kw">await</span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(Instance { datanode })
-    }
-}
-
-<span class="kw">impl </span>TryFrom&lt;StartCommand&gt; <span class="kw">for </span>DatanodeOptions {
-    <span class="kw">type </span>Error = Error;
-    <span class="kw">fn </span>try_from(cmd: StartCommand) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>opts: DatanodeOptions = <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = cmd.config_file {
-            <span class="macro">toml_loader::from_file!</span>(<span class="kw-2">&amp;</span>path)<span class="question-mark">?
+    <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_opts: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>opts: DatanodeOptions = <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = <span class="kw-2">&amp;</span><span class="self">self</span>.config_file {
+            <span class="macro">toml_loader::from_file!</span>(path)<span class="question-mark">?
         </span>} <span class="kw">else </span>{
             DatanodeOptions::default()
         };
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = cmd.rpc_addr {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_opts.log_dir {
+            opts.logging.dir = dir;
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(level) = top_level_opts.log_level {
+            opts.logging.level = level;
+        }
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.rpc_addr.clone() {
             opts.rpc_addr = addr;
         }
 
-        <span class="kw">if </span>cmd.rpc_hostname.is_some() {
-            opts.rpc_hostname = cmd.rpc_hostname;
+        <span class="kw">if </span><span class="self">self</span>.rpc_hostname.is_some() {
+            opts.rpc_hostname = <span class="self">self</span>.rpc_hostname.clone();
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = cmd.mysql_addr {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.mysql_addr.clone() {
             opts.mysql_addr = addr;
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(node_id) = cmd.node_id {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(node_id) = <span class="self">self</span>.node_id {
             opts.node_id = <span class="prelude-val">Some</span>(node_id);
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(meta_addr) = cmd.metasrv_addr {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(meta_addr) = <span class="self">self</span>.metasrv_addr.clone() {
             opts.meta_client_options
                 .get_or_insert_with(MetaClientOptions::default)
                 .metasrv_addrs = meta_addr
@@ -470,33 +514,41 @@
             .fail();
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(data_dir) = cmd.data_dir {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(data_dir) = <span class="self">self</span>.data_dir.clone() {
             opts.storage.store = ObjectStoreConfig::File(FileConfig { data_dir });
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(wal_dir) = cmd.wal_dir {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(wal_dir) = <span class="self">self</span>.wal_dir.clone() {
             opts.wal.dir = wal_dir;
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(procedure_dir) = cmd.procedure_dir {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(procedure_dir) = <span class="self">self</span>.procedure_dir.clone() {
             opts.procedure = ProcedureConfig::from_file_path(procedure_dir);
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = cmd.http_addr {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = <span class="self">self</span>.http_addr.clone() {
             opts.http_opts.addr = http_addr
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_timeout) = cmd.http_timeout {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_timeout) = <span class="self">self</span>.http_timeout {
             opts.http_opts.timeout = Duration::from_secs(http_timeout)
         }
 
         <span class="comment">// Disable dashboard in datanode.
         </span>opts.http_opts.disable_dashboard = <span class="bool-val">true</span>;
 
-        <span class="prelude-val">Ok</span>(opts)
+        <span class="prelude-val">Ok</span>(Options::Datanode(Box::new(opts)))
+    }
+
+    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode start command: {:#?}&quot;</span>, <span class="self">self</span>);
+        <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode options: {:#?}&quot;</span>, opts);
+
+        <span class="kw">let </span>datanode = Datanode::new(opts).<span class="kw">await</span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(Instance { datanode })
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::assert_matches::assert_matches;
     <span class="kw">use </span>std::io::Write;
     <span class="kw">use </span>std::time::Duration;
 
@@ -547,6 +599,10 @@
             checkpoint_margin = 9
             gc_duration = &#39;7s&#39;
             checkpoint_on_startup = true
+
+            [logging]
+            level = &quot;debug&quot;
+            dir = &quot;/tmp/greptimedb/test/logs&quot;
         &quot;#</span>;
         <span class="macro">write!</span>(file, <span class="string">&quot;{}&quot;</span>, toml_str).unwrap();
 
@@ -554,7 +610,10 @@
             config_file: <span class="prelude-val">Some</span>(file.path().to_str().unwrap().to_string()),
             ..Default::default()
         };
-        <span class="kw">let </span>options: DatanodeOptions = cmd.try_into().unwrap();
+
+        <span class="kw">let </span>Options::Datanode(options) =
+            cmd.load_options(TopLevelOptions::default()).unwrap() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
+
         <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(), options.rpc_addr);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4406&quot;</span>.to_string(), options.mysql_addr);
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, options.mysql_runtime_size);
@@ -602,38 +661,61 @@
             },
             options.storage.manifest,
         );
+
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>.to_string(), options.logging.level);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>.to_string(), options.logging.dir);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_from_cmd() {
-        <span class="macro">assert_eq!</span>(
-            Mode::Standalone,
-            DatanodeOptions::try_from(StartCommand::default())
-                .unwrap()
-                .mode
-        );
+        <span class="kw">if let </span>Options::Datanode(opt) = StartCommand::default()
+            .load_options(TopLevelOptions::default())
+            .unwrap()
+        {
+            <span class="macro">assert_eq!</span>(Mode::Standalone, opt.mode)
+        }
 
-        <span class="kw">let </span>mode = DatanodeOptions::try_from(StartCommand {
+        <span class="kw">if let </span>Options::Datanode(opt) = (StartCommand {
             node_id: <span class="prelude-val">Some</span>(<span class="number">42</span>),
             metasrv_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()),
             ..Default::default()
         })
+        .load_options(TopLevelOptions::default())
         .unwrap()
-        .mode;
-        <span class="macro">assert_matches!</span>(mode, Mode::Distributed);
+        {
+            <span class="macro">assert_eq!</span>(Mode::Distributed, opt.mode)
+        }
 
-        <span class="macro">assert!</span>(DatanodeOptions::try_from(StartCommand {
+        <span class="macro">assert!</span>((StartCommand {
             metasrv_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()),
             ..Default::default()
         })
+        .load_options(TopLevelOptions::default())
         .is_err());
 
         <span class="comment">// Providing node_id but leave metasrv_addr absent is ok since metasrv_addr has default value
-        </span>DatanodeOptions::try_from(StartCommand {
+        </span>(StartCommand {
             node_id: <span class="prelude-val">Some</span>(<span class="number">42</span>),
             ..Default::default()
         })
+        .load_options(TopLevelOptions::default())
         .unwrap();
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_top_level_options() {
+        <span class="kw">let </span>cmd = StartCommand::default();
+
+        <span class="kw">let </span>options = cmd
+            .load_options(TopLevelOptions {
+                log_dir: <span class="prelude-val">Some</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>.to_string()),
+                log_level: <span class="prelude-val">Some</span>(<span class="string">&quot;debug&quot;</span>.to_string()),
+            })
+            .unwrap();
+
+        <span class="kw">let </span>logging_opt = options.logging_options();
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, logging_opt.dir);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opt.level);
     }
 }
 </code></pre></div>

@@ -259,6 +259,9 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -281,6 +284,7 @@
 <span class="kw">use </span>api::v1::meta::Peer;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
+<span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>servers::http::HttpOptions;
@@ -309,6 +313,7 @@
     <span class="kw">pub </span>selector: SelectorType,
     <span class="kw">pub </span>use_memory_store: bool,
     <span class="kw">pub </span>http_opts: HttpOptions,
+    <span class="kw">pub </span>logging: LoggingOptions,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>MetaSrvOptions {
@@ -321,6 +326,7 @@
             selector: SelectorType::default(),
             use_memory_store: <span class="bool-val">false</span>,
             http_opts: HttpOptions::default(),
+            logging: LoggingOptions::default(),
         }
     }
 }

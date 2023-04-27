@@ -134,6 +134,28 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -155,6 +177,7 @@
 <span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>opentelemetry::global;
 <span class="kw">use </span>opentelemetry::sdk::propagation::TraceContextPropagator;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">pub use </span>tracing::{event, span, Level};
 <span class="kw">use </span>tracing_appender::non_blocking::WorkerGuard;
 <span class="kw">use </span>tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -166,6 +189,24 @@
 <span class="kw">use </span>tracing_subscriber::{filter, EnvFilter, Registry};
 
 <span class="kw">pub use crate</span>::{debug, error, info, log, trace, warn};
+
+<span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+</span><span class="kw">pub struct </span>LoggingOptions {
+    <span class="kw">pub </span>dir: String,
+    <span class="kw">pub </span>level: String,
+    <span class="kw">pub </span>enable_jaeger_tracing: bool,
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>LoggingOptions {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            dir: <span class="string">&quot;/tmp/greptimedb/logs&quot;</span>.to_string(),
+            level: <span class="string">&quot;info&quot;</span>.to_string(),
+            enable_jaeger_tracing: <span class="bool-val">false</span>,
+        }
+    }
+}
 
 <span class="doccomment">/// Init tracing for unittest.
 /// Write logs to file `unittest`.
@@ -183,7 +224,12 @@
             env::var(<span class="string">&quot;UNITTEST_LOG_DIR&quot;</span>).unwrap_or_else(|<span class="kw">_</span>| <span class="string">&quot;/tmp/__unittest_logs&quot;</span>.to_string());
 
         <span class="kw">let </span>level = env::var(<span class="string">&quot;UNITTEST_LOG_LEVEL&quot;</span>).unwrap_or_else(|<span class="kw">_</span>| <span class="string">&quot;DEBUG&quot;</span>.to_string());
-        <span class="kw-2">*</span>g = <span class="prelude-val">Some</span>(init_global_logging(<span class="string">&quot;unittest&quot;</span>, <span class="kw-2">&amp;</span>dir, <span class="kw-2">&amp;</span>level, <span class="bool-val">false</span>));
+        <span class="kw">let </span>opts = LoggingOptions {
+            dir: dir.clone(),
+            level,
+            ..Default::default()
+        };
+        <span class="kw-2">*</span>g = <span class="prelude-val">Some</span>(init_global_logging(<span class="string">&quot;unittest&quot;</span>, <span class="kw-2">&amp;</span>opts));
 
         <span class="macro">info!</span>(<span class="string">&quot;logs dir = {}&quot;</span>, dir);
     });
@@ -192,13 +238,11 @@
 <span class="kw">static </span>GLOBAL_UT_LOG_GUARD: Lazy&lt;Arc&lt;Mutex&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;WorkerGuard&gt;&gt;&gt;&gt;&gt; =
     Lazy::new(|| Arc::new(Mutex::new(<span class="prelude-val">None</span>)));
 
-<span class="kw">pub fn </span>init_global_logging(
-    app_name: <span class="kw-2">&amp;</span>str,
-    dir: <span class="kw-2">&amp;</span>str,
-    level: <span class="kw-2">&amp;</span>str,
-    enable_jaeger_tracing: bool,
-) -&gt; Vec&lt;WorkerGuard&gt; {
+<span class="kw">pub fn </span>init_global_logging(app_name: <span class="kw-2">&amp;</span>str, opts: <span class="kw-2">&amp;</span>LoggingOptions) -&gt; Vec&lt;WorkerGuard&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>guards = <span class="macro">vec!</span>[];
+    <span class="kw">let </span>dir = <span class="kw-2">&amp;</span>opts.dir;
+    <span class="kw">let </span>level = <span class="kw-2">&amp;</span>opts.level;
+    <span class="kw">let </span>enable_jaeger_tracing = opts.enable_jaeger_tracing;
 
     <span class="comment">// Enable log compatible layer to convert log record to tracing span.
     </span>LogTracer::init().expect(<span class="string">&quot;log tracer must be valid&quot;</span>);

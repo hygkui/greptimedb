@@ -169,6 +169,32 @@
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -189,16 +215,17 @@
 
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>cmd::error::Result;
+<span class="kw">use </span>cmd::options::{Options, TopLevelOptions};
 <span class="kw">use </span>cmd::{cli, datanode, frontend, metasrv, standalone};
 <span class="kw">use </span>common_telemetry::logging::{error, info};
 
 <span class="attr">#[derive(Parser)]
 #[clap(name = <span class="string">&quot;greptimedb&quot;</span>, version = print_version())]
 </span><span class="kw">struct </span>Command {
-    <span class="attr">#[clap(long, default_value = <span class="string">&quot;/tmp/greptimedb/logs&quot;</span>)]
-    </span>log_dir: String,
-    <span class="attr">#[clap(long, default_value = <span class="string">&quot;info&quot;</span>)]
-    </span>log_level: String,
+    <span class="attr">#[clap(long)]
+    </span>log_dir: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="attr">#[clap(long)]
+    </span>log_level: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(subcommand)]
     </span>subcmd: SubCommand,
 }
@@ -234,9 +261,21 @@
 }
 
 <span class="kw">impl </span>Command {
-    <span class="kw">async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Application&gt; {
-        <span class="self">self</span>.subcmd.build().<span class="kw">await
+    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: Options) -&gt; <span class="prelude-ty">Result</span>&lt;Application&gt; {
+        <span class="self">self</span>.subcmd.build(opts).<span class="kw">await
     </span>}
+
+    <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
+        <span class="kw">let </span>top_level_opts = <span class="self">self</span>.top_level_options();
+        <span class="self">self</span>.subcmd.load_options(top_level_opts)
+    }
+
+    <span class="kw">fn </span>top_level_options(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TopLevelOptions {
+        TopLevelOptions {
+            log_dir: <span class="self">self</span>.log_dir.clone(),
+            log_level: <span class="self">self</span>.log_level.clone(),
+        }
+    }
 }
 
 <span class="attr">#[derive(Parser)]
@@ -254,28 +293,40 @@
 }
 
 <span class="kw">impl </span>SubCommand {
-    <span class="kw">async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Application&gt; {
-        <span class="kw">match </span><span class="self">self </span>{
-            SubCommand::Datanode(cmd) =&gt; {
-                <span class="kw">let </span>app = cmd.build().<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: Options) -&gt; <span class="prelude-ty">Result</span>&lt;Application&gt; {
+        <span class="kw">match </span>(<span class="self">self</span>, opts) {
+            (SubCommand::Datanode(cmd), Options::Datanode(dn_opts)) =&gt; {
+                <span class="kw">let </span>app = cmd.build(<span class="kw-2">*</span>dn_opts).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Application::Datanode(app))
             }
-            SubCommand::Frontend(cmd) =&gt; {
-                <span class="kw">let </span>app = cmd.build().<span class="kw">await</span><span class="question-mark">?</span>;
+            (SubCommand::Frontend(cmd), Options::Frontend(fe_opts)) =&gt; {
+                <span class="kw">let </span>app = cmd.build(<span class="kw-2">*</span>fe_opts).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Application::Frontend(app))
             }
-            SubCommand::Metasrv(cmd) =&gt; {
-                <span class="kw">let </span>app = cmd.build().<span class="kw">await</span><span class="question-mark">?</span>;
+            (SubCommand::Metasrv(cmd), Options::Metasrv(meta_opts)) =&gt; {
+                <span class="kw">let </span>app = cmd.build(<span class="kw-2">*</span>meta_opts).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Application::Metasrv(app))
             }
-            SubCommand::Standalone(cmd) =&gt; {
-                <span class="kw">let </span>app = cmd.build().<span class="kw">await</span><span class="question-mark">?</span>;
+            (SubCommand::Standalone(cmd), Options::Standalone(opts)) =&gt; {
+                <span class="kw">let </span>app = cmd.build(opts.fe_opts, opts.dn_opts).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Application::Standalone(app))
             }
-            SubCommand::Cli(cmd) =&gt; {
+            (SubCommand::Cli(cmd), Options::Cli(<span class="kw">_</span>)) =&gt; {
                 <span class="kw">let </span>app = cmd.build().<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Application::Cli(app))
             }
+
+            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+        }
+    }
+
+    <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_opts: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            SubCommand::Datanode(cmd) =&gt; cmd.load_options(top_level_opts),
+            SubCommand::Frontend(cmd) =&gt; cmd.load_options(top_level_opts),
+            SubCommand::Metasrv(cmd) =&gt; cmd.load_options(top_level_opts),
+            SubCommand::Standalone(cmd) =&gt; cmd.load_options(top_level_opts),
+            SubCommand::Cli(cmd) =&gt; cmd.load_options(top_level_opts),
         }
     }
 }
@@ -315,14 +366,15 @@
     <span class="comment">// TODO(dennis):
     // 1. adds ip/port to app
     </span><span class="kw">let </span>app_name = <span class="kw-2">&amp;</span>cmd.subcmd.to_string();
-    <span class="kw">let </span>log_dir = <span class="kw-2">&amp;</span>cmd.log_dir;
-    <span class="kw">let </span>log_level = <span class="kw-2">&amp;</span>cmd.log_level;
+
+    <span class="kw">let </span>opts = cmd.load_options()<span class="question-mark">?</span>;
+    <span class="kw">let </span>logging_opts = opts.logging_options();
 
     common_telemetry::set_panic_hook();
     common_telemetry::init_default_metrics_recorder();
-    <span class="kw">let </span>_guard = common_telemetry::init_global_logging(app_name, log_dir, log_level, <span class="bool-val">false</span>);
+    <span class="kw">let </span>_guard = common_telemetry::init_global_logging(app_name, logging_opts);
 
-    <span class="kw">let </span><span class="kw-2">mut </span>app = cmd.build().<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>app = cmd.build(opts).<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="macro">tokio::select! </span>{
         result = app.run() =&gt; {
