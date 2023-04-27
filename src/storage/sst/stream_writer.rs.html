@@ -374,7 +374,7 @@
             };
             <span class="kw">let </span>size = chunk.len();
             object_writer
-                .append(chunk)
+                .write(chunk)
                 .<span class="kw">await
                 </span>.context(WriteObjectSnafu { path: file_name })<span class="question-mark">?</span>;
             <span class="kw-2">*</span>flushed = <span class="bool-val">true</span>;
@@ -385,7 +385,7 @@
             <span class="kw">let </span>remain = shared_buffer.buffer.lock().unwrap().split();
             <span class="kw">let </span>size = remain.len();
             object_writer
-                .append(remain)
+                .write(remain)
                 .<span class="kw">await
                 </span>.context(WriteObjectSnafu { path: file_name })<span class="question-mark">?</span>;
             <span class="kw-2">*</span>flushed = <span class="bool-val">true</span>;
