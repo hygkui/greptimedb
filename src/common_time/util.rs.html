@@ -60,6 +60,11 @@
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -77,6 +82,11 @@
 </span><span class="doccomment">/// Returns the time duration since UNIX_EPOCH in milliseconds.
 </span><span class="kw">pub fn </span>current_time_millis() -&gt; i64 {
     chrono::Utc::now().timestamp_millis()
+}
+
+<span class="doccomment">/// Returns the current time in rfc3339 format.
+</span><span class="kw">pub fn </span>current_time_rfc3339() -&gt; String {
+    chrono::Utc::now().to_rfc3339()
 }
 
 <span class="doccomment">/// Port of rust unstable features `int_roundings`.

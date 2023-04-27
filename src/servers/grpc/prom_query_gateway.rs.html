@@ -74,6 +74,15 @@
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -95,6 +104,7 @@
 <span class="kw">use </span>api::v1::promql_request::Promql;
 <span class="kw">use </span>api::v1::{PromqlRequest, PromqlResponse, ResponseHeader};
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_time::util::current_time_rfc3339;
 <span class="kw">use </span>query::parser::PromQuery;
 <span class="kw">use </span>snafu::OptionExt;
 <span class="kw">use </span>tonic::{Request, Response};
@@ -102,7 +112,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::InvalidQuerySnafu;
 <span class="kw">use </span><span class="kw">crate</span>::grpc::handler::create_query_context;
 <span class="kw">use </span><span class="kw">crate</span>::grpc::TonicResult;
-<span class="kw">use </span><span class="kw">crate</span>::prom::{retrieve_metric_name, PromHandlerRef, PromJsonResponse};
+<span class="kw">use </span><span class="kw">crate</span>::prom::{retrieve_metric_name_and_result_type, PromHandlerRef, PromJsonResponse};
 
 <span class="kw">pub struct </span>PrometheusGatewayService {
     handler: PromHandlerRef,
@@ -121,18 +131,26 @@
                 end: range_query.end,
                 step: range_query.step,
             },
-            Promql::InstantQuery(instant_query) =&gt; PromQuery {
-                query: instant_query.query,
-                start: instant_query.time.clone(),
-                end: instant_query.time,
-                step: String::from(<span class="string">&quot;1s&quot;</span>),
-            },
+            Promql::InstantQuery(instant_query) =&gt; {
+                <span class="kw">let </span>time = <span class="kw">if </span>instant_query.time.is_empty() {
+                    current_time_rfc3339()
+                } <span class="kw">else </span>{
+                    instant_query.time
+                };
+                PromQuery {
+                    query: instant_query.query,
+                    start: time.clone(),
+                    end: time,
+                    step: String::from(<span class="string">&quot;1s&quot;</span>),
+                }
+            }
         };
 
         <span class="kw">let </span>query_context = create_query_context(inner.header.as_ref());
         <span class="kw">let </span>result = <span class="self">self</span>.handler.do_query(<span class="kw-2">&amp;</span>prom_query, query_context).<span class="kw">await</span>;
-        <span class="kw">let </span>metric_name = retrieve_metric_name(<span class="kw-2">&amp;</span>prom_query.query).unwrap_or_default();
-        <span class="kw">let </span>json_response = PromJsonResponse::from_query_result(result, metric_name)
+        <span class="kw">let </span>(metric_name, result_type) =
+            retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query).unwrap_or_default();
+        <span class="kw">let </span>json_response = PromJsonResponse::from_query_result(result, metric_name, result_type)
             .<span class="kw">await
             </span>.<span class="number">0</span>;
         <span class="kw">let </span>json_bytes = serde_json::to_string(<span class="kw-2">&amp;</span>json_response).unwrap().into_bytes();
