@@ -397,6 +397,7 @@
 <a href="#397" id="397">397</a>
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -497,6 +498,7 @@
         access_key_id: env::var(<span class="string">&quot;GT_S3_ACCESS_KEY_ID&quot;</span>).unwrap(),
         secret_access_key: env::var(<span class="string">&quot;GT_S3_ACCESS_KEY&quot;</span>).unwrap(),
         bucket: env::var(<span class="string">&quot;GT_S3_BUCKET&quot;</span>).unwrap(),
+        region: <span class="prelude-val">Some</span>(env::var(<span class="string">&quot;GT_S3_REGION&quot;</span>).unwrap()),
         ..Default::default()
     }
 }
