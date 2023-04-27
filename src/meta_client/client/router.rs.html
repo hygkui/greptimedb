@@ -195,14 +195,6 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -223,13 +215,12 @@
 <span class="kw">use </span>api::v1::meta::router_client::RouterClient;
 <span class="kw">use </span>api::v1::meta::{CreateRequest, DeleteRequest, RouteRequest, RouteResponse};
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
-<span class="kw">use </span>snafu::{ensure, Location, OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::RwLock;
 <span class="kw">use </span>tonic::transport::Channel;
 
 <span class="kw">use </span><span class="kw">crate</span>::client::{load_balance <span class="kw">as </span>lb, Id};
 <span class="kw">use </span><span class="kw">crate</span>::error;
-<span class="kw">use </span><span class="kw">crate</span>::error::Error::TonicStatus;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 
 <span class="attr">#[derive(Clone, Debug)]
@@ -328,15 +319,8 @@
     <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: DeleteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
         req.set_header(<span class="self">self</span>.id);
-        <span class="kw">let </span>res = client.delete(req).<span class="kw">await</span>.map_err(|<span class="kw-2">mut </span>source| {
-            <span class="comment">// FIXME(hl): here intentionally clear the metadata field so that error date does not changes which will break sqlness test.
-            // we can remove this hack as soon as either: sqlness supports regex result match or greptimedb supports renaming table routes
-            </span>source.metadata_mut().clear();
-            TonicStatus {
-                source,
-                location: Location::default(),
-            }
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>res = client.delete(req).<span class="kw">await</span>.context(error::TonicStatusSnafu)<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(res.into_inner())
     }
 
