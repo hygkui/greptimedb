@@ -398,6 +398,13 @@
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
 <a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -550,6 +557,13 @@
                 .access_key_id(<span class="kw-2">&amp;</span>s3_config.access_key_id)
                 .secret_access_key(<span class="kw-2">&amp;</span>s3_config.secret_access_key)
                 .bucket(<span class="kw-2">&amp;</span>s3_config.bucket);
+
+            <span class="kw">if </span>s3_config.endpoint.is_some() {
+                builder.endpoint(s3_config.endpoint.as_ref().unwrap());
+            }
+            <span class="kw">if </span>s3_config.region.is_some() {
+                builder.region(s3_config.region.as_ref().unwrap());
+            }
 
             <span class="kw">let </span>config = ObjectStoreConfig::S3(s3_config);
 
