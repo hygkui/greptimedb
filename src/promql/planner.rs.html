@@ -1945,6 +1945,12 @@
 <a href="#1945" id="1945">1945</a>
 <a href="#1946" id="1946">1946</a>
 <a href="#1947" id="1947">1947</a>
+<a href="#1948" id="1948">1948</a>
+<a href="#1949" id="1949">1949</a>
+<a href="#1950" id="1950">1950</a>
+<a href="#1951" id="1951">1951</a>
+<a href="#1952" id="1952">1952</a>
+<a href="#1953" id="1953">1953</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1981,9 +1987,9 @@
 <span class="kw">use </span>datatypes::arrow::datatypes::DataType <span class="kw">as </span>ArrowDataType;
 <span class="kw">use </span>promql_parser::label::{MatchOp, Matcher, Matchers, METRIC_NAME};
 <span class="kw">use </span>promql_parser::parser::{
-    token, AggModifier, AggregateExpr, BinaryExpr <span class="kw">as </span>PromBinaryExpr, Call, EvalStmt,
-    Expr <span class="kw">as </span>PromExpr, Function, MatrixSelector, NumberLiteral, Offset, ParenExpr, StringLiteral,
-    SubqueryExpr, TokenType, UnaryExpr, VectorSelector,
+    token, AggregateExpr, BinaryExpr <span class="kw">as </span>PromBinaryExpr, Call, EvalStmt, Expr <span class="kw">as </span>PromExpr, Function,
+    LabelModifier, MatrixSelector, NumberLiteral, Offset, ParenExpr, StringLiteral, SubqueryExpr,
+    TokenType, UnaryExpr, VectorSelector,
 };
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>table::table::adapter::DfTableProviderAdapter;
@@ -2340,6 +2346,10 @@
                     </span>.build()
                     .context(DataFusionPlanningSnafu)<span class="question-mark">?
             </span>}
+            PromExpr::Extension(<span class="kw">_</span>) =&gt; UnsupportedExprSnafu {
+                name: <span class="string">&quot;Prom Extension&quot;</span>,
+            }
+            .fail()<span class="question-mark">?</span>,
         };
         <span class="prelude-val">Ok</span>(res)
     }
@@ -2511,10 +2521,10 @@
     </span><span class="kw">fn </span>agg_modifier_to_col(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         input_schema: <span class="kw-2">&amp;</span>DFSchemaRef,
-        modifier: <span class="kw-2">&amp;</span>AggModifier,
+        modifier: <span class="kw-2">&amp;</span>LabelModifier,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;DfExpr&gt;&gt; {
         <span class="kw">match </span>modifier {
-            AggModifier::By(labels) =&gt; {
+            LabelModifier::Include(labels) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>exprs = Vec::with_capacity(labels.len());
                 <span class="kw">for </span>label <span class="kw">in </span>labels {
                     <span class="comment">// nonexistence label will be ignored
@@ -2531,7 +2541,7 @@
 
                 <span class="prelude-val">Ok</span>(exprs)
             }
-            AggModifier::Without(labels) =&gt; {
+            LabelModifier::Exclude(labels) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>all_fields = input_schema
                     .fields()
                     .iter()
@@ -2677,6 +2687,7 @@
                 | PromExpr::Subquery(<span class="kw">_</span>)
                 | PromExpr::VectorSelector(<span class="kw">_</span>)
                 | PromExpr::MatrixSelector(<span class="kw">_</span>)
+                | PromExpr::Extension(<span class="kw">_</span>)
                 | PromExpr::Call(<span class="kw">_</span>) =&gt; {
                     <span class="kw">if </span>result.input.replace(<span class="kw-2">*</span>arg.clone()).is_some() {
                         MultipleVectorSnafu { expr: <span class="kw-2">*</span>arg.clone() }.fail()<span class="question-mark">?</span>;
@@ -2965,6 +2976,7 @@
             PromExpr::VectorSelector(<span class="kw">_</span>)
             | PromExpr::MatrixSelector(<span class="kw">_</span>)
             | PromExpr::Call(<span class="kw">_</span>)
+            | PromExpr::Extension(<span class="kw">_</span>)
             | PromExpr::Aggregate(<span class="kw">_</span>)
             | PromExpr::Subquery(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
             PromExpr::Paren(ParenExpr { expr }) =&gt; <span class="self">Self</span>::try_build_literal_expr(expr),
@@ -3477,7 +3489,7 @@
 
         <span class="comment">// test group without
         </span><span class="kw">if let </span>PromExpr::Aggregate(AggregateExpr { modifier, .. }) = <span class="kw-2">&amp;mut </span>eval_stmt.expr {
-            <span class="kw-2">*</span>modifier = <span class="prelude-val">Some</span>(AggModifier::Without(
+            <span class="kw-2">*</span>modifier = <span class="prelude-val">Some</span>(LabelModifier::Exclude(
                 <span class="macro">vec!</span>[String::from(<span class="string">&quot;tag_1&quot;</span>)].into_iter().collect(),
             ));
         }
