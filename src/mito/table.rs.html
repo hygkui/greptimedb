@@ -613,6 +613,35 @@
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
 <a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -658,7 +687,7 @@
     InvalidTableSnafu, RegionSchemaMismatchSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, TableOperationSnafu,
 };
 <span class="kw">use </span>table::metadata::{
-    FilterPushDownType, RawTableInfo, TableInfo, TableInfoRef, TableMeta, TableType,
+    FilterPushDownType, RawTableInfo, TableInfo, TableInfoRef, TableMeta, TableType, TableVersion,
 };
 <span class="kw">use </span>table::requests::{
     AddColumnRequest, AlterKind, AlterTableRequest, DeleteRequest, InsertRequest,
@@ -837,29 +866,14 @@
         <span class="kw">let </span>_lock = <span class="self">self</span>.alter_lock.lock().<span class="kw">await</span>;
 
         <span class="kw">let </span>table_info = <span class="self">self</span>.table_info();
+        <span class="kw">let </span>table_version = table_info.ident.version;
+        <span class="kw">let </span>(new_info, alter_op) = <span class="self">self</span>.info_and_op_for_alter(<span class="kw-2">&amp;</span>table_info, <span class="kw-2">&amp;</span>req.alter_kind)<span class="question-mark">?</span>;
         <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>table_info.name;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>new_info = TableInfo::clone(<span class="kw-2">&amp;*</span>table_info);
-        <span class="comment">// setup new table info
-        </span><span class="kw">match </span><span class="kw-2">&amp;</span>req.alter_kind {
-            AlterKind::RenameTable { new_table_name } =&gt; {
-                new_info.name = new_table_name.clone();
-            }
-            AlterKind::AddColumns { .. } | AlterKind::DropColumns { .. } =&gt; {
-                <span class="kw">let </span>table_meta = <span class="kw-2">&amp;</span>table_info.meta;
-                <span class="kw">let </span>new_meta = table_meta
-                    .builder_with_alter_kind(table_name, <span class="kw-2">&amp;</span>req.alter_kind)<span class="question-mark">?
-                    </span>.build()
-                    .context(error::BuildTableMetaSnafu { table_name })
-                    .map_err(BoxedError::new)
-                    .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
-                new_info.meta = new_meta;
-            }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(alter_op) = <span class="kw-2">&amp;</span>alter_op {
+            <span class="self">self</span>.alter_regions(table_name, table_version, alter_op)
+                .<span class="kw">await</span><span class="question-mark">?</span>;
         }
-        <span class="comment">// Do create_alter_operation first to bump next_column_id in meta.
-        </span><span class="kw">let </span>alter_op = create_alter_operation(table_name, <span class="kw-2">&amp;</span>req.alter_kind, <span class="kw-2">&amp;mut </span>new_info.meta)<span class="question-mark">?</span>;
-        <span class="comment">// Increase version of the table.
-        </span>new_info.ident.version = table_info.ident.version + <span class="number">1</span>;
 
         <span class="comment">// Persist the alteration to the manifest.
         </span><span class="macro">logging::debug!</span>(
@@ -880,30 +894,6 @@
             .map_err(BoxedError::new)
             .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(alter_op) = alter_op {
-            <span class="comment">// TODO(yingwen): Error handling. Maybe the region need to provide a method to
-            // validate the request first.
-            </span><span class="kw">let </span>regions = <span class="self">self</span>.regions();
-            <span class="kw">for </span>region <span class="kw">in </span>regions.values() {
-                <span class="kw">let </span>region_meta = region.in_memory_metadata();
-                <span class="kw">let </span>alter_req = AlterRequest {
-                    operation: alter_op.clone(),
-                    version: region_meta.version(),
-                };
-                <span class="comment">// Alter the region.
-                </span><span class="macro">logging::debug!</span>(
-                    <span class="string">&quot;start altering region {} of table {}, with request {:?}&quot;</span>,
-                    region.name(),
-                    table_name,
-                    alter_req,
-                );
-                region
-                    .alter(alter_req)
-                    .<span class="kw">await
-                    </span>.map_err(BoxedError::new)
-                    .context(TableOperationSnafu)<span class="question-mark">?</span>;
-            }
-        }
         <span class="comment">// Update in memory metadata of the table.
         </span><span class="self">self</span>.set_table_info(new_info);
 
@@ -1176,6 +1166,74 @@
     <span class="kw">fn </span>manifest_scan_range() -&gt; (ManifestVersion, ManifestVersion) {
         <span class="comment">// TODO(dennis): use manifest version in catalog ?
         </span>(manifest::MIN_VERSION, manifest::MAX_VERSION)
+    }
+
+    <span class="doccomment">/// For each region, alter it if its version is not updated.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>alter_regions(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        table_name: <span class="kw-2">&amp;</span>str,
+        table_version: TableVersion,
+        alter_op: <span class="kw-2">&amp;</span>AlterOperation,
+    ) -&gt; TableResult&lt;()&gt; {
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions();
+        <span class="kw">for </span>region <span class="kw">in </span>regions.values() {
+            <span class="kw">let </span>region_meta = region.in_memory_metadata();
+            <span class="kw">if </span>u64::from(region_meta.version()) &gt; table_version {
+                <span class="comment">// Region is already altered.
+                </span><span class="kw">continue</span>;
+            }
+
+            <span class="kw">let </span>alter_req = AlterRequest {
+                operation: alter_op.clone(),
+                version: region_meta.version(),
+            };
+            <span class="comment">// Alter the region.
+            </span><span class="macro">logging::debug!</span>(
+                <span class="string">&quot;start altering region {} of table {}, with request {:?}&quot;</span>,
+                region.name(),
+                table_name,
+                alter_req,
+            );
+            region
+                .alter(alter_req)
+                .<span class="kw">await
+                </span>.map_err(BoxedError::new)
+                .context(TableOperationSnafu)<span class="question-mark">?</span>;
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>info_and_op_for_alter(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        current_info: <span class="kw-2">&amp;</span>TableInfo,
+        alter_kind: <span class="kw-2">&amp;</span>AlterKind,
+    ) -&gt; TableResult&lt;(TableInfo, <span class="prelude-ty">Option</span>&lt;AlterOperation&gt;)&gt; {
+        <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>current_info.name;
+        <span class="kw">let </span><span class="kw-2">mut </span>new_info = TableInfo::clone(current_info);
+        <span class="comment">// setup new table info
+        </span><span class="kw">match </span><span class="kw-2">&amp;</span>alter_kind {
+            AlterKind::RenameTable { new_table_name } =&gt; {
+                new_info.name = new_table_name.clone();
+            }
+            AlterKind::AddColumns { .. } | AlterKind::DropColumns { .. } =&gt; {
+                <span class="kw">let </span>table_meta = <span class="kw-2">&amp;</span>current_info.meta;
+                <span class="kw">let </span>new_meta = table_meta
+                    .builder_with_alter_kind(table_name, alter_kind)<span class="question-mark">?
+                    </span>.build()
+                    .context(error::BuildTableMetaSnafu { table_name })
+                    .map_err(BoxedError::new)
+                    .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+                new_info.meta = new_meta;
+            }
+        }
+        <span class="comment">// Increase version of the table.
+        </span>new_info.ident.version = current_info.ident.version + <span class="number">1</span>;
+
+        <span class="comment">// Do create_alter_operation first to bump next_column_id in meta.
+        </span><span class="kw">let </span>alter_op = create_alter_operation(table_name, alter_kind, <span class="kw-2">&amp;mut </span>new_info.meta)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>((new_info, alter_op))
     }
 }
 

@@ -200,22 +200,6 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -261,7 +245,14 @@
     <span class="kw">async fn </span>execute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
         <span class="kw">match </span><span class="self">self</span>.data.state {
             DropTableState::Prepare =&gt; <span class="self">self</span>.on_prepare(),
-            DropTableState::CloseRegions =&gt; <span class="self">self</span>.on_close_regions().<span class="kw">await</span>,
+            DropTableState::EngineDropTable =&gt; {
+                <span class="self">self</span>.engine_inner
+                    .drop_table(<span class="self">self</span>.data.request.clone())
+                    .<span class="kw">await
+                    </span>.map_err(Error::from_error_ext)<span class="question-mark">?</span>;
+
+                <span class="prelude-val">Ok</span>(Status::Done)
+            }
         }
     }
 
@@ -338,42 +329,19 @@
 
     <span class="doccomment">/// Prepare table info.
     </span><span class="kw">fn </span>on_prepare(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
-        <span class="self">self</span>.data.state = DropTableState::CloseRegions;
+        <span class="self">self</span>.data.state = DropTableState::EngineDropTable;
 
         <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
-    }
-
-    <span class="doccomment">/// Close all regions.
-    </span><span class="kw">async fn </span>on_close_regions(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
-        <span class="comment">// Remove the table from the engine to avoid further access from users.
-        </span><span class="kw">let </span>table_ref = <span class="self">self</span>.data.table_ref();
-
-        <span class="kw">let </span>_lock = <span class="self">self
-            </span>.engine_inner
-            .table_mutex
-            .lock(table_ref.to_string())
-            .<span class="kw">await</span>;
-        <span class="self">self</span>.engine_inner.tables.remove(<span class="kw-2">&amp;</span>table_ref.to_string());
-
-        <span class="comment">// Close the table to close all regions. Closing a region is idempotent.
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="kw-2">&amp;</span><span class="self">self</span>.table {
-            table.close().<span class="kw">await</span>.map_err(Error::from_error_ext)<span class="question-mark">?</span>;
-        }
-
-        <span class="comment">// TODO(yingwen): Currently, DROP TABLE doesn&#39;t remove data. We can
-        // write a drop meta update to the table and remove all files in the
-        // background.
-        </span><span class="prelude-val">Ok</span>(Status::Done)
     }
 }
 
 <span class="doccomment">/// Represents each step while dropping table in the mito engine.
 </span><span class="attr">#[derive(Debug, Serialize, Deserialize)]
 </span><span class="kw">enum </span>DropTableState {
-    <span class="doccomment">/// Prepare to drop table.
+    <span class="doccomment">/// Prepare to drop the table.
     </span>Prepare,
-    <span class="doccomment">/// Close regions of this table.
-    </span>CloseRegions,
+    <span class="doccomment">/// Engine drop the table.
+    </span>EngineDropTable,
 }
 
 <span class="doccomment">/// Serializable data of [DropMitoTable].
