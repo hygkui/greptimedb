@@ -415,6 +415,29 @@
 <a href="#415" id="415">415</a>
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -433,9 +456,11 @@
 
 <span class="kw">use </span>axum::http::{<span class="self">self</span>, Request, StatusCode};
 <span class="kw">use </span>axum::response::Response;
-<span class="kw">use </span>common_telemetry::error;
+<span class="kw">use </span>common_error::prelude::ErrorExt;
+<span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>futures::future::BoxFuture;
 <span class="kw">use </span>http_body::Body;
+<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>session::context::UserInfo;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>tower_http::auth::AsyncAuthorizeRequest;
@@ -497,7 +522,14 @@
             <span class="kw">let </span>(username, password) = <span class="kw">match </span>extract_username_and_password(<span class="kw-2">&amp;</span>request) {
                 <span class="prelude-val">Ok</span>((username, password)) =&gt; (username, password),
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">error!</span>(<span class="string">&quot;extract username and password failed: {}&quot;</span>, e);
+                    <span class="macro">warn!</span>(<span class="string">&quot;extract username and password failed: {}&quot;</span>, e);
+                    <span class="macro">increment_counter!</span>(
+                        <span class="kw">crate</span>::metrics::METRIC_AUTH_FAILURE,
+                        <span class="kw-2">&amp;</span>[(
+                            <span class="kw">crate</span>::metrics::METRIC_CODE_LABEL,
+                            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.status_code())
+                        )]
+                    );
                     <span class="kw">return </span><span class="prelude-val">Err</span>(unauthorized_resp());
                 }
             };
@@ -505,7 +537,14 @@
             <span class="kw">let </span>(catalog, schema) = <span class="kw">match </span>extract_catalog_and_schema(<span class="kw-2">&amp;</span>request) {
                 <span class="prelude-val">Ok</span>((catalog, schema)) =&gt; (catalog, schema),
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">error!</span>(<span class="string">&quot;extract catalog and schema failed: {}&quot;</span>, e);
+                    <span class="macro">warn!</span>(<span class="string">&quot;extract catalog and schema failed: {}&quot;</span>, e);
+                    <span class="macro">increment_counter!</span>(
+                        <span class="kw">crate</span>::metrics::METRIC_AUTH_FAILURE,
+                        <span class="kw-2">&amp;</span>[(
+                            <span class="kw">crate</span>::metrics::METRIC_CODE_LABEL,
+                            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.status_code())
+                        )]
+                    );
                     <span class="kw">return </span><span class="prelude-val">Err</span>(unauthorized_resp());
                 }
             };
@@ -524,7 +563,14 @@
                     <span class="prelude-val">Ok</span>(request)
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">error!</span>(<span class="string">&quot;authenticate failed: {}&quot;</span>, e);
+                    <span class="macro">warn!</span>(<span class="string">&quot;authenticate failed: {}&quot;</span>, e);
+                    <span class="macro">increment_counter!</span>(
+                        <span class="kw">crate</span>::metrics::METRIC_AUTH_FAILURE,
+                        <span class="kw-2">&amp;</span>[(
+                            <span class="kw">crate</span>::metrics::METRIC_CODE_LABEL,
+                            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.status_code())
+                        )]
+                    );
                     <span class="prelude-val">Err</span>(unauthorized_resp())
                 }
             }

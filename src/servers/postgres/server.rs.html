@@ -125,6 +125,13 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -148,6 +155,7 @@
 <span class="kw">use </span>common_telemetry::logging::error;
 <span class="kw">use </span>common_telemetry::{debug, warn};
 <span class="kw">use </span>futures::StreamExt;
+<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>pgwire::api::MakeHandler;
 <span class="kw">use </span>pgwire::tokio::process_socket;
 <span class="kw">use </span>tokio;
@@ -210,13 +218,19 @@
                             <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to get PostgreSQL client addr, err: {}&quot;</span>, e),
                         }
 
-                        io_runtime.spawn(process_socket(
-                            io_stream,
-                            tls_acceptor.clone(),
-                            handler.clone(),
-                            handler.clone(),
-                            handler,
-                        ));
+                        io_runtime.spawn(<span class="kw">async move </span>{
+                            <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_POSTGRES_CONNECTIONS, <span class="number">1.0</span>);
+                            <span class="kw">let </span>r = process_socket(
+                                io_stream,
+                                tls_acceptor.clone(),
+                                handler.clone(),
+                                handler.clone(),
+                                handler,
+                            )
+                            .<span class="kw">await</span>;
+                            <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_POSTGRES_CONNECTIONS, <span class="number">1.0</span>);
+                            r
+                        });
                     }
                 };
             }

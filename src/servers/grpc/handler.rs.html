@@ -138,6 +138,22 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -156,8 +172,11 @@
 
 <span class="kw">use </span>api::v1::auth_header::AuthScheme;
 <span class="kw">use </span>api::v1::{Basic, GreptimeRequest, RequestHeader};
+<span class="kw">use </span>common_error::prelude::ErrorExt;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_runtime::Runtime;
+<span class="kw">use </span>common_telemetry::timer;
+<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>session::context::{QueryContext, QueryContextRef};
 <span class="kw">use </span>snafu::OptionExt;
 <span class="kw">use </span>tonic::Status;
@@ -197,6 +216,10 @@
 
         <span class="self">self</span>.auth(header, <span class="kw-2">&amp;</span>query_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
 
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_SERVER_GRPC_DB_REQUEST_TIMER,
+            <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, <span class="kw-2">&amp;</span>query_ctx.get_db_string())]
+        );
         <span class="kw">let </span>handler = <span class="self">self</span>.handler.clone();
 
         <span class="comment">// Executes requests in another runtime to
@@ -252,7 +275,16 @@
                 name: <span class="string">&quot;Token AuthScheme&quot;</span>.to_string(),
             }),
         }
-        .map_err(|e| Status::unauthenticated(e.to_string()))<span class="question-mark">?</span>;
+        .map_err(|e| {
+            <span class="macro">increment_counter!</span>(
+                <span class="kw">crate</span>::metrics::METRIC_AUTH_FAILURE,
+                <span class="kw-2">&amp;</span>[(
+                    <span class="kw">crate</span>::metrics::METRIC_CODE_LABEL,
+                    <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.status_code())
+                )]
+            );
+            Status::unauthenticated(e.to_string())
+        })<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }

@@ -93,6 +93,11 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -115,6 +120,7 @@
 <span class="kw">use </span>axum::response::IntoResponse;
 <span class="kw">use </span>common_catalog::consts::DEFAULT_SCHEMA_NAME;
 <span class="kw">use </span>common_grpc::writer::Precision;
+<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>session::context::QueryContext;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="prelude-ty">Result</span>, TimePrecisionSnafu};
@@ -143,6 +149,10 @@
     <span class="kw">let </span>db = params
         .remove(<span class="string">&quot;db&quot;</span>)
         .unwrap_or_else(|| DEFAULT_SCHEMA_NAME.to_string());
+    <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
+        <span class="kw">crate</span>::metrics::METRIC_HTTP_INFLUXDB_WRITE_ELAPSED,
+        <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, <span class="kw-2">&amp;</span>db)]
+    );
     <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_client_database_name(<span class="kw-2">&amp;</span>db);
     <span class="kw">let </span>ctx = Arc::new(QueryContext::with(catalog, schema));
 

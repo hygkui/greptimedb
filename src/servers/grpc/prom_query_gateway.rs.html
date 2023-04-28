@@ -83,6 +83,14 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -104,6 +112,7 @@
 <span class="kw">use </span>api::v1::promql_request::Promql;
 <span class="kw">use </span>api::v1::{PromqlRequest, PromqlResponse, ResponseHeader};
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>common_time::util::current_time_rfc3339;
 <span class="kw">use </span>query::parser::PromQuery;
 <span class="kw">use </span>snafu::OptionExt;
@@ -147,6 +156,13 @@
         };
 
         <span class="kw">let </span>query_context = create_query_context(inner.header.as_ref());
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_SERVER_GRPC_PROM_REQUEST_TIMER,
+            <span class="kw-2">&amp;</span>[(
+                <span class="kw">crate</span>::metrics::METRIC_DB_LABEL,
+                <span class="kw-2">&amp;</span>query_context.get_db_string()
+            )]
+        );
         <span class="kw">let </span>result = <span class="self">self</span>.handler.do_query(<span class="kw-2">&amp;</span>prom_query, query_context).<span class="kw">await</span>;
         <span class="kw">let </span>(metric_name, result_type) =
             retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query).unwrap_or_default();
