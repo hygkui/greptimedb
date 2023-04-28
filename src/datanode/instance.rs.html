@@ -769,7 +769,7 @@
             )),
         };
 
-        <span class="kw">let </span>procedure_manager = create_procedure_manager(<span class="kw-2">&amp;</span>opts.procedure).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>procedure_manager = create_procedure_manager(<span class="kw-2">&amp;</span>opts.procedure, object_store).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="comment">// Register all procedures.
         // Register procedures of the mito engine.
         </span>mito_engine.register_procedure_loaders(<span class="kw-2">&amp;*</span>procedure_manager);
@@ -1108,13 +1108,13 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>create_procedure_manager(
     procedure_config: <span class="kw-2">&amp;</span>ProcedureConfig,
+    object_store: ObjectStore,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;ProcedureManagerRef&gt; {
     <span class="macro">info!</span>(
         <span class="string">&quot;Creating procedure manager with config: {:?}&quot;</span>,
         procedure_config
     );
 
-    <span class="kw">let </span>object_store = new_object_store(<span class="kw-2">&amp;</span>procedure_config.store).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let </span>state_store = Arc::new(ObjectStateStore::new(object_store));
 
     <span class="kw">let </span>manager_config = ManagerConfig {

@@ -324,20 +324,6 @@
 <a href="#324" id="324">324</a>
 <a href="#325" id="325">325</a>
 <a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -538,8 +524,6 @@
     <span class="doccomment">/// Initial retry delay of procedures, increases exponentially.
     </span><span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
     </span><span class="kw">pub </span>retry_delay: Duration,
-    <span class="doccomment">/// Storage config for procedure manager.
-    </span><span class="kw">pub </span>store: ObjectStoreConfig,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>ProcedureConfig {
@@ -547,18 +531,6 @@
         ProcedureConfig {
             max_retry_times: <span class="number">3</span>,
             retry_delay: Duration::from_millis(<span class="number">500</span>),
-            store: ObjectStoreConfig::File(FileConfig {
-                data_dir: <span class="string">&quot;/tmp/greptimedb/procedure/&quot;</span>.to_string(),
-            }),
-        }
-    }
-}
-
-<span class="kw">impl </span>ProcedureConfig {
-    <span class="kw">pub fn </span>from_file_path(path: String) -&gt; ProcedureConfig {
-        ProcedureConfig {
-            store: ObjectStoreConfig::File(FileConfig { data_dir: path }),
-            ..Default::default()
         }
     }
 }

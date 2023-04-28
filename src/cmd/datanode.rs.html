@@ -351,13 +351,6 @@
 <a href="#351" id="351">351</a>
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -376,9 +369,7 @@
 
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_telemetry::logging;
-<span class="kw">use </span>datanode::datanode::{
-    Datanode, DatanodeOptions, FileConfig, ObjectStoreConfig, ProcedureConfig,
-};
+<span class="kw">use </span>datanode::datanode::{Datanode, DatanodeOptions, FileConfig, ObjectStoreConfig};
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>servers::Mode;
 <span class="kw">use </span>snafu::ResultExt;
@@ -458,8 +449,6 @@
     <span class="attr">#[clap(long)]
     </span>wal_dir: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
-    </span>procedure_dir: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="attr">#[clap(long)]
     </span>http_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
     </span>http_timeout: <span class="prelude-ty">Option</span>&lt;u64&gt;,
@@ -520,9 +509,6 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(wal_dir) = <span class="self">self</span>.wal_dir.clone() {
             opts.wal.dir = wal_dir;
-        }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(procedure_dir) = <span class="self">self</span>.procedure_dir.clone() {
-            opts.procedure = ProcedureConfig::from_file_path(procedure_dir);
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = <span class="self">self</span>.http_addr.clone() {
             opts.http_opts.addr = http_addr

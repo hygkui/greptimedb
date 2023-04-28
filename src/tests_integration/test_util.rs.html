@@ -400,11 +400,6 @@
 <a href="#400" id="400">400</a>
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -595,7 +590,6 @@
 </span><span class="kw">pub struct </span>TestGuard {
     _wal_tmp_dir: TempDir,
     data_tmp_dir: <span class="prelude-ty">Option</span>&lt;TempDirGuard&gt;,
-    _procedure_tmp_dir: TempDir,
 }
 
 <span class="kw">impl </span>TestGuard {
@@ -614,7 +608,6 @@
     name: <span class="kw-2">&amp;</span>str,
 ) -&gt; (DatanodeOptions, TestGuard) {
     <span class="kw">let </span>wal_tmp_dir = create_temp_dir(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;gt_wal_{name}&quot;</span>));
-    <span class="kw">let </span>procedure_tmp_dir = create_temp_dir(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;gt_procedure_{name}&quot;</span>));
 
     <span class="kw">let </span>(store, data_tmp_dir) = get_test_store_config(<span class="kw-2">&amp;</span>store_type, name);
 
@@ -628,9 +621,7 @@
             ..Default::default()
         },
         mode: Mode::Standalone,
-        procedure: ProcedureConfig::from_file_path(
-            procedure_tmp_dir.path().to_str().unwrap().to_string(),
-        ),
+        procedure: ProcedureConfig::default(),
         ..Default::default()
     };
     (
@@ -638,7 +629,6 @@
         TestGuard {
             _wal_tmp_dir: wal_tmp_dir,
             data_tmp_dir,
-            _procedure_tmp_dir: procedure_tmp_dir,
         },
     )
 }

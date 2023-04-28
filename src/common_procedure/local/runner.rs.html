@@ -905,6 +905,7 @@
 <a href="#905" id="905">905</a>
 <a href="#906" id="906">906</a>
 <a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1358,6 +1359,7 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::local::test_util;
+    <span class="kw">use </span><span class="kw">crate</span>::store::PROC_PATH;
     <span class="kw">use crate</span>::{ContextProvider, Error, LockKey, Procedure};
 
     <span class="kw">const </span>ROOT_ID: <span class="kw-2">&amp;</span>str = <span class="string">&quot;9f805a1f-05f7-490c-9f91-bd56e3cc54c1&quot;</span>;
@@ -1379,7 +1381,7 @@
     }
 
     <span class="kw">async fn </span>check_files(object_store: <span class="kw-2">&amp;</span>ObjectStore, procedure_id: ProcedureId, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) {
-        <span class="kw">let </span>dir = <span class="macro">format!</span>(<span class="string">&quot;{procedure_id}/&quot;</span>);
+        <span class="kw">let </span>dir = <span class="macro">format!</span>(<span class="string">&quot;{PROC_PATH}/{procedure_id}/&quot;</span>);
         <span class="kw">let </span>lister = object_store.list(<span class="kw-2">&amp;</span>dir).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>files_in_dir: Vec&lt;<span class="kw">_</span>&gt; = lister
             .map_ok(|de| de.name().to_string())
