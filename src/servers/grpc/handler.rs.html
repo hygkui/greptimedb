@@ -265,7 +265,7 @@
             AuthScheme::Basic(Basic { username, password }) =&gt; user_provider
                 .auth(
                     Identity::UserId(<span class="kw-2">&amp;</span>username, <span class="prelude-val">None</span>),
-                    Password::PlainText(<span class="kw-2">&amp;</span>password),
+                    Password::PlainText(password.into()),
                     <span class="kw-2">&amp;</span>query_ctx.current_catalog(),
                     <span class="kw-2">&amp;</span>query_ctx.current_schema(),
                 )

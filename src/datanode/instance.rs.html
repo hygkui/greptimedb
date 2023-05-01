@@ -561,6 +561,7 @@
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
 <a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -602,6 +603,7 @@
 <span class="kw">use </span>object_store::services::{Fs <span class="kw">as </span>FsBuilder, Oss <span class="kw">as </span>OSSBuilder, S3 <span class="kw">as </span>S3Builder};
 <span class="kw">use </span>object_store::{util, ObjectStore, ObjectStoreBuilder};
 <span class="kw">use </span>query::query_engine::{QueryEngineFactory, QueryEngineRef};
+<span class="kw">use </span>secrecy::ExposeSecret;
 <span class="kw">use </span>servers::Mode;
 <span class="kw">use </span>session::context::QueryContext;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
@@ -937,8 +939,8 @@
         .root(<span class="kw-2">&amp;</span>root)
         .bucket(<span class="kw-2">&amp;</span>oss_config.bucket)
         .endpoint(<span class="kw-2">&amp;</span>oss_config.endpoint)
-        .access_key_id(<span class="kw-2">&amp;</span>oss_config.access_key_id)
-        .access_key_secret(<span class="kw-2">&amp;</span>oss_config.access_key_secret);
+        .access_key_id(oss_config.access_key_id.expose_secret())
+        .access_key_secret(oss_config.access_key_secret.expose_secret());
 
     <span class="kw">let </span>object_store = ObjectStore::new(builder)
         .with_context(|<span class="kw">_</span>| error::InitBackendSnafu {
@@ -1002,8 +1004,8 @@
     builder
         .root(<span class="kw-2">&amp;</span>root)
         .bucket(<span class="kw-2">&amp;</span>s3_config.bucket)
-        .access_key_id(<span class="kw-2">&amp;</span>s3_config.access_key_id)
-        .secret_access_key(<span class="kw-2">&amp;</span>s3_config.secret_access_key);
+        .access_key_id(s3_config.access_key_id.expose_secret())
+        .secret_access_key(s3_config.secret_access_key.expose_secret());
 
     <span class="kw">if </span>s3_config.endpoint.is_some() {
         builder.endpoint(s3_config.endpoint.as_ref().unwrap());

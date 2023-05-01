@@ -402,6 +402,9 @@
 <a href="#402" id="402">402</a>
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -770,7 +773,10 @@
 
         <span class="kw">let </span>provider = provider.unwrap();
         <span class="kw">let </span>result = provider
-            .authenticate(Identity::UserId(<span class="string">&quot;test&quot;</span>, <span class="prelude-val">None</span>), Password::PlainText(<span class="string">&quot;test&quot;</span>))
+            .authenticate(
+                Identity::UserId(<span class="string">&quot;test&quot;</span>, <span class="prelude-val">None</span>),
+                Password::PlainText(<span class="string">&quot;test&quot;</span>.to_string().into()),
+            )
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
     }

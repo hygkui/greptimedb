@@ -287,6 +287,7 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -310,6 +311,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>digest;
 <span class="kw">use </span>digest::Digest;
+<span class="kw">use </span>secrecy::ExposeSecret;
 <span class="kw">use </span>session::context::UserInfo;
 <span class="kw">use </span>sha1::Sha1;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -409,12 +411,12 @@
                 <span class="kw">match </span>input_pwd {
                     Password::PlainText(pwd) =&gt; {
                         <span class="macro">ensure!</span>(
-                            !pwd.is_empty(),
+                            !pwd.expose_secret().is_empty(),
                             IllegalParamSnafu {
                                 msg: <span class="string">&quot;blank password&quot;
                             </span>}
                         );
-                        <span class="kw">return if </span>save_pwd == pwd.as_bytes() {
+                        <span class="kw">return if </span>save_pwd == pwd.expose_secret().as_bytes() {
                             <span class="prelude-val">Ok</span>(UserInfo::new(username))
                         } <span class="kw">else </span>{
                             UserPasswordMismatchSnafu {
@@ -529,7 +531,7 @@
         <span class="kw">let </span>re = provider
             .authenticate(
                 Identity::UserId(username, <span class="prelude-val">None</span>),
-                Password::PlainText(password),
+                Password::PlainText(password.to_string().into()),
             )
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(re.is_ok());

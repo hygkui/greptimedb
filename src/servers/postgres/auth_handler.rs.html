@@ -342,7 +342,7 @@
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = user_provider
             .auth(
                 Identity::UserId(user_name, <span class="prelude-val">None</span>),
-                Password::PlainText(password),
+                Password::PlainText(password.to_string().into()),
                 catalog,
                 schema,
             )
