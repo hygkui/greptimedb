@@ -1312,7 +1312,7 @@
 
         <span class="kw">let </span>splits = <span class="self">self
             </span>.partition_manager
-            .split_insert_request(<span class="kw-2">&amp;</span><span class="self">self</span>.table_name, request)
+            .split_insert_request(<span class="kw-2">&amp;</span><span class="self">self</span>.table_name, request, <span class="kw-2">&amp;</span><span class="self">self</span>.schema())
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(TableOperationSnafu)<span class="question-mark">?</span>;
