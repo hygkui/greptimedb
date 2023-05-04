@@ -561,7 +561,6 @@
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
 <a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -943,15 +942,13 @@
         .access_key_secret(oss_config.access_key_secret.expose_secret());
 
     <span class="kw">let </span>object_store = ObjectStore::new(builder)
-        .with_context(|<span class="kw">_</span>| error::InitBackendSnafu {
-            config: store_config.clone(),
-        })<span class="question-mark">?
+        .context(error::InitBackendSnafu)<span class="question-mark">?
         </span>.finish();
 
-    create_object_store_with_cache(object_store, store_config)
-}
+    create_object_store_with_cache(object_store, store_config).<span class="kw">await
+</span>}
 
-<span class="kw">fn </span>create_object_store_with_cache(
+<span class="kw">async fn </span>create_object_store_with_cache(
     object_store: ObjectStore,
     store_config: <span class="kw-2">&amp;</span>ObjectStoreConfig,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;ObjectStore&gt; {
@@ -974,14 +971,17 @@
     };
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = cache_path {
-        <span class="kw">let </span>cache_store =
-            FsBuilder::default()
-                .root(path)
-                .build()
-                .with_context(|<span class="kw">_</span>| error::InitBackendSnafu {
-                    config: store_config.clone(),
-                })<span class="question-mark">?</span>;
-        <span class="kw">let </span>cache_layer = LruCacheLayer::new(Arc::new(cache_store), cache_capacity.<span class="number">0 </span><span class="kw">as </span>usize);
+        <span class="kw">let </span>atomic_temp_dir = <span class="macro">format!</span>(<span class="string">&quot;{path}/.tmp/&quot;</span>);
+        clean_temp_dir(<span class="kw-2">&amp;</span>atomic_temp_dir)<span class="question-mark">?</span>;
+        <span class="kw">let </span>cache_store = FsBuilder::default()
+            .root(path)
+            .atomic_write_dir(<span class="kw-2">&amp;</span>atomic_temp_dir)
+            .build()
+            .context(error::InitBackendSnafu)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>cache_layer = LruCacheLayer::new(Arc::new(cache_store), cache_capacity.<span class="number">0 </span><span class="kw">as </span>usize)
+            .<span class="kw">await
+            </span>.context(error::InitBackendSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(object_store.layer(cache_layer))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(object_store)
@@ -1016,12 +1016,21 @@
 
     create_object_store_with_cache(
         ObjectStore::new(builder)
-            .with_context(|<span class="kw">_</span>| error::InitBackendSnafu {
-                config: store_config.clone(),
-            })<span class="question-mark">?
+            .context(error::InitBackendSnafu)<span class="question-mark">?
             </span>.finish(),
         store_config,
     )
+    .<span class="kw">await
+</span>}
+
+<span class="kw">fn </span>clean_temp_dir(dir: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">if </span>path::Path::new(<span class="kw-2">&amp;</span>dir).exists() {
+        <span class="macro">info!</span>(<span class="string">&quot;Begin to clean temp storage directory: {}&quot;</span>, dir);
+        fs::remove_dir_all(dir).context(error::RemoveDirSnafu { dir })<span class="question-mark">?</span>;
+        <span class="macro">info!</span>(<span class="string">&quot;Cleaned temp storage directory: {}&quot;</span>, dir);
+    }
+
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new_fs_object_store(store_config: <span class="kw-2">&amp;</span>ObjectStoreConfig) -&gt; <span class="prelude-ty">Result</span>&lt;ObjectStore&gt; {
@@ -1035,24 +1044,13 @@
     <span class="macro">info!</span>(<span class="string">&quot;The file storage directory is: {}&quot;</span>, <span class="kw-2">&amp;</span>data_dir);
 
     <span class="kw">let </span>atomic_write_dir = <span class="macro">format!</span>(<span class="string">&quot;{data_dir}/.tmp/&quot;</span>);
-    <span class="kw">if </span>path::Path::new(<span class="kw-2">&amp;</span>atomic_write_dir).exists() {
-        <span class="macro">info!</span>(
-            <span class="string">&quot;Begin to clean temp storage directory: {}&quot;</span>,
-            <span class="kw-2">&amp;</span>atomic_write_dir
-        );
-        fs::remove_dir_all(<span class="kw-2">&amp;</span>atomic_write_dir).context(error::RemoveDirSnafu {
-            dir: <span class="kw-2">&amp;</span>atomic_write_dir,
-        })<span class="question-mark">?</span>;
-        <span class="macro">info!</span>(<span class="string">&quot;Cleaned temp storage directory: {}&quot;</span>, <span class="kw-2">&amp;</span>atomic_write_dir);
-    }
+    clean_temp_dir(<span class="kw-2">&amp;</span>atomic_write_dir)<span class="question-mark">?</span>;
 
     <span class="kw">let </span><span class="kw-2">mut </span>builder = FsBuilder::default();
     builder.root(<span class="kw-2">&amp;</span>data_dir).atomic_write_dir(<span class="kw-2">&amp;</span>atomic_write_dir);
 
     <span class="kw">let </span>object_store = ObjectStore::new(builder)
-        .context(error::InitBackendSnafu {
-            config: store_config.clone(),
-        })<span class="question-mark">?
+        .context(error::InitBackendSnafu)<span class="question-mark">?
         </span>.finish();
 
     <span class="prelude-val">Ok</span>(object_store)

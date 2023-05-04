@@ -561,9 +561,6 @@
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
 <a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -586,8 +583,6 @@
 <span class="kw">use </span>snafu::Location;
 <span class="kw">use </span>storage::error::Error <span class="kw">as </span>StorageError;
 <span class="kw">use </span>table::error::Error <span class="kw">as </span>TableError;
-
-<span class="kw">use </span><span class="kw">crate</span>::datanode::ObjectStoreConfig;
 
 <span class="doccomment">/// Business error of datanode.
 </span><span class="attr">#[derive(Debug, Snafu)]
@@ -776,9 +771,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to storage engine, source: {}&quot;</span>, source))]
     </span>OpenStorageEngine { source: StorageError },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init backend, config: {:#?}, source: {}&quot;</span>, config, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init backend, source: {}&quot;</span>, source))]
     </span>InitBackend {
-        config: Box&lt;ObjectStoreConfig&gt;,
         source: object_store::Error,
         location: Location,
     },
