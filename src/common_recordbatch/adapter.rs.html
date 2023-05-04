@@ -283,6 +283,41 @@
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -304,6 +339,7 @@
 
 <span class="kw">use </span>datafusion::arrow::datatypes::SchemaRef <span class="kw">as </span>DfSchemaRef;
 <span class="kw">use </span>datafusion::error::Result <span class="kw">as </span>DfResult;
+<span class="kw">use </span>datafusion::parquet::arrow::async_reader::{AsyncFileReader, ParquetRecordBatchStream};
 <span class="kw">use </span>datafusion::physical_plan::RecordBatchStream <span class="kw">as </span>DfRecordBatchStream;
 <span class="kw">use </span>datafusion_common::DataFusionError;
 <span class="kw">use </span>datatypes::schema::{Schema, SchemaRef};
@@ -323,6 +359,40 @@
             &gt; + Send,
     &gt;,
 &gt;;
+
+<span class="doccomment">/// ParquetRecordBatchStream -&gt; DataFusion RecordBatchStream
+</span><span class="kw">pub struct </span>ParquetRecordBatchStreamAdapter&lt;T&gt; {
+    stream: ParquetRecordBatchStream&lt;T&gt;,
+}
+
+<span class="kw">impl</span>&lt;T: Unpin + AsyncFileReader + Send + <span class="lifetime">&#39;static</span>&gt; ParquetRecordBatchStreamAdapter&lt;T&gt; {
+    <span class="kw">pub fn </span>new(stream: ParquetRecordBatchStream&lt;T&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ stream }
+    }
+}
+
+<span class="kw">impl</span>&lt;T: Unpin + AsyncFileReader + Send + <span class="lifetime">&#39;static</span>&gt; DfRecordBatchStream
+    <span class="kw">for </span>ParquetRecordBatchStreamAdapter&lt;T&gt;
+{
+    <span class="kw">fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DfSchemaRef {
+        <span class="self">self</span>.stream.schema().clone()
+    }
+}
+
+<span class="kw">impl</span>&lt;T: Unpin + AsyncFileReader + Send + <span class="lifetime">&#39;static</span>&gt; Stream <span class="kw">for </span>ParquetRecordBatchStreamAdapter&lt;T&gt; {
+    <span class="kw">type </span>Item = DfResult&lt;DfRecordBatch&gt;;
+
+    <span class="kw">fn </span>poll_next(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
+        <span class="kw">let </span>batch = <span class="macro">futures::ready!</span>(Pin::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.stream).poll_next(cx))
+            .map(|r| r.map_err(|e| DataFusionError::External(Box::new(e))));
+        Poll::Ready(batch)
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+        <span class="self">self</span>.stream.size_hint()
+    }
+}
 
 <span class="doccomment">/// Greptime SendableRecordBatchStream -&gt; DataFusion RecordBatchStream
 </span><span class="kw">pub struct </span>DfRecordBatchStreamAdapter {

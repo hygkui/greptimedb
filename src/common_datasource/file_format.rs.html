@@ -284,7 +284,7 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>FileFormat: Send + Sync + std::fmt::Debug {
-    <span class="kw">async fn </span>infer_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>ObjectStore, path: String) -&gt; <span class="prelude-ty">Result</span>&lt;ArrowSchema&gt;;
+    <span class="kw">async fn </span>infer_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>ObjectStore, path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;ArrowSchema&gt;;
 }
 
 <span class="kw">pub trait </span>ArrowDecoder: Send + <span class="lifetime">&#39;static </span>{
@@ -373,7 +373,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;ArrowSchema&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>schemas = Vec::with_capacity(files.len());
     <span class="kw">for </span>file <span class="kw">in </span>files {
-        schemas.push(file_format.infer_schema(store, file.to_string()).<span class="kw">await</span><span class="question-mark">?</span>)
+        schemas.push(file_format.infer_schema(store, file).<span class="kw">await</span><span class="question-mark">?</span>)
     }
     ArrowSchema::try_merge(schemas).context(error::MergeSchemaSnafu)
 }
@@ -381,14 +381,14 @@
 <span class="kw">pub async fn </span>stream_to_file&lt;T: DfRecordBatchEncoder, U: Fn(SharedBuffer) -&gt; T&gt;(
     <span class="kw-2">mut </span>stream: SendableRecordBatchStream,
     store: ObjectStore,
-    path: String,
+    path: <span class="kw-2">&amp;</span>str,
     threshold: usize,
     encoder_factory: U,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
     <span class="kw">let </span>writer = store
-        .writer(<span class="kw-2">&amp;</span>path)
+        .writer(path)
         .<span class="kw">await
-        </span>.context(error::WriteObjectSnafu { path: <span class="kw-2">&amp;</span>path })<span class="question-mark">?
+        </span>.context(error::WriteObjectSnafu { path })<span class="question-mark">?
         </span>.compat_write();
 
     <span class="kw">let </span>buffer = SharedBuffer::with_capacity(threshold);

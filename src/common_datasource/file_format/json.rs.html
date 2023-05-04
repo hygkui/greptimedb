@@ -236,10 +236,6 @@
 <a href="#236" id="236">236</a>
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -322,11 +318,11 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>FileFormat <span class="kw">for </span>JsonFormat {
-    <span class="kw">async fn </span>infer_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>ObjectStore, path: String) -&gt; <span class="prelude-ty">Result</span>&lt;Schema&gt; {
+    <span class="kw">async fn </span>infer_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, store: <span class="kw-2">&amp;</span>ObjectStore, path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Schema&gt; {
         <span class="kw">let </span>reader = store
-            .reader(<span class="kw-2">&amp;</span>path)
+            .reader(path)
             .<span class="kw">await
-            </span>.context(error::ReadObjectSnafu { path: <span class="kw-2">&amp;</span>path })<span class="question-mark">?</span>;
+            </span>.context(error::ReadObjectSnafu { path })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>decoded = <span class="self">self</span>.compression_type.convert_async_read(reader);
 
@@ -337,8 +333,7 @@
 
             <span class="kw">let </span>iter = ValueIter::new(<span class="kw-2">&amp;mut </span>reader, schema_infer_max_record);
 
-            <span class="kw">let </span>schema = infer_json_schema_from_iterator(iter)
-                .context(error::InferSchemaSnafu { path: <span class="kw-2">&amp;</span>path })<span class="question-mark">?</span>;
+            <span class="kw">let </span>schema = infer_json_schema_from_iterator(iter).context(error::InferSchemaSnafu)<span class="question-mark">?</span>;
 
             <span class="prelude-val">Ok</span>(schema)
         })
@@ -391,7 +386,7 @@
 <span class="kw">pub async fn </span>stream_to_json(
     stream: SendableRecordBatchStream,
     store: ObjectStore,
-    path: String,
+    path: <span class="kw-2">&amp;</span>str,
     threshold: usize,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
     stream_to_file(stream, store, path, threshold, |buffer| {
@@ -421,10 +416,7 @@
     </span><span class="kw">async fn </span>infer_schema_basic() {
         <span class="kw">let </span>json = JsonFormat::default();
         <span class="kw">let </span>store = test_store(<span class="kw-2">&amp;</span>test_data_root());
-        <span class="kw">let </span>schema = json
-            .infer_schema(<span class="kw-2">&amp;</span>store, <span class="string">&quot;simple.json&quot;</span>.to_string())
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="kw">let </span>schema = json.infer_schema(<span class="kw-2">&amp;</span>store, <span class="string">&quot;simple.json&quot;</span>).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>formatted: Vec&lt;<span class="kw">_</span>&gt; = format_schema(schema);
 
         <span class="macro">assert_eq!</span>(
@@ -446,7 +438,7 @@
         };
         <span class="kw">let </span>store = test_store(<span class="kw-2">&amp;</span>test_data_root());
         <span class="kw">let </span>schema = json
-            .infer_schema(<span class="kw-2">&amp;</span>store, <span class="string">&quot;schema_infer_limit.json&quot;</span>.to_string())
+            .infer_schema(<span class="kw-2">&amp;</span>store, <span class="string">&quot;schema_infer_limit.json&quot;</span>)
             .<span class="kw">await
             </span>.unwrap();
         <span class="kw">let </span>formatted: Vec&lt;<span class="kw">_</span>&gt; = format_schema(schema);
