@@ -409,7 +409,7 @@
                     Value::Binary(v) =&gt; row_writer.write_col(v.deref())<span class="question-mark">?</span>,
                     Value::Date(v) =&gt; row_writer.write_col(v.val())<span class="question-mark">?</span>,
                     Value::DateTime(v) =&gt; row_writer.write_col(v.val())<span class="question-mark">?</span>,
-                    Value::Timestamp(v) =&gt; row_writer.write_col(v.to_iso8601_string())<span class="question-mark">?</span>,
+                    Value::Timestamp(v) =&gt; row_writer.write_col(v.to_local_string())<span class="question-mark">?</span>,
                     Value::List(<span class="kw">_</span>) =&gt; {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Internal {
                             err_msg: <span class="macro">format!</span>(
