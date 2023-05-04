@@ -139,6 +139,11 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -153,7 +158,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, PutRequest};
+</span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, PutRequest, Role};
 <span class="kw">use </span>dashmap::DashMap;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
@@ -171,16 +176,16 @@
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>HeartbeatHandler <span class="kw">for </span>PersistStatsHandler {
+    <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, role: Role) -&gt; bool {
+        role == Role::Datanode
+    }
+
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         _req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         ctx: <span class="kw-2">&amp;mut </span>Context,
         acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if </span>ctx.is_skip_all() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-        }
-
         <span class="kw">let </span><span class="prelude-val">Some</span>(stat) = acc.stat.take() <span class="kw">else </span>{ <span class="kw">return </span><span class="prelude-val">Ok</span>(()) };
 
         <span class="kw">let </span>key = stat.stat_key();
@@ -219,18 +224,23 @@
     <span class="kw">use </span>api::v1::meta::RangeRequest;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::handler::HeartbeatMailbox;
     <span class="kw">use </span><span class="kw">crate</span>::keys::StatKey;
+    <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_handle_datanode_stats() {
         <span class="kw">let </span>in_memory = Arc::new(MemStore::new());
         <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
+        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_store.clone());
+        <span class="kw">let </span>mailbox = HeartbeatMailbox::create(Arc::new(Default::default()), seq);
         <span class="kw">let </span><span class="kw-2">mut </span>ctx = Context {
             datanode_lease_secs: <span class="number">30</span>,
             server_addr: <span class="string">&quot;127.0.0.1:0000&quot;</span>.to_string(),
             in_memory,
             kv_store,
+            mailbox,
             election: <span class="prelude-val">None</span>,
             skip_all: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
             catalog: <span class="prelude-val">None</span>,

@@ -87,6 +87,14 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -101,7 +109,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, ResponseHeader, PROTOCOL_VERSION};
+</span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, ResponseHeader, Role, PROTOCOL_VERSION};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
@@ -112,6 +120,10 @@
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>HeartbeatHandler <span class="kw">for </span>ResponseHeaderHandler {
+    <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, role: Role) -&gt; bool {
+        role == Role::Datanode
+    }
+
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
@@ -137,18 +149,22 @@
     <span class="kw">use </span>api::v1::meta::{HeartbeatResponse, RequestHeader};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::handler::Context;
+    <span class="kw">use </span><span class="kw">crate</span>::handler::{Context, HeartbeatMailbox};
+    <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_handle_heartbeat_resp_header() {
         <span class="kw">let </span>in_memory = Arc::new(MemStore::new());
         <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
+        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_store.clone());
+        <span class="kw">let </span>mailbox = HeartbeatMailbox::create(Arc::new(Default::default()), seq);
         <span class="kw">let </span><span class="kw-2">mut </span>ctx = Context {
             datanode_lease_secs: <span class="number">30</span>,
             server_addr: <span class="string">&quot;127.0.0.1:0000&quot;</span>.to_string(),
             in_memory,
             kv_store,
+            mailbox,
             election: <span class="prelude-val">None</span>,
             skip_all: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
             catalog: <span class="prelude-val">None</span>,
@@ -171,7 +187,7 @@
         <span class="kw">let </span>header = std::mem::take(<span class="kw-2">&amp;mut </span>acc.header);
         <span class="kw">let </span>res = HeartbeatResponse {
             header,
-            payload: acc.into_payload(),
+            mailbox_messages: acc.into_mailbox_messages(),
         };
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, res.header.unwrap().cluster_id);
     }

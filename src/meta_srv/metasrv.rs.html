@@ -262,6 +262,16 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -299,6 +309,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::metadata_service::MetadataServiceRef;
 <span class="kw">use </span><span class="kw">crate</span>::selector::{Selector, SelectorType};
 <span class="kw">use </span><span class="kw">crate</span>::sequence::SequenceRef;
+<span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvStoreRef, ResettableKvStoreRef};
 
 <span class="kw">pub const </span>TABLE_ID_SEQ: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table_id&quot;</span>;
@@ -337,6 +348,7 @@
     <span class="kw">pub </span>server_addr: String,
     <span class="kw">pub </span>in_memory: ResettableKvStoreRef,
     <span class="kw">pub </span>kv_store: KvStoreRef,
+    <span class="kw">pub </span>mailbox: MailboxRef,
     <span class="kw">pub </span>election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
     <span class="kw">pub </span>skip_all: Arc&lt;AtomicBool&gt;,
     <span class="kw">pub </span>catalog: <span class="prelude-ty">Option</span>&lt;String&gt;,
@@ -380,6 +392,7 @@
     lock: <span class="prelude-ty">Option</span>&lt;DistLockRef&gt;,
     procedure_manager: ProcedureManagerRef,
     metadata_service: MetadataServiceRef,
+    mailbox: MailboxRef,
 }
 
 <span class="kw">impl </span>MetaSrv {
@@ -505,11 +518,17 @@
     }
 
     <span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>mailbox(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MailboxRef {
+        <span class="self">self</span>.mailbox.clone()
+    }
+
+    <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>new_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Context {
         <span class="kw">let </span>datanode_lease_secs = <span class="self">self</span>.options().datanode_lease_secs;
         <span class="kw">let </span>server_addr = <span class="self">self</span>.options().server_addr.clone();
         <span class="kw">let </span>in_memory = <span class="self">self</span>.in_memory();
         <span class="kw">let </span>kv_store = <span class="self">self</span>.kv_store();
+        <span class="kw">let </span>mailbox = <span class="self">self</span>.mailbox();
         <span class="kw">let </span>election = <span class="self">self</span>.election();
         <span class="kw">let </span>skip_all = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
         Context {
@@ -517,6 +536,7 @@
             server_addr,
             in_memory,
             kv_store,
+            mailbox,
             election,
             skip_all,
             catalog: <span class="prelude-val">None</span>,

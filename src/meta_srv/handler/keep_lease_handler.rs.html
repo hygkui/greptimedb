@@ -103,7 +103,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::meta::{BatchPutRequest, HeartbeatRequest, KeyValue};
+</span><span class="kw">use </span>api::v1::meta::{BatchPutRequest, HeartbeatRequest, KeyValue, Role};
 <span class="kw">use </span>common_telemetry::{trace, warn};
 <span class="kw">use </span>common_time::util <span class="kw">as </span>time_util;
 <span class="kw">use </span>tokio::sync::mpsc::{<span class="self">self</span>, Sender};
@@ -146,16 +146,16 @@
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>HeartbeatHandler <span class="kw">for </span>KeepLeaseHandler {
+    <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, role: Role) -&gt; bool {
+        role == Role::Datanode
+    }
+
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
-        ctx: <span class="kw-2">&amp;mut </span>Context,
+        _ctx: <span class="kw-2">&amp;mut </span>Context,
         _acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if </span>ctx.is_skip_all() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-        }
-
         <span class="kw">let </span>HeartbeatRequest { header, peer, .. } = req;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(peer) = <span class="kw-2">&amp;</span>peer {
             <span class="kw">let </span>key = LeaseKey {

@@ -180,6 +180,13 @@
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
 <a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -200,9 +207,11 @@
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 
 <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClient;
+<span class="kw">use </span><span class="kw">crate</span>::handler::mailbox_handler::MailboxHandler;
 <span class="kw">use </span><span class="kw">crate</span>::handler::{
-    CheckLeaderHandler, CollectStatsHandler, HeartbeatHandlerGroup, KeepLeaseHandler,
-    OnLeaderStartHandler, PersistStatsHandler, RegionFailureHandler, ResponseHeaderHandler,
+    CheckLeaderHandler, CollectStatsHandler, HeartbeatHandlerGroup, HeartbeatMailbox,
+    KeepLeaseHandler, OnLeaderStartHandler, PersistStatsHandler, RegionFailureHandler,
+    ResponseHeaderHandler,
 };
 <span class="kw">use </span><span class="kw">crate</span>::lock::DistLockRef;
 <span class="kw">use </span><span class="kw">crate</span>::metadata_service::{DefaultMetadataService, MetadataServiceRef};
@@ -325,6 +334,7 @@
                 group.add_handler(CheckLeaderHandler::default()).<span class="kw">await</span>;
                 group.add_handler(OnLeaderStartHandler::default()).<span class="kw">await</span>;
                 group.add_handler(CollectStatsHandler).<span class="kw">await</span>;
+                group.add_handler(MailboxHandler).<span class="kw">await</span>;
                 group.add_handler(region_failure_handler).<span class="kw">await</span>;
                 group.add_handler(PersistStatsHandler::default()).<span class="kw">await</span>;
                 group
@@ -340,6 +350,9 @@
         <span class="kw">let </span>metadata_service = metadata_service
             .unwrap_or_else(|| Arc::new(DefaultMetadataService::new(kv_store.clone())));
 
+        <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">0</span>, <span class="number">100</span>, kv_store.clone());
+        <span class="kw">let </span>mailbox = HeartbeatMailbox::create(handler_group.pushers(), mailbox_sequence);
+
         MetaSrv {
             started,
             options,
@@ -353,6 +366,7 @@
             lock,
             procedure_manager,
             metadata_service,
+            mailbox,
         }
     }
 }
