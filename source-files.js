@@ -1,6 +1,6 @@
 var sourcesIndex = JSON.parse('{\
 "api":["",[["v1",[],["column_def.rs"]]],["error.rs","helper.rs","lib.rs","v1.rs"]],\
-"catalog":["",[["information_schema",[],["tables.rs"]],["local",[],["manager.rs","memory.rs"]],["remote",[],["client.rs","manager.rs"]]],["error.rs","helper.rs","information_schema.rs","lib.rs","local.rs","remote.rs","schema.rs","system.rs","table_source.rs","tables.rs"]],\
+"catalog":["",[["information_schema",[],["columns.rs","tables.rs"]],["local",[],["manager.rs","memory.rs"]],["remote",[],["client.rs","manager.rs"]]],["error.rs","helper.rs","information_schema.rs","lib.rs","local.rs","remote.rs","schema.rs","system.rs","table_source.rs","tables.rs"]],\
 "client":["",[],["client.rs","database.rs","error.rs","lib.rs","load_balance.rs","metrics.rs"]],\
 "cmd":["",[["cli",[],["cmd.rs","helper.rs","repl.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","options.rs","standalone.rs","toml_loader.rs"]],\
 "common_base":["",[],["bit_vec.rs","buffer.rs","bytes.rs","lib.rs","readable_size.rs"]],\

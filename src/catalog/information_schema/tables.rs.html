@@ -174,17 +174,6 @@
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -215,7 +204,6 @@
 <span class="kw">use </span>table::metadata::TableType;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{CreateRecordBatchSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::information_schema::TABLES;
 <span class="kw">use </span><span class="kw">crate</span>::CatalogProviderRef;
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>InformationSchemaTables {
@@ -304,16 +292,6 @@
                 );
             }
         }
-
-        <span class="comment">// Add a final list for the information schema tables themselves
-        </span><span class="self">self</span>.add_table(
-            <span class="kw-2">&amp;</span>catalog_name,
-            INFORMATION_SCHEMA_NAME,
-            TABLES,
-            TableType::View,
-            <span class="prelude-val">None</span>,
-            <span class="prelude-val">None</span>,
-        );
 
         <span class="self">self</span>.finish()
     }
