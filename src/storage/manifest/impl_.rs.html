@@ -379,6 +379,7 @@
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -632,12 +633,13 @@
 
     <span class="kw">async fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>((last_version, <span class="kw">_</span>)) = <span class="self">self</span>.store.load_last_checkpoint().<span class="kw">await</span><span class="question-mark">? </span>{
-            <span class="comment">// Purge all manifest and checkpoint files before last_version.
-            </span><span class="kw">let </span>deleted = <span class="self">self</span>.store.delete_until(last_version).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="comment">// Purge all manifest &lt;= last_version and checkpoint files &lt; last_version.
+            </span><span class="kw">let </span>deleted = <span class="self">self</span>.store.delete_until(last_version + <span class="number">1</span>, <span class="bool-val">true</span>).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="macro">debug!</span>(
-                <span class="string">&quot;Deleted {} logs from region manifest storage(path={}).&quot;</span>,
+                <span class="string">&quot;Deleted {} logs from region manifest storage(path={}), last_version: {}.&quot;</span>,
                 deleted,
-                <span class="self">self</span>.store.path()
+                <span class="self">self</span>.store.path(),
+                last_version,
             );
         }
 

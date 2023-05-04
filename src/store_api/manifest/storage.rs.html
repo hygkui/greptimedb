@@ -66,6 +66,12 @@
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -104,18 +110,24 @@
         end: ManifestVersion,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Iter, <span class="self">Self</span>::Error&gt;;
 
-    <span class="doccomment">/// Delete logs which version is less than specified version.
+    <span class="doccomment">/// Delete logs and checkpoints which version is less than specified `end`.
+    /// Keep the last checkpoint and remaining logs if `keep_last_checkpoint` is true.
+    ///
     /// Returns the delete logs number.
-    </span><span class="kw">async fn </span>delete_until(<span class="kw-2">&amp;</span><span class="self">self</span>, version: ManifestVersion) -&gt; <span class="prelude-ty">Result</span>&lt;usize, <span class="self">Self</span>::Error&gt;;
+    </span><span class="kw">async fn </span>delete_until(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        end: ManifestVersion,
+        keep_last_checkpoint: bool,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, <span class="self">Self</span>::Error&gt;;
 
-    <span class="doccomment">/// Save  a log
+    <span class="doccomment">/// Save a log
     </span><span class="kw">async fn </span>save(<span class="kw-2">&amp;</span><span class="self">self</span>, version: ManifestVersion, bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;;
 
-    <span class="doccomment">/// Delete logs in [start, end)
+    <span class="doccomment">/// Delete logs in [start, end) and ignore checkpoints.
     </span><span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, start: ManifestVersion, end: ManifestVersion)
         -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;;
 
-    <span class="doccomment">/// Save a checkpoint
+    <span class="doccomment">/// Save a checkpoint.
     </span><span class="kw">async fn </span>save_checkpoint(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         version: ManifestVersion,
