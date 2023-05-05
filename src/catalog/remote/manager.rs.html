@@ -862,6 +862,9 @@
 <a href="#862" id="862">862</a>
 <a href="#863" id="863">863</a>
 <a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -883,7 +886,7 @@
 
 <span class="kw">use </span>async_stream::stream;
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>common_catalog::consts::{MIN_USER_TABLE_ID, MITO_ENGINE};
+<span class="kw">use </span>common_catalog::consts::{MAX_SYS_TABLE_ID, MITO_ENGINE};
 <span class="kw">use </span>common_telemetry::{debug, error, info, warn};
 <span class="kw">use </span>dashmap::DashMap;
 <span class="kw">use </span>futures::Stream;
@@ -1037,12 +1040,12 @@
     }
 
     <span class="doccomment">/// Fetch catalogs/schemas/tables from remote catalog manager along with max table id allocated.
-    </span><span class="kw">async fn </span>initiate_catalogs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(HashMap&lt;String, CatalogProviderRef&gt;, TableId)&gt; {
+    </span><span class="kw">async fn </span>initiate_catalogs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;HashMap&lt;String, CatalogProviderRef&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashMap::new();
-        <span class="kw">let </span>max_table_id = MIN_USER_TABLE_ID - <span class="number">1</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.iter_remote_catalogs().<span class="kw">await</span>;
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = catalogs.next().<span class="kw">await </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>max_table_id = MAX_SYS_TABLE_ID;
             <span class="kw">let </span>CatalogKey { catalog_name, .. } = r<span class="question-mark">?</span>;
             <span class="macro">info!</span>(<span class="string">&quot;Fetch catalog from metasrv: {}&quot;</span>, catalog_name);
             <span class="kw">let </span>catalog = res
@@ -1050,20 +1053,25 @@
                 .or_insert_with(|| <span class="self">self</span>.new_catalog_provider(<span class="kw-2">&amp;</span>catalog_name))
                 .clone();
 
-            <span class="self">self</span>.initiate_schemas(catalog_name, catalog, max_table_id)
+            <span class="self">self</span>.initiate_schemas(<span class="kw-2">&amp;</span>catalog_name, catalog, <span class="kw-2">&amp;mut </span>max_table_id)
                 .<span class="kw">await</span><span class="question-mark">?</span>;
+
+            <span class="macro">info!</span>(
+                <span class="string">&quot;Catalog name: {}, max table id allocated: {}&quot;</span>,
+                <span class="kw-2">&amp;</span>catalog_name, max_table_id
+            );
         }
 
-        <span class="prelude-val">Ok</span>((res, max_table_id))
+        <span class="prelude-val">Ok</span>(res)
     }
 
     <span class="kw">async fn </span>initiate_schemas(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        catalog_name: String,
+        catalog_name: <span class="kw-2">&amp;</span>str,
         catalog: CatalogProviderRef,
-        max_table_id: TableId,
+        max_table_id: <span class="kw-2">&amp;mut </span>TableId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>schemas = <span class="self">self</span>.iter_remote_schemas(<span class="kw-2">&amp;</span>catalog_name).<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>schemas = <span class="self">self</span>.iter_remote_schemas(catalog_name).<span class="kw">await</span>;
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
             <span class="kw">let </span>SchemaKey {
                 catalog_name,
@@ -1099,7 +1107,7 @@
         catalog_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
         schema_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
         schema: SchemaProviderRef,
-        <span class="kw-2">mut </span>max_table_id: TableId,
+        max_table_id: <span class="kw-2">&amp;mut </span>TableId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">info!</span>(<span class="string">&quot;initializing tables in {}.{}&quot;</span>, catalog_name, schema_name);
         <span class="kw">let </span><span class="kw-2">mut </span>table_num = <span class="number">0</span>;
@@ -1124,7 +1132,7 @@
             <span class="kw">let </span>table_id = table_info.ident.table_id;
             schema.register_table(table_name.clone(), table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="macro">info!</span>(<span class="string">&quot;Registered table {}&quot;</span>, table_name);
-            max_table_id = max_table_id.max(table_id);
+            <span class="kw-2">*</span>max_table_id = (<span class="kw-2">*</span>max_table_id).max(table_id);
             table_num += <span class="number">1</span>;
         }
 
@@ -1266,7 +1274,7 @@
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>CatalogManager <span class="kw">for </span>RemoteCatalogManager {
     <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(catalogs, max_table_id) = <span class="self">self</span>.initiate_catalogs().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>catalogs = <span class="self">self</span>.initiate_catalogs().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="macro">info!</span>(
             <span class="string">&quot;Initialized catalogs: {:?}&quot;</span>,
             catalogs.keys().cloned().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
@@ -1278,8 +1286,6 @@
                 self_catalogs.insert(k, v);
             });
         }
-
-        <span class="macro">info!</span>(<span class="string">&quot;Max table id allocated: {}&quot;</span>, max_table_id);
 
         <span class="kw">let </span><span class="kw-2">mut </span>system_table_requests = <span class="self">self</span>.system_table_requests.lock().<span class="kw">await</span>;
         <span class="kw">let </span>engine = <span class="self">self

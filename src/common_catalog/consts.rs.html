@@ -28,6 +28,8 @@
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -51,6 +53,8 @@
 <span class="doccomment">/// Reserves [0,MIN_USER_TABLE_ID) for internal usage.
 /// User defined table id starts from this value.
 </span><span class="kw">pub const </span>MIN_USER_TABLE_ID: u32 = <span class="number">1024</span>;
+<span class="doccomment">/// the max system table id
+</span><span class="kw">pub const </span>MAX_SYS_TABLE_ID: u32 = MIN_USER_TABLE_ID - <span class="number">1</span>;
 <span class="doccomment">/// system_catalog table id
 </span><span class="kw">pub const </span>SYSTEM_CATALOG_TABLE_ID: u32 = <span class="number">0</span>;
 <span class="doccomment">/// scripts table id
