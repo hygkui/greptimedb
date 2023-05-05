@@ -261,6 +261,12 @@
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -278,6 +284,7 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt::{Display, Formatter};
 
+<span class="kw">use </span>common_catalog::consts::IMMUTABLE_FILE_ENGINE;
 <span class="kw">use </span>itertools::Itertools;
 
 <span class="kw">use </span><span class="kw">crate</span>::ast::{ColumnDef, Ident, ObjectName, SqlOption, TableConstraint, Value <span class="kw">as </span>SqlValue};
@@ -373,7 +380,8 @@
         <span class="kw">if </span><span class="self">self</span>.options.is_empty() {
             <span class="string">&quot;&quot;</span>.to_string()
         } <span class="kw">else </span>{
-            <span class="kw">let </span>options = <span class="macro">format_list_indent!</span>(<span class="self">self</span>.options);
+            <span class="kw">let </span>options: Vec&lt;<span class="kw-2">&amp;</span>SqlOption&gt; = <span class="self">self</span>.options.iter().sorted().collect();
+            <span class="kw">let </span>options = <span class="macro">format_list_indent!</span>(options);
             <span class="macro">format!</span>(
                 <span class="string">r#&quot;WITH(
 {options}
@@ -428,10 +436,14 @@
         <span class="kw">let </span>partitions = <span class="self">self</span>.format_partitions();
         <span class="kw">let </span>engine = <span class="kw-2">&amp;</span><span class="self">self</span>.engine;
         <span class="kw">let </span>options = <span class="self">self</span>.format_options();
-
+        <span class="kw">let </span>maybe_external = <span class="kw">if </span><span class="self">self</span>.engine == IMMUTABLE_FILE_ENGINE {
+            <span class="string">&quot;EXTERNAL &quot;
+        </span>} <span class="kw">else </span>{
+            <span class="string">&quot;&quot;
+        </span>};
         <span class="macro">write!</span>(
             f,
-            <span class="string">r#&quot;CREATE TABLE {if_not_exists} {name} (
+            <span class="string">r#&quot;CREATE {maybe_external}TABLE {if_not_exists} {name} (
 {columns},
 {constraints}
 )
