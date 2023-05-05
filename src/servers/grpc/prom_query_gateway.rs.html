@@ -91,6 +91,15 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -114,6 +123,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>common_time::util::current_time_rfc3339;
+<span class="kw">use </span>promql_parser::parser::ValueType;
 <span class="kw">use </span>query::parser::PromQuery;
 <span class="kw">use </span>snafu::OptionExt;
 <span class="kw">use </span>tonic::{Request, Response};
@@ -130,16 +140,20 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>PrometheusGateway <span class="kw">for </span>PrometheusGatewayService {
     <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, req: Request&lt;PromqlRequest&gt;) -&gt; TonicResult&lt;Response&lt;PromqlResponse&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>is_range_query = <span class="bool-val">false</span>;
         <span class="kw">let </span>inner = req.into_inner();
         <span class="kw">let </span>prom_query = <span class="kw">match </span>inner.promql.context(InvalidQuerySnafu {
             reason: <span class="string">&quot;Expecting non-empty PromqlRequest.&quot;</span>,
         })<span class="question-mark">? </span>{
-            Promql::RangeQuery(range_query) =&gt; PromQuery {
-                query: range_query.query,
-                start: range_query.start,
-                end: range_query.end,
-                step: range_query.step,
-            },
+            Promql::RangeQuery(range_query) =&gt; {
+                is_range_query = <span class="bool-val">true</span>;
+                PromQuery {
+                    query: range_query.query,
+                    start: range_query.start,
+                    end: range_query.end,
+                    step: range_query.step,
+                }
+            }
             Promql::InstantQuery(instant_query) =&gt; {
                 <span class="kw">let </span>time = <span class="kw">if </span>instant_query.time.is_empty() {
                     current_time_rfc3339()
@@ -164,8 +178,12 @@
             )]
         );
         <span class="kw">let </span>result = <span class="self">self</span>.handler.do_query(<span class="kw-2">&amp;</span>prom_query, query_context).<span class="kw">await</span>;
-        <span class="kw">let </span>(metric_name, result_type) =
+        <span class="kw">let </span>(metric_name, <span class="kw-2">mut </span>result_type) =
             retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query).unwrap_or_default();
+        <span class="comment">// range query only returns matrix
+        </span><span class="kw">if </span>is_range_query {
+            result_type = <span class="prelude-val">Some</span>(ValueType::Matrix)
+        };
         <span class="kw">let </span>json_response = PromJsonResponse::from_query_result(result, metric_name, result_type)
             .<span class="kw">await
             </span>.<span class="number">0</span>;
