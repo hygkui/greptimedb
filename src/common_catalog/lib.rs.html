@@ -20,6 +20,28 @@
 <a href="#20" id="20">20</a>
 <a href="#21" id="21">21</a>
 <a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -34,13 +56,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">pub mod </span>consts;
+</span><span class="kw">use </span>consts::DEFAULT_CATALOG_NAME;
+
+<span class="kw">pub mod </span>consts;
 <span class="kw">pub mod </span>error;
 
 <span class="doccomment">/// Formats table fully-qualified name
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>format_full_table_name(catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str, table: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">format!</span>(<span class="string">&quot;{catalog}.{schema}.{table}&quot;</span>)
+}
+
+<span class="doccomment">/// Build db name from catalog and schema string
+</span><span class="kw">pub fn </span>build_db_string(catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; String {
+    <span class="kw">if </span>catalog == DEFAULT_CATALOG_NAME {
+        schema.to_string()
+    } <span class="kw">else </span>{
+        <span class="macro">format!</span>(<span class="string">&quot;{catalog}-{schema}&quot;</span>)
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_db_string() {
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;test&quot;</span>, build_db_string(DEFAULT_CATALOG_NAME, <span class="string">&quot;test&quot;</span>));
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;a0b1c2d3-test&quot;</span>, build_db_string(<span class="string">&quot;a0b1c2d3&quot;</span>, <span class="string">&quot;test&quot;</span>));
+    }
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="common_catalog" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

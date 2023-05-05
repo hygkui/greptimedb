@@ -576,6 +576,20 @@
 <a href="#576" id="576">576</a>
 <a href="#577" id="577">577</a>
 <a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -599,6 +613,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::MIN_USER_TABLE_ID;
 <span class="kw">use </span>common_telemetry::error;
+<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::{ensure, OptionExt};
 <span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>table::table::TableIdProvider;
@@ -664,6 +679,11 @@
                 catalog: <span class="kw-2">&amp;</span>request.catalog,
                 schema: <span class="kw-2">&amp;</span>request.schema,
             })<span class="question-mark">?</span>;
+        <span class="macro">increment_gauge!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
+            <span class="number">1.0</span>,
+            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema)],
+        );
         schema
             .register_table(request.table_name, request.table)
             .<span class="kw">await
@@ -702,6 +722,11 @@
                 catalog: <span class="kw-2">&amp;</span>request.catalog,
                 schema: <span class="kw-2">&amp;</span>request.schema,
             })<span class="question-mark">?</span>;
+        <span class="macro">decrement_gauge!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
+            <span class="number">1.0</span>,
+            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema)],
+        );
         schema
             .deregister_table(<span class="kw-2">&amp;</span>request.table_name)
             .<span class="kw">await
@@ -717,6 +742,7 @@
         catalog
             .register_schema(request.schema, Arc::new(MemorySchemaProvider::new()))
             .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
@@ -758,6 +784,7 @@
         name: String,
         catalog: CatalogProviderRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CatalogProviderRef&gt;&gt; {
+        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
         <span class="self">self</span>.register_catalog_sync(name, catalog)
     }
 
@@ -833,6 +860,7 @@
             !schemas.contains_key(<span class="kw-2">&amp;</span>name),
             error::SchemaExistsSnafu { schema: <span class="kw-2">&amp;</span>name }
         );
+        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
         <span class="prelude-val">Ok</span>(schemas.insert(name, schema))
     }
 
