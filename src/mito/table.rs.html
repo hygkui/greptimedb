@@ -682,7 +682,6 @@
     AddColumn, AlterOperation, AlterRequest, ChunkReader, FlushContext, ReadContext, Region,
     RegionMeta, RegionNumber, ScanRequest, SchemaRef, Snapshot, WriteContext, WriteRequest,
 };
-<span class="kw">use </span>table::error <span class="kw">as </span>table_error;
 <span class="kw">use </span>table::error::{
     InvalidTableSnafu, RegionSchemaMismatchSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, TableOperationSnafu,
 };
@@ -693,7 +692,8 @@
     AddColumnRequest, AlterKind, AlterTableRequest, DeleteRequest, InsertRequest,
 };
 <span class="kw">use </span>table::table::scan::SimpleTableScan;
-<span class="kw">use </span>table::table::{AlterContext, RegionStat, Table};
+<span class="kw">use </span>table::table::{AlterContext, Table};
+<span class="kw">use </span>table::{error <span class="kw">as </span>table_error, RegionStat};
 <span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use </span><span class="kw">crate</span>::error;

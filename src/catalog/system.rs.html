@@ -580,6 +580,10 @@
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -662,6 +666,10 @@
     <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest) -&gt; table::Result&lt;usize&gt; {
         <span class="self">self</span>.<span class="number">0</span>.delete(request).<span class="kw">await
     </span>}
+
+    <span class="kw">fn </span>statistics(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;table::stats::TableStatistics&gt; {
+        <span class="self">self</span>.<span class="number">0</span>.statistics()
+    }
 }
 
 <span class="kw">impl </span>SystemCatalogTable {

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["FlushContext","WriteContext"],"trait":["Region"]};
+window.SIDEBAR_ITEMS = {"struct":["FlushContext","RegionStat","WriteContext"],"trait":["Region"]};
