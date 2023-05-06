@@ -163,6 +163,25 @@
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -180,6 +199,9 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>arrow_schema::SchemaRef <span class="kw">as </span>ArrowSchemaRef;
+<span class="kw">use </span>common_catalog::consts::{
+    SEMANTIC_TYPE_FIELD, SEMANTIC_TYPE_PRIMARY_KEY, SEMANTIC_TYPE_TIME_INDEX,
+};
 <span class="kw">use </span>common_query::physical_plan::TaskContext;
 <span class="kw">use </span>common_recordbatch::RecordBatch;
 <span class="kw">use </span>datafusion::datasource::streaming::PartitionStream <span class="kw">as </span>DfPartitionStream;
@@ -205,6 +227,7 @@
 <span class="kw">const </span>TABLE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table_name&quot;</span>;
 <span class="kw">const </span>COLUMN_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;column_name&quot;</span>;
 <span class="kw">const </span>DATA_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;data_type&quot;</span>;
+<span class="kw">const </span>SEMANTIC_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;semantic_type&quot;</span>;
 
 <span class="kw">impl </span>InformationSchemaColumns {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(catalog_name: String, catalog_provider: CatalogProviderRef) -&gt; <span class="self">Self </span>{
@@ -214,6 +237,7 @@
             ColumnSchema::new(TABLE_NAME, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
             ColumnSchema::new(COLUMN_NAME, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
             ColumnSchema::new(DATA_TYPE, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
+            ColumnSchema::new(SEMANTIC_TYPE, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
         ]));
         <span class="self">Self </span>{
             schema,
@@ -241,6 +265,7 @@
     table_names: StringVectorBuilder,
     column_names: StringVectorBuilder,
     data_types: StringVectorBuilder,
+    semantic_types: StringVectorBuilder,
 }
 
 <span class="kw">impl </span>InformationSchemaColumnsBuilder {
@@ -254,6 +279,7 @@
             table_names: StringVectorBuilder::with_capacity(<span class="number">42</span>),
             column_names: StringVectorBuilder::with_capacity(<span class="number">42</span>),
             data_types: StringVectorBuilder::with_capacity(<span class="number">42</span>),
+            semantic_types: StringVectorBuilder::with_capacity(<span class="number">42</span>),
         }
     }
 
@@ -265,14 +291,23 @@
             <span class="kw">let </span><span class="prelude-val">Some</span>(schema) = <span class="self">self</span>.catalog_provider.schema(<span class="kw-2">&amp;</span>schema_name).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">continue </span>};
             <span class="kw">for </span>table_name <span class="kw">in </span>schema.table_names().<span class="kw">await</span><span class="question-mark">? </span>{
                 <span class="kw">let </span><span class="prelude-val">Some</span>(table) = schema.table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">continue </span>};
+                <span class="kw">let </span>keys = <span class="kw-2">&amp;</span>table.table_info().meta.primary_key_indices;
                 <span class="kw">let </span>schema = table.schema();
-                <span class="kw">for </span>column <span class="kw">in </span>schema.column_schemas() {
+                <span class="kw">for </span>(idx, column) <span class="kw">in </span>schema.column_schemas().iter().enumerate() {
+                    <span class="kw">let </span>semantic_type = <span class="kw">if </span>column.is_time_index() {
+                        SEMANTIC_TYPE_TIME_INDEX
+                    } <span class="kw">else if </span>keys.contains(<span class="kw-2">&amp;</span>idx) {
+                        SEMANTIC_TYPE_PRIMARY_KEY
+                    } <span class="kw">else </span>{
+                        SEMANTIC_TYPE_FIELD
+                    };
                     <span class="self">self</span>.add_column(
                         <span class="kw-2">&amp;</span>catalog_name,
                         <span class="kw-2">&amp;</span>schema_name,
                         <span class="kw-2">&amp;</span>table_name,
                         <span class="kw-2">&amp;</span>column.name,
                         column.data_type.name(),
+                        semantic_type,
                     );
                 }
             }
@@ -288,12 +323,14 @@
         table_name: <span class="kw-2">&amp;</span>str,
         column_name: <span class="kw-2">&amp;</span>str,
         data_type: <span class="kw-2">&amp;</span>str,
+        semantic_type: <span class="kw-2">&amp;</span>str,
     ) {
         <span class="self">self</span>.catalog_names.push(<span class="prelude-val">Some</span>(catalog_name));
         <span class="self">self</span>.schema_names.push(<span class="prelude-val">Some</span>(schema_name));
         <span class="self">self</span>.table_names.push(<span class="prelude-val">Some</span>(table_name));
         <span class="self">self</span>.column_names.push(<span class="prelude-val">Some</span>(column_name));
         <span class="self">self</span>.data_types.push(<span class="prelude-val">Some</span>(data_type));
+        <span class="self">self</span>.semantic_types.push(<span class="prelude-val">Some</span>(semantic_type));
     }
 
     <span class="kw">fn </span>finish(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;RecordBatch&gt; {
@@ -303,6 +340,7 @@
             Arc::new(<span class="self">self</span>.table_names.finish()),
             Arc::new(<span class="self">self</span>.column_names.finish()),
             Arc::new(<span class="self">self</span>.data_types.finish()),
+            Arc::new(<span class="self">self</span>.semantic_types.finish()),
         ];
         RecordBatch::new(<span class="self">self</span>.schema.clone(), columns).context(CreateRecordBatchSnafu)
     }
