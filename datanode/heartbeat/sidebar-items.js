@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["resolve_addr"],"opaque":[""],"static":["CALLSITE","META"],"struct":["HeartbeatTask"]};
+window.SIDEBAR_ITEMS = {"fn":["resolve_addr"],"static":["CALLSITE"],"struct":["HeartbeatTask"]};

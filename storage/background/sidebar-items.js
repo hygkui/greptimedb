@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"opaque":[""],"struct":["Context","ContextInner","JobHandle","JobPoolImpl"],"trait":["Job","JobPool"],"type":["BoxedJob","JobPoolRef"]};
+window.SIDEBAR_ITEMS = {"struct":["Context","ContextInner","JobHandle","JobPoolImpl"],"trait":["Job","JobPool"],"type":["BoxedJob","JobPoolRef"]};

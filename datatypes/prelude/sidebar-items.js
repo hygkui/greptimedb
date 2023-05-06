@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Validity"],"trait":["LogicalPrimitiveType","WrapperType"]};
+window.SIDEBAR_ITEMS = {};

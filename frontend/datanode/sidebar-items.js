@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"opaque":[""],"struct":["DatanodeClients"]};
+window.SIDEBAR_ITEMS = {"struct":["DatanodeClients"]};
