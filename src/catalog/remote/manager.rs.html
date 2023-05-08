@@ -899,6 +899,81 @@
 <a href="#899" id="899">899</a>
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -930,7 +1005,6 @@
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>table::engine::manager::TableEngineManagerRef;
 <span class="kw">use </span>table::engine::{EngineContext, TableReference};
-<span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>table::requests::{CreateTableRequest, OpenTableRequest};
 <span class="kw">use </span>table::TableRef;
 <span class="kw">use </span>tokio::sync::Mutex;
@@ -981,16 +1055,6 @@
         }) <span class="kw">as _
     </span>}
 
-    <span class="kw">fn </span>new_schema_provider(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog_name: <span class="kw-2">&amp;</span>str, schema_name: <span class="kw-2">&amp;</span>str) -&gt; SchemaProviderRef {
-        Arc::new(RemoteSchemaProvider {
-            catalog_name: catalog_name.to_string(),
-            schema_name: schema_name.to_string(),
-            node_id: <span class="self">self</span>.node_id,
-            backend: <span class="self">self</span>.backend.clone(),
-            engine_manager: <span class="self">self</span>.engine_manager.clone(),
-        }) <span class="kw">as _
-    </span>}
-
     <span class="kw">async fn </span>iter_remote_catalogs(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;CatalogKey&gt;&gt; + Send + <span class="lifetime">&#39;_</span>&gt;&gt; {
@@ -1015,178 +1079,45 @@
         }))
     }
 
-    <span class="kw">async fn </span>iter_remote_schemas(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        catalog_name: <span class="kw-2">&amp;</span>str,
-    ) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;SchemaKey&gt;&gt; + Send + <span class="lifetime">&#39;_</span>&gt;&gt; {
-        <span class="kw">let </span>schema_prefix = build_schema_prefix(catalog_name);
-        <span class="kw">let </span><span class="kw-2">mut </span>schemas = <span class="self">self</span>.backend.range(schema_prefix.as_bytes());
-
-        Box::pin(<span class="macro">stream!</span>({
-            <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
-                <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
-                <span class="kw">if </span>!k.starts_with(schema_prefix.as_bytes()) {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-schema key: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
-                    <span class="kw">continue</span>;
-                }
-
-                <span class="kw">let </span>schema_key = SchemaKey::parse(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>k))
-                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-                <span class="kw">yield </span><span class="prelude-val">Ok</span>(schema_key)
-            }
-        }))
-    }
-
-    <span class="doccomment">/// Iterate over all table entries on metasrv
-    </span><span class="kw">async fn </span>iter_remote_tables(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        catalog_name: <span class="kw-2">&amp;</span>str,
-        schema_name: <span class="kw-2">&amp;</span>str,
-    ) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;(TableGlobalKey, TableGlobalValue)&gt;&gt; + Send + <span class="lifetime">&#39;_</span>&gt;&gt; {
-        <span class="kw">let </span>table_prefix = build_table_global_prefix(catalog_name, schema_name);
-        <span class="kw">let </span><span class="kw-2">mut </span>tables = <span class="self">self</span>.backend.range(table_prefix.as_bytes());
-        Box::pin(<span class="macro">stream!</span>({
-            <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = tables.next().<span class="kw">await </span>{
-                <span class="kw">let </span>Kv(k, v) = r<span class="question-mark">?</span>;
-                <span class="kw">if </span>!k.starts_with(table_prefix.as_bytes()) {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-table prefix: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
-                    <span class="kw">continue</span>;
-                }
-                <span class="kw">let </span>table_key = TableGlobalKey::parse(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>k))
-                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-                <span class="kw">let </span>table_value =
-                    TableGlobalValue::from_bytes(<span class="kw-2">&amp;</span>v).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-
-                <span class="macro">info!</span>(
-                    <span class="string">&quot;Found catalog table entry, key: {}, value: {:?}&quot;</span>,
-                    table_key, table_value
-                );
-                <span class="comment">// metasrv has allocated region ids to current datanode
-                </span><span class="kw">if </span>table_value
-                    .regions_id_map
-                    .get(<span class="kw-2">&amp;</span><span class="self">self</span>.node_id)
-                    .map(|v| !v.is_empty())
-                    .unwrap_or(<span class="bool-val">false</span>)
-                {
-                    <span class="kw">yield </span><span class="prelude-val">Ok</span>((table_key, table_value))
-                }
-            }
-        }))
-    }
-
     <span class="doccomment">/// Fetch catalogs/schemas/tables from remote catalog manager along with max table id allocated.
     </span><span class="kw">async fn </span>initiate_catalogs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;HashMap&lt;String, CatalogProviderRef&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashMap::new();
 
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.iter_remote_catalogs().<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>joins = Vec::new();
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = catalogs.next().<span class="kw">await </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>max_table_id = MAX_SYS_TABLE_ID;
             <span class="kw">let </span>CatalogKey { catalog_name, .. } = r<span class="question-mark">?</span>;
             <span class="macro">info!</span>(<span class="string">&quot;Fetch catalog from metasrv: {}&quot;</span>, catalog_name);
             <span class="kw">let </span>catalog = res
                 .entry(catalog_name.clone())
                 .or_insert_with(|| <span class="self">self</span>.new_catalog_provider(<span class="kw-2">&amp;</span>catalog_name))
                 .clone();
+
+            <span class="kw">let </span>node_id = <span class="self">self</span>.node_id;
+            <span class="kw">let </span>backend = <span class="self">self</span>.backend.clone();
+            <span class="kw">let </span>engine_manager = <span class="self">self</span>.engine_manager.clone();
+
             <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
 
-            <span class="self">self</span>.initiate_schemas(<span class="kw-2">&amp;</span>catalog_name, catalog, <span class="kw-2">&amp;mut </span>max_table_id)
-                .<span class="kw">await</span><span class="question-mark">?</span>;
-
-            <span class="macro">info!</span>(
-                <span class="string">&quot;Catalog name: {}, max table id allocated: {}&quot;</span>,
-                <span class="kw-2">&amp;</span>catalog_name, max_table_id
-            );
+            joins.push(common_runtime::spawn_bg(<span class="kw">async move </span>{
+                <span class="kw">let </span>max_table_id =
+                    initiate_schemas(node_id, backend, engine_manager, <span class="kw-2">&amp;</span>catalog_name, catalog)
+                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;Catalog name: {}, max table id allocated: {}&quot;</span>,
+                    <span class="kw-2">&amp;</span>catalog_name, max_table_id
+                );
+                <span class="prelude-val">Ok</span>(())
+            }));
         }
+
+        futures::future::try_join_all(joins)
+            .<span class="kw">await
+            </span>.context(ParallelOpenTableSnafu)<span class="question-mark">?
+            </span>.into_iter()
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res)
-    }
-
-    <span class="kw">async fn </span>initiate_schemas(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        catalog_name: <span class="kw-2">&amp;</span>str,
-        catalog: CatalogProviderRef,
-        max_table_id: <span class="kw-2">&amp;mut </span>TableId,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>schemas = <span class="self">self</span>.iter_remote_schemas(catalog_name).<span class="kw">await</span>;
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
-            <span class="kw">let </span>SchemaKey {
-                catalog_name,
-                schema_name,
-                ..
-            } = r<span class="question-mark">?</span>;
-            <span class="macro">info!</span>(<span class="string">&quot;Found schema: {}.{}&quot;</span>, catalog_name, schema_name);
-            <span class="kw">let </span>schema = <span class="kw">match </span>catalog.schema(<span class="kw-2">&amp;</span>schema_name).<span class="kw">await</span><span class="question-mark">? </span>{
-                <span class="prelude-val">None </span>=&gt; {
-                    <span class="kw">let </span>schema = <span class="self">self</span>.new_schema_provider(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name);
-                    catalog
-                        .register_schema(schema_name.clone(), schema.clone())
-                        .<span class="kw">await</span><span class="question-mark">?</span>;
-                    <span class="macro">info!</span>(<span class="string">&quot;Registered schema: {}&quot;</span>, <span class="kw-2">&amp;</span>schema_name);
-                    schema
-                }
-                <span class="prelude-val">Some</span>(schema) =&gt; schema,
-            };
-
-            <span class="macro">info!</span>(
-                <span class="string">&quot;Fetch schema from metasrv: {}.{}&quot;</span>,
-                <span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name
-            );
-            <span class="macro">increment_gauge!</span>(
-                <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT,
-                <span class="number">1.0</span>,
-                <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name)],
-            );
-            <span class="self">self</span>.initiate_tables(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name, schema, max_table_id)
-                .<span class="kw">await</span><span class="question-mark">?</span>;
-        }
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Initiates all tables inside a catalog by fetching data from metasrv.
-    </span><span class="kw">async fn </span>initiate_tables&lt;<span class="lifetime">&#39;a</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        catalog_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
-        schema_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
-        schema: SchemaProviderRef,
-        max_table_id: <span class="kw-2">&amp;mut </span>TableId,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">info!</span>(<span class="string">&quot;initializing tables in {}.{}&quot;</span>, catalog_name, schema_name);
-        <span class="kw">let </span><span class="kw-2">mut </span>table_num = <span class="number">0</span>;
-        <span class="kw">let </span>tables = <span class="self">self</span>.iter_remote_tables(catalog_name, schema_name).<span class="kw">await</span>;
-
-        <span class="kw">let </span>kvs = tables.try_collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>node_id = <span class="self">self</span>.node_id;
-        <span class="kw">let </span>joins = kvs
-            .into_iter()
-            .map(|(table_key, table_value)| {
-                <span class="kw">let </span>engine_manager = <span class="self">self</span>.engine_manager.clone();
-                common_runtime::spawn_bg(<span class="kw">async move </span>{
-                    open_or_create_table(node_id, engine_manager, <span class="kw-2">&amp;</span>table_key, <span class="kw-2">&amp;</span>table_value).<span class="kw">await
-                </span>})
-            })
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>vec = futures::future::join_all(joins).<span class="kw">await</span>;
-        <span class="kw">for </span>res <span class="kw">in </span>vec {
-            <span class="kw">let </span>table_ref = res.context(ParallelOpenTableSnafu)<span class="question-mark">??</span>;
-            <span class="kw">let </span>table_info = table_ref.table_info();
-            <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>table_info.name;
-            <span class="kw">let </span>table_id = table_info.ident.table_id;
-            schema.register_table(table_name.clone(), table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="macro">info!</span>(<span class="string">&quot;Registered table {}&quot;</span>, table_name);
-            <span class="kw-2">*</span>max_table_id = (<span class="kw-2">*</span>max_table_id).max(table_id);
-            table_num += <span class="number">1</span>;
-        }
-
-        <span class="macro">increment_gauge!</span>(
-            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
-            <span class="number">1.0</span>,
-            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(catalog_name, schema_name)],
-        );
-        <span class="macro">info!</span>(
-            <span class="string">&quot;initialized tables in {}.{}, total: {}&quot;</span>,
-            catalog_name, schema_name, table_num
-        );
-        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">pub async fn </span>create_catalog_and_schema(
@@ -1194,7 +1125,13 @@
         catalog_name: <span class="kw-2">&amp;</span>str,
         schema_name: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;CatalogProviderRef&gt; {
-        <span class="kw">let </span>schema_provider = <span class="self">self</span>.new_schema_provider(catalog_name, schema_name);
+        <span class="kw">let </span>schema_provider = new_schema_provider(
+            <span class="self">self</span>.node_id,
+            <span class="self">self</span>.backend.clone(),
+            <span class="self">self</span>.engine_manager.clone(),
+            catalog_name,
+            schema_name,
+        );
 
         <span class="kw">let </span>catalog_provider = <span class="self">self</span>.new_catalog_provider(catalog_name);
         catalog_provider
@@ -1231,6 +1168,213 @@
         <span class="macro">info!</span>(<span class="string">&quot;Created catalog &#39;{catalog_key}&quot;</span>);
         <span class="prelude-val">Ok</span>(catalog_provider)
     }
+}
+
+<span class="kw">fn </span>new_schema_provider(
+    node_id: u64,
+    backend: KvBackendRef,
+    engine_manager: TableEngineManagerRef,
+    catalog_name: <span class="kw-2">&amp;</span>str,
+    schema_name: <span class="kw-2">&amp;</span>str,
+) -&gt; SchemaProviderRef {
+    Arc::new(RemoteSchemaProvider {
+        catalog_name: catalog_name.to_string(),
+        schema_name: schema_name.to_string(),
+        node_id,
+        backend,
+        engine_manager,
+    }) <span class="kw">as _
+</span>}
+
+<span class="kw">async fn </span>iter_remote_schemas&lt;<span class="lifetime">&#39;a</span>&gt;(
+    backend: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>KvBackendRef,
+    catalog_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;SchemaKey&gt;&gt; + Send + <span class="lifetime">&#39;a</span>&gt;&gt; {
+    <span class="kw">let </span>schema_prefix = build_schema_prefix(catalog_name);
+    <span class="kw">let </span><span class="kw-2">mut </span>schemas = backend.range(schema_prefix.as_bytes());
+
+    Box::pin(<span class="macro">stream!</span>({
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
+            <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
+            <span class="kw">if </span>!k.starts_with(schema_prefix.as_bytes()) {
+                <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-schema key: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
+                <span class="kw">continue</span>;
+            }
+
+            <span class="kw">let </span>schema_key =
+                SchemaKey::parse(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>k)).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+            <span class="kw">yield </span><span class="prelude-val">Ok</span>(schema_key)
+        }
+    }))
+}
+
+<span class="doccomment">/// Initiates all schemas inside the catalog by fetching data from metasrv.
+/// Return maximum table id in the catalog.
+</span><span class="kw">async fn </span>initiate_schemas(
+    node_id: u64,
+    backend: KvBackendRef,
+    engine_manager: TableEngineManagerRef,
+    catalog_name: <span class="kw-2">&amp;</span>str,
+    catalog: CatalogProviderRef,
+) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>schemas = iter_remote_schemas(<span class="kw-2">&amp;</span>backend, catalog_name).<span class="kw">await</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>joins = Vec::new();
+    <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
+        <span class="kw">let </span>SchemaKey {
+            catalog_name,
+            schema_name,
+            ..
+        } = r<span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(<span class="string">&quot;Found schema: {}.{}&quot;</span>, catalog_name, schema_name);
+        <span class="kw">let </span>schema = <span class="kw">match </span>catalog.schema(<span class="kw-2">&amp;</span>schema_name).<span class="kw">await</span><span class="question-mark">? </span>{
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">let </span>schema = new_schema_provider(
+                    node_id,
+                    backend.clone(),
+                    engine_manager.clone(),
+                    <span class="kw-2">&amp;</span>catalog_name,
+                    <span class="kw-2">&amp;</span>schema_name,
+                );
+                catalog
+                    .register_schema(schema_name.clone(), schema.clone())
+                    .<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="macro">info!</span>(<span class="string">&quot;Registered schema: {}&quot;</span>, <span class="kw-2">&amp;</span>schema_name);
+                schema
+            }
+            <span class="prelude-val">Some</span>(schema) =&gt; schema,
+        };
+
+        <span class="macro">info!</span>(
+            <span class="string">&quot;Fetch schema from metasrv: {}.{}&quot;</span>,
+            <span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name
+        );
+        <span class="macro">increment_gauge!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT,
+            <span class="number">1.0</span>,
+            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name)],
+        );
+
+        <span class="kw">let </span>backend = backend.clone();
+        <span class="kw">let </span>engine_manager = engine_manager.clone();
+
+        joins.push(common_runtime::spawn_bg(<span class="kw">async move </span>{
+            initiate_tables(
+                node_id,
+                backend,
+                engine_manager,
+                <span class="kw-2">&amp;</span>catalog_name,
+                <span class="kw-2">&amp;</span>schema_name,
+                schema,
+            )
+            .<span class="kw">await
+        </span>}));
+    }
+
+    <span class="kw">let </span><span class="kw-2">mut </span>max_table_id = MAX_SYS_TABLE_ID;
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(found_max_table_id) = futures::future::try_join_all(joins)
+        .<span class="kw">await
+        </span>.context(ParallelOpenTableSnafu)<span class="question-mark">?
+        </span>.into_iter()
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?
+        </span>.into_iter()
+        .max()
+    {
+        max_table_id = max_table_id.max(found_max_table_id);
+    }
+
+    <span class="prelude-val">Ok</span>(max_table_id)
+}
+
+<span class="doccomment">/// Iterate over all table entries on metasrv
+</span><span class="kw">async fn </span>iter_remote_tables&lt;<span class="lifetime">&#39;a</span>&gt;(
+    node_id: u64,
+    backend: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>KvBackendRef,
+    catalog_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+    schema_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;(TableGlobalKey, TableGlobalValue)&gt;&gt; + Send + <span class="lifetime">&#39;a</span>&gt;&gt; {
+    <span class="kw">let </span>table_prefix = build_table_global_prefix(catalog_name, schema_name);
+    <span class="kw">let </span><span class="kw-2">mut </span>tables = backend.range(table_prefix.as_bytes());
+    Box::pin(<span class="macro">stream!</span>({
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = tables.next().<span class="kw">await </span>{
+            <span class="kw">let </span>Kv(k, v) = r<span class="question-mark">?</span>;
+            <span class="kw">if </span>!k.starts_with(table_prefix.as_bytes()) {
+                <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-table prefix: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
+                <span class="kw">continue</span>;
+            }
+            <span class="kw">let </span>table_key = TableGlobalKey::parse(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>k))
+                .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+            <span class="kw">let </span>table_value = TableGlobalValue::from_bytes(<span class="kw-2">&amp;</span>v).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+
+            <span class="macro">info!</span>(
+                <span class="string">&quot;Found catalog table entry, key: {}, value: {:?}&quot;</span>,
+                table_key, table_value
+            );
+            <span class="comment">// metasrv has allocated region ids to current datanode
+            </span><span class="kw">if </span>table_value
+                .regions_id_map
+                .get(<span class="kw-2">&amp;</span>node_id)
+                .map(|v| !v.is_empty())
+                .unwrap_or(<span class="bool-val">false</span>)
+            {
+                <span class="kw">yield </span><span class="prelude-val">Ok</span>((table_key, table_value))
+            }
+        }
+    }))
+}
+
+<span class="doccomment">/// Initiates all tables inside the catalog by fetching data from metasrv.
+/// Return maximum table id in the schema.
+</span><span class="kw">async fn </span>initiate_tables(
+    node_id: u64,
+    backend: KvBackendRef,
+    engine_manager: TableEngineManagerRef,
+    catalog_name: <span class="kw-2">&amp;</span>str,
+    schema_name: <span class="kw-2">&amp;</span>str,
+    schema: SchemaProviderRef,
+) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+    <span class="macro">info!</span>(<span class="string">&quot;initializing tables in {}.{}&quot;</span>, catalog_name, schema_name);
+    <span class="kw">let </span>tables = iter_remote_tables(node_id, <span class="kw-2">&amp;</span>backend, catalog_name, schema_name).<span class="kw">await</span>;
+
+    <span class="kw">let </span>kvs = tables.try_collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>table_num = kvs.len();
+    <span class="kw">let </span>joins = kvs
+        .into_iter()
+        .map(|(table_key, table_value)| {
+            <span class="kw">let </span>engine_manager = engine_manager.clone();
+            <span class="kw">let </span>schema = schema.clone();
+            common_runtime::spawn_bg(<span class="kw">async move </span>{
+                <span class="kw">let </span>table_ref =
+                    open_or_create_table(node_id, engine_manager, <span class="kw-2">&amp;</span>table_key, <span class="kw-2">&amp;</span>table_value).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">let </span>table_info = table_ref.table_info();
+                <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>table_info.name;
+                schema.register_table(table_name.clone(), table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="macro">info!</span>(<span class="string">&quot;Registered table {}&quot;</span>, table_name);
+                <span class="prelude-val">Ok</span>(table_info.ident.table_id)
+            })
+        })
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+
+    <span class="kw">let </span>max_table_id = futures::future::try_join_all(joins)
+        .<span class="kw">await
+        </span>.context(ParallelOpenTableSnafu)<span class="question-mark">?
+        </span>.into_iter()
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?
+        </span>.into_iter()
+        .max()
+        .unwrap_or(MAX_SYS_TABLE_ID);
+
+    <span class="macro">increment_gauge!</span>(
+        <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
+        <span class="number">1.0</span>,
+        <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(catalog_name, schema_name)],
+    );
+    <span class="macro">info!</span>(
+        <span class="string">&quot;initialized tables in {}.{}, total: {}&quot;</span>,
+        catalog_name, schema_name, table_num
+    );
+
+    <span class="prelude-val">Ok</span>(max_table_id)
 }
 
 <span class="kw">async fn </span>open_or_create_table(
@@ -1408,7 +1552,13 @@
                 </span>.context(CatalogNotFoundSnafu {
                     catalog_name: <span class="kw-2">&amp;</span>catalog_name,
                 })<span class="question-mark">?</span>;
-        <span class="kw">let </span>schema_provider = <span class="self">self</span>.new_schema_provider(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name);
+        <span class="kw">let </span>schema_provider = new_schema_provider(
+            <span class="self">self</span>.node_id,
+            <span class="self">self</span>.backend.clone(),
+            <span class="self">self</span>.engine_manager.clone(),
+            <span class="kw-2">&amp;</span>catalog_name,
+            <span class="kw-2">&amp;</span>schema_name,
+        );
         catalog_provider
             .register_schema(schema_name, schema_provider)
             .<span class="kw">await</span><span class="question-mark">?</span>;
