@@ -378,6 +378,10 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -406,6 +410,7 @@
 <span class="kw">use </span>dashmap::DashMap;
 <span class="kw">pub use </span>failure_handler::RegionFailureHandler;
 <span class="kw">pub use </span>keep_lease_handler::KeepLeaseHandler;
+<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">pub use </span>on_leader_start::OnLeaderStartHandler;
 <span class="kw">pub use </span>persist_stats_handler::PersistStatsHandler;
 <span class="kw">pub use </span>response_header_handler::ResponseHeaderHandler;
@@ -417,6 +422,7 @@
 <span class="kw">use </span><span class="self">self</span>::node_stat::Stat;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_META_HEARTBEAT_CONNECTION_NUM;
 <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::{Channel, Mailbox, MailboxReceiver, MailboxRef, MessageId};
 
@@ -507,6 +513,7 @@
     <span class="kw">pub async fn </span>register(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw">impl </span>AsRef&lt;str&gt;, pusher: Pusher) {
         <span class="kw">let </span><span class="kw-2">mut </span>pushers = <span class="self">self</span>.pushers.write().<span class="kw">await</span>;
         <span class="kw">let </span>key = key.as_ref();
+        <span class="macro">increment_gauge!</span>(METRIC_META_HEARTBEAT_CONNECTION_NUM, <span class="number">1.0</span>);
         <span class="macro">info!</span>(<span class="string">&quot;Pusher register: {}&quot;</span>, key);
         pushers.insert(key.into(), pusher);
     }
@@ -514,6 +521,7 @@
     <span class="kw">pub async fn </span>unregister(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw">impl </span>AsRef&lt;str&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Pusher&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>pushers = <span class="self">self</span>.pushers.write().<span class="kw">await</span>;
         <span class="kw">let </span>key = key.as_ref();
+        <span class="macro">decrement_gauge!</span>(METRIC_META_HEARTBEAT_CONNECTION_NUM, <span class="number">1.0</span>);
         <span class="macro">info!</span>(<span class="string">&quot;Pusher unregister: {}&quot;</span>, key);
         pushers.remove(key)
     }
