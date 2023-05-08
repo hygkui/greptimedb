@@ -623,7 +623,7 @@
 }
 
 <span class="kw">pub fn </span>load_frontend_plugins(user_provider: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Plugins&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>plugins = Plugins::new();
+    <span class="kw">let </span>plugins = Plugins::new();
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(provider) = user_provider {
         <span class="kw">let </span>provider = auth::user_provider_from_option(provider).context(IllegalAuthConfigSnafu)<span class="question-mark">?</span>;

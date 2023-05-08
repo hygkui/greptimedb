@@ -212,6 +212,11 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -234,6 +239,7 @@
 <span class="kw">use </span>common_runtime::Builder <span class="kw">as </span>RuntimeBuilder;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>servers::auth::UserProviderRef;
+<span class="kw">use </span>servers::configurator::ConfiguratorRef;
 <span class="kw">use </span>servers::error::Error::InternalIo;
 <span class="kw">use </span>servers::grpc::GrpcServer;
 <span class="kw">use </span>servers::http::HttpServerBuilder;
@@ -270,7 +276,7 @@
         </span>T: FrontendInstance,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::&lt;ServerHandler&gt;::with_capacity(plugins.len());
-        <span class="kw">let </span>user_provider = plugins.get::&lt;UserProviderRef&gt;().cloned();
+        <span class="kw">let </span>user_provider = plugins.get::&lt;UserProviderRef&gt;();
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(opts) = <span class="kw-2">&amp;</span>opts.grpc_options {
             <span class="kw">let </span>grpc_addr = parse_addr(<span class="kw-2">&amp;</span>opts.addr)<span class="question-mark">?</span>;
@@ -393,6 +399,10 @@
             }
             http_server_builder.with_metrics_handler(MetricsHandler);
             http_server_builder.with_script_handler(instance.clone());
+
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(configurator) = plugins.get::&lt;<span class="prelude-ty">Option</span>&lt;ConfiguratorRef&gt;&gt;() {
+                http_server_builder.with_configurator(configurator);
+            }
             <span class="kw">let </span>http_server = http_server_builder.build();
             result.push((Box::new(http_server), http_addr));
         }

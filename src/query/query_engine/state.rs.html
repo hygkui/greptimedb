@@ -145,7 +145,6 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -258,8 +257,7 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>disallow_cross_schema_query(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.plugins
-            .get::&lt;QueryOptions&gt;()
-            .map(|x| x.disallow_cross_schema_query)
+            .map::&lt;QueryOptions, <span class="kw">_</span>, <span class="kw">_</span>&gt;(|x| x.disallow_cross_schema_query)
             .unwrap_or(<span class="bool-val">false</span>)
     }
 

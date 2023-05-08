@@ -783,6 +783,22 @@
 <a href="#783" id="783">783</a>
 <a href="#784" id="784">784</a>
 <a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -843,6 +859,7 @@
 <span class="kw">use </span><span class="self">self</span>::authorize::HttpAuth;
 <span class="kw">use </span><span class="self">self</span>::influxdb::{influxdb_health, influxdb_ping, influxdb_write};
 <span class="kw">use </span><span class="kw">crate</span>::auth::UserProviderRef;
+<span class="kw">use </span><span class="kw">crate</span>::configurator::ConfiguratorRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{AlreadyStartedSnafu, <span class="prelude-ty">Result</span>, StartHttpSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::http::admin::flush;
 <span class="kw">use </span><span class="kw">crate</span>::metrics_handler::MetricsHandler;
@@ -897,6 +914,7 @@
     shutdown_tx: Mutex&lt;<span class="prelude-ty">Option</span>&lt;Sender&lt;()&gt;&gt;&gt;,
     user_provider: <span class="prelude-ty">Option</span>&lt;UserProviderRef&gt;,
     metrics_handler: <span class="prelude-ty">Option</span>&lt;MetricsHandler&gt;,
+    configurator: <span class="prelude-ty">Option</span>&lt;ConfiguratorRef&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -1041,7 +1059,7 @@
 }
 
 <span class="kw">impl </span>JsonResponse {
-    <span class="kw">fn </span>with_error(error: String, error_code: StatusCode) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>with_error(error: String, error_code: StatusCode) -&gt; <span class="self">Self </span>{
         JsonResponse {
             error: <span class="prelude-val">Some</span>(error),
             code: error_code <span class="kw">as </span>u32,
@@ -1065,7 +1083,7 @@
     </span>}
 
     <span class="doccomment">/// Create a json response from query result
-    </span><span class="kw">async fn </span>from_output(outputs: Vec&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt;) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub async fn </span>from_output(outputs: Vec&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="comment">// TODO(sunng87): this api response structure cannot represent error
         // well. It hides successful execution results from error response
         </span><span class="kw">let </span><span class="kw-2">mut </span>results = Vec::with_capacity(outputs.len());
@@ -1167,6 +1185,7 @@
                 script_handler: <span class="prelude-val">None</span>,
                 metrics_handler: <span class="prelude-val">None</span>,
                 shutdown_tx: Mutex::new(<span class="prelude-val">None</span>),
+                configurator: <span class="prelude-val">None</span>,
             },
         }
     }
@@ -1210,6 +1229,12 @@
         <span class="self">self</span>.inner.metrics_handler.get_or_insert(handler);
         <span class="self">self
     </span>}
+
+    <span class="kw">pub fn </span>with_configurator(<span class="kw-2">&amp;mut </span><span class="self">self</span>, configurator: <span class="prelude-ty">Option</span>&lt;ConfiguratorRef&gt;) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.inner.configurator = configurator;
+        <span class="self">self
+    </span>}
+
     <span class="kw">pub fn </span>build(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; HttpServer {
         std::mem::take(<span class="self">self</span>).inner
     }
@@ -1297,7 +1322,10 @@
                 router = router.nest(<span class="string">&quot;/dashboard&quot;</span>, dashboard::dashboard());
             }
         }
+        router
+    }
 
+    <span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>, router: Router) -&gt; Router {
         router
             <span class="comment">// middlewares
             </span>.layer(
@@ -1390,7 +1418,11 @@
                 AlreadyStartedSnafu { server: <span class="string">&quot;HTTP&quot; </span>}
             );
 
-            <span class="kw">let </span>app = <span class="self">self</span>.make_app();
+            <span class="kw">let </span><span class="kw-2">mut </span>app = <span class="self">self</span>.make_app();
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(configurator) = <span class="self">self</span>.configurator.as_ref() {
+                app = configurator.config_http(app);
+            }
+            <span class="kw">let </span>app = <span class="self">self</span>.build(app);
             <span class="kw">let </span>server = axum::Server::bind(<span class="kw-2">&amp;</span>listening).serve(app.into_make_service());
 
             <span class="kw-2">*</span>shutdown_tx = <span class="prelude-val">Some</span>(tx);
@@ -1504,7 +1536,7 @@
             .with_sql_handler(sql_instance)
             .with_grpc_handler(grpc_instance)
             .build();
-        server.make_app().route(
+        server.build(server.make_app()).route(
             <span class="string">&quot;/test/timeout&quot;</span>,
             get(forever.layer(
                 ServiceBuilder::new()

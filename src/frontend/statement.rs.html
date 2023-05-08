@@ -233,7 +233,7 @@
 };
 
 <span class="attr">#[derive(Clone)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>StatementExecutor {
+</span><span class="kw">pub struct </span>StatementExecutor {
     catalog_manager: CatalogManagerRef,
     query_engine: QueryEngineRef,
     sql_stmt_executor: SqlStatementExecutorRef,
@@ -263,7 +263,7 @@
         }
     }
 
-    <span class="kw">async fn </span>execute_sql(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: Statement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">pub async fn </span>execute_sql(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: Statement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">match </span>stmt {
             Statement::Query(<span class="kw">_</span>) | Statement::Explain(<span class="kw">_</span>) | Statement::Delete(<span class="kw">_</span>) =&gt; {
                 <span class="self">self</span>.plan_exec(QueryStatement::Sql(stmt), query_ctx).<span class="kw">await

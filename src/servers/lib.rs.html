@@ -93,6 +93,7 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -114,6 +115,7 @@
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">pub mod </span>auth;
+<span class="kw">pub mod </span>configurator;
 <span class="kw">pub mod </span>error;
 <span class="kw">pub mod </span>grpc;
 <span class="kw">pub mod </span>http;
@@ -157,7 +159,7 @@
 /// schema name
 /// - if `[&lt;catalog&gt;-]` is provided, we split database name with `-` and use
 /// `&lt;catalog&gt;` and `&lt;schema&gt;`.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_catalog_and_schema_from_client_database_name(db: <span class="kw-2">&amp;</span>str) -&gt; (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str) {
+</span><span class="kw">pub fn </span>parse_catalog_and_schema_from_client_database_name(db: <span class="kw-2">&amp;</span>str) -&gt; (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span>parts = db.splitn(<span class="number">2</span>, <span class="string">&#39;-&#39;</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
     <span class="kw">if </span>parts.len() == <span class="number">2 </span>{
         (parts[<span class="number">0</span>], parts[<span class="number">1</span>])
