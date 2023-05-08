@@ -93,17 +93,6 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -121,6 +110,7 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>api::v1::meta::Peer;
+<span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>common_time::util <span class="kw">as </span>time_util;
 
 <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClient;
@@ -129,6 +119,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::lease;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 <span class="kw">use </span><span class="kw">crate</span>::selector::{Namespace, Selector};
+
+<span class="kw">const </span>MAX_REGION_NUMBER: u64 = u64::MAX;
 
 <span class="kw">pub struct </span>LoadBasedSelector {
     <span class="kw">pub </span>meta_peer_client: MetaPeerClient,
@@ -150,6 +142,10 @@
                 </span>.into_iter()
                 .collect();
 
+        <span class="kw">if </span>lease_kvs.is_empty() {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]);
+        }
+
         <span class="comment">// get stats of alive datanodes
         </span><span class="kw">let </span>stat_keys: Vec&lt;StatKey&gt; = lease_kvs
             .keys()
@@ -160,17 +156,23 @@
             .collect();
         <span class="kw">let </span>stat_kvs = <span class="self">self</span>.meta_peer_client.get_dn_stat_kvs(stat_keys).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="comment">// aggregate lease and stat information
-        </span><span class="kw">let </span><span class="kw-2">mut </span>tuples: Vec&lt;(LeaseKey, LeaseValue, u64)&gt; = stat_kvs
+        <span class="kw">let </span><span class="kw-2">mut </span>tuples: Vec&lt;(LeaseKey, LeaseValue, u64)&gt; = lease_kvs
             .into_iter()
-            .filter_map(|(stat_key, stat_val)| {
-                <span class="kw">let </span>lease_key = to_lease_key(<span class="kw-2">&amp;</span>stat_key);
-                <span class="kw">match </span>(lease_kvs.get(<span class="kw-2">&amp;</span>lease_key), stat_val.region_num()) {
-                    (<span class="prelude-val">Some</span>(lease_val), <span class="prelude-val">Some</span>(region_num)) =&gt; {
-                        <span class="prelude-val">Some</span>((lease_key, lease_val.clone(), region_num))
+            .map(|(lease_k, lease_v)| {
+                <span class="kw">let </span>stat_key: StatKey = (<span class="kw-2">&amp;</span>lease_k).into();
+
+                <span class="kw">let </span>region_num = <span class="kw">match </span>stat_kvs
+                    .get(<span class="kw-2">&amp;</span>stat_key)
+                    .and_then(|stat_val| stat_val.region_num())
+                {
+                    <span class="prelude-val">Some</span>(region_num) =&gt; region_num,
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="macro">warn!</span>(<span class="string">&quot;Failed to get stat_val by stat_key {:?}&quot;</span>, stat_key);
+                        MAX_REGION_NUMBER
                     }
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-                }
+                };
+
+                (lease_k, lease_v, region_num)
             })
             .collect();
 
@@ -184,30 +186,6 @@
                 addr: lease_val.node_addr,
             })
             .collect())
-    }
-}
-
-<span class="kw">fn </span>to_lease_key(k: <span class="kw-2">&amp;</span>StatKey) -&gt; LeaseKey {
-    LeaseKey {
-        cluster_id: k.cluster_id,
-        node_id: k.node_id,
-    }
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">super</span>::to_lease_key;
-    <span class="kw">use </span><span class="kw">crate</span>::keys::StatKey;
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_to_lease_key() {
-        <span class="kw">let </span>statkey = StatKey {
-            cluster_id: <span class="number">1</span>,
-            node_id: <span class="number">101</span>,
-        };
-        <span class="kw">let </span>lease_key = to_lease_key(<span class="kw-2">&amp;</span>statkey);
-        <span class="macro">assert_eq!</span>(<span class="number">1</span>, lease_key.cluster_id);
-        <span class="macro">assert_eq!</span>(<span class="number">101</span>, lease_key.node_id);
     }
 }
 </code></pre></div></section></main></body></html>
