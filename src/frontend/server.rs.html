@@ -216,7 +216,6 @@
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -400,9 +399,8 @@
             http_server_builder.with_metrics_handler(MetricsHandler);
             http_server_builder.with_script_handler(instance.clone());
 
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(configurator) = plugins.get::&lt;<span class="prelude-ty">Option</span>&lt;ConfiguratorRef&gt;&gt;() {
-                http_server_builder.with_configurator(configurator);
-            }
+            http_server_builder.with_configurator(plugins.get::&lt;ConfiguratorRef&gt;());
+
             <span class="kw">let </span>http_server = http_server_builder.build();
             result.push((Box::new(http_server), http_addr));
         }

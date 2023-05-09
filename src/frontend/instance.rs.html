@@ -1205,6 +1205,7 @@
 <a href="#1205" id="1205">1205</a>
 <a href="#1206" id="1206">1206</a>
 <a href="#1207" id="1207">1207</a>
+<a href="#1208" id="1208">1208</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1362,7 +1363,8 @@
             query_engine.clone(),
             dist_instance.clone(),
         ));
-        plugins.insert::&lt;<span class="prelude-ty">Option</span>&lt;StatementExecutorRef&gt;&gt;(<span class="prelude-val">Some</span>(statement_executor.clone()));
+
+        plugins.insert::&lt;StatementExecutorRef&gt;(statement_executor.clone());
 
         <span class="prelude-val">Ok</span>(Instance {
             catalog_manager,
