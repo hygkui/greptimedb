@@ -56,6 +56,7 @@
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -86,7 +87,8 @@
         source: std::io::Error,
         location: Location,
     },
-    <span class="attr">#[snafu(display(<span class="string">&quot;Repeated task {} not started yet&quot;</span>, name))]
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Repeated task {} is already started&quot;</span>, name))]
     </span>IllegalState { name: String, location: Location },
 
     <span class="attr">#[snafu(display(

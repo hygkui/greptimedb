@@ -522,13 +522,6 @@
 <a href="#522" id="522">522</a>
 <a href="#523" id="523">523</a>
 <a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -582,7 +575,7 @@
         <span class="string">&quot;RaftEngineLogStore-gc-task&quot;
     </span>}
 
-    <span class="kw">async fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">async fn </span>call(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="kw">match </span><span class="self">self</span>.engine.purge_expired_files().context(RaftEngineSnafu) {
             <span class="prelude-val">Ok</span>(res) =&gt; {
                 <span class="comment">// TODO(hl): the retval of purge_expired_files indicates the namespaces need to be compact,
@@ -615,7 +608,7 @@
         <span class="kw">let </span>engine = Arc::new(Engine::open(raft_engine_config).context(RaftEngineSnafu)<span class="question-mark">?</span>);
         <span class="kw">let </span>gc_task = RepeatedTask::new(
             config.purge_interval,
-            Arc::new(PurgeExpiredFilesFunction {
+            Box::new(PurgeExpiredFilesFunction {
                 engine: engine.clone(),
             }),
         );
@@ -625,7 +618,7 @@
             engine,
             gc_task,
         };
-        log_store.start().<span class="kw">await</span><span class="question-mark">?</span>;
+        log_store.start()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(log_store)
     }
 
@@ -633,11 +626,10 @@
         <span class="self">self</span>.gc_task.started()
     }
 
-    <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="self">self</span>.gc_task
             .start(common_runtime::bg_runtime())
-            .<span class="kw">await
-            </span>.context(StartGcTaskSnafu)
+            .context(StartGcTaskSnafu)
     }
 }
 
@@ -868,7 +860,6 @@
         })
         .<span class="kw">await
         </span>.unwrap();
-        logstore.start().<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>namespaces = logstore.list_namespaces().<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, namespaces.len());
     }
@@ -882,7 +873,6 @@
         })
         .<span class="kw">await
         </span>.unwrap();
-        logstore.start().<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(logstore.list_namespaces().<span class="kw">await</span>.unwrap().is_empty());
 
         logstore
@@ -909,7 +899,6 @@
         })
         .<span class="kw">await
         </span>.unwrap();
-        logstore.start().<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>namespace = Namespace::with_id(<span class="number">1</span>);
         <span class="kw">let </span>cnt = <span class="number">1024</span>;
@@ -971,7 +960,6 @@
         })
         .<span class="kw">await
         </span>.unwrap();
-        logstore.start().<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>entries =
             collect_entries(logstore.read(<span class="kw-2">&amp;</span>Namespace::with_id(<span class="number">1</span>), <span class="number">1</span>).<span class="kw">await</span>.unwrap()).<span class="kw">await</span>;
@@ -1011,7 +999,6 @@
         };
 
         <span class="kw">let </span>logstore = RaftEngineLogStore::try_new(config).<span class="kw">await</span>.unwrap();
-        logstore.start().<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>namespace = Namespace::with_id(<span class="number">42</span>);
         <span class="kw">for </span>id <span class="kw">in </span><span class="number">0</span>..<span class="number">4096 </span>{
             <span class="kw">let </span>entry = Entry::create(id, namespace.id(), [<span class="string">b&#39;x&#39;</span>; <span class="number">4096</span>].to_vec());
@@ -1044,7 +1031,6 @@
         };
 
         <span class="kw">let </span>logstore = RaftEngineLogStore::try_new(config).<span class="kw">await</span>.unwrap();
-        logstore.start().<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>namespace = Namespace::with_id(<span class="number">42</span>);
         <span class="kw">for </span>id <span class="kw">in </span><span class="number">0</span>..<span class="number">1024 </span>{
             <span class="kw">let </span>entry = Entry::create(id, namespace.id(), [<span class="string">b&#39;x&#39;</span>; <span class="number">4096</span>].to_vec());

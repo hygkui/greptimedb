@@ -172,6 +172,28 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -187,57 +209,78 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
-<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::sync::Mutex;
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_error::prelude::ErrorExt;
 <span class="kw">use </span>common_telemetry::logging;
-<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
-<span class="kw">use </span>tokio::sync::Mutex;
+<span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>tokio::task::JoinHandle;
 <span class="kw">use </span>tokio_util::sync::CancellationToken;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{IllegalStateSnafu, <span class="prelude-ty">Result</span>, WaitGcTaskStopSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::Runtime;
 
-<span class="attr">#[async_trait::async_trait]
-</span><span class="kw">pub trait </span>TaskFunction&lt;E: ErrorExt&gt; {
-    <span class="kw">async fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::result::Result&lt;(), E&gt;;
-    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str;
+<span class="doccomment">/// Task to execute repeatedly.
+</span><span class="attr">#[async_trait::async_trait]
+</span><span class="kw">pub trait </span>TaskFunction&lt;E&gt; {
+    <span class="doccomment">/// Invoke the task.
+    </span><span class="kw">async fn </span>call(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; std::result::Result&lt;(), E&gt;;
+
+    <span class="doccomment">/// Name of the task.
+    </span><span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str;
 }
 
-<span class="kw">pub type </span>TaskFunctionRef&lt;E&gt; = Arc&lt;<span class="kw">dyn </span>TaskFunction&lt;E&gt; + Send + Sync&gt;;
+<span class="kw">pub type </span>BoxedTaskFunction&lt;E&gt; = Box&lt;<span class="kw">dyn </span>TaskFunction&lt;E&gt; + Send + Sync + <span class="lifetime">&#39;static</span>&gt;;
+
+<span class="kw">struct </span>TaskInner&lt;E&gt; {
+    <span class="doccomment">/// The repeated task handle. This handle is Some if the task is started.
+    </span>task_handle: <span class="prelude-ty">Option</span>&lt;JoinHandle&lt;()&gt;&gt;,
+    <span class="doccomment">/// The task_fn to run. This is Some if the task is not started.
+    </span>task_fn: <span class="prelude-ty">Option</span>&lt;BoxedTaskFunction&lt;E&gt;&gt;,
+}
 
 <span class="kw">pub struct </span>RepeatedTask&lt;E&gt; {
-    cancel_token: Mutex&lt;<span class="prelude-ty">Option</span>&lt;CancellationToken&gt;&gt;,
-    task_handle: Mutex&lt;<span class="prelude-ty">Option</span>&lt;JoinHandle&lt;()&gt;&gt;&gt;,
+    name: String,
+    cancel_token: CancellationToken,
+    inner: Mutex&lt;TaskInner&lt;E&gt;&gt;,
     started: AtomicBool,
     interval: Duration,
-    task_fn: TaskFunctionRef&lt;E&gt;,
 }
 
-<span class="kw">impl</span>&lt;E: ErrorExt&gt; std::fmt::Display <span class="kw">for </span>RepeatedTask&lt;E&gt; {
+<span class="kw">impl</span>&lt;E&gt; std::fmt::Display <span class="kw">for </span>RepeatedTask&lt;E&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;RepeatedTask({})&quot;</span>, <span class="self">self</span>.task_fn.name())
+        <span class="macro">write!</span>(f, <span class="string">&quot;RepeatedTask({})&quot;</span>, <span class="self">self</span>.name)
     }
 }
 
-<span class="kw">impl</span>&lt;E: ErrorExt&gt; std::fmt::Debug <span class="kw">for </span>RepeatedTask&lt;E&gt; {
+<span class="kw">impl</span>&lt;E&gt; std::fmt::Debug <span class="kw">for </span>RepeatedTask&lt;E&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-        f.debug_tuple(<span class="string">&quot;RepeatedTask&quot;</span>)
-            .field(<span class="kw-2">&amp;</span><span class="self">self</span>.task_fn.name())
-            .finish()
+        f.debug_tuple(<span class="string">&quot;RepeatedTask&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.name).finish()
+    }
+}
+
+<span class="kw">impl</span>&lt;E&gt; Drop <span class="kw">for </span>RepeatedTask&lt;E&gt; {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">let </span>inner = <span class="self">self</span>.inner.get_mut().unwrap();
+        <span class="kw">if </span>inner.task_handle.is_some() {
+            <span class="comment">// Cancel the background task.
+            </span><span class="self">self</span>.cancel_token.cancel();
+        }
     }
 }
 
 <span class="kw">impl</span>&lt;E: ErrorExt + <span class="lifetime">&#39;static</span>&gt; RepeatedTask&lt;E&gt; {
-    <span class="kw">pub fn </span>new(interval: Duration, task_fn: TaskFunctionRef&lt;E&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(interval: Duration, task_fn: BoxedTaskFunction&lt;E&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            cancel_token: Mutex::new(<span class="prelude-val">None</span>),
-            task_handle: Mutex::new(<span class="prelude-val">None</span>),
+            name: task_fn.name().to_string(),
+            cancel_token: CancellationToken::new(),
+            inner: Mutex::new(TaskInner {
+                task_handle: <span class="prelude-val">None</span>,
+                task_fn: <span class="prelude-val">Some</span>(task_fn),
+            }),
             started: AtomicBool::new(<span class="bool-val">false</span>),
             interval,
-            task_fn,
         }
     }
 
@@ -245,11 +288,17 @@
         <span class="self">self</span>.started.load(Ordering::Relaxed)
     }
 
-    <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, runtime: Runtime) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>token = CancellationToken::new();
+    <span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, runtime: Runtime) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().unwrap();
+        <span class="macro">ensure!</span>(
+            inner.task_fn.is_some(),
+            IllegalStateSnafu { name: <span class="kw-2">&amp;</span><span class="self">self</span>.name }
+        );
+
         <span class="kw">let </span>interval = <span class="self">self</span>.interval;
-        <span class="kw">let </span>child = token.child_token();
-        <span class="kw">let </span>task_fn = <span class="self">self</span>.task_fn.clone();
+        <span class="kw">let </span>child = <span class="self">self</span>.cancel_token.child_token();
+        <span class="comment">// Safety: The task is not started.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>task_fn = inner.task_fn.take().unwrap();
         <span class="comment">// TODO(hl): Maybe spawn to a blocking runtime.
         </span><span class="kw">let </span>handle = runtime.spawn(<span class="kw">async move </span>{
             <span class="kw">loop </span>{
@@ -264,13 +313,12 @@
                 }
             }
         });
-        <span class="kw-2">*</span><span class="self">self</span>.cancel_token.lock().<span class="kw">await </span>= <span class="prelude-val">Some</span>(token);
-        <span class="kw-2">*</span><span class="self">self</span>.task_handle.lock().<span class="kw">await </span>= <span class="prelude-val">Some</span>(handle);
+        inner.task_handle = <span class="prelude-val">Some</span>(handle);
         <span class="self">self</span>.started.store(<span class="bool-val">true</span>, Ordering::Relaxed);
 
         <span class="macro">logging::debug!</span>(
             <span class="string">&quot;Repeated task {} started with interval: {:?}&quot;</span>,
-            <span class="self">self</span>.task_fn.name(),
+            <span class="self">self</span>.name,
             <span class="self">self</span>.interval
         );
 
@@ -278,30 +326,25 @@
     }
 
     <span class="kw">pub async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>name = <span class="self">self</span>.task_fn.name();
-        <span class="macro">ensure!</span>(
-            <span class="self">self</span>.started
-                .compare_exchange(<span class="bool-val">true</span>, <span class="bool-val">false</span>, Ordering::Relaxed, Ordering::Relaxed)
-                .is_ok(),
-            IllegalStateSnafu { name }
-        );
-        <span class="kw">let </span>token = <span class="self">self
-            </span>.cancel_token
-            .lock()
-            .<span class="kw">await
-            </span>.take()
-            .context(IllegalStateSnafu { name })<span class="question-mark">?</span>;
-        <span class="kw">let </span>handle = <span class="self">self
-            </span>.task_handle
-            .lock()
-            .<span class="kw">await
-            </span>.take()
-            .context(IllegalStateSnafu { name })<span class="question-mark">?</span>;
+        <span class="kw">let </span>handle = {
+            <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().unwrap();
+            <span class="kw">if </span>inner.task_handle.is_none() {
+                <span class="comment">// We allow stop the task multiple times.
+                </span><span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            }
 
-        token.cancel();
-        handle.<span class="kw">await</span>.context(WaitGcTaskStopSnafu { name })<span class="question-mark">?</span>;
+            <span class="self">self</span>.cancel_token.cancel();
+            <span class="self">self</span>.started.store(<span class="bool-val">false</span>, Ordering::Relaxed);
+            <span class="comment">// Safety: The task is not stopped.
+            </span>inner.task_handle.take().unwrap()
+        };
 
-        <span class="macro">logging::debug!</span>(<span class="string">&quot;Repeated task {} stopped&quot;</span>, name);
+        handle
+            .<span class="kw">await
+            </span>.context(WaitGcTaskStopSnafu { name: <span class="kw-2">&amp;</span><span class="self">self</span>.name })<span class="question-mark">?</span>;
+
+        <span class="macro">logging::debug!</span>(<span class="string">&quot;Repeated task {} stopped&quot;</span>, <span class="self">self</span>.name);
+
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -309,20 +352,22 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::sync::atomic::AtomicI32;
+    <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
     <span class="kw">struct </span>TickTask {
-        n: AtomicI32,
+        n: Arc&lt;AtomicI32&gt;,
     }
 
     <span class="attr">#[async_trait::async_trait]
-    </span><span class="kw">impl </span>TaskFunction&lt;<span class="kw">crate</span>::error::Error&gt; <span class="kw">for </span>TickTask {
+    </span><span class="kw">impl </span>TaskFunction&lt;Error&gt; <span class="kw">for </span>TickTask {
         <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
             <span class="string">&quot;test&quot;
         </span>}
 
-        <span class="kw">async fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">async fn </span>call(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
             <span class="self">self</span>.n.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
 
             <span class="prelude-val">Ok</span>(())
@@ -333,17 +378,16 @@
     </span><span class="kw">async fn </span>test_repeated_task() {
         common_telemetry::init_default_ut_logging();
 
-        <span class="kw">let </span>task_fn = Arc::new(TickTask {
-            n: AtomicI32::new(<span class="number">0</span>),
-        });
+        <span class="kw">let </span>n = Arc::new(AtomicI32::new(<span class="number">0</span>));
+        <span class="kw">let </span>task_fn = TickTask { n: n.clone() };
 
-        <span class="kw">let </span>task = RepeatedTask::new(Duration::from_millis(<span class="number">100</span>), task_fn.clone());
+        <span class="kw">let </span>task = RepeatedTask::new(Duration::from_millis(<span class="number">100</span>), Box::new(task_fn));
 
-        task.start(<span class="kw">crate</span>::bg_runtime()).<span class="kw">await</span>.unwrap();
+        task.start(<span class="kw">crate</span>::bg_runtime()).unwrap();
         tokio::time::sleep(Duration::from_millis(<span class="number">550</span>)).<span class="kw">await</span>;
         task.stop().<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(task_fn.n.load(Ordering::Relaxed), <span class="number">5</span>);
+        <span class="macro">assert_eq!</span>(n.load(Ordering::Relaxed), <span class="number">5</span>);
     }
 }
 </code></pre></div></section></main></body></html>
