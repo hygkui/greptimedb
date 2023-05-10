@@ -187,7 +187,7 @@
         <span class="kw">let </span>header = std::mem::take(<span class="kw-2">&amp;mut </span>acc.header);
         <span class="kw">let </span>res = HeartbeatResponse {
             header,
-            mailbox_messages: acc.into_mailbox_messages(),
+            mailbox_message: acc.into_mailbox_message(),
         };
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, res.header.unwrap().cluster_id);
     }

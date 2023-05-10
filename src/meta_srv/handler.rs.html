@@ -382,6 +382,7 @@
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
 <a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -457,10 +458,10 @@
 }
 
 <span class="kw">impl </span>HeartbeatAccumulator {
-    <span class="kw">pub fn </span>into_mailbox_messages(<span class="self">self</span>) -&gt; Vec&lt;MailboxMessage&gt; {
+    <span class="kw">pub fn </span>into_mailbox_message(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;MailboxMessage&gt; {
         <span class="comment">// TODO(jiachun): to HeartbeatResponse payload
-        </span><span class="macro">vec!</span>[]
-    }
+        </span><span class="prelude-val">None
+    </span>}
 }
 
 <span class="kw">pub struct </span>Pusher {
@@ -557,7 +558,7 @@
         <span class="kw">let </span>header = std::mem::take(<span class="kw-2">&amp;mut </span>acc.header);
         <span class="kw">let </span>res = HeartbeatResponse {
             header,
-            mailbox_messages: acc.into_mailbox_messages(),
+            mailbox_message: acc.into_mailbox_message(),
         };
         <span class="prelude-val">Ok</span>(res)
     }
@@ -659,7 +660,7 @@
         msg.id = message_id;
         <span class="kw">let </span>res = HeartbeatResponse {
             header: <span class="prelude-val">Some</span>(header),
-            mailbox_messages: <span class="macro">vec!</span>[msg],
+            mailbox_message: <span class="prelude-val">Some</span>(msg),
         };
 
         pusher.push(res).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -760,8 +761,9 @@
             </span>.unwrap();
 
         <span class="kw">let </span>recv_obj = pusher_rx.recv().<span class="kw">await</span>.unwrap().unwrap();
-        <span class="macro">assert_eq!</span>(recv_obj.mailbox_messages[<span class="number">0</span>].timestamp_millis, <span class="number">123</span>);
-        <span class="macro">assert_eq!</span>(recv_obj.mailbox_messages[<span class="number">0</span>].subject, <span class="string">&quot;req-test&quot;</span>.to_string());
+        <span class="kw">let </span>message = recv_obj.mailbox_message.unwrap();
+        <span class="macro">assert_eq!</span>(message.timestamp_millis, <span class="number">123</span>);
+        <span class="macro">assert_eq!</span>(message.subject, <span class="string">&quot;req-test&quot;</span>.to_string());
 
         (mailbox, receiver)
     }
