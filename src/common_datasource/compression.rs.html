@@ -135,15 +135,15 @@
 <span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 </span><span class="kw">pub enum </span>CompressionType {
     <span class="doccomment">/// Gzip-ed file
-    </span>GZIP,
+    </span>Gzip,
     <span class="doccomment">/// Bzip2-ed file
-    </span>BZIP2,
+    </span>Bzip2,
     <span class="doccomment">/// Xz-ed file (liblzma)
-    </span>XZ,
+    </span>Xz,
     <span class="doccomment">/// Zstd-ed file,
-    </span>ZSTD,
+    </span>Zstd,
     <span class="doccomment">/// Uncompressed file
-    </span>UNCOMPRESSED,
+    </span>Uncompressed,
 }
 
 <span class="kw">impl </span>FromStr <span class="kw">for </span>CompressionType {
@@ -152,11 +152,11 @@
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>s = s.to_uppercase();
         <span class="kw">match </span>s.as_str() {
-            <span class="string">&quot;GZIP&quot; </span>| <span class="string">&quot;GZ&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::GZIP),
-            <span class="string">&quot;BZIP2&quot; </span>| <span class="string">&quot;BZ2&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::BZIP2),
-            <span class="string">&quot;XZ&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::XZ),
-            <span class="string">&quot;ZST&quot; </span>| <span class="string">&quot;ZSTD&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::ZSTD),
-            <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::UNCOMPRESSED),
+            <span class="string">&quot;GZIP&quot; </span>| <span class="string">&quot;GZ&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Gzip),
+            <span class="string">&quot;BZIP2&quot; </span>| <span class="string">&quot;BZ2&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Bzip2),
+            <span class="string">&quot;XZ&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Xz),
+            <span class="string">&quot;ZST&quot; </span>| <span class="string">&quot;ZSTD&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Zstd),
+            <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Uncompressed),
             <span class="kw">_ </span>=&gt; error::UnsupportedCompressionTypeSnafu {
                 compression_type: s,
             }
@@ -168,18 +168,18 @@
 <span class="kw">impl </span>Display <span class="kw">for </span>CompressionType {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
         f.write_str(<span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::GZIP =&gt; <span class="string">&quot;GZIP&quot;</span>,
-            <span class="self">Self</span>::BZIP2 =&gt; <span class="string">&quot;BZIP2&quot;</span>,
-            <span class="self">Self</span>::XZ =&gt; <span class="string">&quot;XZ&quot;</span>,
-            <span class="self">Self</span>::ZSTD =&gt; <span class="string">&quot;ZSTD&quot;</span>,
-            <span class="self">Self</span>::UNCOMPRESSED =&gt; <span class="string">&quot;&quot;</span>,
+            <span class="self">Self</span>::Gzip =&gt; <span class="string">&quot;GZIP&quot;</span>,
+            <span class="self">Self</span>::Bzip2 =&gt; <span class="string">&quot;BZIP2&quot;</span>,
+            <span class="self">Self</span>::Xz =&gt; <span class="string">&quot;XZ&quot;</span>,
+            <span class="self">Self</span>::Zstd =&gt; <span class="string">&quot;ZSTD&quot;</span>,
+            <span class="self">Self</span>::Uncompressed =&gt; <span class="string">&quot;&quot;</span>,
         })
     }
 }
 
 <span class="kw">impl </span>CompressionType {
     <span class="kw">pub const fn </span>is_compressed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        !<span class="macro">matches!</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="self">Self</span>::UNCOMPRESSED)
+        !<span class="macro">matches!</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="self">Self</span>::Uncompressed)
     }
 
     <span class="kw">pub fn </span>convert_async_read&lt;T: AsyncRead + Unpin + Send + <span class="lifetime">&#39;static</span>&gt;(
@@ -187,11 +187,11 @@
         s: T,
     ) -&gt; Box&lt;<span class="kw">dyn </span>AsyncRead + Unpin + Send&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            CompressionType::GZIP =&gt; Box::new(GzipDecoder::new(BufReader::new(s))),
-            CompressionType::BZIP2 =&gt; Box::new(BzDecoder::new(BufReader::new(s))),
-            CompressionType::XZ =&gt; Box::new(XzDecoder::new(BufReader::new(s))),
-            CompressionType::ZSTD =&gt; Box::new(ZstdDecoder::new(BufReader::new(s))),
-            CompressionType::UNCOMPRESSED =&gt; Box::new(s),
+            CompressionType::Gzip =&gt; Box::new(GzipDecoder::new(BufReader::new(s))),
+            CompressionType::Bzip2 =&gt; Box::new(BzDecoder::new(BufReader::new(s))),
+            CompressionType::Xz =&gt; Box::new(XzDecoder::new(BufReader::new(s))),
+            CompressionType::Zstd =&gt; Box::new(ZstdDecoder::new(BufReader::new(s))),
+            CompressionType::Uncompressed =&gt; Box::new(s),
         }
     }
 
@@ -200,19 +200,19 @@
         s: T,
     ) -&gt; Box&lt;<span class="kw">dyn </span>Stream&lt;Item = io::Result&lt;Bytes&gt;&gt; + Send + Unpin&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            CompressionType::GZIP =&gt; {
+            CompressionType::Gzip =&gt; {
                 Box::new(ReaderStream::new(GzipDecoder::new(StreamReader::new(s))))
             }
-            CompressionType::BZIP2 =&gt; {
+            CompressionType::Bzip2 =&gt; {
                 Box::new(ReaderStream::new(BzDecoder::new(StreamReader::new(s))))
             }
-            CompressionType::XZ =&gt; {
+            CompressionType::Xz =&gt; {
                 Box::new(ReaderStream::new(XzDecoder::new(StreamReader::new(s))))
             }
-            CompressionType::ZSTD =&gt; {
+            CompressionType::Zstd =&gt; {
                 Box::new(ReaderStream::new(ZstdDecoder::new(StreamReader::new(s))))
             }
-            CompressionType::UNCOMPRESSED =&gt; Box::new(s),
+            CompressionType::Uncompressed =&gt; Box::new(s),
         }
     }
 }
