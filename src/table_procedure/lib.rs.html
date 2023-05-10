@@ -52,6 +52,7 @@
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -72,8 +73,6 @@
 <span class="kw">mod </span>create;
 <span class="kw">mod </span>drop;
 <span class="kw">pub mod </span>error;
-<span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>test_util;
 
 <span class="kw">pub use </span>alter::AlterTableProcedure;
 <span class="kw">use </span>catalog::CatalogManagerRef;
@@ -106,4 +105,7 @@
     );
     DropTableProcedure::register_loader(catalog_manager, engine_procedure, procedure_manager);
 }
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>test_util;
 </code></pre></div></section></main></body></html>

@@ -61,6 +61,14 @@
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -75,7 +83,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>session::context::QueryContextRef;
+</span><span class="kw">use </span>common_catalog::consts::INFORMATION_SCHEMA_NAME;
+<span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::ensure;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{QueryAccessDeniedSnafu, <span class="prelude-ty">Result</span>};
@@ -91,6 +100,11 @@
     schema: <span class="kw-2">&amp;</span>str,
     query_ctx: <span class="kw-2">&amp;</span>QueryContextRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="comment">// information_schema is an exception
+    </span><span class="kw">if </span>schema.eq_ignore_ascii_case(INFORMATION_SCHEMA_NAME) {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+    }
+
     <span class="macro">ensure!</span>(
         catalog == query_ctx.current_catalog() &amp;&amp; schema == query_ctx.current_schema(),
         QueryAccessDeniedSnafu {
@@ -122,6 +136,8 @@
         <span class="macro">assert!</span>(re.is_err());
         <span class="kw">let </span>re = validate_catalog_and_schema(<span class="string">&quot;wrong_catalog&quot;</span>, <span class="string">&quot;wrong_schema&quot;</span>, <span class="kw-2">&amp;</span>context);
         <span class="macro">assert!</span>(re.is_err());
+
+        <span class="macro">assert!</span>(validate_catalog_and_schema(<span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;information_schema&quot;</span>, <span class="kw-2">&amp;</span>context).is_ok());
     }
 }
 </code></pre></div></section></main></body></html>
