@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Context","ContextInner","JobHandle","JobPoolImpl"],"trait":["Job","JobPool"],"type":["BoxedJob","JobPoolRef"]};

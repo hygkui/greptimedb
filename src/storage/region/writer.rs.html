@@ -774,58 +774,6 @@
 <a href="#774" id="774">774</a>
 <a href="#775" id="775">775</a>
 <a href="#776" id="776">776</a>
-<a href="#777" id="777">777</a>
-<a href="#778" id="778">778</a>
-<a href="#779" id="779">779</a>
-<a href="#780" id="780">780</a>
-<a href="#781" id="781">781</a>
-<a href="#782" id="782">782</a>
-<a href="#783" id="783">783</a>
-<a href="#784" id="784">784</a>
-<a href="#785" id="785">785</a>
-<a href="#786" id="786">786</a>
-<a href="#787" id="787">787</a>
-<a href="#788" id="788">788</a>
-<a href="#789" id="789">789</a>
-<a href="#790" id="790">790</a>
-<a href="#791" id="791">791</a>
-<a href="#792" id="792">792</a>
-<a href="#793" id="793">793</a>
-<a href="#794" id="794">794</a>
-<a href="#795" id="795">795</a>
-<a href="#796" id="796">796</a>
-<a href="#797" id="797">797</a>
-<a href="#798" id="798">798</a>
-<a href="#799" id="799">799</a>
-<a href="#800" id="800">800</a>
-<a href="#801" id="801">801</a>
-<a href="#802" id="802">802</a>
-<a href="#803" id="803">803</a>
-<a href="#804" id="804">804</a>
-<a href="#805" id="805">805</a>
-<a href="#806" id="806">806</a>
-<a href="#807" id="807">807</a>
-<a href="#808" id="808">808</a>
-<a href="#809" id="809">809</a>
-<a href="#810" id="810">810</a>
-<a href="#811" id="811">811</a>
-<a href="#812" id="812">812</a>
-<a href="#813" id="813">813</a>
-<a href="#814" id="814">814</a>
-<a href="#815" id="815">815</a>
-<a href="#816" id="816">816</a>
-<a href="#817" id="817">817</a>
-<a href="#818" id="818">818</a>
-<a href="#819" id="819">819</a>
-<a href="#820" id="820">820</a>
-<a href="#821" id="821">821</a>
-<a href="#822" id="822">822</a>
-<a href="#823" id="823">823</a>
-<a href="#824" id="824">824</a>
-<a href="#825" id="825">825</a>
-<a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a>
-<a href="#828" id="828">828</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -844,9 +792,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
-<span class="kw">use </span>common_error::prelude::BoxedError;
-<span class="kw">use </span>common_telemetry::tracing::log::{debug, info};
-<span class="kw">use </span>common_telemetry::{error, logging};
+<span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>futures::TryStreamExt;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
@@ -854,11 +800,10 @@
 <span class="kw">use </span>store_api::storage::{AlterRequest, FlushContext, SequenceNumber, WriteContext, WriteResponse};
 <span class="kw">use </span>tokio::sync::{oneshot, Mutex};
 
-<span class="kw">use </span><span class="kw">crate</span>::background::JobHandle;
 <span class="kw">use </span><span class="kw">crate</span>::compaction::{CompactionRequestImpl, CompactionSchedulerRef};
 <span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::flush::{FlushCallback, FlushJob, FlushSchedulerRef, FlushStrategyRef};
+<span class="kw">use </span><span class="kw">crate</span>::flush::{FlushHandle, FlushRequest, FlushSchedulerRef, FlushStrategyRef};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{
     RawRegionMetadata, RegionChange, RegionEdit, RegionMetaAction, RegionMetaActionList,
 };
@@ -870,7 +815,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::schema::compat::CompatWrite;
 <span class="kw">use </span><span class="kw">crate</span>::sst::AccessLayerRef;
-<span class="kw">use </span><span class="kw">crate</span>::version::{VersionControl, VersionControlRef, VersionEdit, VersionRef};
+<span class="kw">use </span><span class="kw">crate</span>::version::{VersionControl, VersionControlRef, VersionEdit};
 <span class="kw">use </span><span class="kw">crate</span>::wal::Wal;
 <span class="kw">use </span><span class="kw">crate</span>::write_batch::WriteBatch;
 
@@ -1095,7 +1040,7 @@
         }
         <span class="comment">// we release the writer lock once for rejecting any following potential writing requests immediately.
 
-        </span><span class="self">self</span>.cancel_flush().<span class="kw">await</span><span class="question-mark">?</span>;
+        </span><span class="self">self</span>.wait_flush().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// TODO: canncel the compaction task
 
@@ -1116,7 +1061,7 @@
 
         <span class="kw">if </span>ctx.wait {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(handle) = inner.flush_handle.take() {
-                handle.join().<span class="kw">await</span><span class="question-mark">?</span>;
+                handle.wait().<span class="kw">await</span><span class="question-mark">?</span>;
             }
         }
 
@@ -1138,15 +1083,12 @@
             .<span class="kw">await
     </span>}
 
-    <span class="doccomment">/// Cancel flush task if any
-    </span><span class="kw">async fn </span>cancel_flush(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="doccomment">/// Wait flush task if any
+    </span><span class="kw">async fn </span>wait_flush(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = inner.flush_handle.take() {
-            task.cancel()
-                .<span class="kw">await
-                </span>.map_err(BoxedError::new)
-                .context(error::CancelFlushSnafu)<span class="question-mark">?</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(handle) = inner.flush_handle.take() {
+            handle.wait().<span class="kw">await</span><span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -1156,7 +1098,7 @@
 <span class="kw">pub struct </span>WriterContext&lt;<span class="lifetime">&#39;a</span>, S: LogStore&gt; {
     <span class="kw">pub </span>shared: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>SharedDataRef,
     <span class="kw">pub </span>flush_strategy: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FlushStrategyRef,
-    <span class="kw">pub </span>flush_scheduler: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FlushSchedulerRef,
+    <span class="kw">pub </span>flush_scheduler: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FlushSchedulerRef&lt;S&gt;,
     <span class="kw">pub </span>compaction_scheduler: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>CompactionSchedulerRef&lt;S&gt;,
     <span class="kw">pub </span>sst_layer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AccessLayerRef,
     <span class="kw">pub </span>wal: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Wal&lt;S&gt;,
@@ -1187,7 +1129,7 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">struct </span>WriterInner {
     memtable_builder: MemtableBuilderRef,
-    flush_handle: <span class="prelude-ty">Option</span>&lt;JobHandle&gt;,
+    flush_handle: <span class="prelude-ty">Option</span>&lt;FlushHandle&gt;,
 
     <span class="doccomment">/// `WriterInner` will reject any future writing, if the closed flag is set.
     ///
@@ -1453,15 +1395,13 @@
         </span>version_control.freeze_mutable(new_mutable);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(flush_handle) = <span class="self">self</span>.flush_handle.take() {
-            <span class="comment">// Previous flush job is incomplete, wait util it is finished (write stall).
+            <span class="comment">// Previous flush job is incomplete, wait util it is finished.
             // However the last flush job may fail, in which case, we just return error
             // and abort current write request. The flush handle is left empty, so the next
             // time we still have chance to trigger a new flush.
-            </span><span class="macro">logging::info!</span>(<span class="string">&quot;Write stall, region: {}&quot;</span>, ctx.shared.name);
-
-            <span class="comment">// TODO(yingwen): We should release the write lock during waiting flush done, which
+            // TODO(yingwen): We should release the write lock during waiting flush done, which
             // needs something like async condvar.
-            </span>flush_handle.join().<span class="kw">await</span>.map_err(|e| {
+            </span>flush_handle.wait().<span class="kw">await</span>.map_err(|e| {
                 <span class="macro">logging::error!</span>(e; <span class="string">&quot;Previous flush job failed, region: {}&quot;</span>, ctx.shared.name);
                 e
             })<span class="question-mark">?</span>;
@@ -1475,15 +1415,7 @@
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
 
-        <span class="kw">let </span>cb = <span class="self">Self</span>::build_flush_callback(
-            <span class="kw-2">&amp;</span>current_version,
-            ctx,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.engine_config,
-            <span class="self">self</span>.ttl,
-            <span class="self">self</span>.compaction_time_window,
-        );
-
-        <span class="kw">let </span>flush_req = FlushJob {
+        <span class="kw">let </span>flush_req = FlushRequest {
             max_memtable_id: max_memtable_id.unwrap(),
             memtables: mem_to_flush,
             <span class="comment">// In write thread, safe to use current committed sequence.
@@ -1493,14 +1425,16 @@
             writer: ctx.writer.clone(),
             wal: ctx.wal.clone(),
             manifest: ctx.manifest.clone(),
-            on_success: cb,
             engine_config: <span class="self">self</span>.engine_config.clone(),
+            sender: <span class="prelude-val">None</span>,
+            ttl: <span class="self">self</span>.ttl,
+            compaction_time_window: <span class="self">self</span>.compaction_time_window,
         };
 
-        <span class="kw">let </span>flush_handle = ctx
-            .flush_scheduler
-            .schedule_flush(Box::new(flush_req))
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>flush_handle = ctx.flush_scheduler.schedule_flush(flush_req).map_err(|e| {
+            <span class="macro">logging::error!</span>(e; <span class="string">&quot;Failed to schedule flush request&quot;</span>);
+            e
+        })<span class="question-mark">?</span>;
         <span class="self">self</span>.flush_handle = <span class="prelude-val">Some</span>(flush_handle);
 
         <span class="prelude-val">Ok</span>(())
@@ -1539,104 +1473,26 @@
             <span class="kw">let </span>(sender, receiver) = oneshot::channel();
             compaction_request.sender = <span class="prelude-val">Some</span>(sender);
 
-            <span class="kw">if </span><span class="self">Self</span>::schedule_compaction(
+            <span class="kw">if </span>schedule_compaction(
                 shared_data,
                 compaction_scheduler,
                 compaction_request,
                 compact_ctx.max_files_in_l0,
-            )
-            .<span class="kw">await
-            </span>{
+            ) {
                 receiver
                     .<span class="kw">await
                     </span>.context(error::CompactTaskCancelSnafu { region_id })<span class="question-mark">??</span>;
             }
         } <span class="kw">else </span>{
-            <span class="self">Self</span>::schedule_compaction(
+            schedule_compaction(
                 shared_data,
                 compaction_scheduler,
                 compaction_request,
                 compact_ctx.max_files_in_l0,
-            )
-            .<span class="kw">await</span>;
+            );
         }
 
         <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">fn </span>build_flush_callback&lt;S: LogStore&gt;(
-        version: <span class="kw-2">&amp;</span>VersionRef,
-        ctx: <span class="kw-2">&amp;</span>WriterContext&lt;S&gt;,
-        config: <span class="kw-2">&amp;</span>Arc&lt;EngineConfig&gt;,
-        ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
-        compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;FlushCallback&gt; {
-        <span class="kw">let </span>region_id = version.metadata().id();
-        <span class="kw">let </span>compaction_request = CompactionRequestImpl {
-            region_id,
-            sst_layer: ctx.sst_layer.clone(),
-            writer: ctx.writer.clone(),
-            shared: ctx.shared.clone(),
-            manifest: ctx.manifest.clone(),
-            wal: ctx.wal.clone(),
-            ttl,
-            compaction_time_window,
-            sender: <span class="prelude-val">None</span>,
-            sst_write_buffer_size: config.sst_write_buffer_size,
-        };
-        <span class="kw">let </span>compaction_scheduler = ctx.compaction_scheduler.clone();
-        <span class="kw">let </span>shared_data = ctx.shared.clone();
-        <span class="kw">let </span>max_files_in_l0 = config.max_files_in_l0;
-
-        <span class="kw">let </span>schedule_compaction_cb = Box::pin(<span class="kw">async move </span>{
-            <span class="self">Self</span>::schedule_compaction(
-                shared_data,
-                compaction_scheduler,
-                compaction_request,
-                max_files_in_l0,
-            )
-            .<span class="kw">await</span>;
-        });
-        <span class="prelude-val">Some</span>(schedule_compaction_cb)
-    }
-
-    <span class="doccomment">/// Schedule compaction task, returns whether the task is scheduled.
-    </span><span class="kw">async fn </span>schedule_compaction&lt;S: LogStore&gt;(
-        shared_data: SharedDataRef,
-        compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
-        compaction_request: CompactionRequestImpl&lt;S&gt;,
-        max_files_in_l0: usize,
-    ) -&gt; bool {
-        <span class="kw">let </span>region_id = shared_data.id();
-        <span class="kw">let </span>level0_file_num = shared_data
-            .version_control
-            .current()
-            .ssts()
-            .level(<span class="number">0</span>)
-            .file_num();
-
-        <span class="kw">if </span>level0_file_num &lt;= max_files_in_l0 {
-            <span class="macro">debug!</span>(
-                <span class="string">&quot;No enough SST files in level 0 (threshold: {}), skip compaction&quot;</span>,
-                max_files_in_l0
-            );
-            <span class="kw">return </span><span class="bool-val">false</span>;
-        }
-        <span class="kw">match </span>compaction_scheduler.schedule(compaction_request) {
-            <span class="prelude-val">Ok</span>(scheduled) =&gt; {
-                <span class="macro">info!</span>(
-                    <span class="string">&quot;Schedule region {} compaction request result: {}&quot;</span>,
-                    region_id, scheduled
-                );
-
-                scheduled
-            }
-            <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">error!</span>(e;<span class="string">&quot;Failed to schedule region compaction request {}&quot;</span>, region_id);
-
-                <span class="bool-val">false
-            </span>}
-        }
     }
 
     <span class="kw">async fn </span>manual_flush&lt;S: LogStore&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -1652,6 +1508,46 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>mark_closed(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.closed = <span class="bool-val">true</span>;
+    }
+}
+
+<span class="doccomment">/// Schedule compaction task, returns whether the task is scheduled.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>schedule_compaction&lt;S: LogStore&gt;(
+    shared_data: SharedDataRef,
+    compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
+    compaction_request: CompactionRequestImpl&lt;S&gt;,
+    max_files_in_l0: usize,
+) -&gt; bool {
+    <span class="kw">let </span>region_id = shared_data.id();
+    <span class="kw">let </span>level0_file_num = shared_data
+        .version_control
+        .current()
+        .ssts()
+        .level(<span class="number">0</span>)
+        .file_num();
+
+    <span class="kw">if </span>level0_file_num &lt;= max_files_in_l0 {
+        <span class="macro">logging::debug!</span>(
+            <span class="string">&quot;No enough SST files in level 0 (threshold: {}), skip compaction&quot;</span>,
+            max_files_in_l0
+        );
+        <span class="kw">return </span><span class="bool-val">false</span>;
+    }
+    <span class="kw">match </span>compaction_scheduler.schedule(compaction_request) {
+        <span class="prelude-val">Ok</span>(scheduled) =&gt; {
+            <span class="macro">logging::info!</span>(
+                <span class="string">&quot;Schedule region {} compaction request result: {}&quot;</span>,
+                region_id,
+                scheduled
+            );
+
+            scheduled
+        }
+        <span class="prelude-val">Err</span>(e) =&gt; {
+            <span class="macro">logging::error!</span>(e;<span class="string">&quot;Failed to schedule region compaction request {}&quot;</span>, region_id);
+
+            <span class="bool-val">false
+        </span>}
     }
 }
 </code></pre></div></section></main></body></html>

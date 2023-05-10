@@ -459,6 +459,30 @@
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
 <a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -487,12 +511,11 @@
     CreateOptions, EngineContext, OpenOptions, Region, RegionDescriptor, StorageEngine,
 };
 
-<span class="kw">use </span><span class="kw">crate</span>::background::JobPoolImpl;
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionSchedulerRef;
 <span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, Error, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::file_purger::{FilePurgeHandler, FilePurgerRef};
-<span class="kw">use </span><span class="kw">crate</span>::flush::{FlushSchedulerImpl, FlushSchedulerRef, FlushStrategyRef, SizeBasedStrategy};
+<span class="kw">use </span><span class="kw">crate</span>::flush::{FlushScheduler, FlushSchedulerRef, FlushStrategyRef, SizeBasedStrategy};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::region::RegionManifest;
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{DefaultMemtableBuilder, MemtableBuilderRef};
 <span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadata;
@@ -593,8 +616,7 @@
     </span>Opening,
     <span class="doccomment">/// The region is ready for access.
     </span>Ready(RegionImpl&lt;S&gt;),
-    <span class="comment">// TODO(yingwen): Closing state.
-</span>}
+}
 
 <span class="kw">impl</span>&lt;S: LogStore&gt; RegionSlot&lt;S&gt; {
     <span class="doccomment">/// Try to get a ready region.
@@ -642,12 +664,12 @@
 <span class="doccomment">/// Used to update slot or clean the slot on failure.
 </span><span class="kw">struct </span>SlotGuard&lt;<span class="lifetime">&#39;a</span>, S: LogStore&gt; {
     name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
-    regions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RwLock&lt;RegionMap&lt;S&gt;&gt;,
+    regions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RegionMap&lt;S&gt;,
     skip_clean: bool,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, S: LogStore&gt; SlotGuard&lt;<span class="lifetime">&#39;a</span>, S&gt; {
-    <span class="kw">fn </span>new(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, regions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RwLock&lt;RegionMap&lt;S&gt;&gt;) -&gt; SlotGuard&lt;<span class="lifetime">&#39;a</span>, S&gt; {
+    <span class="kw">fn </span>new(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, regions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RegionMap&lt;S&gt;) -&gt; SlotGuard&lt;<span class="lifetime">&#39;a</span>, S&gt; {
         SlotGuard {
             name,
             regions,
@@ -657,13 +679,7 @@
 
     <span class="doccomment">/// Update the slot and skip cleaning on drop.
     </span><span class="kw">fn </span>update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, slot: RegionSlot&lt;S&gt;) {
-        {
-            <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.regions.write().unwrap();
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(old) = regions.get_mut(<span class="self">self</span>.name) {
-                <span class="kw-2">*</span>old = slot;
-            }
-        }
-
+        <span class="self">self</span>.regions.update(<span class="self">self</span>.name, slot);
         <span class="self">self</span>.skip_clean = <span class="bool-val">true</span>;
     }
 }
@@ -671,20 +687,70 @@
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, S: LogStore&gt; Drop <span class="kw">for </span>SlotGuard&lt;<span class="lifetime">&#39;a</span>, S&gt; {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">if </span>!<span class="self">self</span>.skip_clean {
-            <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.regions.write().unwrap();
-            regions.remove(<span class="self">self</span>.name);
+            <span class="self">self</span>.regions.remove(<span class="self">self</span>.name)
         }
     }
 }
 
-<span class="kw">type </span>RegionMap&lt;S&gt; = HashMap&lt;String, RegionSlot&lt;S&gt;&gt;;
+<span class="doccomment">/// Region slot map.
+</span><span class="kw">struct </span>RegionMap&lt;S: LogStore&gt;(RwLock&lt;HashMap&lt;String, RegionSlot&lt;S&gt;&gt;&gt;);
+
+<span class="kw">impl</span>&lt;S: LogStore&gt; RegionMap&lt;S&gt; {
+    <span class="doccomment">/// Returns a new region map.
+    </span><span class="kw">fn </span>new() -&gt; RegionMap&lt;S&gt; {
+        RegionMap(RwLock::new(HashMap::new()))
+    }
+
+    <span class="doccomment">/// Returns the `Some(slot)` if there is existing slot with given `name`, or insert
+    /// given `slot` and returns `None`.
+    </span><span class="kw">fn </span>get_or_occupy_slot(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, slot: RegionSlot&lt;S&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;RegionSlot&lt;S&gt;&gt; {
+        {
+            <span class="comment">// Try to get the region under read lock.
+            </span><span class="kw">let </span>regions = <span class="self">self</span>.<span class="number">0</span>.read().unwrap();
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = regions.get(name) {
+                <span class="kw">return </span><span class="prelude-val">Some</span>(slot.clone());
+            }
+        }
+
+        <span class="comment">// Get the region under write lock.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.<span class="number">0</span>.write().unwrap();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = regions.get(name) {
+            <span class="kw">return </span><span class="prelude-val">Some</span>(slot.clone());
+        }
+
+        <span class="comment">// No slot in map, we can insert the slot now.
+        </span>regions.insert(name.to_string(), slot);
+
+        <span class="prelude-val">None
+    </span>}
+
+    <span class="doccomment">/// Gets the region by the specific name.
+    </span><span class="kw">fn </span>get_region(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;RegionImpl&lt;S&gt;&gt; {
+        <span class="kw">let </span>slot = <span class="self">self</span>.<span class="number">0</span>.read().unwrap().get(name).cloned()<span class="question-mark">?</span>;
+        slot.get_ready_region()
+    }
+
+    <span class="doccomment">/// Update the slot by name.
+    </span><span class="kw">fn </span>update(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, slot: RegionSlot&lt;S&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.<span class="number">0</span>.write().unwrap();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(old) = regions.get_mut(name) {
+            <span class="kw-2">*</span>old = slot;
+        }
+    }
+
+    <span class="doccomment">/// Remove region by name.
+    </span><span class="kw">fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) {
+        <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.<span class="number">0</span>.write().unwrap();
+        regions.remove(name);
+    }
+}
 
 <span class="kw">struct </span>EngineInner&lt;S: LogStore&gt; {
     object_store: ObjectStore,
     log_store: Arc&lt;S&gt;,
-    regions: RwLock&lt;RegionMap&lt;S&gt;&gt;,
+    regions: Arc&lt;RegionMap&lt;S&gt;&gt;,
     memtable_builder: MemtableBuilderRef,
-    flush_scheduler: FlushSchedulerRef,
+    flush_scheduler: FlushSchedulerRef&lt;S&gt;,
     flush_strategy: FlushStrategyRef,
     compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
     file_purger: FilePurgerRef,
@@ -698,8 +764,11 @@
         object_store: ObjectStore,
         compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>job_pool = Arc::new(JobPoolImpl {});
-        <span class="kw">let </span>flush_scheduler = Arc::new(FlushSchedulerImpl::new(job_pool));
+        <span class="comment">// TODO(yingwen): max inflight flush tasks.
+        </span><span class="kw">let </span>flush_scheduler = Arc::new(FlushScheduler::new(
+            SchedulerConfig::default(),
+            compaction_scheduler.clone(),
+        ));
 
         <span class="kw">let </span>file_purger = Arc::new(LocalScheduler::new(
             SchedulerConfig {
@@ -710,7 +779,7 @@
         <span class="self">Self </span>{
             object_store,
             log_store,
-            regions: RwLock::new(Default::default()),
+            regions: Arc::new(RegionMap::new()),
             memtable_builder: Arc::new(DefaultMemtableBuilder::default()),
             flush_scheduler,
             flush_strategy: Arc::new(SizeBasedStrategy::default()),
@@ -720,33 +789,10 @@
         }
     }
 
-    <span class="doccomment">/// Returns the `Some(slot)` if there is existing slot with given `name`, or insert
-    /// given `slot` and returns `None`.
-    </span><span class="kw">fn </span>get_or_occupy_slot(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, slot: RegionSlot&lt;S&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;RegionSlot&lt;S&gt;&gt; {
-        {
-            <span class="comment">// Try to get the region under read lock.
-            </span><span class="kw">let </span>regions = <span class="self">self</span>.regions.read().unwrap();
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = regions.get(name) {
-                <span class="kw">return </span><span class="prelude-val">Some</span>(slot.clone());
-            }
-        }
-
-        <span class="comment">// Get the region under write lock.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.regions.write().unwrap();
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = regions.get(name) {
-            <span class="kw">return </span><span class="prelude-val">Some</span>(slot.clone());
-        }
-
-        <span class="comment">// No slot in map, we can insert the slot now.
-        </span>regions.insert(name.to_string(), slot);
-
-        <span class="prelude-val">None
-    </span>}
-
     <span class="kw">async fn </span>open_region(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, opts: <span class="kw-2">&amp;</span>OpenOptions) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;RegionImpl&lt;S&gt;&gt;&gt; {
         <span class="comment">// We can wait until the state of the slot has been changed to ready, but this will
         // make the code more complicate, so we just return the error here.
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = <span class="self">self</span>.get_or_occupy_slot(name, RegionSlot::Opening) {
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = <span class="self">self</span>.regions.get_or_occupy_slot(name, RegionSlot::Opening) {
             <span class="kw">return </span>slot.try_get_ready_region().map(<span class="prelude-val">Some</span>);
         }
 
@@ -781,7 +827,10 @@
         descriptor: RegionDescriptor,
         opts: <span class="kw-2">&amp;</span>CreateOptions,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;RegionImpl&lt;S&gt;&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = <span class="self">self</span>.get_or_occupy_slot(<span class="kw-2">&amp;</span>descriptor.name, RegionSlot::Creating) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(slot) = <span class="self">self
+            </span>.regions
+            .get_or_occupy_slot(<span class="kw-2">&amp;</span>descriptor.name, RegionSlot::Creating)
+        {
             <span class="kw">return </span>slot.try_get_ready_region();
         }
 
@@ -820,8 +869,7 @@
     }
 
     <span class="kw">fn </span>get_region(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;RegionImpl&lt;S&gt;&gt; {
-        <span class="kw">let </span>slot = <span class="self">self</span>.regions.read().unwrap().get(name).cloned()<span class="question-mark">?</span>;
-        slot.get_ready_region()
+        <span class="self">self</span>.regions.get_region(name)
     }
 
     <span class="kw">async fn </span>region_store_config(

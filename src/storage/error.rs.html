@@ -556,6 +556,12 @@
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
 <a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -696,19 +702,15 @@
         source: std::io::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task, source: {}&quot;</span>, source))]
-    </span>JoinTask {
-        source: common_runtime::JoinError,
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to wait flushing, region_id: {}, source: {}&quot;</span>,
+        region_id,
+        source
+    ))]
+    </span>WaitFlush {
+        region_id: RegionId,
+        source: tokio::sync::oneshot::error::RecvError,
         location: Location,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Task already cancelled&quot;</span>))]
-    </span>Cancelled { location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cancel flush, source: {}&quot;</span>, source))]
-    </span>CancelFlush {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: BoxedError,
     },
 
     <span class="attr">#[snafu(display(
@@ -1013,6 +1015,17 @@
         region_id: RegionId,
         source: tokio::sync::oneshot::error::RecvError,
     },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;The flush request is duplicate, region_id: {}, sequence: {}&quot;</span>,
+        region_id,
+        sequence
+    ))]
+    </span>DuplicateFlush {
+        region_id: RegionId,
+        sequence: SequenceNumber,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1050,9 +1063,7 @@
             Utf8 { .. }
             | EncodeJson { .. }
             | DecodeJson { .. }
-            | JoinTask { .. }
-            | Cancelled { .. }
-            | CancelFlush { .. }
+            | WaitFlush { .. }
             | DecodeMetaActionList { .. }
             | Readline { .. }
             | WalDataCorrupted { .. }
@@ -1104,7 +1115,8 @@
 
             StartManifestGcTask { .. }
             | StopManifestGcTask { .. }
-            | IllegalSchedulerState { .. } =&gt; StatusCode::Unexpected,
+            | IllegalSchedulerState { .. }
+            | DuplicateFlush { .. } =&gt; StatusCode::Unexpected,
 
             TtlCalculation { source, .. } =&gt; source.status_code(),
         }

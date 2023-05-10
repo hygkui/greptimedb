@@ -130,6 +130,7 @@
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -176,7 +177,8 @@
 
     <span class="kw">fn </span>complete(<span class="self">self</span>, result: <span class="prelude-ty">Result</span>&lt;()&gt;) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(sender) = <span class="self">self</span>.sender {
-            <span class="comment">// We don&#39;t care the send result as
+            <span class="comment">// We don&#39;t care the send result as callers might not
+            // wait the result.
             </span><span class="kw">let _ </span>= sender.send(result);
         }
     }

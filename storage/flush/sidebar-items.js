@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_WRITE_BUFFER_SIZE"],"fn":["get_mutable_limitation"],"static":["CALLSITE"],"struct":["FlushJob","FlushSchedulerImpl","SizeBasedStrategy"],"trait":["FlushScheduler","FlushStrategy"],"type":["FlushCallback","FlushSchedulerRef","FlushStrategyRef"]};
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_WRITE_BUFFER_SIZE"],"fn":["get_mutable_limitation"],"mod":["scheduler"],"static":["CALLSITE"],"struct":["FlushJob","SizeBasedStrategy"],"trait":["FlushStrategy"],"type":["FlushStrategyRef"]};

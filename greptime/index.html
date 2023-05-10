@@ -74,50 +74,16 @@ ubuntu, you can install it with <code>sudo apt install python3-dev</code>, or
 <p>Or if you built from docker:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code>docker run -p <span class="number">4002</span>:<span class="number">4002 </span>-v <span class="string">&quot;$(pwd):/tmp/greptimedb&quot; </span>greptime/greptimedb standalone start</code></pre></div>
-<p>For more startup options, greptimedb’s <strong>distributed mode</strong> and information
-about Kubernetes deployment, check our <a href="https://docs.greptime.com/">docs</a>.</p>
-<h4 id="connect"><a href="#connect">Connect</a></h4>
-<ol>
-<li>
-<p>Connect to GreptimeDB via standard <a href="https://dev.mysql.com/downloads/mysql/">MySQL
-client</a>:</p>
-
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code>mysql -h <span class="number">127.0</span>.<span class="number">0.1 </span>-P <span class="number">4002</span></code></pre></div>
-</li>
-<li>
-<p>Create table:</p>
-<div class="example-wrap"><pre class="language-SQL"><code>CREATE TABLE monitor (
-  host STRING,
-  ts TIMESTAMP,
-  cpu DOUBLE DEFAULT 0,
-  memory DOUBLE,
-  TIME INDEX (ts),
-  PRIMARY KEY(host)) ENGINE=mito WITH(regions=1);
-</code></pre></div></li>
-<li>
-<p>Insert some data:</p>
-<div class="example-wrap"><pre class="language-SQL"><code>INSERT INTO monitor(host, cpu, memory, ts) VALUES (&#39;host1&#39;, 66.6, 1024, 1660897955000);
-INSERT INTO monitor(host, cpu, memory, ts) VALUES (&#39;host2&#39;, 77.7, 2048, 1660897956000);
-INSERT INTO monitor(host, cpu, memory, ts) VALUES (&#39;host3&#39;, 88.8, 4096, 1660897957000);
-</code></pre></div></li>
-<li>
-<p>Query the data:</p>
-<div class="example-wrap"><pre class="language-SQL"><code>SELECT * FROM monitor;
-</code></pre></div><div class="example-wrap"><pre class="language-TEXT"><code>+-------+--------------------------+------+--------+
-| host  | ts                       | cpu  | memory |
-+-------+--------------------------+------+--------+
-| host1 | 2022-08-19 16:32:35+0800 | 66.6 |   1024 |
-| host2 | 2022-08-19 16:32:36+0800 | 77.7 |   2048 |
-| host3 | 2022-08-19 16:32:37+0800 | 88.8 |   4096 |
-+-------+--------------------------+------+--------+
-3 rows in set (0.03 sec)
-</code></pre></div></li>
-</ol>
-<p>You can always cleanup test database by removing <code>/tmp/greptimedb</code>.</p>
+<p>Please see <a href="https://docs.greptime.com/getting-started/overview#install-greptimedb">the online document site</a> for more installation options and <a href="https://docs.greptime.com/user-guide/operations/overview">operations info</a>.</p>
+<h4 id="get-started"><a href="#get-started">Get started</a></h4>
+<p>Read the <a href="https://docs.greptime.com/getting-started/overview#connect">complete getting started guide</a> on our <a href="https://docs.greptime.com/">official document site</a>.</p>
+<p>To write and query data, GreptimeDB is compatible with multiple <a href="https://docs.greptime.com/user-guide/clients">protocols and clients</a>.</p>
 <h3 id="resources"><a href="#resources">Resources</a></h3><h4 id="installation"><a href="#installation">Installation</a></h4>
 <ul>
-<li><a href="https://github.com/GreptimeTeam/greptimedb/releases">Pre-built Binaries</a>:
-For Linux and macOS, you can easily download pre-built binaries that are ready to use. In most cases, downloading the version without PyO3 is sufficient. However, if you plan to run scripts in CPython (and use Python packages like NumPy and Pandas), you will need to download the version with PyO3 and install a Python with the same version as the Python in the PyO3 version. We recommend using virtualenv for the installation process to manage multiple Python versions.</li>
+<li><a href="https://greptime.com/download">Pre-built Binaries</a>:
+For Linux and macOS, you can easily download pre-built binaries including official releases and nightly builds that are ready to use. 
+In most cases, downloading the version without PyO3 is sufficient. However, if you plan to run scripts in CPython (and use Python packages like NumPy and Pandas), you will need to download the version with PyO3 and install a Python with the same version as the Python in the PyO3 version.
+We recommend using virtualenv for the installation process to manage multiple Python versions.</li>
 <li><a href="https://hub.docker.com/r/greptime/greptimedb">Docker Images</a>(<strong>recommended</strong>): pre-built
 Docker images, this is the easiest way to try GreptimeDB. By default it runs CPython script with <code>pyo3_backend</code> enabled.</li>
 <li><a href="https://github.com/GreptimeTeam/gtctl"><code>gtctl</code></a>: the command-line tool for

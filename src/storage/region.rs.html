@@ -721,6 +721,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::manifest::region::RegionManifest;
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
 <span class="kw">use </span><span class="kw">crate</span>::metadata::{RegionMetaImpl, RegionMetadata, RegionMetadataRef};
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span><span class="kw">crate</span>::region::writer::schedule_compaction;
 <span class="kw">pub use </span><span class="kw">crate</span>::region::writer::{AlterContext, RegionWriter, RegionWriterRef, WriterContext};
 <span class="kw">use </span><span class="kw">crate</span>::schema::compat::CompatWrite;
 <span class="kw">use </span><span class="kw">crate</span>::snapshot::SnapshotImpl;
@@ -751,7 +752,6 @@
             .field(<span class="string">&quot;name&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.shared.name)
             .field(<span class="string">&quot;wal&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.wal)
             .field(<span class="string">&quot;flush_strategy&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.flush_strategy)
-            .field(<span class="string">&quot;flush_scheduler&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.flush_scheduler)
             .field(<span class="string">&quot;compaction_scheduler&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.compaction_scheduler)
             .field(<span class="string">&quot;sst_layer&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.sst_layer)
             .field(<span class="string">&quot;manifest&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.manifest)
@@ -829,7 +829,7 @@
     <span class="kw">pub </span>sst_layer: AccessLayerRef,
     <span class="kw">pub </span>manifest: RegionManifest,
     <span class="kw">pub </span>memtable_builder: MemtableBuilderRef,
-    <span class="kw">pub </span>flush_scheduler: FlushSchedulerRef,
+    <span class="kw">pub </span>flush_scheduler: FlushSchedulerRef&lt;S&gt;,
     <span class="kw">pub </span>flush_strategy: FlushStrategyRef,
     <span class="kw">pub </span>compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
     <span class="kw">pub </span>engine_config: Arc&lt;EngineConfig&gt;,
@@ -1254,7 +1254,7 @@
     writer: RegionWriterRef,
     wal: Wal&lt;S&gt;,
     flush_strategy: FlushStrategyRef,
-    flush_scheduler: FlushSchedulerRef,
+    flush_scheduler: FlushSchedulerRef&lt;S&gt;,
     compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
     sst_layer: AccessLayerRef,
     manifest: RegionManifest,
