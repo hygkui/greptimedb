@@ -191,6 +191,8 @@
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -371,7 +373,9 @@
         .map_err(BoxedError::new)
         .context(ExternalSnafu)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>pattern = with.get(<span class="string">&quot;PATTERN&quot;</span>).cloned();
+    <span class="kw">let </span>pattern = with
+        .get(common_datasource::file_format::FILE_PATTERN)
+        .cloned();
 
     <span class="prelude-val">Ok</span>(CopyTableRequest {
         catalog_name,

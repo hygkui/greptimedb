@@ -374,7 +374,7 @@
         <span class="kw">let </span>with = options
             .into_iter()
             .filter_map(|option| {
-                parse_option_string(option.value).map(|v| (option.name.value.to_uppercase(), v))
+                parse_option_string(option.value).map(|v| (option.name.value.to_lowercase(), v))
             })
             .collect();
 
@@ -386,7 +386,7 @@
         <span class="kw">let </span>connection = connection_options
             .into_iter()
             .filter_map(|option| {
-                parse_option_string(option.value).map(|v| (option.name.value.to_uppercase(), v))
+                parse_option_string(option.value).map(|v| (option.name.value.to_lowercase(), v))
             })
             .collect();
         <span class="prelude-val">Ok</span>(CopyTableArgument {
@@ -415,7 +415,7 @@
         <span class="kw">let </span>with = options
             .into_iter()
             .filter_map(|option| {
-                parse_option_string(option.value).map(|v| (option.name.value.to_uppercase(), v))
+                parse_option_string(option.value).map(|v| (option.name.value.to_lowercase(), v))
             })
             .collect();
 
@@ -427,7 +427,7 @@
         <span class="kw">let </span>connection = connection_options
             .into_iter()
             .filter_map(|option| {
-                parse_option_string(option.value).map(|v| (option.name.value.to_uppercase(), v))
+                parse_option_string(option.value).map(|v| (option.name.value.to_lowercase(), v))
             })
             .collect();
 
@@ -549,7 +549,7 @@
             Test {
                 sql: <span class="string">&quot;COPY catalog0.schema0.tbl FROM &#39;tbl_file.parquet&#39; WITH (PATTERN = &#39;demo.*&#39;) CONNECTION (FOO=&#39;Bar&#39;, ONE=&#39;two&#39;)&quot;</span>,
                 expected_pattern: <span class="prelude-val">Some</span>(<span class="string">&quot;demo.*&quot;</span>.into()),
-                expected_connection: [(<span class="string">&quot;FOO&quot;</span>,<span class="string">&quot;Bar&quot;</span>),(<span class="string">&quot;ONE&quot;</span>,<span class="string">&quot;two&quot;</span>)].into_iter().map(|(k,v)|{(k.to_string(),v.to_string())}).collect()
+                expected_connection: [(<span class="string">&quot;foo&quot;</span>,<span class="string">&quot;Bar&quot;</span>),(<span class="string">&quot;one&quot;</span>,<span class="string">&quot;two&quot;</span>)].into_iter().map(|(k,v)|{(k.to_string(),v.to_string())}).collect()
             },
         ];
 
@@ -586,11 +586,11 @@
             },
             Test {
                 sql: <span class="string">&quot;COPY catalog0.schema0.tbl TO &#39;tbl_file.parquet&#39; CONNECTION (FOO=&#39;Bar&#39;, ONE=&#39;two&#39;)&quot;</span>,
-                expected_connection: [(<span class="string">&quot;FOO&quot;</span>,<span class="string">&quot;Bar&quot;</span>),(<span class="string">&quot;ONE&quot;</span>,<span class="string">&quot;two&quot;</span>)].into_iter().map(|(k,v)|{(k.to_string(),v.to_string())}).collect()
+                expected_connection: [(<span class="string">&quot;foo&quot;</span>,<span class="string">&quot;Bar&quot;</span>),(<span class="string">&quot;one&quot;</span>,<span class="string">&quot;two&quot;</span>)].into_iter().map(|(k,v)|{(k.to_string(),v.to_string())}).collect()
             },
             Test {
                 sql:<span class="string">&quot;COPY catalog0.schema0.tbl TO &#39;tbl_file.parquet&#39; WITH (FORMAT = &#39;parquet&#39;) CONNECTION (FOO=&#39;Bar&#39;, ONE=&#39;two&#39;)&quot;</span>,
-                expected_connection: [(<span class="string">&quot;FOO&quot;</span>,<span class="string">&quot;Bar&quot;</span>),(<span class="string">&quot;ONE&quot;</span>,<span class="string">&quot;two&quot;</span>)].into_iter().map(|(k,v)|{(k.to_string(),v.to_string())}).collect()
+                expected_connection: [(<span class="string">&quot;foo&quot;</span>,<span class="string">&quot;Bar&quot;</span>),(<span class="string">&quot;one&quot;</span>,<span class="string">&quot;two&quot;</span>)].into_iter().map(|(k,v)|{(k.to_string(),v.to_string())}).collect()
             },
         ];
 

@@ -369,11 +369,11 @@
 
     <span class="kw">fn </span>try_from(value: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>format = CsvFormat::default();
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(delimiter) = value.get(file_format::FORMAT_DELIMTERL) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(delimiter) = value.get(file_format::FORMAT_DELIMITER) {
             <span class="comment">// TODO(weny): considers to support parse like &quot;\t&quot; (not only b&#39;\t&#39;)
             </span>format.delimiter = u8::from_str(delimiter).map_err(|<span class="kw">_</span>| {
                 error::ParseFormatSnafu {
-                    key: file_format::FORMAT_DELIMTERL,
+                    key: file_format::FORMAT_DELIMITER,
                     value: delimiter,
                 }
                 .build()
@@ -529,7 +529,7 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::file_format::{
-        FileFormat, FORMAT_COMPRESSION_TYPE, FORMAT_DELIMTERL, FORMAT_HAS_HEADER,
+        FileFormat, FORMAT_COMPRESSION_TYPE, FORMAT_DELIMITER, FORMAT_HAS_HEADER,
         FORMAT_SCHEMA_INFER_MAX_RECORD,
     };
     <span class="kw">use </span><span class="kw">crate</span>::test_util::{<span class="self">self</span>, format_schema, test_store};
@@ -620,7 +620,7 @@
         );
 
         map.insert(FORMAT_COMPRESSION_TYPE.to_string(), <span class="string">&quot;zstd&quot;</span>.to_string());
-        map.insert(FORMAT_DELIMTERL.to_string(), <span class="string">b&#39;\t&#39;</span>.to_string());
+        map.insert(FORMAT_DELIMITER.to_string(), <span class="string">b&#39;\t&#39;</span>.to_string());
         map.insert(FORMAT_HAS_HEADER.to_string(), <span class="string">&quot;false&quot;</span>.to_string());
 
         <span class="kw">let </span>format = CsvFormat::try_from(<span class="kw-2">&amp;</span>map).unwrap();

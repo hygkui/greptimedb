@@ -204,6 +204,7 @@
 <a href="#204" id="204">204</a>
 <a href="#205" id="205">205</a>
 <a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -251,11 +252,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::share_buffer::SharedBuffer;
 
-<span class="kw">pub const </span>FORMAT_COMPRESSION_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;COMPRESSION_TYPE&quot;</span>;
-<span class="kw">pub const </span>FORMAT_DELIMTERL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;DELIMTERL&quot;</span>;
-<span class="kw">pub const </span>FORMAT_SCHEMA_INFER_MAX_RECORD: <span class="kw-2">&amp;</span>str = <span class="string">&quot;SCHEMA_INFER_MAX_RECORD&quot;</span>;
-<span class="kw">pub const </span>FORMAT_HAS_HEADER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;FORMAT_HAS_HEADER&quot;</span>;
-<span class="kw">pub const </span>FORMAT_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;FORMAT&quot;</span>;
+<span class="kw">pub const </span>FORMAT_COMPRESSION_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;compression_type&quot;</span>;
+<span class="kw">pub const </span>FORMAT_DELIMITER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;delimiter&quot;</span>;
+<span class="kw">pub const </span>FORMAT_SCHEMA_INFER_MAX_RECORD: <span class="kw-2">&amp;</span>str = <span class="string">&quot;schema_infer_max_record&quot;</span>;
+<span class="kw">pub const </span>FORMAT_HAS_HEADER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;has_header&quot;</span>;
+<span class="kw">pub const </span>FORMAT_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;format&quot;</span>;
+<span class="kw">pub const </span>FILE_PATTERN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;pattern&quot;</span>;
 
 <span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 </span><span class="kw">pub enum </span>Format {
