@@ -227,7 +227,7 @@
 </span><span class="kw">use </span>std::future::Future;
 <span class="kw">use </span>std::sync::{Mutex, Once};
 
-<span class="kw">use </span>common_telemetry::logging;
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>paste::paste;
 
@@ -237,13 +237,10 @@
 <span class="kw">const </span>WRITE_WORKERS: usize = <span class="number">8</span>;
 <span class="kw">const </span>BG_WORKERS: usize = <span class="number">8</span>;
 
-<span class="kw">pub fn </span>create_runtime(thread_name: <span class="kw-2">&amp;</span>str, worker_threads: usize) -&gt; Runtime {
-    <span class="macro">logging::info!</span>(
-        <span class="string">&quot;Creating runtime, thread name: {}, work_threads: {}.&quot;</span>,
-        thread_name,
-        worker_threads
-    );
+<span class="kw">pub fn </span>create_runtime(runtime_name: <span class="kw-2">&amp;</span>str, thread_name: <span class="kw-2">&amp;</span>str, worker_threads: usize) -&gt; Runtime {
+    <span class="macro">info!</span>(<span class="string">&quot;Creating runtime with runtime_name: {runtime_name}, thread_name: {thread_name}, work_threads: {worker_threads}.&quot;</span>);
     Builder::default()
+        .runtime_name(runtime_name)
         .thread_name(thread_name)
         .worker_threads(worker_threads)
         .build()
@@ -290,9 +287,12 @@
 
     <span class="kw">fn </span>new(read: <span class="prelude-ty">Option</span>&lt;Runtime&gt;, write: <span class="prelude-ty">Option</span>&lt;Runtime&gt;, background: <span class="prelude-ty">Option</span>&lt;Runtime&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            read_runtime: read.unwrap_or_else(|| create_runtime(<span class="string">&quot;read-worker&quot;</span>, READ_WORKERS)),
-            write_runtime: write.unwrap_or_else(|| create_runtime(<span class="string">&quot;write-worker&quot;</span>, WRITE_WORKERS)),
-            bg_runtime: background.unwrap_or_else(|| create_runtime(<span class="string">&quot;bg-worker&quot;</span>, BG_WORKERS)),
+            read_runtime: read
+                .unwrap_or_else(|| create_runtime(<span class="string">&quot;global-read&quot;</span>, <span class="string">&quot;read-worker&quot;</span>, READ_WORKERS)),
+            write_runtime: write
+                .unwrap_or_else(|| create_runtime(<span class="string">&quot;global-write&quot;</span>, <span class="string">&quot;write-worker&quot;</span>, WRITE_WORKERS)),
+            bg_runtime: background
+                .unwrap_or_else(|| create_runtime(<span class="string">&quot;global-bg&quot;</span>, <span class="string">&quot;bg-worker&quot;</span>, BG_WORKERS)),
         }
     }
 }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DatanodeClients"]};
+window.SIDEBAR_ITEMS = {"static":["CALLSITE"],"struct":["DatanodeClients"]};

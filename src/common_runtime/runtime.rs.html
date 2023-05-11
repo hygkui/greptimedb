@@ -268,6 +268,22 @@
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -283,6 +299,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::future::Future;
+<span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::thread;
 <span class="kw">use </span>std::time::Duration;
@@ -296,9 +313,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::metrics::<span class="kw-2">*</span>;
 
+<span class="kw">static </span>RUNTIME_ID: AtomicUsize = AtomicUsize::new(<span class="number">0</span>);
+
 <span class="doccomment">/// A runtime to run future tasks
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Runtime {
+    name: String,
     handle: Handle,
     <span class="comment">// Used to receive a drop signal when dropper is dropped, inspired by databend
     </span>_dropper: Arc&lt;Dropper&gt;,
@@ -343,9 +363,14 @@
     </span><span class="kw">pub fn </span>block_on&lt;F: Future&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, future: F) -&gt; F::Output {
         <span class="self">self</span>.handle.block_on(future)
     }
+
+    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.name
+    }
 }
 
 <span class="kw">pub struct </span>Builder {
+    runtime_name: String,
     thread_name: String,
     builder: RuntimeBuilder,
 }
@@ -353,6 +378,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>Builder {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
+            runtime_name: <span class="macro">format!</span>(<span class="string">&quot;runtime-{}&quot;</span>, RUNTIME_ID.fetch_add(<span class="number">1</span>, Ordering::Relaxed)),
             thread_name: <span class="string">&quot;default-worker&quot;</span>.to_string(),
             builder: RuntimeBuilder::new_multi_thread(),
         }
@@ -386,6 +412,11 @@
         <span class="self">self
     </span>}
 
+    <span class="kw">pub fn </span>runtime_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.runtime_name = val.into();
+        <span class="self">self
+    </span>}
+
     <span class="doccomment">/// Sets name of threads spawned by the Runtime thread pool
     </span><span class="kw">pub fn </span>thread_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.thread_name = val.into();
@@ -412,6 +443,7 @@
             .spawn(<span class="kw">move </span>|| runtime.block_on(recv_stop));
 
         <span class="prelude-val">Ok</span>(Runtime {
+            name: <span class="self">self</span>.runtime_name.clone(),
             handle,
             _dropper: Arc::new(Dropper {
                 close: <span class="prelude-val">Some</span>(send_stop),

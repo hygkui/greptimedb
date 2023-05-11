@@ -156,6 +156,53 @@
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -208,6 +255,12 @@
     }
 }
 
+<span class="attr">#[derive(Default)]
+</span><span class="kw">pub struct </span>TracingOptions {
+    <span class="attr">#[cfg(feature = <span class="string">&quot;tokio-console&quot;</span>)]
+    </span><span class="kw">pub </span>tokio_console_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
+}
+
 <span class="doccomment">/// Init tracing for unittest.
 /// Write logs to file `unittest`.
 </span><span class="kw">pub fn </span>init_default_ut_logging() {
@@ -229,7 +282,11 @@
             level,
             ..Default::default()
         };
-        <span class="kw-2">*</span>g = <span class="prelude-val">Some</span>(init_global_logging(<span class="string">&quot;unittest&quot;</span>, <span class="kw-2">&amp;</span>opts));
+        <span class="kw-2">*</span>g = <span class="prelude-val">Some</span>(init_global_logging(
+            <span class="string">&quot;unittest&quot;</span>,
+            <span class="kw-2">&amp;</span>opts,
+            TracingOptions::default(),
+        ));
 
         <span class="macro">info!</span>(<span class="string">&quot;logs dir = {}&quot;</span>, dir);
     });
@@ -238,7 +295,12 @@
 <span class="kw">static </span>GLOBAL_UT_LOG_GUARD: Lazy&lt;Arc&lt;Mutex&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;WorkerGuard&gt;&gt;&gt;&gt;&gt; =
     Lazy::new(|| Arc::new(Mutex::new(<span class="prelude-val">None</span>)));
 
-<span class="kw">pub fn </span>init_global_logging(app_name: <span class="kw-2">&amp;</span>str, opts: <span class="kw-2">&amp;</span>LoggingOptions) -&gt; Vec&lt;WorkerGuard&gt; {
+<span class="attr">#[allow(clippy::print_stdout)]
+</span><span class="kw">pub fn </span>init_global_logging(
+    app_name: <span class="kw-2">&amp;</span>str,
+    opts: <span class="kw-2">&amp;</span>LoggingOptions,
+    tracing_opts: TracingOptions,
+) -&gt; Vec&lt;WorkerGuard&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>guards = <span class="macro">vec!</span>[];
     <span class="kw">let </span>dir = <span class="kw-2">&amp;</span>opts.dir;
     <span class="kw">let </span>level = <span class="kw-2">&amp;</span>opts.level;
@@ -285,16 +347,48 @@
                 .expect(<span class="string">&quot;error parsing level string&quot;</span>),
         );
 
-    <span class="kw">let </span>subscriber = Registry::default()
+    <span class="comment">// Must enable &#39;tokio_unstable&#39; cfg to use this feature.
+    // For example: `RUSTFLAGS=&quot;--cfg tokio_unstable&quot; cargo run -F common-telemetry/console -- standalone start`
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;tokio-console&quot;</span>)]
+    </span><span class="kw">let </span>subscriber = {
+        <span class="kw">let </span>tokio_console_layer = <span class="kw">if let </span><span class="prelude-val">Some</span>(tokio_console_addr) = <span class="kw-2">&amp;</span>tracing_opts.tokio_console_addr
+        {
+            <span class="kw">let </span>addr: std::net::SocketAddr = tokio_console_addr.parse().unwrap_or_else(|e| {
+                <span class="macro">panic!</span>(<span class="string">&quot;Invalid binding address &#39;{tokio_console_addr}&#39; for tokio-console: {e}&quot;</span>);
+            });
+            <span class="macro">println!</span>(<span class="string">&quot;tokio-console listening on {addr}&quot;</span>);
+
+            <span class="prelude-val">Some</span>(
+                console_subscriber::ConsoleLayer::builder()
+                    .server_addr(addr)
+                    .spawn(),
+            )
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
+
+        <span class="kw">let </span>stdout_logging_layer = stdout_logging_layer.with_filter(filter.clone());
+
+        <span class="kw">let </span>file_logging_layer = file_logging_layer.with_filter(filter);
+
+        Registry::default()
+            .with(tokio_console_layer)
+            .with(JsonStorageLayer)
+            .with(stdout_logging_layer)
+            .with(file_logging_layer)
+            .with(err_file_logging_layer.with_filter(filter::LevelFilter::ERROR))
+    };
+
+    <span class="comment">// consume the `tracing_opts`, to avoid &quot;unused&quot; warnings
+    </span><span class="kw">let _ </span>= tracing_opts;
+
+    <span class="attr">#[cfg(not(feature = <span class="string">&quot;tokio-console&quot;</span>))]
+    </span><span class="kw">let </span>subscriber = Registry::default()
         .with(filter)
         .with(JsonStorageLayer)
         .with(stdout_logging_layer)
         .with(file_logging_layer)
         .with(err_file_logging_layer.with_filter(filter::LevelFilter::ERROR));
-
-    <span class="comment">// Must enable &#39;tokio_unstable&#39; cfg, https://github.com/tokio-rs/console
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;console&quot;</span>)]
-    </span><span class="kw">let </span>subscriber = subscriber.with(console_subscriber::spawn());
 
     <span class="kw">if </span>enable_jaeger_tracing {
         <span class="comment">// Jaeger layer.

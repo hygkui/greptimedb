@@ -53,6 +53,20 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -71,12 +85,14 @@
 
 <span class="kw">use </span>client::Client;
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>meta_client::rpc::Peer;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
 
 <span class="kw">pub struct </span>DatanodeClients {
     channel_manager: ChannelManager,
     clients: Cache&lt;Peer, Client&gt;,
+    started: bool,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>DatanodeClients {
@@ -87,11 +103,23 @@
                 .time_to_live(Duration::from_secs(<span class="number">30 </span>* <span class="number">60</span>))
                 .time_to_idle(Duration::from_secs(<span class="number">5 </span>* <span class="number">60</span>))
                 .build(),
+            started: <span class="bool-val">false</span>,
         }
     }
 }
 
 <span class="kw">impl </span>DatanodeClients {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if </span><span class="self">self</span>.started {
+            <span class="kw">return</span>;
+        }
+
+        <span class="self">self</span>.channel_manager.start_channel_recycle();
+
+        <span class="macro">info!</span>(<span class="string">&quot;Datanode clients manager is started!&quot;</span>);
+        <span class="self">self</span>.started = <span class="bool-val">true</span>;
+    }
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_client(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode: <span class="kw-2">&amp;</span>Peer) -&gt; Client {
         <span class="self">self</span>.clients
             .get_with_by_ref(datanode, <span class="kw">async move </span>{

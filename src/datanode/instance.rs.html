@@ -567,6 +567,9 @@
 <a href="#567" id="567">567</a>
 <a href="#568" id="568">568</a>
 <a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1077,7 +1080,10 @@
         .timeout(Duration::from_millis(meta_config.timeout_millis))
         .connect_timeout(Duration::from_millis(meta_config.connect_timeout_millis))
         .tcp_nodelay(meta_config.tcp_nodelay);
-    <span class="kw">let </span>channel_manager = ChannelManager::with_config(config);
+
+    <span class="kw">let </span><span class="kw-2">mut </span>channel_manager = ChannelManager::with_config(config);
+    channel_manager.start_channel_recycle();
+
     <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(cluster_id, member_id)
         .enable_heartbeat()
         .enable_router()
