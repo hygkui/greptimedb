@@ -799,6 +799,14 @@
 <a href="#799" id="799">799</a>
 <a href="#800" id="800">800</a>
 <a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1320,6 +1328,14 @@
             <span class="kw">if </span>!<span class="self">self</span>.options.disable_dashboard {
                 <span class="macro">info!</span>(<span class="string">&quot;Enable dashboard service at &#39;/dashboard&#39;&quot;</span>);
                 router = router.nest(<span class="string">&quot;/dashboard&quot;</span>, dashboard::dashboard());
+
+                <span class="comment">// &quot;/dashboard&quot; and &quot;/dashboard/&quot; are two different paths in Axum.
+                // We cannot nest &quot;/dashboard/&quot;, because we already mapping &quot;/dashboard/*x&quot; while nesting &quot;/dashboard&quot;.
+                // So we explicitly route &quot;/dashboard/&quot; here.
+                </span>router = router.route(
+                    <span class="string">&quot;/dashboard/&quot;</span>,
+                    routing::get(dashboard::static_handler).post(dashboard::static_handler),
+                );
             }
         }
         router
