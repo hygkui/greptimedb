@@ -561,6 +561,12 @@
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
 <a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -625,6 +631,8 @@
     <span class="self">self</span>, CatalogSnafu, MetaClientInitSnafu, MissingMetasrvOptsSnafu, MissingNodeIdSnafu,
     NewCatalogSnafu, OpenLogStoreSnafu, RecoverProcedureSnafu, <span class="prelude-ty">Result</span>, ShutdownInstanceSnafu,
 };
+<span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
+<span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::HandlerGroupExecutor;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
 <span class="kw">use </span><span class="kw">crate</span>::sql::{SqlHandler, SqlRequest};
 
@@ -759,6 +767,9 @@
         <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_manager.clone());
         <span class="kw">let </span>query_engine = factory.query_engine();
 
+        <span class="kw">let </span>handlder_executor =
+            HandlerGroupExecutor::new(<span class="macro">vec!</span>[Arc::new(ParseMailboxMessageHandler::default())]);
+
         <span class="kw">let </span>heartbeat_task = <span class="kw">match </span>opts.mode {
             Mode::Standalone =&gt; <span class="prelude-val">None</span>,
             Mode::Distributed =&gt; <span class="prelude-val">Some</span>(HeartbeatTask::new(
@@ -767,6 +778,7 @@
                 opts.rpc_hostname.clone(),
                 meta_client.as_ref().unwrap().clone(),
                 catalog_manager.clone(),
+                Arc::new(handlder_executor),
             )),
         };
 
