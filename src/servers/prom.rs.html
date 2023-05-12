@@ -497,6 +497,8 @@
 <a href="#497" id="497">497</a>
 <a href="#498" id="498">498</a>
 <a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -849,10 +851,12 @@
                 <span class="kw">let </span>timestamp = timestamp_millis <span class="kw">as </span>f64 / <span class="number">1000.0</span>;
 
                 <span class="comment">// retrieve value
-                </span><span class="kw">let </span>value =
-                    Into::&lt;f64&gt;::into(field_column.get_data(row_index).unwrap()).to_string();
-
-                buffer.entry(tags).or_default().push((timestamp, value));
+                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(v) = field_column.get_data(row_index) {
+                    buffer
+                        .entry(tags)
+                        .or_default()
+                        .push((timestamp, Into::&lt;f64&gt;::into(v).to_string()));
+                };
             }
         }
 
