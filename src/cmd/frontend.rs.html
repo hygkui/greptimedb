@@ -405,6 +405,53 @@
 <a href="#405" id="405">405</a>
 <a href="#406" id="406">406</a>
 <a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -424,12 +471,8 @@
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
-<span class="kw">use </span>frontend::grpc::GrpcOptions;
 <span class="kw">use </span>frontend::influxdb::InfluxdbOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
-<span class="kw">use </span>frontend::mysql::MysqlOptions;
-<span class="kw">use </span>frontend::opentsdb::OpentsdbOptions;
-<span class="kw">use </span>frontend::postgres::PostgresOptions;
 <span class="kw">use </span>frontend::prom::PromOptions;
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>servers::auth::UserProviderRef;
@@ -439,7 +482,6 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, IllegalAuthConfigSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::options::{Options, TopLevelOptions};
-<span class="kw">use </span><span class="kw">crate</span>::toml_loader;
 
 <span class="kw">pub struct </span>Instance {
     frontend: FeInstance,
@@ -496,7 +538,7 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Parser)]
+<span class="attr">#[derive(Debug, Default, Parser)]
 </span><span class="kw">pub struct </span>StartCommand {
     <span class="attr">#[clap(long)]
     </span>http_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
@@ -526,15 +568,14 @@
     </span>user_provider: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
     </span>disable_dashboard: <span class="prelude-ty">Option</span>&lt;bool&gt;,
+    <span class="attr">#[clap(long, default_value = <span class="string">&quot;GREPTIMEDB_FRONTEND&quot;</span>)]
+    </span>env_prefix: String,
 }
 
 <span class="kw">impl </span>StartCommand {
     <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_opts: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>opts: FrontendOptions = <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = <span class="kw-2">&amp;</span><span class="self">self</span>.config_file {
-            <span class="macro">toml_loader::from_file!</span>(path)<span class="question-mark">?
-        </span>} <span class="kw">else </span>{
-            FrontendOptions::default()
-        };
+        <span class="kw">let </span><span class="kw-2">mut </span>opts: FrontendOptions =
+            Options::load_layered_options(<span class="self">self</span>.config_file.as_deref(), <span class="self">self</span>.env_prefix.as_ref())<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_opts.log_dir {
             opts.logging.dir = dir;
@@ -543,14 +584,16 @@
             opts.logging.level = level;
         }
 
-        <span class="kw">let </span>tls_option = TlsOption::new(
+        <span class="kw">let </span>tls_opts = TlsOption::new(
             <span class="self">self</span>.tls_mode.clone(),
             <span class="self">self</span>.tls_cert_path.clone(),
             <span class="self">self</span>.tls_key_path.clone(),
         );
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.http_addr.clone() {
-            opts.http_options.get_or_insert_with(Default::default).addr = addr;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(http_opts) = <span class="kw-2">&amp;mut </span>opts.http_options {
+                http_opts.addr = addr.clone()
+            }
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(disable_dashboard) = <span class="self">self</span>.disable_dashboard {
@@ -559,43 +602,45 @@
                 .disable_dashboard = disable_dashboard;
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.grpc_addr.clone() {
-            opts.grpc_options = <span class="prelude-val">Some</span>(GrpcOptions {
-                addr,
-                ..Default::default()
-            });
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(grpc_opts) = <span class="kw-2">&amp;mut </span>opts.grpc_options {
+                grpc_opts.addr = addr.clone()
+            }
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.mysql_addr.clone() {
-            opts.mysql_options = <span class="prelude-val">Some</span>(MysqlOptions {
-                addr,
-                tls: tls_option.clone(),
-                ..Default::default()
-            });
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.mysql_addr {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(mysql_opts) = <span class="kw-2">&amp;mut </span>opts.mysql_options {
+                mysql_opts.addr = addr.clone();
+                mysql_opts.tls = tls_opts.clone();
+            }
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.prom_addr.clone() {
-            opts.prom_options = <span class="prelude-val">Some</span>(PromOptions { addr });
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.prom_addr {
+            opts.prom_options = <span class="prelude-val">Some</span>(PromOptions { addr: addr.clone() });
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.postgres_addr.clone() {
-            opts.postgres_options = <span class="prelude-val">Some</span>(PostgresOptions {
-                addr,
-                tls: tls_option,
-                ..Default::default()
-            });
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.postgres_addr {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(postgres_opts) = <span class="kw-2">&amp;mut </span>opts.postgres_options {
+                postgres_opts.addr = addr.clone();
+                postgres_opts.tls = tls_opts;
+            }
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.opentsdb_addr.clone() {
-            opts.opentsdb_options = <span class="prelude-val">Some</span>(OpentsdbOptions {
-                addr,
-                ..Default::default()
-            });
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.opentsdb_addr {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(opentsdb_addr) = <span class="kw-2">&amp;mut </span>opts.opentsdb_options {
+                opentsdb_addr.addr = addr.clone();
+            }
         }
+
         <span class="kw">if let </span><span class="prelude-val">Some</span>(enable) = <span class="self">self</span>.influxdb_enable {
             opts.influxdb_options = <span class="prelude-val">Some</span>(InfluxdbOptions { enable });
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(metasrv_addr) = <span class="self">self</span>.metasrv_addr.clone() {
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(metasrv_addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.metasrv_addr {
             opts.meta_client_options
                 .get_or_insert_with(MetaClientOptions::default)
                 .metasrv_addrs = metasrv_addr
+                .clone()
                 .split(<span class="string">&#39;,&#39;</span>)
                 .map(<span class="kw-2">&amp;</span>str::trim)
                 .map(<span class="kw-2">&amp;</span>str::to_string)
@@ -638,27 +683,23 @@
     <span class="kw">use </span>std::time::Duration;
 
     <span class="kw">use </span>common_test_util::temp_dir::create_named_temp_file;
+    <span class="kw">use </span>frontend::grpc::GrpcOptions;
     <span class="kw">use </span>servers::auth::{Identity, Password, UserProviderRef};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::options::ENV_VAR_SEP;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_from_start_command() {
         <span class="kw">let </span>command = StartCommand {
             http_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:1234&quot;</span>.to_string()),
-            grpc_addr: <span class="prelude-val">None</span>,
             prom_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:4444&quot;</span>.to_string()),
             mysql_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:5678&quot;</span>.to_string()),
             postgres_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:5432&quot;</span>.to_string()),
             opentsdb_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:4321&quot;</span>.to_string()),
             influxdb_enable: <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
-            config_file: <span class="prelude-val">None</span>,
-            metasrv_addr: <span class="prelude-val">None</span>,
-            tls_mode: <span class="prelude-val">None</span>,
-            tls_cert_path: <span class="prelude-val">None</span>,
-            tls_key_path: <span class="prelude-val">None</span>,
-            user_provider: <span class="prelude-val">None</span>,
             disable_dashboard: <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
+            ..Default::default()
         };
 
         <span class="kw">let </span>Options::Frontend(opts) =
@@ -714,20 +755,9 @@
         <span class="macro">write!</span>(file, <span class="string">&quot;{}&quot;</span>, toml_str).unwrap();
 
         <span class="kw">let </span>command = StartCommand {
-            http_addr: <span class="prelude-val">None</span>,
-            grpc_addr: <span class="prelude-val">None</span>,
-            mysql_addr: <span class="prelude-val">None</span>,
-            prom_addr: <span class="prelude-val">None</span>,
-            postgres_addr: <span class="prelude-val">None</span>,
-            opentsdb_addr: <span class="prelude-val">None</span>,
-            influxdb_enable: <span class="prelude-val">None</span>,
             config_file: <span class="prelude-val">Some</span>(file.path().to_str().unwrap().to_string()),
-            metasrv_addr: <span class="prelude-val">None</span>,
-            tls_mode: <span class="prelude-val">None</span>,
-            tls_cert_path: <span class="prelude-val">None</span>,
-            tls_key_path: <span class="prelude-val">None</span>,
-            user_provider: <span class="prelude-val">None</span>,
             disable_dashboard: <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
+            ..Default::default()
         };
 
         <span class="kw">let </span>Options::Frontend(fe_opts) =
@@ -749,20 +779,9 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_try_from_start_command_to_anymap() {
         <span class="kw">let </span>command = StartCommand {
-            http_addr: <span class="prelude-val">None</span>,
-            grpc_addr: <span class="prelude-val">None</span>,
-            mysql_addr: <span class="prelude-val">None</span>,
-            prom_addr: <span class="prelude-val">None</span>,
-            postgres_addr: <span class="prelude-val">None</span>,
-            opentsdb_addr: <span class="prelude-val">None</span>,
-            influxdb_enable: <span class="prelude-val">None</span>,
-            config_file: <span class="prelude-val">None</span>,
-            metasrv_addr: <span class="prelude-val">None</span>,
-            tls_mode: <span class="prelude-val">None</span>,
-            tls_cert_path: <span class="prelude-val">None</span>,
-            tls_key_path: <span class="prelude-val">None</span>,
             user_provider: <span class="prelude-val">Some</span>(<span class="string">&quot;static_user_provider:cmd:test=test&quot;</span>.to_string()),
             disable_dashboard: <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
+            ..Default::default()
         };
 
         <span class="kw">let </span>plugins = load_frontend_plugins(<span class="kw-2">&amp;</span>command.user_provider);
@@ -784,20 +803,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_top_level_options() {
         <span class="kw">let </span>cmd = StartCommand {
-            http_addr: <span class="prelude-val">None</span>,
-            grpc_addr: <span class="prelude-val">None</span>,
-            mysql_addr: <span class="prelude-val">None</span>,
-            prom_addr: <span class="prelude-val">None</span>,
-            postgres_addr: <span class="prelude-val">None</span>,
-            opentsdb_addr: <span class="prelude-val">None</span>,
-            influxdb_enable: <span class="prelude-val">None</span>,
-            config_file: <span class="prelude-val">None</span>,
-            metasrv_addr: <span class="prelude-val">None</span>,
-            tls_mode: <span class="prelude-val">None</span>,
-            tls_cert_path: <span class="prelude-val">None</span>,
-            tls_key_path: <span class="prelude-val">None</span>,
-            user_provider: <span class="prelude-val">None</span>,
             disable_dashboard: <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
+            ..Default::default()
         };
 
         <span class="kw">let </span>options = cmd
@@ -810,6 +817,93 @@
         <span class="kw">let </span>logging_opt = options.logging_options();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, logging_opt.dir);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opt.level);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_config_precedence_order() {
+        <span class="kw">let </span><span class="kw-2">mut </span>file = create_named_temp_file();
+        <span class="kw">let </span>toml_str = <span class="string">r#&quot;
+            mode = &quot;distributed&quot;
+
+            [http_options]
+            addr = &quot;127.0.0.1:4000&quot;
+            
+            [mysql_options]
+            addr = &quot;127.0.0.1:4002&quot;
+        &quot;#</span>;
+        <span class="macro">write!</span>(file, <span class="string">&quot;{}&quot;</span>, toml_str).unwrap();
+
+        <span class="kw">let </span>env_prefix = <span class="string">&quot;FRONTEND_UT&quot;</span>;
+        temp_env::with_vars(
+            <span class="macro">vec!</span>[
+                (
+                    <span class="comment">// mysql_options.addr = 127.0.0.1:14002
+                    </span><span class="macro">vec!</span>[
+                        env_prefix.to_string(),
+                        <span class="string">&quot;mysql_options&quot;</span>.to_uppercase(),
+                        <span class="string">&quot;addr&quot;</span>.to_uppercase(),
+                    ]
+                    .join(ENV_VAR_SEP),
+                    <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:14002&quot;</span>),
+                ),
+                (
+                    <span class="comment">// mysql_options.runtime_size = 11
+                    </span><span class="macro">vec!</span>[
+                        env_prefix.to_string(),
+                        <span class="string">&quot;mysql_options&quot;</span>.to_uppercase(),
+                        <span class="string">&quot;runtime_size&quot;</span>.to_uppercase(),
+                    ]
+                    .join(ENV_VAR_SEP),
+                    <span class="prelude-val">Some</span>(<span class="string">&quot;11&quot;</span>),
+                ),
+                (
+                    <span class="comment">// http_options.addr = 127.0.0.1:24000
+                    </span><span class="macro">vec!</span>[
+                        env_prefix.to_string(),
+                        <span class="string">&quot;http_options&quot;</span>.to_uppercase(),
+                        <span class="string">&quot;addr&quot;</span>.to_uppercase(),
+                    ]
+                    .join(ENV_VAR_SEP),
+                    <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:24000&quot;</span>),
+                ),
+            ],
+            || {
+                <span class="kw">let </span>command = StartCommand {
+                    config_file: <span class="prelude-val">Some</span>(file.path().to_str().unwrap().to_string()),
+                    http_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:14000&quot;</span>.to_string()),
+                    env_prefix: env_prefix.to_string(),
+                    ..Default::default()
+                };
+
+                <span class="kw">let </span>top_level_opts = TopLevelOptions {
+                    log_dir: <span class="prelude-val">None</span>,
+                    log_level: <span class="prelude-val">Some</span>(<span class="string">&quot;error&quot;</span>.to_string()),
+                };
+                <span class="kw">let </span>Options::Frontend(fe_opts) =
+                    command.load_options(top_level_opts).unwrap() <span class="kw">else </span>{<span class="macro">unreachable!</span>()};
+
+                <span class="comment">// Should be read from env, env &gt; default values.
+                </span><span class="macro">assert_eq!</span>(fe_opts.mysql_options.as_ref().unwrap().runtime_size, <span class="number">11</span>);
+
+                <span class="comment">// Should be read from config file, config file &gt; env &gt; default values.
+                </span><span class="macro">assert_eq!</span>(
+                    fe_opts.mysql_options.as_ref().unwrap().addr,
+                    <span class="string">&quot;127.0.0.1:4002&quot;
+                </span>);
+
+                <span class="comment">// Should be read from cli, cli &gt; config file &gt; env &gt; default values.
+                </span><span class="macro">assert_eq!</span>(
+                    fe_opts.http_options.as_ref().unwrap().addr,
+                    <span class="string">&quot;127.0.0.1:14000&quot;
+                </span>);
+
+                <span class="comment">// Should be default value.
+                </span><span class="macro">assert_eq!</span>(
+                    fe_opts.grpc_options.as_ref().unwrap().addr,
+                    GrpcOptions::default().addr
+                );
+            },
+        );
     }
 }
 </code></pre></div></section></main></body></html>

@@ -252,6 +252,65 @@
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -274,9 +333,8 @@
 <span class="kw">use </span>meta_srv::metasrv::MetaSrvOptions;
 <span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::options::{Options, TopLevelOptions};
-<span class="kw">use crate</span>::{error, toml_loader};
 
 <span class="kw">pub struct </span>Instance {
     instance: MetaSrvInstance,
@@ -333,7 +391,7 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Parser)]
+<span class="attr">#[derive(Debug, Default, Parser)]
 </span><span class="kw">struct </span>StartCommand {
     <span class="attr">#[clap(long)]
     </span>bind_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
@@ -351,15 +409,14 @@
     </span>http_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
     </span>http_timeout: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    <span class="attr">#[clap(long, default_value = <span class="string">&quot;GREPTIMEDB_METASRV&quot;</span>)]
+    </span>env_prefix: String,
 }
 
 <span class="kw">impl </span>StartCommand {
     <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_opts: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>opts: MetaSrvOptions = <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = <span class="kw-2">&amp;</span><span class="self">self</span>.config_file {
-            <span class="macro">toml_loader::from_file!</span>(path)<span class="question-mark">?
-        </span>} <span class="kw">else </span>{
-            MetaSrvOptions::default()
-        };
+        <span class="kw">let </span><span class="kw-2">mut </span>opts: MetaSrvOptions =
+            Options::load_layered_options(<span class="self">self</span>.config_file.as_deref(), <span class="self">self</span>.env_prefix.as_ref())<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_opts.log_dir {
             opts.logging.dir = dir;
@@ -368,15 +425,18 @@
             opts.logging.level = level;
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.bind_addr.clone() {
-            opts.bind_addr = addr;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.bind_addr {
+            opts.bind_addr = addr.clone();
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.server_addr.clone() {
-            opts.server_addr = addr;
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.server_addr {
+            opts.server_addr = addr.clone();
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="self">self</span>.store_addr.clone() {
-            opts.store_addr = addr;
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.store_addr {
+            opts.store_addr = addr.clone();
         }
+
         <span class="kw">if let </span><span class="prelude-val">Some</span>(selector_type) = <span class="kw-2">&amp;</span><span class="self">self</span>.selector {
             opts.selector = selector_type[..]
                 .try_into()
@@ -387,9 +447,10 @@
             opts.use_memory_store = <span class="bool-val">true</span>;
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = <span class="self">self</span>.http_addr.clone() {
-            opts.http_opts.addr = http_addr;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
+            opts.http_opts.addr = http_addr.clone();
         }
+
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_timeout) = <span class="self">self</span>.http_timeout {
             opts.http_opts.timeout = Duration::from_secs(http_timeout);
         }
@@ -421,6 +482,7 @@
     <span class="kw">use </span>meta_srv::selector::SelectorType;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::options::ENV_VAR_SEP;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_read_from_cmd() {
@@ -428,11 +490,8 @@
             bind_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()),
             server_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()),
             store_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:2380&quot;</span>.to_string()),
-            config_file: <span class="prelude-val">None</span>,
             selector: <span class="prelude-val">Some</span>(<span class="string">&quot;LoadBased&quot;</span>.to_string()),
-            use_memory_store: <span class="bool-val">false</span>,
-            http_addr: <span class="prelude-val">None</span>,
-            http_timeout: <span class="prelude-val">None</span>,
+            ..Default::default()
         };
 
         <span class="kw">let </span>Options::Metasrv(options) =
@@ -460,14 +519,8 @@
         <span class="macro">write!</span>(file, <span class="string">&quot;{}&quot;</span>, toml_str).unwrap();
 
         <span class="kw">let </span>cmd = StartCommand {
-            bind_addr: <span class="prelude-val">None</span>,
-            server_addr: <span class="prelude-val">None</span>,
-            store_addr: <span class="prelude-val">None</span>,
-            selector: <span class="prelude-val">None</span>,
             config_file: <span class="prelude-val">Some</span>(file.path().to_str().unwrap().to_string()),
-            use_memory_store: <span class="bool-val">false</span>,
-            http_addr: <span class="prelude-val">None</span>,
-            http_timeout: <span class="prelude-val">None</span>,
+            ..Default::default()
         };
 
         <span class="kw">let </span>Options::Metasrv(options) =
@@ -487,11 +540,8 @@
             bind_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()),
             server_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()),
             store_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:2380&quot;</span>.to_string()),
-            config_file: <span class="prelude-val">None</span>,
             selector: <span class="prelude-val">Some</span>(<span class="string">&quot;LoadBased&quot;</span>.to_string()),
-            use_memory_store: <span class="bool-val">false</span>,
-            http_addr: <span class="prelude-val">None</span>,
-            http_timeout: <span class="prelude-val">None</span>,
+            ..Default::default()
         };
 
         <span class="kw">let </span>options = cmd
@@ -504,6 +554,74 @@
         <span class="kw">let </span>logging_opt = options.logging_options();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, logging_opt.dir);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opt.level);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_config_precedence_order() {
+        <span class="kw">let </span><span class="kw-2">mut </span>file = create_named_temp_file();
+        <span class="kw">let </span>toml_str = <span class="string">r#&quot;
+            server_addr = &quot;127.0.0.1:3002&quot;
+            datanode_lease_secs = 15
+            selector = &quot;LeaseBased&quot;
+            use_memory_store = false
+
+            [http_options]
+            addr = &quot;127.0.0.1:4000&quot;
+            
+            [logging]
+            level = &quot;debug&quot;
+            dir = &quot;/tmp/greptimedb/test/logs&quot;
+        &quot;#</span>;
+        <span class="macro">write!</span>(file, <span class="string">&quot;{}&quot;</span>, toml_str).unwrap();
+
+        <span class="kw">let </span>env_prefix = <span class="string">&quot;METASRV_UT&quot;</span>;
+        temp_env::with_vars(
+            <span class="macro">vec!</span>[
+                (
+                    <span class="comment">// bind_addr = 127.0.0.1:14002
+                    </span><span class="macro">vec!</span>[env_prefix.to_string(), <span class="string">&quot;bind_addr&quot;</span>.to_uppercase()].join(ENV_VAR_SEP),
+                    <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:14002&quot;</span>),
+                ),
+                (
+                    <span class="comment">// server_addr = 127.0.0.1:13002
+                    </span><span class="macro">vec!</span>[env_prefix.to_string(), <span class="string">&quot;server_addr&quot;</span>.to_uppercase()].join(ENV_VAR_SEP),
+                    <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:13002&quot;</span>),
+                ),
+                (
+                    <span class="comment">// http_options.addr = 127.0.0.1:24000
+                    </span><span class="macro">vec!</span>[
+                        env_prefix.to_string(),
+                        <span class="string">&quot;http_options&quot;</span>.to_uppercase(),
+                        <span class="string">&quot;addr&quot;</span>.to_uppercase(),
+                    ]
+                    .join(ENV_VAR_SEP),
+                    <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:24000&quot;</span>),
+                ),
+            ],
+            || {
+                <span class="kw">let </span>command = StartCommand {
+                    http_addr: <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:14000&quot;</span>.to_string()),
+                    config_file: <span class="prelude-val">Some</span>(file.path().to_str().unwrap().to_string()),
+                    env_prefix: env_prefix.to_string(),
+                    ..Default::default()
+                };
+
+                <span class="kw">let </span>Options::Metasrv(opts) =
+                    command.load_options(TopLevelOptions::default()).unwrap() <span class="kw">else </span>{<span class="macro">unreachable!</span>()};
+
+                <span class="comment">// Should be read from env, env &gt; default values.
+                </span><span class="macro">assert_eq!</span>(opts.bind_addr, <span class="string">&quot;127.0.0.1:14002&quot;</span>);
+
+                <span class="comment">// Should be read from config file, config file &gt; env &gt; default values.
+                </span><span class="macro">assert_eq!</span>(opts.server_addr, <span class="string">&quot;127.0.0.1:3002&quot;</span>);
+
+                <span class="comment">// Should be read from cli, cli &gt; config file &gt; env &gt; default values.
+                </span><span class="macro">assert_eq!</span>(opts.http_opts.addr, <span class="string">&quot;127.0.0.1:14000&quot;</span>);
+
+                <span class="comment">// Should be default value.
+                </span><span class="macro">assert_eq!</span>(opts.store_addr, <span class="string">&quot;127.0.0.1:2379&quot;</span>);
+            },
+        );
     }
 }
 </code></pre></div></section></main></body></html>

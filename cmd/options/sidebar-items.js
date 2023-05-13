@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Options"],"struct":["MixOptions","TopLevelOptions"]};
+window.SIDEBAR_ITEMS = {"constant":["ENV_VAR_SEP"],"enum":["Options"],"struct":["MixOptions","TopLevelOptions"]};

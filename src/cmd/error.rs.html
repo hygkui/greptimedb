@@ -209,6 +209,7 @@
 </span><span class="kw">use </span>std::any::Any;
 
 <span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>config::ConfigError;
 <span class="kw">use </span>rustyline::error::ReadlineError;
 <span class="kw">use </span>snafu::Location;
 
@@ -261,12 +262,6 @@
     </span>ReadConfig {
         path: String,
         source: std::io::Error,
-        location: Location,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse config, source: {}&quot;</span>, source))]
-    </span>ParseConfig {
-        source: toml::de::Error,
         location: Location,
     },
 
@@ -347,6 +342,12 @@
         <span class="attr">#[snafu(backtrace)]
         </span>source: substrait::error::Error,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to load layered config, source: {}&quot;</span>, source))]
+    </span>LoadLayeredConfig {
+        source: ConfigError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -362,13 +363,12 @@
             Error::ShutdownMetaServer { source } =&gt; source.status_code(),
             Error::BuildMetaServer { source } =&gt; source.status_code(),
             Error::UnsupportedSelectorType { source, .. } =&gt; source.status_code(),
-            Error::ReadConfig { .. } | Error::ParseConfig { .. } | Error::MissingConfig { .. } =&gt; {
-                StatusCode::InvalidArguments
-            }
-            Error::IllegalConfig { .. } | Error::InvalidReplCommand { .. } =&gt; {
-                StatusCode::InvalidArguments
-            }
-            Error::IllegalAuthConfig { .. } =&gt; StatusCode::InvalidArguments,
+            Error::ReadConfig { .. }
+            | Error::MissingConfig { .. }
+            | Error::LoadLayeredConfig { .. }
+            | Error::IllegalConfig { .. }
+            | Error::InvalidReplCommand { .. }
+            | Error::IllegalAuthConfig { .. } =&gt; StatusCode::InvalidArguments,
             Error::ReplCreation { .. } | Error::Readline { .. } =&gt; StatusCode::Internal,
             Error::RequestDatabase { source, .. } =&gt; source.status_code(),
             Error::CollectRecordBatches { source } | Error::PrettyPrintRecordBatches { source } =&gt; {
