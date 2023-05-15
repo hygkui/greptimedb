@@ -570,6 +570,7 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -692,7 +693,8 @@
                 log_store.clone(),
                 object_store.clone(),
                 compaction_scheduler,
-            ),
+            )
+            .unwrap(),
             object_store.clone(),
         ));
 

@@ -694,6 +694,12 @@
 <a href="#694" id="694">694</a>
 <a href="#695" id="695">695</a>
 <a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1364,6 +1370,12 @@
         .<span class="kw">await
         </span>.map_err(BoxedError::new)
         .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.storage_engine
+            .close(<span class="kw-2">&amp;</span>StorageEngineContext::default())
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }

@@ -585,6 +585,7 @@
 <a href="#585" id="585">585</a>
 <a href="#586" id="586">586</a>
 <a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1096,7 +1097,8 @@
                 Arc::new(NoopLogStore::default()),
                 object_store.clone(),
                 noop_compaction_scheduler,
-            ),
+            )
+            .unwrap(),
             object_store,
         ));
         (dir, table_engine)

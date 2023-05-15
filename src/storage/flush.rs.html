@@ -244,7 +244,6 @@
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -259,17 +258,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>scheduler;
+</span><span class="kw">mod </span>picker;
+<span class="kw">mod </span>scheduler;
 
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_telemetry::{logging, timer};
+<span class="kw">pub use </span>picker::{FlushPicker, PickerConfig};
 <span class="kw">pub use </span>scheduler::{FlushHandle, FlushRequest, FlushScheduler, FlushSchedulerRef};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::consts::WRITE_ROW_GROUP_SIZE;
 <span class="kw">use </span>store_api::storage::SequenceNumber;
 
-<span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
+<span class="kw">use </span><span class="kw">crate</span>::config::{EngineConfig, DEFAULT_REGION_WRITE_BUFFER_SIZE};
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::region::RegionManifest;
@@ -278,9 +279,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::region::{RegionWriterRef, SharedDataRef};
 <span class="kw">use </span><span class="kw">crate</span>::sst::{AccessLayerRef, FileId, FileMeta, Source, SstInfo, WriteOptions};
 <span class="kw">use </span><span class="kw">crate</span>::wal::Wal;
-
-<span class="doccomment">/// Default write buffer size (32M).
-</span><span class="kw">const </span>DEFAULT_WRITE_BUFFER_SIZE: usize = <span class="number">32 </span>* <span class="number">1024 </span>* <span class="number">1024</span>;
 
 <span class="kw">pub trait </span>FlushStrategy: Send + Sync + std::fmt::Debug {
     <span class="kw">fn </span>should_flush(
@@ -319,7 +317,7 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>SizeBasedStrategy {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>max_write_buffer_size = DEFAULT_WRITE_BUFFER_SIZE;
+        <span class="kw">let </span>max_write_buffer_size = DEFAULT_REGION_WRITE_BUFFER_SIZE.as_bytes() <span class="kw">as </span>usize;
         <span class="self">Self </span>{
             max_write_buffer_size,
             mutable_limitation: get_mutable_limitation(max_write_buffer_size),

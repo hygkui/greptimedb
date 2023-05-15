@@ -113,6 +113,15 @@
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -191,6 +200,12 @@
     </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.deque.is_empty()
     }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.deque.clear();
+        <span class="self">self</span>.existing.clear();
+    }
 }
 
 <span class="kw">impl</span>&lt;K, V&gt; Debug <span class="kw">for </span>DedupDeque&lt;K, V&gt;
@@ -226,6 +241,9 @@
         </span><span class="macro">assert!</span>(deque.push_back(<span class="number">1</span>, <span class="string">&quot;hello&quot;</span>.to_string()));
         <span class="macro">assert!</span>(!deque.push_back(<span class="number">1</span>, <span class="string">&quot;world&quot;</span>.to_string()));
         <span class="macro">assert_eq!</span>((<span class="number">1</span>, <span class="string">&quot;hello&quot;</span>.to_string()), deque.pop_front().unwrap());
+
+        deque.clear();
+        <span class="macro">assert!</span>(deque.is_empty());
     }
 }
 </code></pre></div></section></main></body></html>

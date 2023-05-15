@@ -72,6 +72,7 @@
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -140,7 +141,8 @@
             Arc::new(NoopLogStore::default()),
             object_store.clone(),
             compaction_scheduler,
-        );
+        )
+        .unwrap();
         <span class="kw">let </span>table_engine = MitoEngine::new(EngineConfig::default(), storage_engine, object_store);
 
         TestEnv { table_engine, dir }

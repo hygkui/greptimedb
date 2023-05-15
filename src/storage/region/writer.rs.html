@@ -774,6 +774,21 @@
 <a href="#774" id="774">774</a>
 <a href="#775" id="775">775</a>
 <a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -794,10 +809,13 @@
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>futures::TryStreamExt;
+<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::manifest::{Manifest, ManifestVersion, MetaAction};
-<span class="kw">use </span>store_api::storage::{AlterRequest, FlushContext, SequenceNumber, WriteContext, WriteResponse};
+<span class="kw">use </span>store_api::storage::{
+    AlterRequest, FlushContext, FlushReason, SequenceNumber, WriteContext, WriteResponse,
+};
 <span class="kw">use </span>tokio::sync::{oneshot, Mutex};
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::{CompactionRequestImpl, CompactionSchedulerRef};
@@ -809,6 +827,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{Inserter, MemtableBuilderRef, MemtableId, MemtableRef};
 <span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadataRef;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{FLUSH_REASON, FLUSH_REQUESTS_TOTAL};
 <span class="kw">use </span><span class="kw">crate</span>::proto::wal::WalHeader;
 <span class="kw">use </span><span class="kw">crate</span>::region::{
     CompactContext, RecoverdMetadata, RecoveredMetadataMap, RegionManifest, SharedDataRef,
@@ -1057,7 +1076,7 @@
 
         <span class="macro">ensure!</span>(!inner.is_closed(), error::ClosedRegionSnafu);
 
-        inner.manual_flush(writer_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+        inner.manual_flush(writer_ctx, ctx.reason).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span>ctx.wait {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(handle) = inner.flush_handle.take() {
@@ -1363,7 +1382,8 @@
             version_control,
             writer_ctx.flush_strategy,
         ) {
-            <span class="self">self</span>.trigger_flush(writer_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="self">self</span>.trigger_flush(writer_ctx, FlushReason::MemtableFull)
+                .<span class="kw">await</span><span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -1388,11 +1408,17 @@
         flush_strategy.should_flush(shared, mutable_bytes_allocated, total_bytes_allocated)
     }
 
-    <span class="kw">async fn </span>trigger_flush&lt;S: LogStore&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">async fn </span>trigger_flush&lt;S: LogStore&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        ctx: <span class="kw-2">&amp;</span>WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
+        reason: FlushReason,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>version_control = <span class="kw-2">&amp;</span>ctx.shared.version_control;
         <span class="kw">let </span>new_mutable = <span class="self">self</span>.alloc_memtable(version_control);
         <span class="comment">// Freeze all mutable memtables so we can flush them later.
         </span>version_control.freeze_mutable(new_mutable);
+
+        <span class="macro">increment_counter!</span>(FLUSH_REQUESTS_TOTAL, FLUSH_REASON =&gt; reason.as_str());
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(flush_handle) = <span class="self">self</span>.flush_handle.take() {
             <span class="comment">// Previous flush job is incomplete, wait util it is finished.
@@ -1495,8 +1521,12 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>manual_flush&lt;S: LogStore&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.trigger_flush(<span class="kw-2">&amp;</span>writer_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">async fn </span>manual_flush&lt;S: LogStore&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
+        reason: FlushReason,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.trigger_flush(<span class="kw-2">&amp;</span>writer_ctx, reason).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 

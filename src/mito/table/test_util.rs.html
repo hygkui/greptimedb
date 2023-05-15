@@ -215,6 +215,7 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -372,7 +373,8 @@
         Arc::new(NoopLogStore::default()),
         object_store.clone(),
         compaction_scheduler,
-    );
+    )
+    .unwrap();
     <span class="kw">let </span>table_engine = MitoEngine::new(
         EngineConfig::default(),
         storage_engine.clone(),
