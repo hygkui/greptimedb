@@ -53,6 +53,25 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -67,20 +86,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>query::parser::{PromQuery, QueryLanguageParser};
+</span><span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span>common_query::Output;
+<span class="kw">use </span>query::parser::{PromQuery, QueryLanguageParser, ANALYZE_NODE_NAME, EXPLAIN_NODE_NAME};
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>sql::statements::tql::Tql;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{
-    ExecLogicalPlanSnafu, NotSupportedSnafu, ParseQuerySnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>,
-};
+<span class="kw">use </span><span class="kw">crate</span>::error::{ExecLogicalPlanSnafu, ParseQuerySnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::statement::StatementExecutor;
 
 <span class="kw">impl </span>StatementExecutor {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">async fn </span>execute_tql(<span class="kw-2">&amp;</span><span class="self">self</span>, tql: Tql, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>plan = <span class="kw">match </span>tql {
+        <span class="kw">let </span>stmt = <span class="kw">match </span>tql {
             Tql::Eval(eval) =&gt; {
                 <span class="kw">let </span>promql = PromQuery {
                     start: eval.start,
@@ -88,20 +107,39 @@
                     step: eval.step,
                     query: eval.query,
                 };
-                <span class="kw">let </span>stmt = QueryLanguageParser::parse_promql(<span class="kw-2">&amp;</span>promql).context(ParseQuerySnafu)<span class="question-mark">?</span>;
-                <span class="self">self</span>.query_engine
-                    .planner()
-                    .plan(stmt, query_ctx.clone())
-                    .<span class="kw">await
-                    </span>.context(PlanStatementSnafu)<span class="question-mark">?
+                QueryLanguageParser::parse_promql(<span class="kw-2">&amp;</span>promql).context(ParseQuerySnafu)<span class="question-mark">?
             </span>}
-            Tql::Explain(<span class="kw">_</span>) =&gt; {
-                <span class="kw">return </span>NotSupportedSnafu {
-                    feat: <span class="string">&quot;TQL EXPLAIN&quot;</span>,
-                }
-                .fail()
+            Tql::Explain(explain) =&gt; {
+                <span class="kw">let </span>promql = PromQuery {
+                    query: explain.query,
+                    ..PromQuery::default()
+                };
+                <span class="kw">let </span>params = HashMap::from([(<span class="string">&quot;name&quot;</span>.to_string(), EXPLAIN_NODE_NAME.to_string())]);
+                QueryLanguageParser::parse_promql(<span class="kw-2">&amp;</span>promql)
+                    .context(ParseQuerySnafu)<span class="question-mark">?
+                    </span>.post_process(params)
+                    .unwrap()
+            }
+            Tql::Analyze(tql_analyze) =&gt; {
+                <span class="kw">let </span>promql = PromQuery {
+                    start: tql_analyze.start,
+                    end: tql_analyze.end,
+                    step: tql_analyze.step,
+                    query: tql_analyze.query,
+                };
+                <span class="kw">let </span>params = HashMap::from([(<span class="string">&quot;name&quot;</span>.to_string(), ANALYZE_NODE_NAME.to_string())]);
+                QueryLanguageParser::parse_promql(<span class="kw-2">&amp;</span>promql)
+                    .context(ParseQuerySnafu)<span class="question-mark">?
+                    </span>.post_process(params)
+                    .unwrap()
             }
         };
+        <span class="kw">let </span>plan = <span class="self">self
+            </span>.query_engine
+            .planner()
+            .plan(stmt, query_ctx.clone())
+            .<span class="kw">await
+            </span>.context(PlanStatementSnafu)<span class="question-mark">?</span>;
         <span class="self">self</span>.query_engine
             .execute(plan, query_ctx)
             .<span class="kw">await

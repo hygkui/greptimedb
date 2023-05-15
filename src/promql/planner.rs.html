@@ -1951,6 +1951,26 @@
 <a href="#1951" id="1951">1951</a>
 <a href="#1952" id="1952">1952</a>
 <a href="#1953" id="1953">1953</a>
+<a href="#1954" id="1954">1954</a>
+<a href="#1955" id="1955">1955</a>
+<a href="#1956" id="1956">1956</a>
+<a href="#1957" id="1957">1957</a>
+<a href="#1958" id="1958">1958</a>
+<a href="#1959" id="1959">1959</a>
+<a href="#1960" id="1960">1960</a>
+<a href="#1961" id="1961">1961</a>
+<a href="#1962" id="1962">1962</a>
+<a href="#1963" id="1963">1963</a>
+<a href="#1964" id="1964">1964</a>
+<a href="#1965" id="1965">1965</a>
+<a href="#1966" id="1966">1966</a>
+<a href="#1967" id="1967">1967</a>
+<a href="#1968" id="1968">1968</a>
+<a href="#1969" id="1969">1969</a>
+<a href="#1970" id="1970">1970</a>
+<a href="#1971" id="1971">1971</a>
+<a href="#1972" id="1972">1972</a>
+<a href="#1973" id="1973">1973</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2346,10 +2366,30 @@
                     </span>.build()
                     .context(DataFusionPlanningSnafu)<span class="question-mark">?
             </span>}
-            PromExpr::Extension(<span class="kw">_</span>) =&gt; UnsupportedExprSnafu {
-                name: <span class="string">&quot;Prom Extension&quot;</span>,
+            PromExpr::Extension(promql_parser::parser::ast::Extension { expr }) =&gt; {
+                <span class="kw">let </span>children = expr.children();
+                <span class="kw">let </span>plan = <span class="self">self</span>.prom_expr_to_plan(children[<span class="number">0</span>].clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="comment">// Wrapper for the explanation/analyze of the existing plan
+                // https://docs.rs/datafusion-expr/latest/datafusion_expr/logical_plan/builder/struct.LogicalPlanBuilder.html#method.explain
+                // if `analyze` is true, runs the actual plan and produces
+                // information about metrics during run.
+                // if `verbose` is true, prints out additional details when VERBOSE keyword is specified
+                </span><span class="kw">match </span>expr.name() {
+                    <span class="string">&quot;ANALYZE&quot; </span>=&gt; LogicalPlanBuilder::from(plan)
+                        .explain(<span class="bool-val">false</span>, <span class="bool-val">true</span>)
+                        .unwrap()
+                        .build()
+                        .context(DataFusionPlanningSnafu)<span class="question-mark">?</span>,
+                    <span class="string">&quot;EXPLAIN&quot; </span>=&gt; LogicalPlanBuilder::from(plan)
+                        .explain(<span class="bool-val">false</span>, <span class="bool-val">false</span>)
+                        .unwrap()
+                        .build()
+                        .context(DataFusionPlanningSnafu)<span class="question-mark">?</span>,
+                    <span class="kw">_ </span>=&gt; LogicalPlanBuilder::empty(<span class="bool-val">true</span>)
+                        .build()
+                        .context(DataFusionPlanningSnafu)<span class="question-mark">?</span>,
+                }
             }
-            .fail()<span class="question-mark">?</span>,
         };
         <span class="prelude-val">Ok</span>(res)
     }
@@ -2512,7 +2552,7 @@
         <span class="prelude-val">Ok</span>(logical_plan)
     }
 
-    <span class="doccomment">/// Convert [AggModifier] to [Column] exprs for aggregation.
+    <span class="doccomment">/// Convert [LabelModifier] to [Column] exprs for aggregation.
     /// Timestamp column and tag columns will be included.
     ///
     /// # Side effect

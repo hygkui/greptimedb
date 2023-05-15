@@ -317,8 +317,6 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -492,9 +490,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>query = PromQuery {
             query: promql.to_string(),
-            start: <span class="string">&quot;0&quot;</span>.to_string(),
-            end: <span class="string">&quot;0&quot;</span>.to_string(),
-            step: <span class="string">&quot;5m&quot;</span>.to_string(),
+            ..PromQuery::default()
         };
         <span class="kw">let </span><span class="kw-2">mut </span>stmt = QueryLanguageParser::parse_promql(<span class="kw-2">&amp;</span>query).context(ExecuteSqlSnafu)<span class="question-mark">?</span>;
         <span class="kw">match </span><span class="kw-2">&amp;mut </span>stmt {

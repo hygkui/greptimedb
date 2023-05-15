@@ -224,6 +224,13 @@
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -251,6 +258,12 @@
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported expr type: {}&quot;</span>, name))]
     </span>UnsupportedExpr { name: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Operation {} not implemented yet&quot;</span>, operation))]
+    </span>Unimplemented {
+        operation: String,
+        location: Location,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;General catalog error: {}&quot;</span>, source))]
     </span>Catalog {
@@ -409,6 +422,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             QueryParse { .. } | MultipleStatements { .. } =&gt; StatusCode::InvalidSyntax,
             UnsupportedExpr { .. }
+            | Unimplemented { .. }
             | CatalogNotFound { .. }
             | SchemaNotFound { .. }
             | TableNotFound { .. }
