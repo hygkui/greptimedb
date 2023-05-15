@@ -45,6 +45,6 @@ var sourcesIndex = JSON.parse('{\
 "substrait":["",[],["context.rs","df_expr.rs","df_logical.rs","df_substrait.rs","error.rs","lib.rs","schema.rs","types.rs"]],\
 "table":["",[["engine",[],["manager.rs"]],["predicate",[],["stats.rs"]],["table",[],["adapter.rs","numbers.rs","scan.rs"]],["test_util",[],["empty_table.rs","memtable.rs","mock_engine.rs"]]],["engine.rs","error.rs","lib.rs","metadata.rs","predicate.rs","requests.rs","stats.rs","table.rs","test_util.rs"]],\
 "table_procedure":["",[],["alter.rs","create.rs","drop.rs","error.rs","lib.rs"]],\
-"tests_integration":["",[],["lib.rs","test_util.rs"]]\
+"tests_integration":["",[],["catalog.rs","grpc.rs","influxdb.rs","instance.rs","lib.rs","opentsdb.rs","prometheus.rs","table.rs","test_util.rs"]]\
 }');
 createSourceSidebar();

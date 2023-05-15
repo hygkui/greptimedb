@@ -131,8 +131,8 @@
             .<span class="kw">await
     </span>}
 
-    <span class="attr">#[cfg(test)]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>insert_client(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode: Peer, client: Client) {
+    <span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
+    </span><span class="kw">pub async fn </span>insert_client(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode: Peer, client: Client) {
         <span class="self">self</span>.clients.insert(datanode, client).<span class="kw">await
     </span>}
 }
