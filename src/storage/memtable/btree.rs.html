@@ -474,6 +474,8 @@
 <a href="#474" id="474">474</a>
 <a href="#475" id="475">475</a>
 <a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -831,8 +833,10 @@
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">struct </span>InnerKey {
-    row_key: Vec&lt;Value&gt;,
-    sequence: SequenceNumber,
+    <span class="doccomment">/// User defined primary keys
+    </span>row_key: Vec&lt;Value&gt;,
+    <span class="doccomment">/// Sequence number of row
+    </span>sequence: SequenceNumber,
     index_in_batch: usize,
     op_type: OpType,
 }

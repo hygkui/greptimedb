@@ -308,17 +308,6 @@
 <a href="#308" id="308">308</a>
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -435,11 +424,6 @@
     </span><span class="kw">pub </span>columns: Vec&lt;ColumnDescriptor&gt;,
     <span class="doccomment">/// Timestamp key column.
     </span><span class="kw">pub </span>timestamp: ColumnDescriptor,
-    <span class="doccomment">/// Enable version column in row key if this field is true.
-    ///
-    /// The default value is false.
-    </span><span class="attr">#[builder(default = <span class="string">&quot;false&quot;</span>)]
-    </span><span class="kw">pub </span>enable_version_column: bool,
 }
 
 <span class="doccomment">/// A [ColumnFamilyDescriptor] contains information to create a column family.
@@ -584,7 +568,6 @@
             .build()
             .unwrap();
         <span class="macro">assert!</span>(desc.columns.is_empty());
-        <span class="macro">assert!</span>(!desc.enable_version_column);
 
         <span class="kw">let </span>desc = RowKeyDescriptorBuilder::new(timestamp.clone())
             .columns_capacity(<span class="number">1</span>)
@@ -601,14 +584,9 @@
             .build()
             .unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, desc.columns.len());
-        <span class="macro">assert!</span>(!desc.enable_version_column);
 
-        <span class="kw">let </span>desc = RowKeyDescriptorBuilder::new(timestamp)
-            .enable_version_column(<span class="bool-val">false</span>)
-            .build()
-            .unwrap();
+        <span class="kw">let </span>desc = RowKeyDescriptorBuilder::new(timestamp).build().unwrap();
         <span class="macro">assert!</span>(desc.columns.is_empty());
-        <span class="macro">assert!</span>(!desc.enable_version_column);
     }
 
     <span class="attr">#[test]

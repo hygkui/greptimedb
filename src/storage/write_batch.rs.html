@@ -598,18 +598,6 @@
 <a href="#598" id="598">598</a>
 <a href="#599" id="599">599</a>
 <a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
-<a href="#612" id="612">612</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -942,19 +930,17 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_test_batch() -&gt; WriteBatch {
     <span class="kw">use </span>datatypes::type_id::LogicalTypeId;
-    <span class="kw">use </span>store_api::storage::consts;
 
     <span class="kw">use </span><span class="kw">crate</span>::test_util::write_batch_util;
 
     write_batch_util::new_write_batch(
         <span class="kw-2">&amp;</span>[
             (<span class="string">&quot;k1&quot;</span>, LogicalTypeId::UInt64, <span class="bool-val">false</span>),
-            (consts::VERSION_COLUMN_NAME, LogicalTypeId::UInt64, <span class="bool-val">false</span>),
             (<span class="string">&quot;ts&quot;</span>, LogicalTypeId::TimestampMillisecond, <span class="bool-val">false</span>),
             (<span class="string">&quot;v1&quot;</span>, LogicalTypeId::Boolean, <span class="bool-val">true</span>),
         ],
-        <span class="prelude-val">Some</span>(<span class="number">2</span>),
-        <span class="number">3</span>,
+        <span class="prelude-val">Some</span>(<span class="number">1</span>),
+        <span class="number">2</span>,
     )
 }
 
@@ -969,7 +955,6 @@
     <span class="kw">use </span>datatypes::vectors::{
         BooleanVector, Int32Vector, Int64Vector, TimestampMillisecondVector, UInt64Vector,
     };
-    <span class="kw">use </span>store_api::storage::consts;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::test_util::write_batch_util;
@@ -980,11 +965,9 @@
         <span class="macro">assert!</span>(columns.is_empty());
 
         <span class="kw">let </span>vector1 = Arc::new(Int32Vector::from_slice([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])) <span class="kw">as </span>VectorRef;
-        <span class="kw">let </span>vector2 = Arc::new(UInt64Vector::from_slice([<span class="number">0</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>])) <span class="kw">as </span>VectorRef;
 
         <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::with_capacity(<span class="number">3</span>);
         put_data.insert(<span class="string">&quot;k1&quot;</span>.to_string(), vector1.clone());
-        put_data.insert(consts::VERSION_COLUMN_NAME.to_string(), vector2);
         put_data.insert(<span class="string">&quot;v1&quot;</span>.to_string(), vector1);
 
         <span class="kw">let </span>columns = NameToVector::new(put_data).unwrap();
@@ -1011,7 +994,6 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::with_capacity(<span class="number">4</span>);
         put_data.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-        put_data.insert(consts::VERSION_COLUMN_NAME.to_string(), intv);
         put_data.insert(<span class="string">&quot;v1&quot;</span>.to_string(), boolv);
         put_data.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
 
@@ -1054,7 +1036,6 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::new();
         put_data.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-        put_data.insert(consts::VERSION_COLUMN_NAME.to_string(), intv);
         put_data.insert(<span class="string">&quot;v1&quot;</span>.to_string(), boolv.clone());
         put_data.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
 
@@ -1094,7 +1075,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_put_missing_column() {
         <span class="kw">let </span>boolv = Arc::new(BooleanVector::from(<span class="macro">vec!</span>[<span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>])) <span class="kw">as </span>VectorRef;
-        <span class="kw">let </span>tsv = Arc::new(Int64Vector::from_slice([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>])) <span class="kw">as </span>VectorRef;
+        <span class="kw">let </span>tsv = Arc::new(TimestampMillisecondVector::from_slice([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>])) <span class="kw">as </span>VectorRef;
 
         <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::new();
         put_data.insert(<span class="string">&quot;v1&quot;</span>.to_string(), boolv);
@@ -1113,7 +1094,6 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::new();
         put_data.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-        put_data.insert(consts::VERSION_COLUMN_NAME.to_string(), intv);
         put_data.insert(<span class="string">&quot;v1&quot;</span>.to_string(), boolv.clone());
         put_data.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
         put_data.insert(<span class="string">&quot;v2&quot;</span>.to_string(), boolv);
@@ -1144,7 +1124,6 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>keys = HashMap::with_capacity(<span class="number">3</span>);
         keys.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-        keys.insert(consts::VERSION_COLUMN_NAME.to_string(), intv);
         keys.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
 
         <span class="kw">let </span><span class="kw-2">mut </span>batch = new_test_batch();
@@ -1152,7 +1131,7 @@
 
         <span class="kw">let </span>record_batch = <span class="kw-2">&amp;</span>batch.payload().mutations[<span class="number">0</span>].record_batch;
         <span class="macro">assert_eq!</span>(<span class="number">3</span>, record_batch.num_rows());
-        <span class="macro">assert_eq!</span>(<span class="number">4</span>, record_batch.num_columns());
+        <span class="macro">assert_eq!</span>(<span class="number">3</span>, record_batch.num_columns());
         <span class="kw">let </span>v1 = record_batch.column_by_name(<span class="string">&quot;v1&quot;</span>).unwrap();
         <span class="macro">assert!</span>(v1.only_null());
     }
@@ -1163,7 +1142,6 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>keys = HashMap::with_capacity(<span class="number">3</span>);
         keys.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-        keys.insert(consts::VERSION_COLUMN_NAME.to_string(), intv);
 
         <span class="kw">let </span><span class="kw-2">mut </span>batch = new_test_batch();
         <span class="kw">let </span>err = batch.delete(keys).unwrap_err();
@@ -1177,7 +1155,6 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>keys = HashMap::with_capacity(<span class="number">3</span>);
         keys.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-        keys.insert(consts::VERSION_COLUMN_NAME.to_string(), intv.clone());
         keys.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
         keys.insert(<span class="string">&quot;v2&quot;</span>.to_string(), intv);
 
@@ -1193,7 +1170,6 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>keys = HashMap::with_capacity(<span class="number">3</span>);
         keys.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-        keys.insert(consts::VERSION_COLUMN_NAME.to_string(), intv);
         keys.insert(<span class="string">&quot;ts&quot;</span>.to_string(), boolv);
 
         <span class="kw">let </span><span class="kw-2">mut </span>batch = new_test_batch();
