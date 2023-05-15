@@ -468,11 +468,11 @@
 <span class="kw">impl </span>Pusher {
     <span class="kw">pub fn </span>new(
         sender: Sender&lt;std::result::Result&lt;HeartbeatResponse, tonic::Status&gt;&gt;,
-        req_header: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;RequestHeader&gt;,
+        req_header: <span class="kw-2">&amp;</span>RequestHeader,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>res_header = ResponseHeader {
             protocol_version: PROTOCOL_VERSION,
-            cluster_id: req_header.as_ref().map_or(<span class="number">0</span>, |h| h.cluster_id),
+            cluster_id: req_header.cluster_id,
             ..Default::default()
         };
 
@@ -733,7 +733,7 @@
             protocol_version: PROTOCOL_VERSION,
             ..Default::default()
         };
-        <span class="kw">let </span>pusher: Pusher = Pusher::new(pusher_tx, <span class="kw-2">&amp;</span>Option::from(res_header));
+        <span class="kw">let </span>pusher: Pusher = Pusher::new(pusher_tx, <span class="kw-2">&amp;</span>res_header);
         <span class="kw">let </span>handler_group = HeartbeatHandlerGroup::default();
         handler_group
             .register(<span class="macro">format!</span>(<span class="string">&quot;{}-{}&quot;</span>, Role::Datanode <span class="kw">as </span>i32, datanode_id), pusher)

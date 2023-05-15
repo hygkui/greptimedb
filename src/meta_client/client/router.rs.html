@@ -195,6 +195,8 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -213,7 +215,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::meta::router_client::RouterClient;
-<span class="kw">use </span>api::v1::meta::{CreateRequest, DeleteRequest, RouteRequest, RouteResponse};
+<span class="kw">use </span>api::v1::meta::{CreateRequest, DeleteRequest, Role, RouteRequest, RouteResponse};
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::RwLock;
@@ -229,9 +231,10 @@
 }
 
 <span class="kw">impl </span>Client {
-    <span class="kw">pub fn </span>new(id: Id, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(id: Id, role: Role, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>inner = Arc::new(RwLock::new(Inner {
             id,
+            role,
             channel_manager,
             peers: <span class="macro">vec!</span>[],
         }));
@@ -272,6 +275,7 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">struct </span>Inner {
     id: Id,
+    role: Role,
     channel_manager: ChannelManager,
     peers: Vec&lt;String&gt;,
 }
@@ -302,7 +306,7 @@
 
     <span class="kw">async fn </span>create(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: CreateRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id);
+        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
         <span class="kw">let </span>res = client.create(req).<span class="kw">await</span>.context(error::TonicStatusSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())
@@ -310,7 +314,7 @@
 
     <span class="kw">async fn </span>route(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: RouteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id);
+        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
         <span class="kw">let </span>res = client.route(req).<span class="kw">await</span>.context(error::TonicStatusSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())
@@ -318,7 +322,7 @@
 
     <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: DeleteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id);
+        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
         <span class="kw">let </span>res = client.delete(req).<span class="kw">await</span>.context(error::TonicStatusSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())
@@ -356,7 +360,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_start_client() {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), ChannelManager::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), Role::Frontend, ChannelManager::default());
         <span class="macro">assert!</span>(!client.is_started().<span class="kw">await</span>);
         client
             .start(<span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1001&quot;</span>])
@@ -367,7 +371,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_already_start() {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), ChannelManager::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), Role::Frontend, ChannelManager::default());
         client
             .start(<span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1001&quot;</span>])
             .<span class="kw">await
@@ -383,7 +387,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_start_with_duplicate_peers() {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), ChannelManager::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), Role::Frontend, ChannelManager::default());
         client
             .start(<span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1000&quot;</span>])
             .<span class="kw">await

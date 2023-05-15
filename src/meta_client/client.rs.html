@@ -901,6 +901,15 @@
 <a href="#901" id="901">901</a>
 <a href="#902" id="902">902</a>
 <a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -921,6 +930,7 @@
 <span class="kw">mod </span>router;
 <span class="kw">mod </span>store;
 
+<span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>heartbeat::Client <span class="kw">as </span>HeartbeatClient;
@@ -946,6 +956,7 @@
 <span class="attr">#[derive(Clone, Debug, Default)]
 </span><span class="kw">pub struct </span>MetaClientBuilder {
     id: Id,
+    role: Role,
     enable_heartbeat: bool,
     enable_router: bool,
     enable_store: bool,
@@ -954,9 +965,10 @@
 }
 
 <span class="kw">impl </span>MetaClientBuilder {
-    <span class="kw">pub fn </span>new(cluster_id: u64, member_id: u64) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(cluster_id: u64, member_id: u64, role: Role) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             id: (cluster_id, member_id),
+            role,
             ..Default::default()
         }
     }
@@ -1010,16 +1022,16 @@
         <span class="kw">let </span>mgr = client.channel_manager.clone();
 
         <span class="kw">if </span><span class="self">self</span>.enable_heartbeat {
-            client.heartbeat = <span class="prelude-val">Some</span>(HeartbeatClient::new(<span class="self">self</span>.id, mgr.clone()));
+            client.heartbeat = <span class="prelude-val">Some</span>(HeartbeatClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr.clone()));
         }
         <span class="kw">if </span><span class="self">self</span>.enable_router {
-            client.router = <span class="prelude-val">Some</span>(RouterClient::new(<span class="self">self</span>.id, mgr.clone()));
+            client.router = <span class="prelude-val">Some</span>(RouterClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr.clone()));
         }
         <span class="kw">if </span><span class="self">self</span>.enable_store {
-            client.store = <span class="prelude-val">Some</span>(StoreClient::new(<span class="self">self</span>.id, mgr.clone()));
+            client.store = <span class="prelude-val">Some</span>(StoreClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr.clone()));
         }
         <span class="kw">if </span><span class="self">self</span>.enable_lock {
-            client.lock = <span class="prelude-val">Some</span>(LockClient::new(<span class="self">self</span>.id, mgr));
+            client.lock = <span class="prelude-val">Some</span>(LockClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr));
         }
 
         client
@@ -1312,28 +1324,34 @@
     </span><span class="kw">async fn </span>test_meta_client_builder() {
         <span class="kw">let </span>urls = <span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:3001&quot;</span>, <span class="string">&quot;127.0.0.1:3002&quot;</span>];
 
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>).enable_heartbeat().build();
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode)
+            .enable_heartbeat()
+            .build();
         <span class="macro">assert!</span>(meta_client.heartbeat_client().is_ok());
         <span class="macro">assert!</span>(meta_client.router_client().is_err());
         <span class="macro">assert!</span>(meta_client.store_client().is_err());
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(meta_client.heartbeat_client().unwrap().is_started().<span class="kw">await</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>).enable_router().build();
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode)
+            .enable_router()
+            .build();
         <span class="macro">assert!</span>(meta_client.heartbeat_client().is_err());
         <span class="macro">assert!</span>(meta_client.router_client().is_ok());
         <span class="macro">assert!</span>(meta_client.store_client().is_err());
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(meta_client.router_client().unwrap().is_started().<span class="kw">await</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>).enable_store().build();
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode)
+            .enable_store()
+            .build();
         <span class="macro">assert!</span>(meta_client.heartbeat_client().is_err());
         <span class="macro">assert!</span>(meta_client.router_client().is_err());
         <span class="macro">assert!</span>(meta_client.store_client().is_ok());
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(meta_client.store_client().unwrap().is_started().<span class="kw">await</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">1</span>, <span class="number">2</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">1</span>, <span class="number">2</span>, Role::Datanode)
             .enable_heartbeat()
             .enable_router()
             .enable_store()
@@ -1352,7 +1370,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_not_start_heartbeat_client() {
         <span class="kw">let </span>urls = <span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:3001&quot;</span>, <span class="string">&quot;127.0.0.1:3002&quot;</span>];
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode)
             .enable_router()
             .enable_store()
             .build();
@@ -1397,7 +1415,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_not_start_router_client() {
         <span class="kw">let </span>urls = <span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:3001&quot;</span>, <span class="string">&quot;127.0.0.1:3002&quot;</span>];
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode)
             .enable_heartbeat()
             .enable_store()
             .build();
@@ -1412,7 +1430,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_not_start_store_client() {
         <span class="kw">let </span>urls = <span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:3001&quot;</span>, <span class="string">&quot;127.0.0.1:3002&quot;</span>];
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode)
             .enable_heartbeat()
             .enable_router()
             .build();
@@ -1425,7 +1443,7 @@
     <span class="attr">#[should_panic]
     #[test]
     </span><span class="kw">fn </span>test_failed_when_start_nothing() {
-        <span class="kw">let _ </span>= MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>).build();
+        <span class="kw">let _ </span>= MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode).build();
     }
 
     <span class="attr">#[tokio::test]

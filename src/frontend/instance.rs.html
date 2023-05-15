@@ -834,6 +834,20 @@
 <a href="#834" id="834">834</a>
 <a href="#835" id="835">835</a>
 <a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -863,6 +877,7 @@
 <span class="kw">use </span>api::v1::alter_expr::Kind;
 <span class="kw">use </span>api::v1::ddl_request::Expr <span class="kw">as </span>DdlExpr;
 <span class="kw">use </span>api::v1::greptime_request::Request;
+<span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>api::v1::{AddColumns, AlterExpr, Column, DdlRequest, InsertRequest};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::remote::MetaKvBackend;
@@ -910,6 +925,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::expr_factory::{CreateExprFactoryRef, DefaultCreateExprFactory};
 <span class="kw">use </span><span class="kw">crate</span>::frontend::FrontendOptions;
+<span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
 <span class="kw">use </span><span class="kw">crate</span>::instance::standalone::StandaloneGrpcQueryHandler;
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::script::ScriptExecutor;
@@ -950,6 +966,8 @@
     </span>plugins: Arc&lt;Plugins&gt;,
 
     servers: Arc&lt;ServerHandlers&gt;,
+
+    heartbeat_task: <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;,
 }
 
 <span class="kw">impl </span>Instance {
@@ -973,7 +991,7 @@
             FrontendCatalogManager::new(meta_backend, partition_manager, datanode_clients.clone());
 
         <span class="kw">let </span>dist_instance = DistInstance::new(
-            meta_client,
+            meta_client.clone(),
             Arc::new(catalog_manager.clone()),
             datanode_clients,
         );
@@ -997,6 +1015,8 @@
 
         plugins.insert::&lt;StatementExecutorRef&gt;(statement_executor.clone());
 
+        <span class="kw">let </span>heartbeat_task = <span class="prelude-val">Some</span>(HeartbeatTask::new(meta_client, <span class="number">5</span>, <span class="number">5</span>));
+
         <span class="prelude-val">Ok</span>(Instance {
             catalog_manager,
             script_executor,
@@ -1006,6 +1026,7 @@
             grpc_query_handler: dist_instance,
             plugins: plugins.clone(),
             servers: Arc::new(HashMap::new()),
+            heartbeat_task,
         })
     }
 
@@ -1029,9 +1050,10 @@
         <span class="kw">let </span><span class="kw-2">mut </span>channel_manager = ChannelManager::with_config(channel_config);
         channel_manager.start_channel_recycle();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Frontend)
             .enable_router()
             .enable_store()
+            .enable_heartbeat()
             .channel_manager(channel_manager)
             .build();
         meta_client
@@ -1062,6 +1084,7 @@
             grpc_query_handler: StandaloneGrpcQueryHandler::arc(dn_instance.clone()),
             plugins: Default::default(),
             servers: Arc::new(HashMap::new()),
+            heartbeat_task: <span class="prelude-val">None</span>,
         })
     }
 
@@ -1098,6 +1121,7 @@
             grpc_query_handler: dist_instance,
             plugins: Default::default(),
             servers: Arc::new(HashMap::new()),
+            heartbeat_task: <span class="prelude-val">None</span>,
         }
     }
 
@@ -1268,7 +1292,11 @@
     <span class="kw">async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// TODO(hl): Frontend init should move to here
 
-        </span>futures::future::try_join_all(<span class="self">self</span>.servers.values().map(start_server))
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(heartbeat_task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
+            heartbeat_task.start().<span class="kw">await</span><span class="question-mark">?</span>;
+        }
+
+        futures::future::try_join_all(<span class="self">self</span>.servers.values().map(start_server))
             .<span class="kw">await
             </span>.context(error::StartServerSnafu)
             .map(|<span class="kw">_</span>| ())

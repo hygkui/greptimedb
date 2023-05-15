@@ -182,6 +182,8 @@
 <a href="#182" id="182">182</a>
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -200,7 +202,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::meta::lock_client::LockClient;
-<span class="kw">use </span>api::v1::meta::{LockRequest, LockResponse, UnlockRequest, UnlockResponse};
+<span class="kw">use </span>api::v1::meta::{LockRequest, LockResponse, Role, UnlockRequest, UnlockResponse};
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::RwLock;
@@ -216,9 +218,10 @@
 }
 
 <span class="kw">impl </span>Client {
-    <span class="kw">pub fn </span>new(id: Id, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(id: Id, role: Role, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>inner = Arc::new(RwLock::new(Inner {
             id,
+            role,
             channel_manager,
             peers: <span class="macro">vec!</span>[],
         }));
@@ -254,6 +257,7 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">struct </span>Inner {
     id: Id,
+    role: Role,
     channel_manager: ChannelManager,
     peers: Vec&lt;String&gt;,
 }
@@ -309,7 +313,7 @@
 
     <span class="kw">async fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: LockRequest) -&gt; <span class="prelude-ty">Result</span>&lt;LockResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id);
+        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
         <span class="kw">let </span>res = client.lock(req).<span class="kw">await</span>.context(error::TonicStatusSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())
@@ -317,7 +321,7 @@
 
     <span class="kw">async fn </span>unlock(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: UnlockRequest) -&gt; <span class="prelude-ty">Result</span>&lt;UnlockResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id);
+        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
         <span class="kw">let </span>res = client.unlock(req).<span class="kw">await</span>.context(error::TonicStatusSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())
@@ -330,7 +334,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_start_client() {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), ChannelManager::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), Role::Datanode, ChannelManager::default());
         <span class="macro">assert!</span>(!client.is_started().<span class="kw">await</span>);
         client
             .start(<span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1001&quot;</span>])
@@ -341,7 +345,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_already_start() {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), ChannelManager::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), Role::Datanode, ChannelManager::default());
         client
             .start(<span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1001&quot;</span>])
             .<span class="kw">await
@@ -357,7 +361,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_start_with_duplicate_peers() {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), ChannelManager::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>client = Client::new((<span class="number">0</span>, <span class="number">0</span>), Role::Datanode, ChannelManager::default());
         client
             .start(<span class="kw-2">&amp;</span>[<span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1000&quot;</span>, <span class="string">&quot;127.0.0.1:1000&quot;</span>])
             .<span class="kw">await

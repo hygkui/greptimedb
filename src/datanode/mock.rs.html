@@ -54,6 +54,7 @@
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -70,6 +71,7 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>meta_client::client::{MetaClient, MetaClientBuilder};
 <span class="kw">use </span>meta_srv::mocks::MockInfo;
 <span class="kw">use </span>storage::compaction::noop::NoopCompactionScheduler;
@@ -98,7 +100,7 @@
     } = mock_info;
 
     <span class="kw">let </span>id = (<span class="number">1000u64</span>, <span class="number">2000u64</span>);
-    <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(id.<span class="number">0</span>, node_id)
+    <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(id.<span class="number">0</span>, node_id, Role::Datanode)
         .enable_heartbeat()
         .enable_router()
         .enable_store()

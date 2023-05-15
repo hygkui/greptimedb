@@ -269,6 +269,7 @@
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -397,6 +398,7 @@
         <span class="kw">let </span>addr = resolve_addr(<span class="kw-2">&amp;</span><span class="self">self</span>.server_addr, <span class="kw-2">&amp;</span><span class="self">self</span>.server_hostname);
         <span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.clone();
         <span class="kw">let </span>catalog_manager_clone = <span class="self">self</span>.catalog_manager.clone();
+
         <span class="kw">let </span>handler_executor = <span class="self">self</span>.heartbeat_response_handler_exector.clone();
 
         <span class="kw">let </span>(outgoing_tx, <span class="kw-2">mut </span>outgoing_rx) = mpsc::channel(<span class="number">16</span>);
