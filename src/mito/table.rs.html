@@ -642,6 +642,22 @@
 <a href="#642" id="642">642</a>
 <a href="#643" id="643">643</a>
 <a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -671,7 +687,7 @@
 <span class="kw">use </span>common_query::physical_plan::PhysicalPlanRef;
 <span class="kw">use </span>common_recordbatch::error::{ExternalSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>RecordBatchResult};
 <span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatchStream};
-<span class="kw">use </span>common_telemetry::logging;
+<span class="kw">use </span>common_telemetry::{logging, warn};
 <span class="kw">use </span>datatypes::schema::Schema;
 <span class="kw">use </span>futures::task::{Context, Poll};
 <span class="kw">use </span>futures::Stream;
@@ -978,6 +994,10 @@
             })
             .collect())
     }
+
+    <span class="kw">fn </span>contain_regions(<span class="kw-2">&amp;</span><span class="self">self</span>, region: RegionNumber) -&gt; TableResult&lt;bool&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.regions.contains_key(<span class="kw-2">&amp;</span>region))
+    }
 }
 
 <span class="kw">struct </span>ChunkStream {
@@ -1201,6 +1221,18 @@
                 .context(TableOperationSnafu)<span class="question-mark">?</span>;
         }
 
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub async fn </span>load_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_number: RegionNumber, _region: R) -&gt; TableResult&lt;()&gt; {
+        <span class="kw">let </span>info = <span class="self">self</span>.table_info.load_full();
+
+        <span class="comment">// TODO(weny): Supports to load the region
+        </span><span class="macro">warn!</span>(
+            <span class="string">&quot;MitoTable try to load region: {} in table: {}&quot;</span>,
+            region_number,
+            <span class="macro">format!</span>(<span class="string">&quot;{}.{}.{}&quot;</span>, info.catalog_name, info.schema_name, info.name)
+        );
         <span class="prelude-val">Ok</span>(())
     }
 

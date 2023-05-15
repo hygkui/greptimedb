@@ -81,6 +81,8 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -98,31 +100,33 @@
 </span><span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>RegionIdent {
+    <span class="kw">pub </span>catalog: String,
+    <span class="kw">pub </span>schema: String,
+    <span class="kw">pub </span>table: String,
+    <span class="kw">pub </span>table_id: u32,
+    <span class="kw">pub </span>engine: String,
+    <span class="kw">pub </span>region_number: u32,
+}
+
+<span class="attr">#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+</span><span class="kw">pub struct </span>SimpleReply {
+    <span class="kw">pub </span>result: bool,
+    <span class="kw">pub </span>error: <span class="prelude-ty">Option</span>&lt;String&gt;,
+}
+
+<span class="attr">#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = <span class="string">&quot;type&quot;</span>, rename_all = <span class="string">&quot;snake_case&quot;</span>)]
 </span><span class="kw">pub enum </span>Instruction {
-    OpenRegion {
-        catalog: String,
-        schema: String,
-        table: String,
-        table_id: u32,
-        engine: String,
-        region_number: u32,
-    },
-    CloseRegion {
-        catalog: String,
-        schema: String,
-        table: String,
-        table_id: u32,
-        engine: String,
-        region_number: u32,
-    },
+    OpenRegion(RegionIdent),
+    CloseRegion(RegionIdent),
 }
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = <span class="string">&quot;type&quot;</span>, rename_all = <span class="string">&quot;snake_case&quot;</span>)]
 </span><span class="kw">pub enum </span>InstructionReply {
-    OpenRegion { result: bool, error: <span class="prelude-ty">Option</span>&lt;String&gt; },
-    CloseRegion { result: bool, error: <span class="prelude-ty">Option</span>&lt;String&gt; },
+    OpenRegion(SimpleReply),
+    CloseRegion(SimpleReply),
 }
 
 <span class="attr">#[cfg(test)]
@@ -131,14 +135,14 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_serialize_instruction() {
-        <span class="kw">let </span>open_region = Instruction::OpenRegion {
+        <span class="kw">let </span>open_region = Instruction::OpenRegion(RegionIdent {
             catalog: <span class="string">&quot;foo&quot;</span>.to_string(),
             schema: <span class="string">&quot;bar&quot;</span>.to_string(),
             table: <span class="string">&quot;hi&quot;</span>.to_string(),
             table_id: <span class="number">1024</span>,
             engine: <span class="string">&quot;mito&quot;</span>.to_string(),
             region_number: <span class="number">1</span>,
-        };
+        });
 
         <span class="kw">let </span>serialized = serde_json::to_string(<span class="kw-2">&amp;</span>open_region).unwrap();
 
@@ -147,14 +151,14 @@
             serialized
         );
 
-        <span class="kw">let </span>close_region = Instruction::CloseRegion {
+        <span class="kw">let </span>close_region = Instruction::CloseRegion(RegionIdent {
             catalog: <span class="string">&quot;foo&quot;</span>.to_string(),
             schema: <span class="string">&quot;bar&quot;</span>.to_string(),
             table: <span class="string">&quot;hi&quot;</span>.to_string(),
             table_id: <span class="number">1024</span>,
             engine: <span class="string">&quot;mito&quot;</span>.to_string(),
             region_number: <span class="number">1</span>,
-        };
+        });
 
         <span class="kw">let </span>serialized = serde_json::to_string(<span class="kw-2">&amp;</span>close_region).unwrap();
 
