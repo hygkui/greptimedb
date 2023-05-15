@@ -241,6 +241,7 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -259,7 +260,7 @@
 <span class="kw">use </span>std::fmt::{Debug, Formatter};
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
-<span class="kw">use </span>common_telemetry::{debug, error};
+<span class="kw">use </span>common_telemetry::{debug, error, timer};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::RegionId;
 
@@ -383,6 +384,7 @@
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl</span>&lt;S: LogStore&gt; CompactionTask <span class="kw">for </span>CompactionTaskImpl&lt;S&gt; {
     <span class="kw">async fn </span>run(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::COMPACT_ELAPSED);
         <span class="self">self</span>.mark_files_compacting(<span class="bool-val">true</span>);
 
         <span class="kw">let </span>(output, <span class="kw-2">mut </span>compacted) = <span class="self">self</span>.merge_ssts().<span class="kw">await</span>.map_err(|e| {

@@ -677,6 +677,10 @@
 <a href="#677" id="677">677</a>
 <a href="#678" id="678">678</a>
 <a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -702,6 +706,7 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_telemetry::logging;
+<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::manifest::{<span class="self">self</span>, Manifest, ManifestVersion, MetaActionIterator};
@@ -802,6 +807,7 @@
     </span>}
 
     <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
         <span class="self">self</span>.inner.close().<span class="kw">await
     </span>}
 
@@ -894,6 +900,7 @@
             store_config.file_purger.clone(),
         );
         <span class="kw">let </span>region = RegionImpl::new(version, store_config);
+        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
 
         <span class="prelude-val">Ok</span>(region)
     }
@@ -1033,6 +1040,7 @@
             manifest: store_config.manifest,
         });
 
+        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(RegionImpl { inner }))
     }
 

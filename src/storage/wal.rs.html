@@ -310,6 +310,8 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -328,6 +330,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_error::prelude::BoxedError;
+<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>futures::{stream, Stream, TryStreamExt};
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
@@ -418,6 +421,7 @@
         <span class="kw-2">mut </span>header: WalHeader,
         payload: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Payload&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Id&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::LOG_STORE_WRITE_ELAPSED);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = payload {
             header.mutation_types = wal::gen_mutation_types(p);
         }
