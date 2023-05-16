@@ -700,6 +700,11 @@
 <a href="#700" id="700">700</a>
 <a href="#701" id="701">701</a>
 <a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -723,6 +728,7 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">pub use </span>common_catalog::consts::MITO_ENGINE;
+<span class="kw">use </span>common_datasource::compression::CompressionType;
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_procedure::{BoxedProcedure, ProcedureManager};
 <span class="kw">use </span>common_telemetry::{debug, logging};
@@ -731,6 +737,7 @@
 <span class="kw">use </span>key_lock::KeyLock;
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>storage::manifest::manifest_compress_type;
 <span class="kw">use </span>store_api::storage::{
     ColumnDescriptorBuilder, ColumnFamilyDescriptor, ColumnFamilyDescriptorBuilder, ColumnId,
     EngineContext <span class="kw">as </span>StorageEngineContext, OpenOptions, RegionNumber, RowKeyDescriptor,
@@ -949,6 +956,7 @@
     /// Writing to `tables` should also hold the `table_mutex`.
     </span>tables: DashMap&lt;String, Arc&lt;MitoTable&lt;S::Region&gt;&gt;&gt;,
     object_store: ObjectStore,
+    compress_type: CompressionType,
     storage_engine: S,
     <span class="doccomment">/// Table mutex is used to protect the operations such as creating/opening/closing
     /// a table, to avoid things like opening the same table simultaneously.
@@ -1340,6 +1348,7 @@
         <span class="kw">let </span>manifest = MitoTable::&lt;&lt;S <span class="kw">as </span>StorageEngine&gt;::Region&gt;::build_manifest(
             table_dir,
             <span class="self">self</span>.object_store.clone(),
+            <span class="self">self</span>.compress_type,
         );
         <span class="kw">let  </span><span class="prelude-val">Some</span>(table_info) =
             MitoTable::&lt;&lt;S <span class="kw">as </span>StorageEngine&gt;::Region&gt;::recover_table_info(table_name, <span class="kw-2">&amp;</span>manifest)
@@ -1393,11 +1402,12 @@
 </span>}
 
 <span class="kw">impl</span>&lt;S: StorageEngine&gt; MitoEngineInner&lt;S&gt; {
-    <span class="kw">fn </span>new(_config: EngineConfig, storage_engine: S, object_store: ObjectStore) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>new(config: EngineConfig, storage_engine: S, object_store: ObjectStore) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             tables: DashMap::new(),
             storage_engine,
             object_store,
+            compress_type: manifest_compress_type(config.compress_manifest),
             table_mutex: Arc::new(KeyLock::new()),
         }
     }

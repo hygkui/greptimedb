@@ -389,6 +389,20 @@
 <a href="#389" id="389">389</a>
 <a href="#390" id="390">390</a>
 <a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -410,6 +424,7 @@
 
 <span class="kw">use </span>arc_swap::ArcSwap;
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_datasource::compression::CompressionType;
 <span class="kw">use </span>common_runtime::{RepeatedTask, TaskFunction};
 <span class="kw">use </span>common_telemetry::{debug, logging, warn};
 <span class="kw">use </span>object_store::ObjectStore;
@@ -443,11 +458,16 @@
     <span class="kw">pub fn </span>new(
         manifest_dir: <span class="kw-2">&amp;</span>str,
         object_store: ObjectStore,
+        compress_type: CompressionType,
         checkpoint_actions_margin: <span class="prelude-ty">Option</span>&lt;u16&gt;,
         gc_duration: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
         checkpointer: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Checkpointer&lt;Checkpoint = S, MetaAction = M&gt;&gt;&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>inner = Arc::new(ManifestImplInner::new(manifest_dir, object_store));
+        <span class="kw">let </span>inner = Arc::new(ManifestImplInner::new(
+            manifest_dir,
+            object_store,
+            compress_type,
+        ));
         <span class="kw">let </span>gc_task = <span class="kw">if </span>checkpointer.is_some() {
             <span class="comment">// only start gc task when checkpoint is enabled.
             </span><span class="prelude-val">Some</span>(Arc::new(RepeatedTask::new(
@@ -470,8 +490,12 @@
         }
     }
 
-    <span class="kw">pub fn </span>create(manifest_dir: <span class="kw-2">&amp;</span>str, object_store: ObjectStore) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new(manifest_dir, object_store, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+    <span class="kw">pub fn </span>create(
+        manifest_dir: <span class="kw-2">&amp;</span>str,
+        object_store: ObjectStore,
+        compress_type: CompressionType,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new(manifest_dir, object_store, compress_type, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
     }
 
     <span class="attr">#[inline]
@@ -666,11 +690,15 @@
 }
 
 <span class="kw">impl</span>&lt;S: Checkpoint&lt;Error = Error&gt;, M: MetaAction&lt;Error = Error&gt;&gt; ManifestImplInner&lt;S, M&gt; {
-    <span class="kw">fn </span>new(manifest_dir: <span class="kw-2">&amp;</span>str, object_store: ObjectStore) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>new(manifest_dir: <span class="kw-2">&amp;</span>str, object_store: ObjectStore, compress_type: CompressionType) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>(reader_version, writer_version) = action::supported_protocol_version();
 
         <span class="self">Self </span>{
-            store: Arc::new(ManifestObjectStore::new(manifest_dir, object_store)),
+            store: Arc::new(ManifestObjectStore::new(
+                manifest_dir,
+                object_store,
+                compress_type,
+            )),
             version: AtomicU64::new(<span class="number">0</span>),
             protocol: ArcSwap::new(Arc::new(ProtocolAction::new())),
             supported_reader_version: reader_version,

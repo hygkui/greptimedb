@@ -63,6 +63,8 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -95,6 +97,7 @@
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>EngineConfig {
     <span class="kw">pub </span>manifest_checkpoint_on_startup: bool,
+    <span class="kw">pub </span>compress_manifest: bool,
     <span class="kw">pub </span>manifest_checkpoint_margin: <span class="prelude-ty">Option</span>&lt;u16&gt;,
     <span class="kw">pub </span>manifest_gc_duration: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="kw">pub </span>max_files_in_l0: usize,
@@ -114,6 +117,7 @@
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             manifest_checkpoint_on_startup: <span class="bool-val">false</span>,
+            compress_manifest: <span class="bool-val">false</span>,
             manifest_checkpoint_margin: <span class="prelude-val">Some</span>(<span class="number">10</span>),
             manifest_gc_duration: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">30</span>)),
             max_files_in_l0: <span class="number">8</span>,

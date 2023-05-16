@@ -461,6 +461,8 @@
 <a href="#461" id="461">461</a>
 <a href="#462" id="462">462</a>
 <a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -699,6 +701,7 @@
             checkpoint_margin = 9
             gc_duration = &#39;7s&#39;
             checkpoint_on_startup = true
+            compress = true
 
             [logging]
             level = &quot;debug&quot;
@@ -758,7 +761,8 @@
                 checkpoint_margin: <span class="prelude-val">Some</span>(<span class="number">9</span>),
                 gc_duration: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">7</span>)),
                 checkpoint_on_startup: <span class="bool-val">true</span>,
-            },
+                compress: <span class="bool-val">true
+            </span>},
             options.storage.manifest,
         );
 

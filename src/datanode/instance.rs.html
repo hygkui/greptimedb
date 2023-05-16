@@ -581,6 +581,8 @@
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
 <a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -699,7 +701,9 @@
         <span class="kw">let </span>log_store = Arc::new(create_log_store(<span class="kw-2">&amp;</span>opts.wal).<span class="kw">await</span><span class="question-mark">?</span>);
 
         <span class="kw">let </span>mito_engine = Arc::new(DefaultEngine::new(
-            TableEngineConfig::default(),
+            TableEngineConfig {
+                compress_manifest: opts.storage.manifest.compress,
+            },
             EngineImpl::new(
                 StorageEngineConfig::from(opts),
                 log_store.clone(),

@@ -545,6 +545,8 @@
 <a href="#545" id="545">545</a>
 <a href="#546" id="546">546</a>
 <a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -581,6 +583,7 @@
     FlushScheduler, FlushSchedulerRef, FlushStrategyRef, PickerConfig, SizeBasedStrategy,
 };
 <span class="kw">use </span><span class="kw">crate</span>::manifest::region::RegionManifest;
+<span class="kw">use </span><span class="kw">crate</span>::manifest::storage::manifest_compress_type;
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{DefaultMemtableBuilder, MemtableBuilderRef};
 <span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadata;
 <span class="kw">use </span><span class="kw">crate</span>::region::{RegionImpl, StoreConfig};
@@ -996,6 +999,7 @@
         <span class="kw">let </span>manifest = RegionManifest::with_checkpointer(
             <span class="kw-2">&amp;</span>manifest_dir,
             <span class="self">self</span>.object_store.clone(),
+            manifest_compress_type(config.compress_manifest),
             config.manifest_checkpoint_margin,
             config.manifest_gc_duration,
         );
