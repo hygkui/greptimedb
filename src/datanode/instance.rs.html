@@ -572,6 +572,15 @@
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -636,6 +645,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, CatalogSnafu, MetaClientInitSnafu, MissingMetasrvOptsSnafu, MissingNodeIdSnafu,
     NewCatalogSnafu, OpenLogStoreSnafu, RecoverProcedureSnafu, <span class="prelude-ty">Result</span>, ShutdownInstanceSnafu,
+    StartProcedureManagerSnafu, StopProcedureManagerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::HandlerGroupExecutor;
@@ -832,10 +842,17 @@
             .recover()
             .<span class="kw">await
             </span>.context(RecoverProcedureSnafu)<span class="question-mark">?</span>;
+        <span class="self">self</span>.procedure_manager
+            .start()
+            .context(StartProcedureManagerSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">pub async fn </span>shutdown(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.procedure_manager
+            .stop()
+            .<span class="kw">await
+            </span>.context(StopProcedureManagerSnafu)<span class="question-mark">?</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(heartbeat_task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
             heartbeat_task
                 .close()
@@ -1142,6 +1159,7 @@
     <span class="kw">let </span>manager_config = ManagerConfig {
         max_retry_times: procedure_config.max_retry_times,
         retry_delay: procedure_config.retry_delay,
+        ..Default::default()
     };
 
     <span class="prelude-val">Ok</span>(Arc::new(LocalManager::new(manager_config, state_store)))

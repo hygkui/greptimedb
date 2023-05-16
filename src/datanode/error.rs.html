@@ -609,6 +609,19 @@
 <a href="#609" id="609">609</a>
 <a href="#610" id="610">610</a>
 <a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1093,6 +1106,16 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Payload not exist&quot;</span>))]
     </span>PayloadNotExist { location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start the procedure manager&quot;</span>))]
+    </span>StartProcedureManager {
+        source: common_procedure::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop the procedure manager&quot;</span>))]
+    </span>StopProcedureManager {
+        source: common_procedure::error::Error,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1192,6 +1215,9 @@
                 source.status_code()
             }
             WaitProcedure { source, .. } =&gt; source.status_code(),
+            StartProcedureManager { source } | StopProcedureManager { source } =&gt; {
+                source.status_code()
+            }
         }
     }
 
