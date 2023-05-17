@@ -350,7 +350,7 @@
         <span class="kw">let </span>metadata_service = metadata_service
             .unwrap_or_else(|| Arc::new(DefaultMetadataService::new(kv_store.clone())));
 
-        <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">0</span>, <span class="number">100</span>, kv_store.clone());
+        <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">1</span>, <span class="number">100</span>, kv_store.clone());
         <span class="kw">let </span>mailbox = HeartbeatMailbox::create(handler_group.pushers(), mailbox_sequence);
 
         MetaSrv {

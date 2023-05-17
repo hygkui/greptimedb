@@ -381,6 +381,10 @@
 <a href="#381" id="381">381</a>
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -624,6 +628,18 @@
             }
         }
     }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">async fn </span>next_message_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
+        <span class="comment">// In this implementation, we pre-occupy the message_id of 0,
+        // and we use `message_id = 0` to mark a Message as a one-way call.
+        </span><span class="kw">loop </span>{
+            <span class="kw">let </span>next = <span class="self">self</span>.sequence.next().<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="kw">if </span>next &gt; <span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(next);
+            }
+        }
+    }
 }
 
 <span class="attr">#[async_trait::async_trait]
@@ -634,7 +650,7 @@
         <span class="kw-2">mut </span>msg: MailboxMessage,
         timeout: Duration,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MailboxReceiver&gt; {
-        <span class="kw">let </span>message_id = <span class="self">self</span>.sequence.next().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>message_id = <span class="self">self</span>.next_message_id().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>pusher_id = <span class="kw">match </span>ch {
             Channel::Datanode(id) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{}-{}&quot;</span>, Role::Datanode <span class="kw">as </span>i32, id),
@@ -671,15 +687,7 @@
             tx.send(maybe_msg)
                 .map_err(|<span class="kw">_</span>| error::MailboxClosedSnafu { id }.build())<span class="question-mark">?</span>;
         } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(finally_msg) = maybe_msg {
-            <span class="kw">let </span>MailboxMessage {
-                id,
-                subject,
-                from,
-                to,
-                timestamp_millis,
-                ..
-            } = finally_msg;
-            <span class="macro">warn!</span>(<span class="string">&quot;The response arrived too late, id={id}, subject={subject}, from={from}, to={to}, timestamp={timestamp_millis}&quot;</span>);
+            <span class="macro">warn!</span>(<span class="string">&quot;The response arrived too late: {finally_msg:?}&quot;</span>);
         }
 
         <span class="prelude-val">Ok</span>(())

@@ -214,8 +214,6 @@
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -266,7 +264,7 @@
         common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>pusher_key = <span class="prelude-val">None</span>;
             <span class="kw">while let </span><span class="prelude-val">Some</span>(msg) = in_stream.next().<span class="kw">await </span>{
-                <span class="kw">let </span><span class="kw-2">mut </span>quit = <span class="bool-val">false</span>;
+                <span class="kw">let </span><span class="kw-2">mut </span>is_not_leader = <span class="bool-val">false</span>;
                 <span class="kw">match </span>msg {
                     <span class="prelude-val">Ok</span>(req) =&gt; {
                         <span class="kw">let </span>header = <span class="kw">match </span>req.header.as_ref() {
@@ -292,9 +290,7 @@
                             .<span class="kw">await
                             </span>.map_err(|e| e.into());
 
-                        <span class="kw">if let </span><span class="prelude-val">Ok</span>(res) = <span class="kw-2">&amp;</span>res {
-                            quit = res.is_not_leader();
-                        }
+                        is_not_leader = res.as_ref().map_or(<span class="bool-val">false</span>, |r| r.is_not_leader());
 
                         tx.send(res).<span class="kw">await</span>.expect(<span class="string">&quot;working rx&quot;</span>);
                     }
@@ -314,7 +310,7 @@
                     }
                 }
 
-                <span class="kw">if </span>quit {
+                <span class="kw">if </span>is_not_leader {
                     <span class="macro">warn!</span>(<span class="string">&quot;Quit because it is no longer the leader&quot;</span>);
                     <span class="kw">break</span>;
                 }
