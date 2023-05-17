@@ -111,9 +111,9 @@
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 </span><span class="kw">pub enum </span>SelectorType {
-    LoadBased,
     <span class="attr">#[default]
-    </span>LeaseBased,
+    </span>LoadBased,
+    LeaseBased,
 }
 
 <span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>str&gt; <span class="kw">for </span>SelectorType {
@@ -138,7 +138,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_default_selector_type() {
-        <span class="macro">assert_eq!</span>(SelectorType::LeaseBased, SelectorType::default());
+        <span class="macro">assert_eq!</span>(SelectorType::LoadBased, SelectorType::default());
     }
 
     <span class="attr">#[test]
