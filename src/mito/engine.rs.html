@@ -697,14 +697,6 @@
 <a href="#697" id="697">697</a>
 <a href="#698" id="698">698</a>
 <a href="#699" id="699">699</a>
-<a href="#700" id="700">700</a>
-<a href="#701" id="701">701</a>
-<a href="#702" id="702">702</a>
-<a href="#703" id="703">703</a>
-<a href="#704" id="704">704</a>
-<a href="#705" id="705">705</a>
-<a href="#706" id="706">706</a>
-<a href="#707" id="707">707</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1157,17 +1149,9 @@
             table_id, table_info
         );
 
-        <span class="kw">for </span>target_region <span class="kw">in </span><span class="kw-2">&amp;</span>request.region_numbers {
-            <span class="kw">if </span>!table_info.meta.region_numbers.contains(target_region) {
-                table_error::RegionNotFoundSnafu {
-                    table: table_ref.to_string(),
-                    region: <span class="kw-2">*</span>target_region,
-                }
-                .fail()<span class="question-mark">?
-            </span>}
-        }
+        <span class="comment">// FIXME: We cannot trust the region numbers in the manifest because other datanodes might overwrite the manifest.
 
-        <span class="kw">let </span><span class="kw-2">mut </span>regions = HashMap::with_capacity(table_info.meta.region_numbers.len());
+        </span><span class="kw">let </span><span class="kw-2">mut </span>regions = HashMap::with_capacity(table_info.meta.region_numbers.len());
 
         <span class="kw">for </span>region_number <span class="kw">in </span><span class="kw-2">&amp;</span>request.region_numbers {
             <span class="kw">let </span>region = <span class="self">self
