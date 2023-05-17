@@ -1821,6 +1821,15 @@
         }
     }
 
+    <span class="doccomment">/// Cast Value to timestamp. Return None if value is not a valid timestamp data type.
+    </span><span class="kw">pub fn </span>as_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Timestamp&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Value::Int64(v) =&gt; <span class="prelude-val">Some</span>(Timestamp::new_millisecond(<span class="kw-2">*</span>v)),
+            Value::Timestamp(t) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>t),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+        }
+    }
+
     <span class="doccomment">/// Returns the logical type of the value.
     </span><span class="kw">pub fn </span>logical_type_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LogicalTypeId {
         <span class="kw">match </span><span class="self">self </span>{
@@ -1890,15 +1899,6 @@
         };
 
         <span class="prelude-val">Ok</span>(scalar_value)
-    }
-
-    <span class="doccomment">/// Casts Value to [Timestamp]. Returns None if it&#39;s not a valid timestamp value.
-    </span><span class="kw">pub fn </span>as_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Timestamp&gt; {
-        <span class="kw">match </span><span class="self">self </span>{
-            Value::Int64(v) =&gt; <span class="prelude-val">Some</span>(Timestamp::new_millisecond(<span class="kw-2">*</span>v)),
-            Value::Timestamp(t) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>t),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-        }
     }
 }
 

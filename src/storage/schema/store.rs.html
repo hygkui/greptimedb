@@ -312,6 +312,8 @@
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -393,6 +395,13 @@
         <span class="self">self</span>.row_key_end
     }
 
+    <span class="doccomment">/// Returns the index of timestamp column.
+    /// We always assume that timestamp is the last column in [StoreSchema].
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>timestamp_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.row_key_end - <span class="number">1
+    </span>}
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>contains_column(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; bool {
         <span class="self">self</span>.schema.column_schema_by_name(name).is_some()
     }
@@ -467,11 +476,6 @@
     <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>op_type_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.user_column_end + <span class="number">1
-    </span>}
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>timestamp_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.row_key_end - <span class="number">1
     </span>}
 
     <span class="attr">#[inline]

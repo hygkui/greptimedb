@@ -146,6 +146,8 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -223,7 +225,9 @@
         _id: Id,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;store_api::logstore::entry_stream::SendableEntryStream&lt;<span class="lifetime">&#39;_</span>, <span class="self">Self</span>::Entry, <span class="self">Self</span>::Error&gt;&gt;
     {
-        <span class="macro">todo!</span>()
+        <span class="prelude-val">Ok</span>(Box::pin(futures::stream::once(futures::future::ready(<span class="prelude-val">Ok</span>(
+            <span class="macro">vec!</span>[],
+        )))))
     }
 
     <span class="kw">async fn </span>create_namespace(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _ns: <span class="kw-2">&amp;</span><span class="self">Self</span>::Namespace) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {

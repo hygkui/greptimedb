@@ -603,6 +603,26 @@
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
 <a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1104,6 +1124,24 @@
         <span class="attr">#[snafu(backtrace)]
         </span>source: RuntimeError,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert columns to rows, source: {}&quot;</span>, source))]
+    </span>ConvertColumnsToRows {
+        source: ArrowError,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to sort arrays, source: {}&quot;</span>, source))]
+    </span>SortArrays {
+        source: ArrowError,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to sort arrays, source: {}&quot;</span>, source))]
+    </span>SelectRows {
+        source: ArrowError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1201,6 +1239,8 @@
             | StopPickTask { .. } =&gt; StatusCode::Unexpected,
 
             TtlCalculation { source, .. } =&gt; source.status_code(),
+            ConvertColumnsToRows { .. } | SortArrays { .. } =&gt; StatusCode::Unexpected,
+            SelectRows { .. } =&gt; StatusCode::Unexpected,
         }
     }
 
