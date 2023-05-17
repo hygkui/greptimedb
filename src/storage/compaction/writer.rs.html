@@ -633,8 +633,7 @@
         <span class="kw">for </span>key <span class="kw">in </span>ts {
             key_builders.push(<span class="prelude-val">Some</span>(<span class="kw-2">*</span>key));
         }
-        <span class="kw">let </span>row_keys = <span class="macro">vec!</span>[Arc::new(key_builders.finish()) <span class="kw">as _</span>];
-
+        <span class="kw">let </span>ts_col = Arc::new(key_builders.finish()) <span class="kw">as _</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>value_builders = UInt64VectorBuilder::with_capacity(values.len());
 
         <span class="kw">for </span>value <span class="kw">in </span>values {
@@ -646,8 +645,9 @@
             sequence,
             op_type,
             start_index_in_batch,
-            keys: row_keys,
+            keys: <span class="macro">vec!</span>[],
             values: row_values,
+            timestamp: <span class="prelude-val">Some</span>(ts_col),
         };
 
         <span class="macro">assert_eq!</span>(ts.len(), kvs.len());

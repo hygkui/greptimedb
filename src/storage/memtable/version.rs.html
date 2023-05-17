@@ -224,15 +224,15 @@
     }
 
     <span class="kw">pub fn </span>mutable_bytes_allocated(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.mutable.bytes_allocated()
+        <span class="self">self</span>.mutable.stats().bytes_allocated()
     }
 
     <span class="kw">pub fn </span>total_bytes_allocated(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.immutables
             .iter()
-            .map(|m| m.bytes_allocated())
+            .map(|m| m.stats().bytes_allocated())
             .sum::&lt;usize&gt;()
-            + <span class="self">self</span>.mutable.bytes_allocated()
+            + <span class="self">self</span>.mutable.stats().bytes_allocated()
     }
 
     <span class="doccomment">/// Creates a new `MemtableVersion` that removes immutable memtables

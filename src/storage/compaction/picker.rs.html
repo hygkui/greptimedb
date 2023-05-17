@@ -234,7 +234,7 @@
         <span class="kw">let </span><span class="prelude-val">Some</span>(ttl) = ttl <span class="kw">else </span>{ <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]); };
 
         <span class="kw">let </span>expire_time = Timestamp::current_millis()
-            .sub(ttl)
+            .sub_duration(ttl)
             .context(TtlCalculationSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>expired_ssts = <span class="macro">vec!</span>[];

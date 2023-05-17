@@ -236,6 +236,15 @@
 <a href="#236" id="236">236</a>
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -294,6 +303,7 @@
             start_index_in_batch: <span class="self">self</span>.index_in_batch,
             keys: Vec::with_capacity(total_column_num),
             values: Vec::with_capacity(total_column_num),
+            timestamp: <span class="prelude-val">None</span>,
         };
 
         <span class="kw">for </span>mutation <span class="kw">in </span><span class="kw-2">&amp;</span>payload.mutations {
@@ -314,10 +324,11 @@
 
         kvs.reset(mutation.op_type, <span class="self">self</span>.index_in_batch);
 
-        <span class="kw">for </span>key_idx <span class="kw">in </span>schema.row_key_indices() {
+        <span class="kw">let </span>ts_idx = schema.timestamp_index();
+        kvs.timestamp = <span class="prelude-val">Some</span>(mutation.record_batch.column(ts_idx).clone());
+        <span class="kw">for </span>key_idx <span class="kw">in </span><span class="number">0</span>..ts_idx {
             kvs.keys.push(mutation.record_batch.column(key_idx).clone());
         }
-
         <span class="kw">for </span>value_idx <span class="kw">in </span>schema.value_indices() {
             kvs.values
                 .push(mutation.record_batch.column(value_idx).clone());
@@ -358,6 +369,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::collections::HashMap;
+    <span class="kw">use </span>std::sync::atomic::Ordering;
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>common_time::timestamp::Timestamp;
@@ -409,8 +421,12 @@
         mem: <span class="kw-2">&amp;</span>MemtableRef,
         sequence: SequenceNumber,
         data: <span class="kw-2">&amp;</span>[(i64, <span class="prelude-ty">Option</span>&lt;i64&gt;)],
+        max_ts: i64,
+        min_ts: i64,
     ) {
         <span class="kw">let </span>iter = mem.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
+        <span class="macro">assert_eq!</span>(min_ts, mem.stats().min_timestamp.load(Ordering::Relaxed));
+        <span class="macro">assert_eq!</span>(max_ts, mem.stats().max_timestamp.load(Ordering::Relaxed));
 
         <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="number">0</span>;
         <span class="kw">for </span>batch <span class="kw">in </span>iter {
@@ -471,6 +487,8 @@
                 (<span class="number">102</span>, <span class="prelude-val">None</span>),
                 (<span class="number">201</span>, <span class="prelude-val">Some</span>(<span class="number">201</span>)),
             ],
+            <span class="number">201</span>,
+            <span class="number">1</span>,
         );
     }
 }

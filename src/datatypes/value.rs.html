@@ -1630,6 +1630,15 @@
 <a href="#1630" id="1630">1630</a>
 <a href="#1631" id="1631">1631</a>
 <a href="#1632" id="1632">1632</a>
+<a href="#1633" id="1633">1633</a>
+<a href="#1634" id="1634">1634</a>
+<a href="#1635" id="1635">1635</a>
+<a href="#1636" id="1636">1636</a>
+<a href="#1637" id="1637">1637</a>
+<a href="#1638" id="1638">1638</a>
+<a href="#1639" id="1639">1639</a>
+<a href="#1640" id="1640">1640</a>
+<a href="#1641" id="1641">1641</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1881,6 +1890,15 @@
         };
 
         <span class="prelude-val">Ok</span>(scalar_value)
+    }
+
+    <span class="doccomment">/// Casts Value to [Timestamp]. Returns None if it&#39;s not a valid timestamp value.
+    </span><span class="kw">pub fn </span>as_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Timestamp&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Value::Int64(v) =&gt; <span class="prelude-val">Some</span>(Timestamp::new_millisecond(<span class="kw-2">*</span>v)),
+            Value::Timestamp(t) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>t),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+        }
     }
 }
 
