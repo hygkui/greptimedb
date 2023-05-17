@@ -311,6 +311,9 @@
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -415,8 +418,11 @@
 
 <span class="kw">impl </span>StartCommand {
     <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_opts: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>opts: MetaSrvOptions =
-            Options::load_layered_options(<span class="self">self</span>.config_file.as_deref(), <span class="self">self</span>.env_prefix.as_ref())<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>opts: MetaSrvOptions = Options::load_layered_options(
+            <span class="self">self</span>.config_file.as_deref(),
+            <span class="self">self</span>.env_prefix.as_ref(),
+            <span class="prelude-val">None</span>,
+        )<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_opts.log_dir {
             opts.logging.dir = dir;

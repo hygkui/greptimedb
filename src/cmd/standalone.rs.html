@@ -570,6 +570,9 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -789,8 +792,11 @@
 
 <span class="kw">impl </span>StartCommand {
     <span class="kw">fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_options: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>opts: StandaloneOptions =
-            Options::load_layered_options(<span class="self">self</span>.config_file.as_deref(), <span class="self">self</span>.env_prefix.as_ref())<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>opts: StandaloneOptions = Options::load_layered_options(
+            <span class="self">self</span>.config_file.as_deref(),
+            <span class="self">self</span>.env_prefix.as_ref(),
+            <span class="prelude-val">None</span>,
+        )<span class="question-mark">?</span>;
 
         opts.enable_memory_catalog = <span class="self">self</span>.enable_memory_catalog;
 

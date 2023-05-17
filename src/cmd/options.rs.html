@@ -241,6 +241,37 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -266,6 +297,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{LoadLayeredConfigSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="kw">pub const </span>ENV_VAR_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__&quot;</span>;
+<span class="kw">pub const </span>ENV_LIST_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;,&quot;</span>;
 
 <span class="kw">pub struct </span>MixOptions {
     <span class="kw">pub </span>fe_opts: FrontendOptions,
@@ -303,9 +335,12 @@
     /// `env_prefix` is the prefix of environment variables, e.g. &quot;FRONTEND__xxx&quot;.
     /// The function will use dunder(double underscore) `__` as the separator for environment variables, for example:
     /// `DATANODE__STORAGE__MANIFEST__CHECKPOINT_MARGIN` will be mapped to `DatanodeOptions.storage.manifest.checkpoint_margin` field in the configuration.
+    /// `list_keys` is the list of keys that should be parsed as a list, for example, you can pass `Some(&amp;[&quot;meta_client_options.metasrv_addrs&quot;]` to parse `GREPTIMEDB_METASRV__META_CLIENT_OPTIONS__METASRV_ADDRS` as a list.
+    /// The function will use comma `,` as the separator for list values, for example: `127.0.0.1:3001,127.0.0.1:3002,127.0.0.1:3003`.
     </span><span class="kw">pub fn </span>load_layered_options&lt;<span class="lifetime">&#39;de</span>, T: Serialize + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; + Default&gt;(
         config_file: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
         env_prefix: <span class="kw-2">&amp;</span>str,
+        list_keys: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;T&gt; {
         <span class="kw">let </span>default_opts = T::default();
 
@@ -314,6 +349,13 @@
 
             <span class="kw">if </span>!env_prefix.is_empty() {
                 env = env.prefix(env_prefix);
+            }
+
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(list_keys) = list_keys {
+                env = env.list_separator(ENV_LIST_SEP);
+                <span class="kw">for </span>key <span class="kw">in </span>list_keys {
+                    env = env.with_list_parse_key(key);
+                }
             }
 
             env.try_parsing(<span class="bool-val">true</span>)
@@ -364,7 +406,6 @@
             mysql_runtime_size = 2
 
             [meta_client_options]
-            metasrv_addrs = [&quot;127.0.0.1:3002&quot;]
             timeout_millis = 3000
             connect_timeout_millis = 5000
             tcp_nodelay = true
@@ -455,11 +496,24 @@
                     .join(ENV_VAR_SEP),
                     <span class="prelude-val">Some</span>(<span class="string">&quot;/other/wal/dir&quot;</span>),
                 ),
+                (
+                    <span class="comment">// meta_client_options.metasrv_addrs = 127.0.0.1:3001,127.0.0.1:3002,127.0.0.1:3003
+                    </span><span class="macro">vec!</span>[
+                        env_prefix.to_string(),
+                        <span class="string">&quot;meta_client_options&quot;</span>.to_uppercase(),
+                        <span class="string">&quot;metasrv_addrs&quot;</span>.to_uppercase(),
+                    ]
+                    .join(ENV_VAR_SEP),
+                    <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:3001,127.0.0.1:3002,127.0.0.1:3003&quot;</span>),
+                ),
             ],
             || {
-                <span class="kw">let </span>opts: DatanodeOptions =
-                    Options::load_layered_options(<span class="prelude-val">Some</span>(file.path().to_str().unwrap()), env_prefix)
-                        .unwrap();
+                <span class="kw">let </span>opts: DatanodeOptions = Options::load_layered_options(
+                    <span class="prelude-val">Some</span>(file.path().to_str().unwrap()),
+                    env_prefix,
+                    DatanodeOptions::env_list_keys(),
+                )
+                .unwrap();
 
                 <span class="comment">// Check the configs from environment variables.
                 </span><span class="macro">assert_eq!</span>(opts.storage.manifest.checkpoint_margin, <span class="prelude-val">Some</span>(<span class="number">99</span>));
@@ -474,6 +528,14 @@
                     <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">42</span>))
                 );
                 <span class="macro">assert!</span>(opts.storage.manifest.checkpoint_on_startup);
+                <span class="macro">assert_eq!</span>(
+                    opts.meta_client_options.unwrap().metasrv_addrs,
+                    <span class="macro">vec!</span>[
+                        <span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(),
+                        <span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string(),
+                        <span class="string">&quot;127.0.0.1:3003&quot;</span>.to_string()
+                    ]
+                );
 
                 <span class="comment">// Should be the values from config file, not environment variables.
                 </span><span class="macro">assert_eq!</span>(opts.wal.dir, <span class="string">&quot;/tmp/greptimedb/wal&quot;</span>.to_string());
