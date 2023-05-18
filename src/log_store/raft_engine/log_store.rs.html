@@ -744,7 +744,7 @@
         <span class="prelude-val">Ok</span>(Box::pin(s))
     }
 
-    <span class="kw">async fn </span>create_namespace(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ns: <span class="kw-2">&amp;</span><span class="self">Self</span>::Namespace) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
+    <span class="kw">async fn </span>create_namespace(<span class="kw-2">&amp;</span><span class="self">self</span>, ns: <span class="kw-2">&amp;</span><span class="self">Self</span>::Namespace) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
         <span class="macro">ensure!</span>(
             ns.id != SYSTEM_NAMESPACE,
             IllegalNamespaceSnafu { ns: ns.id }
@@ -761,7 +761,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>delete_namespace(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ns: <span class="kw-2">&amp;</span><span class="self">Self</span>::Namespace) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
+    <span class="kw">async fn </span>delete_namespace(<span class="kw-2">&amp;</span><span class="self">self</span>, ns: <span class="kw-2">&amp;</span><span class="self">Self</span>::Namespace) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
         <span class="macro">ensure!</span>(
             ns.id != SYSTEM_NAMESPACE,
             IllegalNamespaceSnafu { ns: ns.id }
@@ -867,7 +867,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_manage_namespace() {
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;raft-engine-logstore-test&quot;</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>logstore = RaftEngineLogStore::try_new(LogConfig {
+        <span class="kw">let </span>logstore = RaftEngineLogStore::try_new(LogConfig {
             log_file_dir: dir.path().to_str().unwrap().to_string(),
             ..Default::default()
         })

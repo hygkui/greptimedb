@@ -1313,7 +1313,7 @@
         <span class="comment">// Close the table to close all regions. Closing a region is idempotent.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, table)) = <span class="kw-2">&amp;</span>removed_table {
             table
-                .close()
+                .drop_regions()
                 .<span class="kw">await
                 </span>.map_err(BoxedError::new)
                 .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;

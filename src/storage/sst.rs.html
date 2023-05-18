@@ -751,6 +751,16 @@
 <a href="#751" id="751">751</a>
 <a href="#752" id="752">752</a>
 <a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -872,6 +882,16 @@
             }
         }
         merged
+    }
+
+    <span class="kw">pub fn </span>mark_all_files_deleted(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;FileId&gt; {
+        <span class="self">self</span>.levels().iter().fold(<span class="macro">vec!</span>[], |<span class="kw-2">mut </span>files, level| {
+            files.extend(level.files().map(|f| {
+                f.mark_deleted();
+                f.file_id()
+            }));
+            files
+        })
     }
 
     <span class="kw">pub fn </span>levels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[LevelMeta] {

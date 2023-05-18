@@ -704,6 +704,26 @@
 <a href="#704" id="704">704</a>
 <a href="#705" id="705">705</a>
 <a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -752,6 +772,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
 <span class="kw">use </span><span class="kw">crate</span>::metadata::{RegionMetaImpl, RegionMetadata, RegionMetadataRef};
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span><span class="kw">crate</span>::region::writer::schedule_compaction;
+<span class="kw">use </span><span class="kw">crate</span>::region::writer::DropContext;
 <span class="kw">pub use </span><span class="kw">crate</span>::region::writer::{AlterContext, RegionWriter, RegionWriterRef, WriterContext};
 <span class="kw">use </span><span class="kw">crate</span>::schema::compat::CompatWrite;
 <span class="kw">use </span><span class="kw">crate</span>::snapshot::SnapshotImpl;
@@ -834,6 +855,10 @@
     <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
         <span class="self">self</span>.inner.close().<span class="kw">await
+    </span>}
+
+    <span class="kw">async fn </span>drop_region(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.inner.drop_region().<span class="kw">await
     </span>}
 
     <span class="kw">fn </span>disk_usage_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
@@ -1379,6 +1404,21 @@
     <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.writer.close().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.manifest.stop().<span class="kw">await
+    </span>}
+
+    <span class="kw">async fn </span>drop_region(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="macro">logging::info!</span>(<span class="string">&quot;Drop region {}, name: {}&quot;</span>, <span class="self">self</span>.shared.id, <span class="self">self</span>.shared.name);
+        <span class="kw">let </span>drop_ctx = DropContext {
+            shared: <span class="kw-2">&amp;</span><span class="self">self</span>.shared,
+            wal: <span class="kw-2">&amp;</span><span class="self">self</span>.wal,
+            manifest: <span class="kw-2">&amp;</span><span class="self">self</span>.manifest,
+            flush_scheduler: <span class="kw-2">&amp;</span><span class="self">self</span>.flush_scheduler,
+            compaction_scheduler: <span class="kw-2">&amp;</span><span class="self">self</span>.compaction_scheduler,
+            sst_layer: <span class="kw-2">&amp;</span><span class="self">self</span>.sst_layer,
+        };
+
+        <span class="self">self</span>.manifest.stop().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.writer.on_drop(drop_ctx).<span class="kw">await
     </span>}
 
     <span class="kw">async fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>FlushContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
