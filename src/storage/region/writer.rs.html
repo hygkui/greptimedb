@@ -857,6 +857,15 @@
 <a href="#857" id="857">857</a>
 <a href="#858" id="858">858</a>
 <a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1167,9 +1176,9 @@
         </span><span class="kw">let </span>prev_version = version_control.current_manifest_version();
         action_list.set_prev_version(prev_version);
 
-        <span class="macro">logging::debug!</span>(
+        <span class="macro">logging::info!</span>(
             <span class="string">&quot;Try to remove region {}, action_list: {:?}&quot;</span>,
-            drop_ctx.shared.name(),
+            drop_ctx.shared.id(),
             action_list
         );
 
@@ -1178,10 +1187,19 @@
         <span class="comment">// Mark all data obsolete and delete the namespace in the WAL
         </span>drop_ctx.wal.obsolete(committed_sequence).<span class="kw">await</span><span class="question-mark">?</span>;
         drop_ctx.wal.delete_namespace().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="macro">logging::info!</span>(
+            <span class="string">&quot;Remove WAL entries in region: {}, committed sequence: {}&quot;</span>,
+            drop_ctx.shared.id(),
+            committed_sequence
+        );
 
         <span class="comment">// Mark all SSTs deleted
         </span><span class="kw">let </span>files = current_version.ssts().mark_all_files_deleted();
-        <span class="macro">logging::debug!</span>(<span class="string">&quot;Try to remove all SSTs {:?}&quot;</span>, files);
+        <span class="macro">logging::info!</span>(
+            <span class="string">&quot;Try to remove all SSTs, region: {}, files: {:?}&quot;</span>,
+            drop_ctx.shared.id(),
+            files
+        );
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1398,15 +1416,10 @@
                     }
                 }
 
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(payload) = payload {
-                    num_requests += <span class="number">1</span>;
-                    <span class="comment">// Note that memtables of `Version` may be updated during replay.
-                    </span><span class="kw">let </span>version = version_control.current();
-
-                    <span class="kw">if </span>req_sequence &gt; last_sequence {
-                        last_sequence = req_sequence;
-                    } <span class="kw">else </span>{
-                        <span class="macro">logging::error!</span>(
+                <span class="kw">if </span>req_sequence &gt; last_sequence {
+                    last_sequence = req_sequence;
+                } <span class="kw">else </span>{
+                    <span class="macro">logging::error!</span>(
                             <span class="string">&quot;Sequence should not decrease during replay, found {} &lt;= {}, \
                              region_id: {}, region_name: {}, flushed_sequence: {}, num_requests: {}&quot;</span>,
                             req_sequence,
@@ -1417,12 +1430,17 @@
                             num_requests,
                         );
 
-                        error::SequenceNotMonotonicSnafu {
-                            prev: last_sequence,
-                            given: req_sequence,
-                        }
-                        .fail()<span class="question-mark">?</span>;
+                    error::SequenceNotMonotonicSnafu {
+                        prev: last_sequence,
+                        given: req_sequence,
                     }
+                    .fail()<span class="question-mark">?</span>;
+                }
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(payload) = payload {
+                    num_requests += <span class="number">1</span>;
+                    <span class="comment">// Note that memtables of `Version` may be updated during replay.
+                    </span><span class="kw">let </span>version = version_control.current();
                     <span class="comment">// TODO(yingwen): Trigger flush if the size of memtables reach the flush threshold to avoid
                     // out of memory during replay, but we need to do it carefully to avoid dead lock.
                     </span><span class="kw">let </span><span class="kw-2">mut </span>inserter = Inserter::new(last_sequence);
