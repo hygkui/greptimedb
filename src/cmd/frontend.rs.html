@@ -472,7 +472,6 @@
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
 <a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -492,9 +491,8 @@
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
-<span class="kw">use </span>frontend::influxdb::InfluxdbOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
-<span class="kw">use </span>frontend::prom::PromOptions;
+<span class="kw">use </span>frontend::service_config::{InfluxdbOptions, PromOptions};
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>servers::auth::UserProviderRef;
 <span class="kw">use </span>servers::tls::{TlsMode, TlsOption};
@@ -702,7 +700,7 @@
     <span class="kw">use </span>std::time::Duration;
 
     <span class="kw">use </span>common_test_util::temp_dir::create_named_temp_file;
-    <span class="kw">use </span>frontend::grpc::GrpcOptions;
+    <span class="kw">use </span>frontend::service_config::GrpcOptions;
     <span class="kw">use </span>servers::auth::{Identity, Password, UserProviderRef};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
