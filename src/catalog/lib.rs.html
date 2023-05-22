@@ -268,6 +268,10 @@
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -285,6 +289,7 @@
 </span><span class="attr">#![feature(assert_matches)]
 
 </span><span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt::{Debug, Formatter};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -514,6 +519,8 @@
                 <span class="kw">let </span>region_numbers = <span class="kw-2">&amp;</span>table.table_info().meta.region_numbers;
                 region_number += region_numbers.len() <span class="kw">as </span>u64;
 
+                <span class="kw">let </span>engine = <span class="kw-2">&amp;</span>table.table_info().meta.engine;
+
                 <span class="kw">match </span>table.region_stats() {
                     <span class="prelude-val">Ok</span>(stats) =&gt; {
                         <span class="kw">let </span>stats = stats.into_iter().map(|stat| RegionStat {
@@ -524,6 +531,7 @@
                                 table_name: table_name.clone(),
                             }),
                             approximate_bytes: stat.disk_usage_bytes <span class="kw">as </span>i64,
+                            attrs: HashMap::from([(<span class="string">&quot;engine_name&quot;</span>.to_owned(), engine.clone())]),
                             ..Default::default()
                         });
 
