@@ -866,6 +866,33 @@
 <a href="#866" id="866">866</a>
 <a href="#867" id="867">867</a>
 <a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -898,7 +925,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::compaction::{CompactionRequestImpl, CompactionSchedulerRef};
 <span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::flush::{FlushHandle, FlushRequest, FlushSchedulerRef, FlushStrategyRef};
+<span class="kw">use </span><span class="kw">crate</span>::flush::{
+    FlushHandle, FlushRegionRequest, FlushSchedulerRef, FlushStrategyRef, FlushType, RegionStatus,
+};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{
     RawRegionMetadata, RegionChange, RegionEdit, RegionMetaAction, RegionMetaActionList,
     RegionRemove,
@@ -939,6 +968,7 @@
         config: Arc&lt;EngineConfig&gt;,
         ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
         compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+        write_buffer_size: usize,
     ) -&gt; RegionWriter {
         RegionWriter {
             inner: Mutex::new(WriterInner::new(
@@ -946,6 +976,7 @@
                 config,
                 ttl,
                 compaction_time_window,
+                write_buffer_size,
             )),
             version_mutex: Mutex::new(()),
         }
@@ -1311,6 +1342,8 @@
     engine_config: Arc&lt;EngineConfig&gt;,
     ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+    <span class="doccomment">/// Size in bytes to freeze the mutable memtable.
+    </span>write_buffer_size: usize,
 }
 
 <span class="kw">impl </span>WriterInner {
@@ -1319,6 +1352,7 @@
         engine_config: Arc&lt;EngineConfig&gt;,
         ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
         compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+        write_buffer_size: usize,
     ) -&gt; WriterInner {
         WriterInner {
             memtable_builder,
@@ -1327,6 +1361,7 @@
             closed: <span class="bool-val">false</span>,
             ttl,
             compaction_time_window,
+            write_buffer_size,
         }
     }
 
@@ -1531,13 +1566,24 @@
         <span class="kw">let </span>version_control = writer_ctx.version_control();
         <span class="comment">// Check whether memtable is full or flush should be triggered. We need to do this first since
         // switching memtables will clear all mutable memtables.
-        </span><span class="kw">if </span><span class="self">self</span>.should_flush(
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(flush_type) = <span class="self">self</span>.should_flush(
             writer_ctx.shared,
             version_control,
             writer_ctx.flush_strategy,
         ) {
-            <span class="self">self</span>.trigger_flush(writer_ctx, FlushReason::MemtableFull)
-                .<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="comment">// Trigger flush according to the flush type.
+            </span><span class="kw">match </span>flush_type {
+                FlushType::Region =&gt; {
+                    <span class="comment">// Trigger flush for current region.
+                    </span><span class="self">self</span>.trigger_flush(writer_ctx, FlushReason::MemtableFull)
+                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                }
+                FlushType::Engine =&gt; {
+                    <span class="comment">// Trigger engine level flush. This wakeup the flush handler
+                    // to pick region to flush.
+                    </span>writer_ctx.flush_scheduler.schedule_engine_flush()<span class="question-mark">?</span>;
+                }
+            }
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -1554,12 +1600,15 @@
         shared: <span class="kw-2">&amp;</span>SharedDataRef,
         version_control: <span class="kw-2">&amp;</span>VersionControlRef,
         flush_strategy: <span class="kw-2">&amp;</span>FlushStrategyRef,
-    ) -&gt; bool {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;FlushType&gt; {
         <span class="kw">let </span>current = version_control.current();
         <span class="kw">let </span>memtables = current.memtables();
-        <span class="kw">let </span>mutable_bytes_allocated = memtables.mutable_bytes_allocated();
-        <span class="kw">let </span>total_bytes_allocated = memtables.total_bytes_allocated();
-        flush_strategy.should_flush(shared, mutable_bytes_allocated, total_bytes_allocated)
+        <span class="kw">let </span>status = RegionStatus {
+            region_id: shared.id(),
+            bytes_mutable: memtables.mutable_bytes_allocated(),
+            write_buffer_size: <span class="self">self</span>.write_buffer_size,
+        };
+        flush_strategy.should_flush(status)
     }
 
     <span class="kw">async fn </span>trigger_flush&lt;S: LogStore&gt;(
@@ -1591,11 +1640,14 @@
         <span class="kw">let </span>(max_memtable_id, mem_to_flush) = current_version.memtables().memtables_to_flush();
 
         <span class="kw">if </span>max_memtable_id.is_none() {
+            <span class="comment">// We still update the flush time to avoid the picker picks this region again.
+            </span>ctx.shared.update_flush_millis();
+
             <span class="macro">logging::info!</span>(<span class="string">&quot;No memtables to flush in region: {}&quot;</span>, ctx.shared.name);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
 
-        <span class="kw">let </span>flush_req = FlushRequest {
+        <span class="kw">let </span>flush_req = FlushRegionRequest {
             max_memtable_id: max_memtable_id.unwrap(),
             memtables: mem_to_flush,
             <span class="comment">// In write thread, safe to use current committed sequence.
@@ -1606,15 +1658,17 @@
             wal: ctx.wal.clone(),
             manifest: ctx.manifest.clone(),
             engine_config: <span class="self">self</span>.engine_config.clone(),
-            sender: <span class="prelude-val">None</span>,
             ttl: <span class="self">self</span>.ttl,
             compaction_time_window: <span class="self">self</span>.compaction_time_window,
         };
 
-        <span class="kw">let </span>flush_handle = ctx.flush_scheduler.schedule_flush(flush_req).map_err(|e| {
-            <span class="macro">logging::error!</span>(e; <span class="string">&quot;Failed to schedule flush request&quot;</span>);
-            e
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>flush_handle = ctx
+            .flush_scheduler
+            .schedule_region_flush(flush_req)
+            .map_err(|e| {
+                <span class="macro">logging::error!</span>(e; <span class="string">&quot;Failed to schedule flush request&quot;</span>);
+                e
+            })<span class="question-mark">?</span>;
         <span class="self">self</span>.flush_handle = <span class="prelude-val">Some</span>(flush_handle);
 
         <span class="prelude-val">Ok</span>(())

@@ -730,6 +730,14 @@
 <a href="#730" id="730">730</a>
 <a href="#731" id="731">731</a>
 <a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -898,6 +906,7 @@
     <span class="kw">pub </span>file_purger: FilePurgerRef,
     <span class="kw">pub </span>ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+    <span class="kw">pub </span>write_buffer_size: usize,
 }
 
 <span class="kw">pub type </span>RecoverdMetadata = (SequenceNumber, (ManifestVersion, RawRegionMetadata));
@@ -981,6 +990,7 @@
                 store_config.engine_config.clone(),
                 store_config.ttl,
                 store_config.compaction_time_window,
+                store_config.write_buffer_size,
             )),
             wal,
             flush_strategy: store_config.flush_strategy,
@@ -1071,6 +1081,7 @@
             store_config.engine_config.clone(),
             store_config.ttl,
             compaction_time_window,
+            store_config.write_buffer_size,
         ));
         <span class="kw">let </span>writer_ctx = WriterContext {
             shared: <span class="kw-2">&amp;</span>shared,
@@ -1114,8 +1125,13 @@
     }
 
     <span class="doccomment">/// Returns last flush timestamp in millis.
-    </span><span class="kw">pub fn </span>last_flush_millis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>last_flush_millis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {
         <span class="self">self</span>.inner.shared.last_flush_millis()
+    }
+
+    <span class="doccomment">/// Returns the [VersionControl] of the region.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>version_control(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>VersionControl {
+        <span class="self">self</span>.inner.version_control()
     }
 
     <span class="kw">fn </span>create_version_with_checkpoint(

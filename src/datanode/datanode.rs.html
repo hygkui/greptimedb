@@ -427,6 +427,10 @@
 <a href="#427" id="427">427</a>
 <a href="#428" id="428">428</a>
 <a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -652,6 +656,8 @@
     <span class="doccomment">/// Interval to auto flush a region if it has not flushed yet.
     </span><span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
     </span><span class="kw">pub </span>auto_flush_interval: Duration,
+    <span class="doccomment">/// Global write buffer size for all regions.
+    </span><span class="kw">pub </span>global_write_buffer_size: <span class="prelude-ty">Option</span>&lt;ReadableSize&gt;,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>FlushConfig {
@@ -663,6 +669,7 @@
                 DEFAULT_PICKER_SCHEDULE_INTERVAL.into(),
             ),
             auto_flush_interval: Duration::from_millis(DEFAULT_AUTO_FLUSH_INTERVAL.into()),
+            global_write_buffer_size: <span class="prelude-val">None</span>,
         }
     }
 }
@@ -689,6 +696,7 @@
             region_write_buffer_size: value.storage.flush.region_write_buffer_size,
             picker_schedule_interval: value.storage.flush.picker_schedule_interval,
             auto_flush_interval: value.storage.flush.auto_flush_interval,
+            global_write_buffer_size: value.storage.flush.global_write_buffer_size,
         }
     }
 }

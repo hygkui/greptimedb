@@ -640,6 +640,15 @@
 <a href="#640" id="640">640</a>
 <a href="#641" id="641">641</a>
 <a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -669,7 +678,7 @@
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionSchedulerRef;
-<span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
+<span class="kw">use </span><span class="kw">crate</span>::config::{EngineConfig, DEFAULT_REGION_WRITE_BUFFER_SIZE};
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, Error, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::file_purger::{FilePurgeHandler, FilePurgerRef};
 <span class="kw">use </span><span class="kw">crate</span>::flush::{
@@ -930,7 +939,7 @@
     }
 
     <span class="doccomment">/// Clear the region map.
-    </span><span class="kw">fn </span>clear(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>clear(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="self">self</span>.<span class="number">0</span>.write().unwrap().clear();
     }
 }
@@ -979,15 +988,25 @@
             },
             FilePurgeHandler,
         ));
+        <span class="kw">let </span>flush_strategy = Arc::new(SizeBasedStrategy::new(
+            config
+                .global_write_buffer_size
+                .map(|size| size.as_bytes() <span class="kw">as </span>usize),
+        ));
+        <span class="kw">let </span>memtable_builder = <span class="kw">if </span>config.global_write_buffer_size.is_some() {
+            <span class="comment">// If global write buffer size is provided, we set the flush strategy
+            // to the memtable to track global memtable usage.
+            </span>DefaultMemtableBuilder::with_flush_strategy(<span class="prelude-val">Some</span>(flush_strategy.clone()))
+        } <span class="kw">else </span>{
+            DefaultMemtableBuilder::default()
+        };
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             object_store,
             log_store,
             regions,
-            memtable_builder: Arc::new(DefaultMemtableBuilder::default()),
+            memtable_builder: Arc::new(memtable_builder),
             flush_scheduler,
-            flush_strategy: Arc::new(SizeBasedStrategy::new(
-                config.region_write_buffer_size.as_bytes() <span class="kw">as </span>usize,
-            )),
+            flush_strategy,
             compaction_scheduler,
             file_purger,
             config: Arc::new(config),
@@ -1103,10 +1122,7 @@
             config.manifest_gc_duration,
         );
         manifest.start().<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">let </span>flush_strategy = write_buffer_size
-            .map(|size| Arc::new(SizeBasedStrategy::new(size)) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;)
-            .unwrap_or_else(|| <span class="self">self</span>.flush_strategy.clone());
+        <span class="kw">let </span>flush_strategy = <span class="self">self</span>.flush_strategy.clone();
 
         <span class="prelude-val">Ok</span>(StoreConfig {
             log_store: <span class="self">self</span>.log_store.clone(),
@@ -1120,6 +1136,8 @@
             file_purger: <span class="self">self</span>.file_purger.clone(),
             ttl,
             compaction_time_window,
+            write_buffer_size: write_buffer_size
+                .unwrap_or(DEFAULT_REGION_WRITE_BUFFER_SIZE.as_bytes() <span class="kw">as </span>usize),
         })
     }
 
