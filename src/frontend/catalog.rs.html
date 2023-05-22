@@ -406,6 +406,7 @@
 <a href="#406" id="406">406</a>
 <a href="#407" id="407">407</a>
 <a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -442,10 +443,10 @@
 };
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::BoxedError;
+<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>futures_util::TryStreamExt;
-<span class="kw">use </span>meta_client::rpc::TableName;
 <span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>table::table::numbers::NumbersTable;
@@ -505,6 +506,7 @@
 </span><span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>CatalogManager <span class="kw">for </span>FrontendCatalogManager {
     <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; catalog::error::Result&lt;()&gt; {
+        <span class="self">self</span>.datanode_clients.start();
         <span class="prelude-val">Ok</span>(())
     }
 

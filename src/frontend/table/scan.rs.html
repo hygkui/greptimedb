@@ -134,12 +134,12 @@
 
 <span class="kw">use </span>api::v1::{DeleteRequest, InsertRequest};
 <span class="kw">use </span>client::Database;
+<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::prelude::Expr;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::RecordBatches;
 <span class="kw">use </span>datafusion::datasource::DefaultTableSource;
 <span class="kw">use </span>datafusion_expr::{LogicalPlan, LogicalPlanBuilder};
-<span class="kw">use </span>meta_client::rpc::TableName;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>substrait::{DFLogicalSubstraitConvertor, SubstraitPlan};
 <span class="kw">use </span>table::table::adapter::DfTableProviderAdapter;

@@ -1073,6 +1073,12 @@
 <a href="#1073" id="1073">1073</a>
 <a href="#1074" id="1074">1074</a>
 <a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1096,12 +1102,14 @@
     DeleteRangeResponse <span class="kw">as </span>PbDeleteRangeResponse, KeyValue <span class="kw">as </span>PbKeyValue,
     MoveValueRequest <span class="kw">as </span>PbMoveValueRequest, MoveValueResponse <span class="kw">as </span>PbMoveValueResponse,
     PutRequest <span class="kw">as </span>PbPutRequest, PutResponse <span class="kw">as </span>PbPutResponse, RangeRequest <span class="kw">as </span>PbRangeRequest,
-    RangeResponse <span class="kw">as </span>PbRangeResponse,
+    RangeResponse <span class="kw">as </span>PbRangeResponse, ResponseHeader <span class="kw">as </span>PbResponseHeader,
 };
+<span class="kw">use </span>common_meta::util;
+<span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::error;
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::rpc::{util, KeyValue, ResponseHeader};
+<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidResponseHeaderSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::rpc::{KeyValue, ResponseHeader};
 
 <span class="attr">#[derive(Debug, Clone, Default)]
 </span><span class="kw">pub struct </span>RangeRequest {
@@ -1201,7 +1209,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbRangeResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(pb))
     }
@@ -1293,7 +1301,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbPutResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(pb))
     }
@@ -1355,7 +1363,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbBatchGetResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(pb))
     }
@@ -1430,7 +1438,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbBatchPutResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(pb))
     }
@@ -1502,7 +1510,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbBatchDeleteResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(pb))
     }
@@ -1586,7 +1594,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbCompareAndPutResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(pb))
     }
@@ -1706,7 +1714,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbDeleteRangeResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(pb))
     }
@@ -1770,7 +1778,7 @@
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(pb: PbMoveValueResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        util::check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
+        check_response_header(pb.header.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(pb))
     }
@@ -1791,6 +1799,10 @@
     </span><span class="kw">pub fn </span>take_kv(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;KeyValue&gt; {
         <span class="self">self</span>.<span class="number">0</span>.kv.take().map(KeyValue::new)
     }
+}
+
+<span class="kw">fn </span>check_response_header(header: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>PbResponseHeader&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    util::check_response_header(header).context(InvalidResponseHeaderSnafu)
 }
 
 <span class="attr">#[cfg(test)]

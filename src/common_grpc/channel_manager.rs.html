@@ -611,6 +611,7 @@
 <a href="#611" id="611">611</a>
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -626,7 +627,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
-<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::sync::{Arc, Mutex};
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_telemetry::info;
@@ -647,7 +648,7 @@
     config: ChannelConfig,
     client_tls_config: <span class="prelude-ty">Option</span>&lt;ClientTlsConfig&gt;,
     pool: Arc&lt;Pool&gt;,
-    channel_recycle_started: bool,
+    channel_recycle_started: Arc&lt;Mutex&lt;bool&gt;&gt;,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>ChannelManager {
@@ -667,12 +668,13 @@
             config,
             client_tls_config: <span class="prelude-val">None</span>,
             pool,
-            channel_recycle_started: <span class="bool-val">false</span>,
+            channel_recycle_started: Arc::new(Mutex::new(<span class="bool-val">false</span>)),
         }
     }
 
-    <span class="kw">pub fn </span>start_channel_recycle(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">if </span><span class="self">self</span>.channel_recycle_started {
+    <span class="kw">pub fn </span>start_channel_recycle(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>started = <span class="self">self</span>.channel_recycle_started.lock().unwrap();
+        <span class="kw">if </span><span class="kw-2">*</span>started {
             <span class="kw">return</span>;
         }
 
@@ -682,7 +684,7 @@
         });
         <span class="macro">info!</span>(<span class="string">&quot;Channel recycle is started, running in the background!&quot;</span>);
 
-        <span class="self">self</span>.channel_recycle_started = <span class="bool-val">true</span>;
+        <span class="kw-2">*</span>started = <span class="bool-val">true</span>;
     }
 
     <span class="kw">pub fn </span>with_tls_config(config: ChannelConfig) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {

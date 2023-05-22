@@ -427,6 +427,59 @@
 <a href="#427" id="427">427</a>
 <a href="#428" id="428">428</a>
 <a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -579,6 +632,13 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Table route not found: {}&quot;</span>, key))]
     </span>TableRouteNotFound { key: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table route corrupted, key: {}, reason: {}&quot;</span>, key, reason))]
+    </span>CorruptedTableRoute {
+        key: String,
+        reason: String,
+        location: Location,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get sequence: {}&quot;</span>, err_msg))]
     </span>NextSequence { err_msg: String, location: Location },
@@ -753,6 +813,43 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing request header&quot;</span>))]
     </span>MissingRequestHeader { location: Location },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to register procedure loader, type name: {}, source: {}&quot;</span>,
+        type_name,
+        source
+    ))]
+    </span>RegisterProcedureLoader {
+        type_name: String,
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: common_procedure::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find failover candidates for region: {}&quot;</span>, failed_region))]
+    </span>RegionFailoverCandidatesNotFound {
+        failed_region: String,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Received unexpected instruction reply, mailbox message: {}, reason: {}&quot;</span>,
+        mailbox_message,
+        reason
+    ))]
+    </span>UnexpectedInstructionReply {
+        mailbox_message: String,
+        reason: String,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Expected to retry later, reason: {}&quot;</span>, reason))]
+    </span>RetryLater { reason: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert table route, source: {}&quot;</span>, source))]
+    </span>TableRouteConversion {
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: common_meta::error::Error,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -799,6 +896,7 @@
             | Error::MailboxClosed { .. }
             | Error::MailboxTimeout { .. }
             | Error::MailboxReceiver { .. }
+            | Error::RetryLater { .. }
             | Error::StartGrpc { .. } =&gt; StatusCode::Internal,
             Error::EmptyKey { .. }
             | Error::MissingRequiredParameter { .. }
@@ -815,12 +913,14 @@
             | Error::StatValueFromUtf8 { .. }
             | Error::UnexceptedSequenceValue { .. }
             | Error::TableRouteNotFound { .. }
+            | Error::CorruptedTableRoute { .. }
             | Error::NextSequence { .. }
             | Error::SequenceOutOfRange { .. }
             | Error::MoveValue { .. }
             | Error::InvalidKvsLength { .. }
             | Error::InvalidTxnResult { .. }
             | Error::InvalidUtf8Value { .. }
+            | Error::UnexpectedInstructionReply { .. }
             | Error::Unexpected { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::InvalidCatalogValue { source, .. } =&gt; source.status_code(),
@@ -829,6 +929,12 @@
             Error::ShutdownServer { source, .. } | Error::StartHttp { source } =&gt; {
                 source.status_code()
             }
+
+            Error::RegionFailoverCandidatesNotFound { .. } =&gt; StatusCode::RuntimeResourcesExhausted,
+
+            Error::RegisterProcedureLoader { source, .. } =&gt; source.status_code(),
+
+            Error::TableRouteConversion { source } =&gt; source.status_code(),
         }
     }
 }

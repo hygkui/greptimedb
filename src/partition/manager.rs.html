@@ -307,6 +307,8 @@
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
 <a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -324,11 +326,13 @@
 </span><span class="kw">use </span>std::collections::{HashMap, HashSet};
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>common_meta::peer::Peer;
+<span class="kw">use </span>common_meta::router::TableRoute;
+<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::prelude::Expr;
 <span class="kw">use </span>datafusion_expr::{BinaryExpr, Expr <span class="kw">as </span>DfExpr, Operator};
 <span class="kw">use </span>datatypes::prelude::Value;
 <span class="kw">use </span>datatypes::schema::Schema;
-<span class="kw">use </span>meta_client::rpc::{Peer, TableName, TableRoute};
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
 <span class="kw">use </span>table::requests::InsertRequest;

@@ -128,10 +128,6 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -201,11 +197,7 @@
         }
     }
 
-    <span class="comment">// TODO(LFC): Refactor consideration: a context awareness &quot;Planner&quot;.
-    // Now we have some query related state (like current using database in session context), maybe
-    // we could create a new struct called `Planner` that stores context and handle these queries
-    // there, instead of executing here in a &quot;static&quot; fashion.
-    </span><span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, request: SqlRequest, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, request: SqlRequest, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>result = <span class="kw">match </span>request {
             SqlRequest::CreateTable(req) =&gt; <span class="self">self</span>.create_table(req).<span class="kw">await</span>,
             SqlRequest::CreateDatabase(req) =&gt; <span class="self">self</span>.create_database(req, query_ctx.clone()).<span class="kw">await</span>,

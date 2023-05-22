@@ -187,6 +187,24 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -207,15 +225,19 @@
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 
 <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClient;
+<span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::mailbox_handler::MailboxHandler;
 <span class="kw">use </span><span class="kw">crate</span>::handler::{
     CheckLeaderHandler, CollectStatsHandler, HeartbeatHandlerGroup, HeartbeatMailbox,
-    KeepLeaseHandler, OnLeaderStartHandler, PersistStatsHandler, RegionFailureHandler,
+    KeepLeaseHandler, OnLeaderStartHandler, PersistStatsHandler, Pushers, RegionFailureHandler,
     ResponseHeaderHandler,
 };
 <span class="kw">use </span><span class="kw">crate</span>::lock::DistLockRef;
 <span class="kw">use </span><span class="kw">crate</span>::metadata_service::{DefaultMetadataService, MetadataServiceRef};
-<span class="kw">use </span><span class="kw">crate</span>::metasrv::{ElectionRef, MetaSrv, MetaSrvOptions, SelectorRef, TABLE_ID_SEQ};
+<span class="kw">use </span><span class="kw">crate</span>::metasrv::{
+    ElectionRef, MetaSrv, MetaSrvOptions, SelectorContext, SelectorRef, TABLE_ID_SEQ,
+};
+<span class="kw">use </span><span class="kw">crate</span>::procedure::region_failover::RegionFailoverManager;
 <span class="kw">use </span><span class="kw">crate</span>::procedure::state_store::MetaStateStore;
 <span class="kw">use </span><span class="kw">crate</span>::selector::lease_based::LeaseBasedSelector;
 <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
@@ -295,7 +317,7 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; MetaSrv {
+    <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrv&gt; {
         <span class="kw">let </span>started = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
 
         <span class="kw">let </span>MetaSrvBuilder {
@@ -318,13 +340,34 @@
 
         <span class="kw">let </span>selector = selector.unwrap_or_else(|| Arc::new(LeaseBasedSelector));
 
+        <span class="kw">let </span>pushers = Pushers::default();
+        <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">1</span>, <span class="number">100</span>, kv_store.clone());
+        <span class="kw">let </span>mailbox = HeartbeatMailbox::create(pushers.clone(), mailbox_sequence);
+
+        <span class="kw">let </span>state_store = Arc::new(MetaStateStore::new(kv_store.clone()));
+        <span class="kw">let </span>procedure_manager = Arc::new(LocalManager::new(ManagerConfig::default(), state_store));
+
         <span class="kw">let </span>handler_group = <span class="kw">match </span>handler_group {
             <span class="prelude-val">Some</span>(handler_group) =&gt; handler_group,
             <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>region_failure_handler = RegionFailureHandler::new(election.clone());
-                region_failure_handler.start().<span class="kw">await</span>;
+                <span class="kw">let </span>region_failover_manager = Arc::new(RegionFailoverManager::new(
+                    mailbox.clone(),
+                    procedure_manager.clone(),
+                    selector.clone(),
+                    SelectorContext {
+                        server_addr: options.server_addr.clone(),
+                        datanode_lease_secs: options.datanode_lease_secs,
+                        kv_store: kv_store.clone(),
+                        catalog: <span class="prelude-val">None</span>,
+                        schema: <span class="prelude-val">None</span>,
+                    },
+                ));
 
-                <span class="kw">let </span>group = HeartbeatHandlerGroup::default();
+                <span class="kw">let </span>region_failure_handler =
+                    RegionFailureHandler::try_new(election.clone(), region_failover_manager)
+                        .<span class="kw">await</span><span class="question-mark">?</span>;
+
+                <span class="kw">let </span>group = HeartbeatHandlerGroup::new(pushers);
                 <span class="kw">let </span>keep_lease_handler = KeepLeaseHandler::new(kv_store.clone());
                 group.add_handler(ResponseHeaderHandler::default()).<span class="kw">await</span>;
                 <span class="comment">// `KeepLeaseHandler` should preferably be in front of `CheckLeaderHandler`,
@@ -343,17 +386,10 @@
 
         <span class="kw">let </span>table_id_sequence = Arc::new(Sequence::new(TABLE_ID_SEQ, <span class="number">1024</span>, <span class="number">10</span>, kv_store.clone()));
 
-        <span class="kw">let </span>config = ManagerConfig::default();
-        <span class="kw">let </span>state_store = Arc::new(MetaStateStore::new(kv_store.clone()));
-        <span class="kw">let </span>procedure_manager = Arc::new(LocalManager::new(config, state_store));
-
         <span class="kw">let </span>metadata_service = metadata_service
             .unwrap_or_else(|| Arc::new(DefaultMetadataService::new(kv_store.clone())));
 
-        <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">1</span>, <span class="number">100</span>, kv_store.clone());
-        <span class="kw">let </span>mailbox = HeartbeatMailbox::create(handler_group.pushers(), mailbox_sequence);
-
-        MetaSrv {
+        <span class="prelude-val">Ok</span>(MetaSrv {
             started,
             options,
             in_memory,
@@ -367,7 +403,7 @@
             procedure_manager,
             metadata_service,
             mailbox,
-        }
+        })
     }
 }
 

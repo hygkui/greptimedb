@@ -303,6 +303,7 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -323,6 +324,7 @@
 <span class="kw">use </span>api::v1::meta::heartbeat_client::HeartbeatClient;
 <span class="kw">use </span>api::v1::meta::{AskLeaderRequest, HeartbeatRequest, HeartbeatResponse, RequestHeader, Role};
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
+<span class="kw">use </span>common_meta::util;
 <span class="kw">use </span>common_telemetry::{debug, info};
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::{mpsc, RwLock};
@@ -332,8 +334,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::client::Id;
 <span class="kw">use </span><span class="kw">crate</span>::error;
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::rpc::util;
+<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidResponseHeaderSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="kw">pub struct </span>HeartbeatSender {
     id: Id,
@@ -386,7 +387,8 @@
     </span><span class="kw">pub async fn </span>message(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HeartbeatResponse&gt;&gt; {
         <span class="kw">let </span>res = <span class="self">self</span>.stream.message().<span class="kw">await</span>.context(error::TonicStatusSnafu);
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(heartbeat)) = <span class="kw-2">&amp;</span>res {
-            util::check_response_header(heartbeat.header.as_ref())<span class="question-mark">?</span>;
+            util::check_response_header(heartbeat.header.as_ref())
+                .context(InvalidResponseHeaderSnafu)<span class="question-mark">?</span>;
         }
         res
     }

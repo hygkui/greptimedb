@@ -195,13 +195,6 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -308,13 +301,20 @@
     <span class="kw">use </span>tonic::IntoRequest;
 
     <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
+    <span class="kw">use </span><span class="kw">crate</span>::metasrv::MetaSrv;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
+
+    <span class="kw">async fn </span>new_meta_srv() -&gt; MetaSrv {
+        MetaSrvBuilder::new()
+            .kv_store(Arc::new(MemStore::new()))
+            .build()
+            .<span class="kw">await
+            </span>.unwrap()
+    }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_range() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = RangeRequest::default();
         <span class="kw">let </span>res = meta_srv.range(req.into_request()).<span class="kw">await</span>;
@@ -324,9 +324,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_put() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = PutRequest::default();
         <span class="kw">let </span>res = meta_srv.put(req.into_request()).<span class="kw">await</span>;
@@ -336,9 +334,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_batch_get() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = BatchGetRequest::default();
         <span class="kw">let </span>res = meta_srv.batch_get(req.into_request()).<span class="kw">await</span>;
@@ -348,9 +344,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_batch_put() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = BatchPutRequest::default();
         <span class="kw">let </span>res = meta_srv.batch_put(req.into_request()).<span class="kw">await</span>;
@@ -360,9 +354,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_batch_delete() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = BatchDeleteRequest::default();
         <span class="kw">let </span>res = meta_srv.batch_delete(req.into_request()).<span class="kw">await</span>;
@@ -372,9 +364,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_compare_and_put() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = CompareAndPutRequest::default();
         <span class="kw">let </span>res = meta_srv.compare_and_put(req.into_request()).<span class="kw">await</span>;
@@ -384,9 +374,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_delete_range() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = DeleteRangeRequest::default();
         <span class="kw">let </span>res = meta_srv.delete_range(req.into_request()).<span class="kw">await</span>;
@@ -396,9 +384,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_move_value() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span>req = MoveValueRequest::default();
         <span class="kw">let </span>res = meta_srv.move_value(req.into_request()).<span class="kw">await</span>;

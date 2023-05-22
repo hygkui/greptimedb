@@ -403,6 +403,7 @@
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
 <a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -465,7 +466,8 @@
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_distributed_exec_sql() {
         <span class="kw">let </span>distributed = tests::create_distributed_instance(<span class="string">&quot;test_distributed_exec_sql&quot;</span>).<span class="kw">await</span>;
-        <span class="kw">let </span>instance = distributed.frontend.as_ref();
+        <span class="kw">let </span>frontend = distributed.frontend();
+        <span class="kw">let </span>instance = frontend.as_ref();
 
         <span class="kw">let </span>sql = <span class="string">r#&quot;
             CREATE TABLE demo(
@@ -582,7 +584,7 @@
         expected_distribution: HashMap&lt;u32, <span class="kw-2">&amp;</span>str&gt;,
     ) {
         <span class="kw">let </span>table = instance
-            .frontend
+            .frontend()
             .catalog_manager()
             .table(<span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="string">&quot;demo&quot;</span>)
             .<span class="kw">await
@@ -607,7 +609,7 @@
 
         <span class="kw">let </span>stmt = QueryLanguageParser::parse_sql(<span class="string">&quot;SELECT ts, host FROM demo ORDER BY ts&quot;</span>).unwrap();
         <span class="kw">for </span>(region, dn) <span class="kw">in </span>region_to_dn_map.iter() {
-            <span class="kw">let </span>dn = instance.datanodes.get(dn).unwrap();
+            <span class="kw">let </span>dn = instance.datanodes().get(dn).unwrap();
             <span class="kw">let </span>engine = dn.query_engine();
             <span class="kw">let </span>plan = engine
                 .planner()
@@ -632,7 +634,7 @@
     }
 
     <span class="kw">async fn </span>verify_table_is_dropped(instance: <span class="kw-2">&amp;</span>MockDistributedInstance) {
-        <span class="kw">for </span>(<span class="kw">_</span>, dn) <span class="kw">in </span>instance.datanodes.iter() {
+        <span class="kw">for </span>(<span class="kw">_</span>, dn) <span class="kw">in </span>instance.datanodes().iter() {
             <span class="macro">assert!</span>(dn
                 .catalog_manager()
                 .table(<span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="string">&quot;demo&quot;</span>)

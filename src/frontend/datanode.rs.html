@@ -67,6 +67,8 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -81,18 +83,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::time::Duration;
+</span><span class="kw">use </span>std::sync::{Arc, Mutex};
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>client::Client;
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
+<span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_telemetry::info;
-<span class="kw">use </span>meta_client::rpc::Peer;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
 
 <span class="kw">pub struct </span>DatanodeClients {
     channel_manager: ChannelManager,
     clients: Cache&lt;Peer, Client&gt;,
-    started: bool,
+    started: Arc&lt;Mutex&lt;bool&gt;&gt;,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>DatanodeClients {
@@ -103,21 +106,22 @@
                 .time_to_live(Duration::from_secs(<span class="number">30 </span>* <span class="number">60</span>))
                 .time_to_idle(Duration::from_secs(<span class="number">5 </span>* <span class="number">60</span>))
                 .build(),
-            started: <span class="bool-val">false</span>,
+            started: Arc::new(Mutex::new(<span class="bool-val">false</span>)),
         }
     }
 }
 
 <span class="kw">impl </span>DatanodeClients {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">if </span><span class="self">self</span>.started {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>started = <span class="self">self</span>.started.lock().unwrap();
+        <span class="kw">if </span><span class="kw-2">*</span>started {
             <span class="kw">return</span>;
         }
 
         <span class="self">self</span>.channel_manager.start_channel_recycle();
 
         <span class="macro">info!</span>(<span class="string">&quot;Datanode clients manager is started!&quot;</span>);
-        <span class="self">self</span>.started = <span class="bool-val">true</span>;
+        <span class="kw-2">*</span>started = <span class="bool-val">true</span>;
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_client(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode: <span class="kw-2">&amp;</span>Peer) -&gt; Client {

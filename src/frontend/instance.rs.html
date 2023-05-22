@@ -824,30 +824,6 @@
 <a href="#824" id="824">824</a>
 <a href="#825" id="825">825</a>
 <a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a>
-<a href="#828" id="828">828</a>
-<a href="#829" id="829">829</a>
-<a href="#830" id="830">830</a>
-<a href="#831" id="831">831</a>
-<a href="#832" id="832">832</a>
-<a href="#833" id="833">833</a>
-<a href="#834" id="834">834</a>
-<a href="#835" id="835">835</a>
-<a href="#836" id="836">836</a>
-<a href="#837" id="837">837</a>
-<a href="#838" id="838">838</a>
-<a href="#839" id="839">839</a>
-<a href="#840" id="840">840</a>
-<a href="#841" id="841">841</a>
-<a href="#842" id="842">842</a>
-<a href="#843" id="843">843</a>
-<a href="#844" id="844">844</a>
-<a href="#845" id="845">845</a>
-<a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
-<a href="#849" id="849">849</a>
-<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -977,15 +953,21 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>meta_client = <span class="self">Self</span>::create_meta_client(opts).<span class="kw">await</span><span class="question-mark">?</span>;
 
+        <span class="kw">let </span>datanode_clients = Arc::new(DatanodeClients::default());
+
+        <span class="self">Self</span>::try_new_distributed_with(meta_client, datanode_clients, plugins).<span class="kw">await
+    </span>}
+
+    <span class="kw">pub async fn </span>try_new_distributed_with(
+        meta_client: Arc&lt;MetaClient&gt;,
+        datanode_clients: Arc&lt;DatanodeClients&gt;,
+        plugins: Arc&lt;Plugins&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>meta_backend = Arc::new(MetaKvBackend {
             client: meta_client.clone(),
         });
         <span class="kw">let </span>table_routes = Arc::new(TableRoutes::new(meta_client.clone()));
         <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(table_routes));
-
-        <span class="kw">let </span><span class="kw-2">mut </span>datanode_clients = DatanodeClients::default();
-        datanode_clients.start();
-        <span class="kw">let </span>datanode_clients = Arc::new(datanode_clients);
 
         <span class="kw">let </span><span class="kw-2">mut </span>catalog_manager =
             FrontendCatalogManager::new(meta_backend, partition_manager, datanode_clients.clone());
@@ -1047,7 +1029,7 @@
             .connect_timeout(Duration::from_millis(meta_config.connect_timeout_millis))
             .tcp_nodelay(meta_config.tcp_nodelay);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>channel_manager = ChannelManager::with_config(channel_config);
+        <span class="kw">let </span>channel_manager = ChannelManager::with_config(channel_config);
         channel_manager.start_channel_recycle();
 
         <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Frontend)
@@ -1093,36 +1075,6 @@
         <span class="self">self</span>.servers = Arc::new(servers);
 
         <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">pub async fn </span>new_distributed(
-        catalog_manager: CatalogManagerRef,
-        dist_instance: Arc&lt;DistInstance&gt;,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>query_engine = QueryEngineFactory::new(catalog_manager.clone(), <span class="bool-val">false</span>).query_engine();
-        <span class="kw">let </span>script_executor = Arc::new(
-            ScriptExecutor::new(catalog_manager.clone(), query_engine.clone())
-                .<span class="kw">await
-                </span>.unwrap(),
-        );
-
-        <span class="kw">let </span>statement_executor = Arc::new(StatementExecutor::new(
-            catalog_manager.clone(),
-            query_engine.clone(),
-            dist_instance.clone(),
-        ));
-
-        Instance {
-            catalog_manager,
-            script_executor,
-            statement_executor,
-            query_engine,
-            create_expr_factory: Arc::new(DefaultCreateExprFactory),
-            grpc_query_handler: dist_instance,
-            plugins: Default::default(),
-            servers: Arc::new(HashMap::new()),
-            heartbeat_task: <span class="prelude-val">None</span>,
-        }
     }
 
     <span class="kw">pub fn </span>catalog_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CatalogManagerRef {

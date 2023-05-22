@@ -472,6 +472,12 @@
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
 <a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -499,7 +505,7 @@
 <span class="kw">use </span>servers::{auth, Mode};
 <span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, IllegalAuthConfigSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, IllegalAuthConfigSnafu, <span class="prelude-ty">Result</span>, StartCatalogManagerSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::options::{Options, TopLevelOptions};
 
 <span class="kw">pub struct </span>Instance {
@@ -508,6 +514,12 @@
 
 <span class="kw">impl </span>Instance {
     <span class="kw">pub async fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.frontend
+            .catalog_manager()
+            .start()
+            .<span class="kw">await
+            </span>.context(StartCatalogManagerSnafu)<span class="question-mark">?</span>;
+
         <span class="self">self</span>.frontend
             .start()
             .<span class="kw">await

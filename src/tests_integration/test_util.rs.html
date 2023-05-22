@@ -401,6 +401,7 @@
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
 <a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -507,10 +508,10 @@
     }
 }
 
-<span class="kw">fn </span>get_test_store_config(
+<span class="kw">pub fn </span>get_test_store_config(
     store_type: <span class="kw-2">&amp;</span>StorageType,
     name: <span class="kw-2">&amp;</span>str,
-) -&gt; (ObjectStoreConfig, <span class="prelude-ty">Option</span>&lt;TempDirGuard&gt;) {
+) -&gt; (ObjectStoreConfig, TempDirGuard) {
     <span class="kw">let _ </span>= dotenv::dotenv();
 
     <span class="kw">match </span>store_type {
@@ -536,10 +537,7 @@
 
             <span class="kw">let </span>store = ObjectStore::new(builder).unwrap().finish();
 
-            (
-                config,
-                <span class="prelude-val">Some</span>(TempDirGuard::Oss(TempFolder::new(<span class="kw-2">&amp;</span>store, <span class="string">&quot;/&quot;</span>))),
-            )
+            (config, TempDirGuard::Oss(TempFolder::new(<span class="kw-2">&amp;</span>store, <span class="string">&quot;/&quot;</span>)))
         }
         StorageType::S3 | StorageType::S3WithCache =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>s3_config = s3_test_config();
@@ -566,7 +564,7 @@
 
             <span class="kw">let </span>store = ObjectStore::new(builder).unwrap().finish();
 
-            (config, <span class="prelude-val">Some</span>(TempDirGuard::S3(TempFolder::new(<span class="kw-2">&amp;</span>store, <span class="string">&quot;/&quot;</span>))))
+            (config, TempDirGuard::S3(TempFolder::new(<span class="kw-2">&amp;</span>store, <span class="string">&quot;/&quot;</span>)))
         }
         StorageType::File =&gt; {
             <span class="kw">let </span>data_tmp_dir = create_temp_dir(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;gt_data_{name}&quot;</span>));
@@ -575,32 +573,31 @@
                 ObjectStoreConfig::File(FileConfig {
                     data_dir: data_tmp_dir.path().to_str().unwrap().to_string(),
                 }),
-                <span class="prelude-val">Some</span>(TempDirGuard::File(data_tmp_dir)),
+                TempDirGuard::File(data_tmp_dir),
             )
         }
     }
 }
 
-<span class="kw">enum </span>TempDirGuard {
+<span class="kw">pub enum </span>TempDirGuard {
     File(TempDir),
     S3(TempFolder),
     Oss(TempFolder),
 }
 
-<span class="doccomment">/// Create a tmp dir(will be deleted once it goes out of scope.) and a default `DatanodeOptions`,
-/// Only for test.
-</span><span class="kw">pub struct </span>TestGuard {
-    _wal_tmp_dir: TempDir,
-    data_tmp_dir: <span class="prelude-ty">Option</span>&lt;TempDirGuard&gt;,
+<span class="kw">pub struct </span>TestGuard {
+    <span class="kw">pub </span>wal_guard: WalGuard,
+    <span class="kw">pub </span>storage_guard: StorageGuard,
 }
+
+<span class="kw">pub struct </span>WalGuard(<span class="kw">pub </span>TempDir);
+
+<span class="kw">pub struct </span>StorageGuard(<span class="kw">pub </span>TempDirGuard);
 
 <span class="kw">impl </span>TestGuard {
     <span class="kw">pub async fn </span>remove_all(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(TempDirGuard::S3(<span class="kw-2">mut </span>guard)) = <span class="self">self</span>.data_tmp_dir.take() {
-            guard.remove_all().<span class="kw">await</span>.unwrap();
-        }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(TempDirGuard::Oss(<span class="kw-2">mut </span>guard)) = <span class="self">self</span>.data_tmp_dir.take() {
-            guard.remove_all().<span class="kw">await</span>.unwrap();
+        <span class="kw">if let </span>TempDirGuard::S3(guard) | TempDirGuard::Oss(guard) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.storage_guard.<span class="number">0 </span>{
+            guard.remove_all().<span class="kw">await</span>.unwrap()
         }
     }
 }
@@ -610,12 +607,24 @@
     name: <span class="kw-2">&amp;</span>str,
 ) -&gt; (DatanodeOptions, TestGuard) {
     <span class="kw">let </span>wal_tmp_dir = create_temp_dir(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;gt_wal_{name}&quot;</span>));
+    <span class="kw">let </span>wal_dir = wal_tmp_dir.path().to_str().unwrap().to_string();
 
     <span class="kw">let </span>(store, data_tmp_dir) = get_test_store_config(<span class="kw-2">&amp;</span>store_type, name);
+    <span class="kw">let </span>opts = create_datanode_opts(store, wal_dir);
 
-    <span class="kw">let </span>opts = DatanodeOptions {
+    (
+        opts,
+        TestGuard {
+            wal_guard: WalGuard(wal_tmp_dir),
+            storage_guard: StorageGuard(data_tmp_dir),
+        },
+    )
+}
+
+<span class="kw">pub fn </span>create_datanode_opts(store: ObjectStoreConfig, wal_dir: String) -&gt; DatanodeOptions {
+    DatanodeOptions {
         wal: WalConfig {
-            dir: wal_tmp_dir.path().to_str().unwrap().to_string(),
+            dir: wal_dir,
             ..Default::default()
         },
         storage: StorageConfig {
@@ -625,14 +634,7 @@
         mode: Mode::Standalone,
         procedure: ProcedureConfig::default(),
         ..Default::default()
-    };
-    (
-        opts,
-        TestGuard {
-            _wal_tmp_dir: wal_tmp_dir,
-            data_tmp_dir,
-        },
-    )
+    }
 }
 
 <span class="kw">pub async fn </span>create_test_table(

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["state_store"]};
+window.SIDEBAR_ITEMS = {"mod":["region_failover","state_store"]};

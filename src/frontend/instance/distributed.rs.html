@@ -881,6 +881,7 @@
 <a href="#881" id="881">881</a>
 <a href="#882" id="882">882</a>
 <a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -913,6 +914,11 @@
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_error::prelude::BoxedError;
+<span class="kw">use </span>common_meta::router::{
+    CreateRequest <span class="kw">as </span>MetaCreateRequest, DeleteRequest <span class="kw">as </span>MetaDeleteRequest,
+    Partition <span class="kw">as </span>MetaPartition, RouteRequest, RouteResponse,
+};
+<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>datanode::instance::sql::table_idents_to_full_name;
@@ -920,11 +926,7 @@
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>datatypes::schema::RawSchema;
 <span class="kw">use </span>meta_client::client::MetaClient;
-<span class="kw">use </span>meta_client::rpc::router::DeleteRequest <span class="kw">as </span>MetaDeleteRequest;
-<span class="kw">use </span>meta_client::rpc::{
-    CompareAndPutRequest, CreateRequest <span class="kw">as </span>MetaCreateRequest, Partition <span class="kw">as </span>MetaPartition,
-    RouteRequest, RouteResponse, TableName,
-};
+<span class="kw">use </span>meta_client::rpc::CompareAndPutRequest;
 <span class="kw">use </span>partition::manager::PartitionInfo;
 <span class="kw">use </span>partition::partition::{PartitionBound, PartitionDef};
 <span class="kw">use </span>query::error::QueryExecutionSnafu;

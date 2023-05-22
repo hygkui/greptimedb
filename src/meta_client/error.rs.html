@@ -97,6 +97,9 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -154,20 +157,22 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed create heartbeat stream to server&quot;</span>))]
     </span>CreateHeartbeatStream { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Route info corrupted: {}&quot;</span>, err_msg))]
-    </span>RouteInfoCorrupted { err_msg: String, location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Illegal state from server, code: {}, error: {}&quot;</span>, code, err_msg))]
-    </span>IllegalServerState {
-        code: i32,
-        err_msg: String,
-        location: Location,
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid response header, source: {}&quot;</span>, source))]
+    </span>InvalidResponseHeader {
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serde json, source: {}&quot;</span>, source))]
-    </span>SerdeJson {
-        source: serde_json::error::Error,
-        location: Location,
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv request, source: {}&quot;</span>, source))]
+    </span>ConvertMetaRequest {
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: common_meta::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv response, source: {}&quot;</span>, source))]
+    </span>ConvertMetaResponse {
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: common_meta::error::Error,
     },
 }
 
@@ -189,10 +194,11 @@
             | Error::NotStarted { .. }
             | Error::SendHeartbeat { .. }
             | Error::CreateHeartbeatStream { .. }
-            | Error::CreateChannel { .. }
-            | Error::IllegalServerState { .. }
-            | Error::SerdeJson { .. } =&gt; StatusCode::Internal,
-            Error::RouteInfoCorrupted { .. } =&gt; StatusCode::Unexpected,
+            | Error::CreateChannel { .. } =&gt; StatusCode::Internal,
+
+            Error::InvalidResponseHeader { source }
+            | Error::ConvertMetaRequest { source }
+            | Error::ConvertMetaResponse { source } =&gt; source.status_code(),
         }
     }
 }

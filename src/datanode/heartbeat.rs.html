@@ -270,6 +270,14 @@
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -353,6 +361,8 @@
         handler_executor: HeartbeatResponseHandlerExecutorRef,
         mailbox: MailboxRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;HeartbeatSender&gt; {
+        <span class="kw">let </span>client_id = meta_client.id();
+
         <span class="kw">let </span>(tx, <span class="kw-2">mut </span>rx) = meta_client.heartbeat().<span class="kw">await</span>.context(MetaClientInitSnafu)<span class="question-mark">?</span>;
         common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">while let </span><span class="prelude-val">Some</span>(res) = <span class="kw">match </span>rx.message().<span class="kw">await </span>{
@@ -362,6 +372,10 @@
                     <span class="prelude-val">None
                 </span>}
             } {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(msg) = res.mailbox_message.as_ref() {
+                    <span class="macro">info!</span>(<span class="string">&quot;Received mailbox message: {msg:?}, meta_client id: {client_id:?}&quot;</span>);
+                }
+
                 <span class="kw">let </span>ctx = HeartbeatResponseHandlerContext::new(mailbox.clone(), res);
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">Self</span>::handle_response(ctx, handler_executor.clone()) {
                     <span class="macro">error!</span>(e;<span class="string">&quot;Error while handling heartbeat response&quot;</span>);
@@ -396,6 +410,8 @@
         <span class="kw">let </span>interval = <span class="self">self</span>.interval;
         <span class="kw">let </span>node_id = <span class="self">self</span>.node_id;
         <span class="kw">let </span>addr = resolve_addr(<span class="kw-2">&amp;</span><span class="self">self</span>.server_addr, <span class="kw-2">&amp;</span><span class="self">self</span>.server_hostname);
+        <span class="macro">info!</span>(<span class="string">&quot;Starting heartbeat to Metasrv with interval {interval}. My node id is {node_id}, address is {addr}.&quot;</span>);
+
         <span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.clone();
         <span class="kw">let </span>catalog_manager_clone = <span class="self">self</span>.catalog_manager.clone();
 

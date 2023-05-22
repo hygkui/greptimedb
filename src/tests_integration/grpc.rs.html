@@ -901,9 +901,8 @@
     </span><span class="kw">async fn </span>test_distributed_handle_ddl_request() {
         <span class="kw">let </span>instance =
             tests::create_distributed_instance(<span class="string">&quot;test_distributed_handle_ddl_request&quot;</span>).<span class="kw">await</span>;
-        <span class="kw">let </span>frontend = <span class="kw-2">&amp;</span>instance.frontend;
 
-        test_handle_ddl_request(frontend.as_ref()).<span class="kw">await</span>;
+        test_handle_ddl_request(instance.frontend().as_ref()).<span class="kw">await</span>;
 
         verify_table_is_dropped(<span class="kw-2">&amp;</span>instance).<span class="kw">await</span>;
     }
@@ -1016,7 +1015,7 @@
     }
 
     <span class="kw">async fn </span>verify_table_is_dropped(instance: <span class="kw-2">&amp;</span>MockDistributedInstance) {
-        <span class="kw">for </span>(<span class="kw">_</span>, dn) <span class="kw">in </span>instance.datanodes.iter() {
+        <span class="kw">for </span>(<span class="kw">_</span>, dn) <span class="kw">in </span>instance.datanodes().iter() {
             <span class="macro">assert!</span>(dn
                 .catalog_manager()
                 .table(
@@ -1036,7 +1035,8 @@
 
         <span class="kw">let </span>instance =
             tests::create_distributed_instance(<span class="string">&quot;test_distributed_insert_delete_and_query&quot;</span>).<span class="kw">await</span>;
-        <span class="kw">let </span>frontend = instance.frontend.as_ref();
+        <span class="kw">let </span>frontend = instance.frontend();
+        <span class="kw">let </span>frontend = frontend.as_ref();
 
         <span class="kw">let </span>table_name = <span class="string">&quot;my_dist_table&quot;</span>;
         <span class="kw">let </span>sql = <span class="macro">format!</span>(
@@ -1154,7 +1154,8 @@ CREATE TABLE {table_name} (
 
         <span class="kw">let </span>instance = tests::create_distributed_instance(<span class="string">&quot;test_distributed_flush_table&quot;</span>).<span class="kw">await</span>;
         <span class="kw">let </span>data_tmp_dirs = instance.data_tmp_dirs();
-        <span class="kw">let </span>frontend = instance.frontend.as_ref();
+        <span class="kw">let </span>frontend = instance.frontend();
+        <span class="kw">let </span>frontend = frontend.as_ref();
 
         <span class="kw">let </span>table_name = <span class="string">&quot;my_dist_table&quot;</span>;
         <span class="kw">let </span>sql = <span class="macro">format!</span>(
@@ -1178,8 +1179,7 @@ CREATE TABLE {table_name} (
         <span class="comment">// Wait for previous task finished
         </span>flush_table(frontend, <span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;public&quot;</span>, table_name, <span class="prelude-val">None</span>).<span class="kw">await</span>;
 
-        <span class="kw">let </span>table = instance
-            .frontend
+        <span class="kw">let </span>table = frontend
             .catalog_manager()
             .table(<span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;public&quot;</span>, table_name)
             .<span class="kw">await
@@ -1451,7 +1451,7 @@ CREATE TABLE {table_name} (
         expected_distribution: HashMap&lt;u32, <span class="kw-2">&amp;</span>str&gt;,
     ) {
         <span class="kw">let </span>table = instance
-            .frontend
+            .frontend()
             .catalog_manager()
             .table(<span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;public&quot;</span>, table_name)
             .<span class="kw">await
@@ -1479,7 +1479,7 @@ CREATE TABLE {table_name} (
                 <span class="string">&quot;SELECT ts, a, b FROM {table_name} ORDER BY ts&quot;
             </span>))
             .unwrap();
-            <span class="kw">let </span>dn = instance.datanodes.get(dn).unwrap();
+            <span class="kw">let </span>dn = instance.datanodes().get(dn).unwrap();
             <span class="kw">let </span>engine = dn.query_engine();
             <span class="kw">let </span>plan = engine
                 .planner()

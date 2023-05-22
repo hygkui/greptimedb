@@ -214,6 +214,10 @@
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -391,7 +395,11 @@
     </span><span class="kw">async fn </span>test_ask_leader() {
         <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
 
-        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new().kv_store(kv_store).build().<span class="kw">await</span>;
+        <span class="kw">let </span>meta_srv = MetaSrvBuilder::new()
+            .kv_store(kv_store)
+            .build()
+            .<span class="kw">await
+            </span>.unwrap();
 
         <span class="kw">let </span>req = AskLeaderRequest {
             header: <span class="prelude-val">Some</span>(RequestHeader::new((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode)),

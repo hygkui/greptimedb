@@ -272,6 +272,10 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -344,16 +348,12 @@
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Context {
-    <span class="kw">pub </span>datanode_lease_secs: i64,
     <span class="kw">pub </span>server_addr: String,
     <span class="kw">pub </span>in_memory: ResettableKvStoreRef,
     <span class="kw">pub </span>kv_store: KvStoreRef,
     <span class="kw">pub </span>mailbox: MailboxRef,
     <span class="kw">pub </span>election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
     <span class="kw">pub </span>skip_all: Arc&lt;AtomicBool&gt;,
-    <span class="kw">pub </span>catalog: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>table: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>is_infancy: bool,
 }
 
@@ -373,7 +373,16 @@
 
 <span class="kw">pub struct </span>LeaderValue(<span class="kw">pub </span>String);
 
-<span class="kw">pub type </span>SelectorRef = Arc&lt;<span class="kw">dyn </span>Selector&lt;Context = Context, Output = Vec&lt;Peer&gt;&gt;&gt;;
+<span class="attr">#[derive(Clone)]
+</span><span class="kw">pub struct </span>SelectorContext {
+    <span class="kw">pub </span>datanode_lease_secs: i64,
+    <span class="kw">pub </span>server_addr: String,
+    <span class="kw">pub </span>kv_store: KvStoreRef,
+    <span class="kw">pub </span>catalog: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="kw">pub </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
+}
+
+<span class="kw">pub type </span>SelectorRef = Arc&lt;<span class="kw">dyn </span>Selector&lt;Context = SelectorContext, Output = Vec&lt;Peer&gt;&gt;&gt;;
 <span class="kw">pub type </span>ElectionRef = Arc&lt;<span class="kw">dyn </span>Election&lt;Leader = LeaderValue&gt;&gt;;
 
 <span class="attr">#[derive(Clone)]
@@ -522,9 +531,12 @@
         <span class="self">self</span>.mailbox.clone()
     }
 
+    <span class="kw">pub fn </span>procedure_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ProcedureManagerRef {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.procedure_manager
+    }
+
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>new_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Context {
-        <span class="kw">let </span>datanode_lease_secs = <span class="self">self</span>.options().datanode_lease_secs;
         <span class="kw">let </span>server_addr = <span class="self">self</span>.options().server_addr.clone();
         <span class="kw">let </span>in_memory = <span class="self">self</span>.in_memory();
         <span class="kw">let </span>kv_store = <span class="self">self</span>.kv_store();
@@ -532,16 +544,12 @@
         <span class="kw">let </span>election = <span class="self">self</span>.election();
         <span class="kw">let </span>skip_all = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
         Context {
-            datanode_lease_secs,
             server_addr,
             in_memory,
             kv_store,
             mailbox,
             election,
             skip_all,
-            catalog: <span class="prelude-val">None</span>,
-            schema: <span class="prelude-val">None</span>,
-            table: <span class="prelude-val">None</span>,
             is_infancy: <span class="bool-val">false</span>,
         }
     }
