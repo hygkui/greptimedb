@@ -221,12 +221,6 @@
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -344,12 +338,6 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute DataFusion ExecutionPlan, source: {}&quot;</span>, source))]
-    </span>DataFusionExecutionPlan {
-        source: DataFusionError,
-        location: Location,
-    },
-
     <span class="attr">#[snafu(display(
         <span class="string">&quot;Failed to convert DataFusion&#39;s recordbatch stream, source: {}&quot;</span>,
         source
@@ -427,9 +415,9 @@
             | Error::ConvertArrowSchema { source }
             | Error::FromArrowArray { source } =&gt; source.status_code(),
 
-            Error::ExecuteRepeatedly { .. }
-            | Error::GeneralDataFusion { .. }
-            | Error::DataFusionExecutionPlan { .. } =&gt; StatusCode::Unexpected,
+            Error::ExecuteRepeatedly { .. } | Error::GeneralDataFusion { .. } =&gt; {
+                StatusCode::Unexpected
+            }
 
             Error::UnsupportedInputDataType { .. }
             | Error::TypeCast { .. }

@@ -462,24 +462,6 @@
 <a href="#462" id="462">462</a>
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
-<a href="#469" id="469">469</a>
-<a href="#470" id="470">470</a>
-<a href="#471" id="471">471</a>
-<a href="#472" id="472">472</a>
-<a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
-<a href="#476" id="476">476</a>
-<a href="#477" id="477">477</a>
-<a href="#478" id="478">478</a>
-<a href="#479" id="479">479</a>
-<a href="#480" id="480">480</a>
-<a href="#481" id="481">481</a>
-<a href="#482" id="482">482</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -514,9 +496,6 @@
         </span>source: servers::error::Error,
         server: String,
     },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Error stream request next is None&quot;</span>))]
-    </span>StreamNone { location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Empty key is not allowed&quot;</span>))]
     </span>EmptyKey { location: Location },
@@ -669,12 +648,6 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode table global value, source: {}&quot;</span>, source))]
-    </span>DecodeTableGlobalValue {
-        source: prost::DecodeError,
-        location: Location,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected, violated: {}&quot;</span>, violated))]
     </span>Unexpected {
         violated: String,
@@ -739,12 +712,6 @@
         func_name: String,
         retry_num: usize,
         location: Location,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;An error occurred in Meta, source: {}&quot;</span>, source))]
-    </span>MetaInternal {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: BoxedError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to lock based on etcd, source: {}&quot;</span>, source))]
@@ -867,14 +834,12 @@
 
     <span class="kw">fn </span>status_code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
         <span class="kw">match </span><span class="self">self </span>{
-            Error::StreamNone { .. }
-            | Error::EtcdFailed { .. }
+            Error::EtcdFailed { .. }
             | Error::ConnectEtcd { .. }
             | Error::TcpBind { .. }
             | Error::SerializeToJson { .. }
             | Error::DeserializeFromJson { .. }
             | Error::DecodeTableRoute { .. }
-            | Error::DecodeTableGlobalValue { .. }
             | Error::NoLeader { .. }
             | Error::CreateChannel { .. }
             | Error::BatchGet { .. }
@@ -924,7 +889,6 @@
             | Error::Unexpected { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::InvalidCatalogValue { source, .. } =&gt; source.status_code(),
-            Error::MetaInternal { source } =&gt; source.status_code(),
             Error::RecoverProcedure { source } =&gt; source.status_code(),
             Error::ShutdownServer { source, .. } | Error::StartHttp { source } =&gt; {
                 source.status_code()

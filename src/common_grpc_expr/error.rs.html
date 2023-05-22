@@ -113,19 +113,6 @@
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -142,7 +129,6 @@
 
 </span><span class="kw">use </span>std::any::Any;
 
-<span class="kw">use </span>api::DecodeError;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::prelude::{Snafu, StatusCode};
 <span class="kw">use </span>snafu::Location;
@@ -155,9 +141,6 @@
         column_name: String,
         table_name: String,
     },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert bytes to insert batch, source: {}&quot;</span>, source))]
-    </span>DecodeInsert { source: DecodeError },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Illegal delete request, reason: {reason}&quot;</span>))]
     </span>IllegalDeleteRequest { reason: String, location: Location },
@@ -193,12 +176,6 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field in protobuf, field: {}&quot;</span>, field))]
     </span>MissingField { field: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid column default constraint, source: {}&quot;</span>, source))]
-    </span>ColumnDefaultConstraint {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
-    },
-
     <span class="attr">#[snafu(display(
         <span class="string">&quot;Invalid column proto definition, column: {}, source: {}&quot;</span>,
         column,
@@ -230,9 +207,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             Error::ColumnNotFound { .. } =&gt; StatusCode::TableColumnNotFound,
 
-            Error::DecodeInsert { .. } | Error::IllegalDeleteRequest { .. } =&gt; {
-                StatusCode::InvalidArguments
-            }
+            Error::IllegalDeleteRequest { .. } =&gt; StatusCode::InvalidArguments,
 
             Error::ColumnDataType { .. } =&gt; StatusCode::Internal,
             Error::DuplicatedTimestampColumn { .. } | Error::MissingTimestampColumn { .. } =&gt; {
@@ -241,7 +216,6 @@
             Error::InvalidColumnProto { .. } =&gt; StatusCode::InvalidArguments,
             Error::CreateVector { .. } =&gt; StatusCode::InvalidArguments,
             Error::MissingField { .. } =&gt; StatusCode::InvalidArguments,
-            Error::ColumnDefaultConstraint { source, .. } =&gt; source.status_code(),
             Error::InvalidColumnDef { source, .. } =&gt; source.status_code(),
             Error::UnrecognizedTableOption { .. } =&gt; StatusCode::InvalidArguments,
             Error::UnexpectedValuesLength { .. } | Error::ColumnAlreadyExists { .. } =&gt; {

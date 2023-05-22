@@ -143,12 +143,6 @@
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -199,12 +193,6 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find value columns in table {}&quot;</span>, table))]
     </span>ValueNotFound { table: String, location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find the table {}&quot;</span>, table))]
-    </span>TableNotFound {
-        table: String,
-        source: datafusion::error::DataFusionError,
-    },
 
     <span class="attr">#[snafu(display(
         <span class="string">&quot;Cannot accept multiple vector as function input, PromQL expr: {:?}&quot;</span>,
@@ -271,7 +259,7 @@
             | IllegalRange { .. }
             | EmptyRange { .. } =&gt; StatusCode::Internal,
 
-            TableNotFound { .. } | TableNameNotFound { .. } =&gt; StatusCode::TableNotFound,
+            TableNameNotFound { .. } =&gt; StatusCode::TableNotFound,
 
             Catalog { source } =&gt; source.status_code(),
         }

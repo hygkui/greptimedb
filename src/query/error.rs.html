@@ -227,10 +227,6 @@
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
 <a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -393,9 +389,6 @@
         </span>source: common_datasource::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported file format: {}&quot;</span>, format))]
-    </span>UnsupportedFileFormat { format: String, location: Location },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse file format: {}&quot;</span>, source))]
     </span>ParseFileFormat {
         <span class="attr">#[snafu(backtrace)]
@@ -430,7 +423,6 @@
             | ParseFloat { .. }
             | MissingRequiredField { .. }
             | BuildRegex { .. }
-            | UnsupportedFileFormat { .. }
             | ConvertSchema { .. } =&gt; StatusCode::InvalidArguments,
 
             BuildBackend { .. } | ListObjects { .. } =&gt; StatusCode::StorageUnavailable,
