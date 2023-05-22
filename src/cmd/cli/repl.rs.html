@@ -271,6 +271,10 @@
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -540,7 +544,11 @@
         partition_manager,
         datanode_clients,
     ));
-    <span class="kw">let </span>state = Arc::new(QueryEngineState::new(catalog_list, Default::default()));
+    <span class="kw">let </span>state = Arc::new(QueryEngineState::new(
+        catalog_list,
+        <span class="bool-val">false</span>,
+        Default::default(),
+    ));
 
     <span class="prelude-val">Ok</span>(DatafusionQueryEngine::new(state))
 }

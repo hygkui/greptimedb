@@ -935,7 +935,7 @@
             .register_catalog_sync(DEFAULT_CATALOG_NAME.to_string(), default_catalog)
             .unwrap();
 
-        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list);
+        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list, <span class="bool-val">false</span>);
         <span class="kw">let </span>query_engine = factory.query_engine();
 
         PyEngine::new(query_engine.clone())

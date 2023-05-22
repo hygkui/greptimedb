@@ -1001,7 +1001,7 @@
         <span class="kw">let </span>catalog_manager = Arc::new(catalog_manager);
 
         <span class="kw">let </span>query_engine =
-            QueryEngineFactory::new_with_plugins(catalog_manager.clone(), plugins.clone())
+            QueryEngineFactory::new_with_plugins(catalog_manager.clone(), <span class="bool-val">false</span>, plugins.clone())
                 .query_engine();
 
         <span class="kw">let </span>script_executor =
@@ -1099,7 +1099,7 @@
         catalog_manager: CatalogManagerRef,
         dist_instance: Arc&lt;DistInstance&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>query_engine = QueryEngineFactory::new(catalog_manager.clone()).query_engine();
+        <span class="kw">let </span>query_engine = QueryEngineFactory::new(catalog_manager.clone(), <span class="bool-val">false</span>).query_engine();
         <span class="kw">let </span>script_executor = Arc::new(
             ScriptExecutor::new(catalog_manager.clone(), query_engine.clone())
                 .<span class="kw">await

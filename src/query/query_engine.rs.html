@@ -107,6 +107,14 @@
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -174,12 +182,20 @@
 }
 
 <span class="kw">impl </span>QueryEngineFactory {
-    <span class="kw">pub fn </span>new(catalog_manager: CatalogManagerRef) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new_with_plugins(catalog_manager, Default::default())
+    <span class="kw">pub fn </span>new(catalog_manager: CatalogManagerRef, with_dist_planner: bool) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new_with_plugins(catalog_manager, with_dist_planner, Default::default())
     }
 
-    <span class="kw">pub fn </span>new_with_plugins(catalog_manager: CatalogManagerRef, plugins: Arc&lt;Plugins&gt;) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>state = Arc::new(QueryEngineState::new(catalog_manager, plugins));
+    <span class="kw">pub fn </span>new_with_plugins(
+        catalog_manager: CatalogManagerRef,
+        with_dist_planner: bool,
+        plugins: Arc&lt;Plugins&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>state = Arc::new(QueryEngineState::new(
+            catalog_manager,
+            with_dist_planner,
+            plugins,
+        ));
         <span class="kw">let </span>query_engine = Arc::new(DatafusionQueryEngine::new(state));
         register_functions(<span class="kw-2">&amp;</span>query_engine);
         <span class="self">Self </span>{ query_engine }
@@ -209,7 +225,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_query_engine_factory() {
         <span class="kw">let </span>catalog_list = catalog::local::new_memory_catalog_list().unwrap();
-        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list);
+        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list, <span class="bool-val">false</span>);
 
         <span class="kw">let </span>engine = factory.query_engine();
 

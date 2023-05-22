@@ -184,8 +184,8 @@
             .logical_plan(substrait_plan.to_vec())
             .<span class="kw">await
             </span>.context(error::RequestDatanodeSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span>Output::RecordBatches(recordbatches) = result <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
-        <span class="prelude-val">Ok</span>(recordbatches)
+        <span class="kw">let </span>Output::RecordBatches(record_batches) = result <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
+        <span class="prelude-val">Ok</span>(record_batches)
     }
 
     <span class="kw">fn </span>build_logical_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, table_scan: <span class="kw-2">&amp;</span>TableScanPlan) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {

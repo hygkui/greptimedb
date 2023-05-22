@@ -381,7 +381,7 @@
                 </span>.unwrap(),
         );
 
-        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_manager.clone());
+        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_manager.clone(), <span class="bool-val">false</span>);
         <span class="kw">let </span>query_engine = factory.query_engine();
         <span class="kw">let </span>mgr = ScriptManager::new(catalog_manager.clone(), query_engine)
             .<span class="kw">await
