@@ -617,7 +617,7 @@
         <span class="macro">log::debug!</span>(<span class="string">&quot;execute replaced query: {}&quot;</span>, query);
 
         <span class="kw">let </span>outputs = <span class="self">self</span>.do_query(<span class="kw-2">&amp;</span>query).<span class="kw">await</span>;
-        writer::write_output(w, <span class="kw-2">&amp;</span>query, outputs).<span class="kw">await</span><span class="question-mark">?</span>;
+        writer::write_output(w, <span class="kw-2">&amp;</span>query, <span class="self">self</span>.session.context(), outputs).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -649,7 +649,7 @@
             ]
         );
         <span class="kw">let </span>outputs = <span class="self">self</span>.do_query(query).<span class="kw">await</span>;
-        writer::write_output(writer, query, outputs).<span class="kw">await</span><span class="question-mark">?</span>;
+        writer::write_output(writer, query, <span class="self">self</span>.session.context(), outputs).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
