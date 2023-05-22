@@ -450,6 +450,10 @@
 <a href="#450" id="450">450</a>
 <a href="#451" id="451">451</a>
 <a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -582,17 +586,21 @@
         })<span class="question-mark">?</span>;
 
     <span class="kw">let </span>cluster_id = header.as_ref().map_or(<span class="number">0</span>, |h| h.cluster_id);
-    <span class="kw">let </span>peers = selector.select(cluster_id, <span class="kw-2">&amp;</span>ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>peers = selector.select(cluster_id, <span class="kw-2">&amp;</span>ctx).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">if </span>peers.is_empty() {
-        <span class="kw">let </span>header = <span class="prelude-val">Some</span>(ResponseHeader::failed(
-            cluster_id,
-            Error::no_active_datanodes(),
-        ));
+        <span class="macro">warn!</span>(<span class="string">&quot;Create table failed due to no active datanodes, table: {table_name:?}&quot;</span>);
         <span class="kw">return </span><span class="prelude-val">Ok</span>(RouteResponse {
-            header,
+            header: <span class="prelude-val">Some</span>(ResponseHeader::failed(
+                cluster_id,
+                Error::no_active_datanodes(),
+            )),
             ..Default::default()
         });
     }
+    <span class="comment">// We don&#39;t need to keep all peers, just truncate it to the number of partitions.
+    // If the peers are not enough, some peers will be used for multiple partitions.
+    </span>peers.truncate(partitions.len());
+
     <span class="kw">let </span>id = table_id_sequence.next().<span class="kw">await</span><span class="question-mark">?</span>;
     table_info.ident.table_id = id <span class="kw">as </span>u32;
 
