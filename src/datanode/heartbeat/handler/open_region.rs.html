@@ -347,7 +347,7 @@
             <span class="kw">for </span>r <span class="kw">in </span>region_numbers {
                 <span class="kw">let </span>region_exist =
                     table
-                        .contain_regions(<span class="kw-2">*</span>r)
+                        .contains_region(<span class="kw-2">*</span>r)
                         .with_context(|<span class="kw">_</span>| error::CheckRegionSnafu {
                             table_name: format_full_table_name(
                                 catalog_name,

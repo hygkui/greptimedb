@@ -447,6 +447,7 @@
 <a href="#447" id="447">447</a>
 <a href="#448" id="448">448</a>
 <a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -851,7 +852,7 @@
 
         <span class="kw">let </span>tables = <span class="self">self</span>.tables.read().unwrap().clone();
 
-        futures::future::try_join_all(tables.values().map(|t| t.close()))
+        futures::future::try_join_all(tables.values().map(|t| t.close(<span class="kw-2">&amp;</span>[])))
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
@@ -884,8 +885,9 @@
         <span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock().<span class="kw">await</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_table_by_full_name(<span class="kw-2">&amp;</span>full_name) {
+            <span class="kw">let </span>regions = Vec::new();
             table
-                .close()
+                .close(<span class="kw-2">&amp;</span>regions)
                 .<span class="kw">await
                 </span>.map_err(BoxedError::new)
                 .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;

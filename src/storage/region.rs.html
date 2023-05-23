@@ -866,11 +866,6 @@
         <span class="self">self</span>.inner.alter(request).<span class="kw">await
     </span>}
 
-    <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
-        <span class="self">self</span>.inner.close().<span class="kw">await
-    </span>}
-
     <span class="kw">async fn </span>drop_region(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.inner.drop_region().<span class="kw">await
     </span>}
@@ -1279,6 +1274,11 @@
     <span class="doccomment">/// Compact the region manually.
     </span><span class="kw">pub async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: CompactContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.inner.compact(ctx).<span class="kw">await
+    </span>}
+
+    <span class="kw">pub async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
+        <span class="self">self</span>.inner.close().<span class="kw">await
     </span>}
 }
 

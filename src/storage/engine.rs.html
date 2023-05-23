@@ -649,6 +649,16 @@
 <a href="#649" id="649">649</a>
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -719,8 +729,8 @@
         <span class="self">self</span>.inner.open_region(name, opts).<span class="kw">await
     </span>}
 
-    <span class="kw">async fn </span>close_region(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>EngineContext, region: <span class="self">Self</span>::Region) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        region.close().<span class="kw">await
+    <span class="kw">async fn </span>close_region(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>EngineContext, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.inner.close_region(name).<span class="kw">await
     </span>}
 
     <span class="kw">async fn </span>create_region(
@@ -1013,6 +1023,16 @@
         })
     }
 
+    <span class="kw">async fn </span>close_region(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.get_region(name) {
+            region.close().<span class="kw">await</span><span class="question-mark">?</span>;
+        }
+
+        <span class="self">self</span>.regions.remove(name);
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
     <span class="kw">async fn </span>open_region(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, opts: <span class="kw-2">&amp;</span>OpenOptions) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;RegionImpl&lt;S&gt;&gt;&gt; {
         <span class="comment">// We can wait until the state of the slot has been changed to ready, but this will
         // make the code more complicate, so we just return the error here.
@@ -1278,7 +1298,7 @@
 
         <span class="comment">// Flush memtable to sst.
         </span>region.flush(<span class="kw-2">&amp;</span>FlushContext::default()).<span class="kw">await</span>.unwrap();
-        engine.close_region(<span class="kw-2">&amp;</span>ctx, region).<span class="kw">await</span>.unwrap();
+        engine.close_region(<span class="kw-2">&amp;</span>ctx, region.name()).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>dir_path = dir.path().join(region_name);
 

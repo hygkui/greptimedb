@@ -683,6 +683,32 @@
 <a href="#683" id="683">683</a>
 <a href="#684" id="684">684</a>
 <a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -745,7 +771,6 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::TableManifest;
-
 <span class="attr">#[inline]
 </span><span class="kw">fn </span>table_manifest_dir(table_dir: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">format!</span>(<span class="string">&quot;{table_dir}/manifest/&quot;</span>)
@@ -756,7 +781,7 @@
     manifest: TableManifest,
     <span class="comment">// guarded by `self.alter_lock`
     </span>table_info: ArcSwap&lt;TableInfo&gt;,
-    regions: HashMap&lt;RegionNumber, R&gt;,
+    regions: ArcSwap&lt;HashMap&lt;RegionNumber, R&gt;&gt;,
     alter_lock: Mutex&lt;()&gt;,
 }
 
@@ -774,9 +799,8 @@
         <span class="kw">if </span>request.columns_values.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
-
-        <span class="kw">let </span>region = <span class="self">self
-            </span>.regions
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+        <span class="kw">let </span>region = regions
             .get(<span class="kw-2">&amp;</span>request.region_number)
             .with_context(|| RegionNotFoundSnafu {
                 table: common_catalog::format_full_table_name(
@@ -830,14 +854,16 @@
         _limit: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     ) -&gt; TableResult&lt;PhysicalPlanRef&gt; {
         <span class="kw">let </span>read_ctx = ReadContext::default();
-        <span class="kw">let </span><span class="kw-2">mut </span>readers = Vec::with_capacity(<span class="self">self</span>.regions.len());
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>readers = Vec::with_capacity(regions.len());
         <span class="kw">let </span><span class="kw-2">mut </span>first_schema: <span class="prelude-ty">Option</span>&lt;Arc&lt;Schema&gt;&gt; = <span class="prelude-val">None</span>;
 
         <span class="kw">let </span>table_info = <span class="self">self</span>.table_info.load();
         <span class="comment">// TODO(hl): Currently the API between frontend and datanode is under refactoring in
         // https://github.com/GreptimeTeam/greptimedb/issues/597 . Once it&#39;s finished, query plan
         // can carry filtered region info to avoid scanning all regions on datanode.
-        </span><span class="kw">for </span>region <span class="kw">in </span><span class="self">self</span>.regions.values() {
+        </span><span class="kw">for </span>region <span class="kw">in </span>regions.values() {
             <span class="kw">let </span>snapshot = region
                 .snapshot(<span class="kw-2">&amp;</span>read_ctx)
                 .map_err(BoxedError::new)
@@ -946,10 +972,11 @@
         <span class="kw">if </span>request.key_column_values.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
         <span class="kw">let </span><span class="kw-2">mut </span>rows_deleted = <span class="number">0</span>;
         <span class="comment">// TODO(hl): Should be tracked by procedure.
         // TODO(hl): Parse delete request into region-&gt;keys instead of delete in each region
-        </span><span class="kw">for </span>region <span class="kw">in </span><span class="self">self</span>.regions.values() {
+        </span><span class="kw">for </span>region <span class="kw">in </span>regions.values() {
             <span class="kw">let </span><span class="kw-2">mut </span>write_request = region.write_request();
             <span class="kw">let </span>key_column_values = request.key_column_values.clone();
             <span class="comment">// Safety: key_column_values isn&#39;t empty.
@@ -986,8 +1013,10 @@
                 reason: FlushReason::Manually,
             })
             .unwrap_or_default();
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+
         <span class="kw">if let </span><span class="prelude-val">Some</span>(region_number) = region_number {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.get(<span class="kw-2">&amp;</span>region_number) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(region) = regions.get(<span class="kw-2">&amp;</span>region_number) {
                 region
                     .flush(<span class="kw-2">&amp;</span>flush_ctx)
                     .<span class="kw">await
@@ -995,37 +1024,19 @@
                     .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
             }
         } <span class="kw">else </span>{
-            futures::future::try_join_all(
-                <span class="self">self</span>.regions.values().map(|region| region.flush(<span class="kw-2">&amp;</span>flush_ctx)),
-            )
-            .<span class="kw">await
-            </span>.map_err(BoxedError::new)
-            .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+            futures::future::try_join_all(regions.values().map(|region| region.flush(<span class="kw-2">&amp;</span>flush_ctx)))
+                .<span class="kw">await
+                </span>.map_err(BoxedError::new)
+                .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableResult&lt;()&gt; {
-        futures::future::try_join_all(<span class="self">self</span>.regions.values().map(|region| region.close()))
-            .<span class="kw">await
-            </span>.map_err(BoxedError::new)
-            .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">async fn </span>drop_regions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableResult&lt;()&gt; {
-        futures::future::try_join_all(<span class="self">self</span>.regions.values().map(|region| region.drop_region()))
-            .<span class="kw">await
-            </span>.map_err(BoxedError::new)
-            .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
-    }
-
     <span class="kw">fn </span>region_stats(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableResult&lt;Vec&lt;RegionStat&gt;&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self
-            </span>.regions
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+
+        <span class="prelude-val">Ok</span>(regions
             .values()
             .map(|region| RegionStat {
                 region_id: region.id(),
@@ -1034,8 +1045,10 @@
             .collect())
     }
 
-    <span class="kw">fn </span>contain_regions(<span class="kw-2">&amp;</span><span class="self">self</span>, region: RegionNumber) -&gt; TableResult&lt;bool&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.regions.contains_key(<span class="kw-2">&amp;</span>region))
+    <span class="kw">fn </span>contains_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region: RegionNumber) -&gt; TableResult&lt;bool&gt; {
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+
+        <span class="prelude-val">Ok</span>(regions.contains_key(<span class="kw-2">&amp;</span>region))
     }
 }
 
@@ -1071,7 +1084,7 @@
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             table_info: ArcSwap::new(Arc::new(table_info)),
-            regions,
+            regions: ArcSwap::new(Arc::new(regions)),
             manifest,
             alter_lock: Mutex::new(()),
         }
@@ -1219,9 +1232,48 @@
         <span class="prelude-val">Ok</span>(table_info)
     }
 
+    <span class="doccomment">/// Remove regions
+    /// Notes: Please release regions in StorageEngine.
+    </span><span class="kw">pub async fn </span>remove_regions(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        region_numbers: <span class="kw-2">&amp;</span>[RegionNumber],
+    ) -&gt; TableResult&lt;HashMap&lt;RegionNumber, R&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>removed = HashMap::with_capacity(region_numbers.len());
+        <span class="self">self</span>.regions.rcu(|regions| {
+            removed.clear();
+            <span class="kw">let </span><span class="kw-2">mut </span>regions = HashMap::clone(regions);
+            <span class="kw">for </span>region_number <span class="kw">in </span>region_numbers {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(region) = regions.remove(region_number) {
+                    removed.insert(<span class="kw-2">*</span>region_number, region);
+                }
+            }
+
+            Arc::new(regions)
+        });
+
+        <span class="prelude-val">Ok</span>(removed)
+    }
+
+    <span class="kw">pub async fn </span>drop_regions(<span class="kw-2">&amp;</span><span class="self">self</span>, region_number: <span class="kw-2">&amp;</span>[RegionNumber]) -&gt; TableResult&lt;()&gt; {
+        <span class="kw">let </span>regions = <span class="self">self</span>.remove_regions(region_number).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        futures::future::try_join_all(regions.values().map(|region| region.drop_region()))
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>is_releasable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+
+        regions.is_empty()
+    }
+
     <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>regions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>HashMap&lt;RegionNumber, R&gt; {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.regions
+    </span><span class="kw">pub fn </span>region_ids(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;RegionNumber&gt; {
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+        regions.iter().map(|(k, <span class="kw">_</span>)| <span class="kw-2">*</span>k).collect()
     }
 
     <span class="kw">pub fn </span>set_table_info(<span class="kw-2">&amp;</span><span class="self">self</span>, table_info: TableInfo) {
@@ -1245,7 +1297,7 @@
         table_version: TableVersion,
         alter_op: <span class="kw-2">&amp;</span>AlterOperation,
     ) -&gt; TableResult&lt;()&gt; {
-        <span class="kw">let </span>regions = <span class="self">self</span>.regions();
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
         <span class="kw">for </span>region <span class="kw">in </span>regions.values() {
             <span class="kw">let </span>region_meta = region.in_memory_metadata();
             <span class="kw">if </span>u64::from(region_meta.version()) &gt; table_version {
@@ -1275,7 +1327,7 @@
     }
 
     <span class="kw">pub async fn </span>load_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_number: RegionNumber, _region: R) -&gt; TableResult&lt;()&gt; {
-        <span class="kw">let </span>info = <span class="self">self</span>.table_info.load_full();
+        <span class="kw">let </span>info = <span class="self">self</span>.table_info.load();
 
         <span class="comment">// TODO(weny): Supports to load the region
         </span><span class="macro">warn!</span>(
