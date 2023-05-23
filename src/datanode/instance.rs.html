@@ -441,6 +441,13 @@
 <a href="#441" id="441">441</a>
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -501,6 +508,7 @@
     NewCatalogSnafu, OpenLogStoreSnafu, RecoverProcedureSnafu, <span class="prelude-ty">Result</span>, ShutdownInstanceSnafu,
     StartProcedureManagerSnafu, StopProcedureManagerSnafu,
 };
+<span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::close_region::CloseRegionHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::open_region::OpenRegionHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::HandlerGroupExecutor;
@@ -642,6 +650,18 @@
         <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_manager.clone(), <span class="bool-val">false</span>);
         <span class="kw">let </span>query_engine = factory.query_engine();
 
+        <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
+            Arc::new(ParseMailboxMessageHandler::default()),
+            Arc::new(OpenRegionHandler::new(
+                catalog_manager.clone(),
+                engine_manager.clone(),
+            )),
+            Arc::new(CloseRegionHandler::new(
+                catalog_manager.clone(),
+                engine_manager.clone(),
+            )),
+        ]);
+
         <span class="kw">let </span>heartbeat_task = <span class="kw">match </span>opts.mode {
             Mode::Standalone =&gt; <span class="prelude-val">None</span>,
             Mode::Distributed =&gt; <span class="prelude-val">Some</span>(HeartbeatTask::new(
@@ -650,13 +670,7 @@
                 opts.rpc_hostname.clone(),
                 meta_client.as_ref().unwrap().clone(),
                 catalog_manager.clone(),
-                Arc::new(HandlerGroupExecutor::new(<span class="macro">vec!</span>[
-                    Arc::new(ParseMailboxMessageHandler::default()),
-                    Arc::new(OpenRegionHandler::new(
-                        catalog_manager.clone(),
-                        engine_manager.clone(),
-                    )),
-                ])),
+                Arc::new(handlers_executor),
             )),
         };
 

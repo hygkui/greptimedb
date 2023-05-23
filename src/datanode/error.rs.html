@@ -550,6 +550,37 @@
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
 <a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -591,6 +622,13 @@
         </span>source: catalog::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to deregister table: {}, source: {}&quot;</span>, table_name, source))]
+    </span>DeregisterTable {
+        table_name: String,
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: catalog::error::Error,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open table: {}, source: {}&quot;</span>, table_name, source))]
     </span>OpenTable {
         table_name: String,
@@ -603,6 +641,19 @@
         table_name: String,
         <span class="attr">#[snafu(backtrace)]
         </span>source: catalog::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to close regions {:?} in table {}, source: {}&quot;</span>,
+        region_numbers,
+        table_name,
+        source
+    ))]
+    </span>CloseTable {
+        table_name: String,
+        region_numbers: Vec&lt;RegionNumber&gt;,
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: TableError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to send message: {err_msg}&quot;</span>))]
@@ -655,6 +706,13 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create table: {}, source: {}&quot;</span>, table_name, source))]
     </span>CreateTable {
+        table_name: String,
+        <span class="attr">#[snafu(backtrace)]
+        </span>source: TableError,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get table: {}, source: {}&quot;</span>, table_name, source))]
+    </span>GetTable {
         table_name: String,
         <span class="attr">#[snafu(backtrace)]
         </span>source: TableError,
@@ -998,7 +1056,9 @@
             | ExecuteLogicalPlan { source } =&gt; source.status_code(),
 
             OpenTable { source, .. } =&gt; source.status_code(),
-            RegisterTable { source, .. } | AccessCatalog { source, .. } =&gt; source.status_code(),
+            RegisterTable { source, .. }
+            | DeregisterTable { source, .. }
+            | AccessCatalog { source, .. } =&gt; source.status_code(),
 
             DecodeLogicalPlan { source } =&gt; source.status_code(),
             NewCatalog { source } | RegisterSchema { source } =&gt; source.status_code(),
@@ -1006,6 +1066,8 @@
             CreateTable { source, .. } | CheckRegion { source, .. } =&gt; source.status_code(),
             DropTable { source, .. } =&gt; source.status_code(),
             FlushTable { source, .. } =&gt; source.status_code(),
+            GetTable { source, .. } =&gt; source.status_code(),
+            CloseTable { source, .. } =&gt; source.status_code(),
 
             Insert { source, .. } =&gt; source.status_code(),
             Delete { source, .. } =&gt; source.status_code(),

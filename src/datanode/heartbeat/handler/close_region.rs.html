@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/datanode/src/heartbeat/handler/open_region.rs`."><title>open_region.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="datanode" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (a368898de 2023-05-02)" data-search-js="search-618e954b235f6acc.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-6f6ffb5395b17c6e.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../../../static.files/source-script-11255107d0a65077.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-f0540c1d82cde29b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../datanode/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/datanode/src/heartbeat/handler/close_region.rs`."><title>close_region.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="datanode" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (a368898de 2023-05-02)" data-search-js="search-618e954b235f6acc.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-6f6ffb5395b17c6e.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../../../static.files/source-script-11255107d0a65077.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-f0540c1d82cde29b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../datanode/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -213,6 +213,18 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -229,58 +241,74 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>catalog::error::Error <span class="kw">as </span>CatalogError;
-<span class="kw">use </span>catalog::{CatalogManagerRef, RegisterTableRequest};
+<span class="kw">use </span>catalog::{CatalogManagerRef, DeregisterTableRequest};
 <span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, RegionIdent, SimpleReply};
 <span class="kw">use </span>common_telemetry::{error, warn};
+<span class="kw">use </span>log::info;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionNumber;
 <span class="kw">use </span>table::engine::manager::TableEngineManagerRef;
-<span class="kw">use </span>table::engine::EngineContext;
-<span class="kw">use </span>table::requests::OpenTableRequest;
+<span class="kw">use </span>table::engine::{CloseTableResult, EngineContext, TableReference};
+<span class="kw">use </span>table::requests::CloseTableRequest;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::{HandleControl, HeartbeatResponseHandler};
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatResponseHandlerContext;
 
 <span class="attr">#[derive(Clone)]
-</span><span class="kw">pub struct </span>OpenRegionHandler {
+</span><span class="kw">pub struct </span>CloseRegionHandler {
     catalog_manager: CatalogManagerRef,
     table_engine_manager: TableEngineManagerRef,
 }
 
-<span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>OpenRegionHandler {
+<span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>CloseRegionHandler {
     <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>HeartbeatResponseHandlerContext) -&gt; bool {
         <span class="macro">matches!</span>(
-            ctx.incoming_message,
-            <span class="prelude-val">Some</span>((<span class="kw">_</span>, Instruction::OpenRegion { .. }))
+            ctx.incoming_message.as_ref(),
+            <span class="prelude-val">Some</span>((<span class="kw">_</span>, Instruction::CloseRegion { .. }))
         )
     }
 
     <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
-        <span class="kw">let </span><span class="prelude-val">Some</span>((meta, Instruction::OpenRegion(region_ident))) = ctx.incoming_message.take() <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>(<span class="string">&quot;OpenRegionHandler: should be guarded by &#39;is_acceptable&#39;&quot;</span>);
+        <span class="kw">let </span><span class="prelude-val">Some</span>((meta, Instruction::CloseRegion(region_ident))) = ctx.incoming_message.take() <span class="kw">else </span>{
+            <span class="macro">unreachable!</span>(<span class="string">&quot;CloseRegionHandler: should be guarded by &#39;is_acceptable&#39;&quot;</span>);
         };
 
         <span class="kw">let </span>mailbox = ctx.mailbox.clone();
         <span class="kw">let </span>self_ref = Arc::new(<span class="self">self</span>.clone());
 
+        <span class="kw">let </span>RegionIdent {
+            engine,
+            catalog,
+            schema,
+            table,
+            region_number,
+            ..
+        } = region_ident;
+
         common_runtime::spawn_bg(<span class="kw">async move </span>{
-            <span class="kw">let </span>(engine, request) = OpenRegionHandler::prepare_request(region_ident);
-            <span class="kw">let </span>result = self_ref.open_region_inner(engine, request).<span class="kw">await</span>;
+            <span class="kw">let </span>result = self_ref
+                .close_region_inner(
+                    engine,
+                    <span class="kw-2">&amp;</span>TableReference::full(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>table),
+                    <span class="macro">vec!</span>[region_number],
+                )
+                .<span class="kw">await</span>;
+
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = mailbox
-                .send((meta, OpenRegionHandler::map_result(result)))
+                .send((meta, CloseRegionHandler::map_result(result)))
                 .<span class="kw">await
             </span>{
-                <span class="macro">error!</span>(e; <span class="string">&quot;Failed to send reply to mailbox&quot;</span>);
+                <span class="macro">error!</span>(e;<span class="string">&quot;Failed to send reply to mailbox&quot;</span>);
             }
         });
+
         <span class="prelude-val">Ok</span>(HandleControl::Done)
     }
 }
 
-<span class="kw">impl </span>OpenRegionHandler {
+<span class="kw">impl </span>CloseRegionHandler {
     <span class="kw">pub fn </span>new(
         catalog_manager: CatalogManagerRef,
         table_engine_manager: TableEngineManagerRef,
@@ -294,13 +322,13 @@
     <span class="kw">fn </span>map_result(result: <span class="prelude-ty">Result</span>&lt;bool&gt;) -&gt; InstructionReply {
         result.map_or_else(
             |error| {
-                InstructionReply::OpenRegion(SimpleReply {
+                InstructionReply::CloseRegion(SimpleReply {
                     result: <span class="bool-val">false</span>,
                     error: <span class="prelude-val">Some</span>(error.to_string()),
                 })
             },
             |result| {
-                InstructionReply::OpenRegion(SimpleReply {
+                InstructionReply::CloseRegion(SimpleReply {
                     result,
                     error: <span class="prelude-val">None</span>,
                 })
@@ -308,31 +336,8 @@
         )
     }
 
-    <span class="kw">fn </span>prepare_request(ident: RegionIdent) -&gt; (String, OpenTableRequest) {
-        <span class="kw">let </span>RegionIdent {
-            catalog,
-            schema,
-            table,
-            table_id,
-            region_number,
-            engine,
-            ..
-        } = ident;
-
-        (
-            engine,
-            OpenTableRequest {
-                catalog_name: catalog,
-                schema_name: schema,
-                table_name: table,
-                table_id,
-                region_numbers: <span class="macro">vec!</span>[region_number],
-            },
-        )
-    }
-
-    <span class="doccomment">/// Returns true if a table or target regions have been opened.
-    </span><span class="kw">async fn </span>regions_opened(
+    <span class="doccomment">/// Returns true if a table or target regions have been closed.
+    </span><span class="kw">async fn </span>regions_closed(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         catalog_name: <span class="kw-2">&amp;</span>str,
         schema_name: <span class="kw-2">&amp;</span>str,
@@ -357,28 +362,21 @@
                             ),
                             region_number: <span class="kw-2">*</span>r,
                         })<span class="question-mark">?</span>;
-                <span class="kw">if </span>!region_exist {
-                    <span class="macro">warn!</span>(
-                        <span class="string">&quot;Failed to check table: {}, region: {} does not exist&quot;</span>,
-                        format_full_table_name(catalog_name, schema_name, table_name,),
-                        r
-                    );
+                <span class="kw">if </span>region_exist {
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
                 }
             }
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
         }
-        <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+        <span class="comment">// Returns true if table not exist
+        </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
-    <span class="kw">async fn </span>open_region_inner(<span class="kw-2">&amp;</span><span class="self">self</span>, engine: String, request: OpenTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>OpenTableRequest {
-            catalog_name,
-            schema_name,
-            table_name,
-            region_numbers,
-            ..
-        } = <span class="kw-2">&amp;</span>request;
+    <span class="kw">async fn </span>close_region_inner(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        engine: String,
+        table_ref: <span class="kw-2">&amp;</span>TableReference&lt;<span class="lifetime">&#39;_</span>&gt;,
+        region_numbers: Vec&lt;RegionNumber&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span>engine =
             <span class="self">self</span>.table_engine_manager
                 .engine(<span class="kw-2">&amp;</span>engine)
@@ -388,44 +386,70 @@
         <span class="kw">let </span>ctx = EngineContext::default();
 
         <span class="kw">if </span><span class="self">self
-            </span>.regions_opened(catalog_name, schema_name, table_name, region_numbers)
+            </span>.regions_closed(
+                table_ref.catalog,
+                table_ref.schema,
+                table_ref.table,
+                <span class="kw-2">&amp;</span>region_numbers,
+            )
             .<span class="kw">await</span><span class="question-mark">?
         </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = engine
-            .open_table(<span class="kw-2">&amp;</span>ctx, request.clone())
-            .<span class="kw">await
-            </span>.with_context(|<span class="kw">_</span>| error::OpenTableSnafu {
-                table_name: format_full_table_name(catalog_name, schema_name, table_name),
+        <span class="kw">if </span>engine
+            .get_table(<span class="kw-2">&amp;</span>ctx, table_ref)
+            .with_context(|<span class="kw">_</span>| error::GetTableSnafu {
+                table_name: table_ref.to_string(),
             })<span class="question-mark">?
-        </span>{
-            <span class="kw">let </span>request = RegisterTableRequest {
-                catalog: request.catalog_name.clone(),
-                schema: request.schema_name.clone(),
-                table_name: request.table_name.clone(),
-                table_id: request.table_id,
-                table,
+            </span>.is_some()
+        {
+            <span class="kw">return match </span>engine
+                .close_table(
+                    <span class="kw-2">&amp;</span>ctx,
+                    CloseTableRequest {
+                        catalog_name: table_ref.catalog.to_string(),
+                        schema_name: table_ref.schema.to_string(),
+                        table_name: table_ref.table.to_string(),
+                        region_numbers: region_numbers.clone(),
+                    },
+                )
+                .<span class="kw">await
+                </span>.with_context(|<span class="kw">_</span>| error::CloseTableSnafu {
+                    table_name: table_ref.to_string(),
+                    region_numbers: region_numbers.clone(),
+                })<span class="question-mark">? </span>{
+                CloseTableResult::NotFound | CloseTableResult::Released(<span class="kw">_</span>) =&gt; {
+                    <span class="comment">// Deregister table if The table released.
+                    </span><span class="self">self</span>.deregister_table(table_ref).<span class="kw">await
+                </span>}
+                CloseTableResult::PartialClosed(regions) =&gt; {
+                    <span class="comment">// Requires caller to update the region_numbers
+                    </span><span class="macro">info!</span>(
+                        <span class="string">&quot;Close partial regions: {:?} in table: {}&quot;</span>,
+                        regions, table_ref
+                    );
+                    <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+                }
             };
-            <span class="kw">let </span>result = <span class="self">self</span>.catalog_manager.register_table(request).<span class="kw">await</span>;
-            <span class="kw">match </span>result {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) | <span class="prelude-val">Err</span>(CatalogError::TableExists { .. }) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
-                e =&gt; e.with_context(|<span class="kw">_</span>| error::RegisterTableSnafu {
-                    table_name: format_full_table_name(catalog_name, schema_name, table_name),
-                }),
-            }
-        } <span class="kw">else </span>{
-            <span class="comment">// Case 1:
-            // TODO(weny): Fix/Cleanup the broken table manifest
-            // The manifest writing operation should be atomic.
-            // Therefore, we won&#39;t meet this case, in theory.
-
-            // Case 2: The target region was not found in table meta
-
-            // Case 3: The table not exist
-            </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
         }
+
+        <span class="macro">warn!</span>(<span class="string">&quot;Trying to close a non-existing table: {}&quot;</span>, table_ref);
+        <span class="comment">// Table doesn&#39;t exist
+        </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+    }
+
+    <span class="kw">async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ref: <span class="kw-2">&amp;</span>TableReference&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="self">self</span>.catalog_manager
+            .deregister_table(DeregisterTableRequest {
+                catalog: table_ref.catalog.to_string(),
+                schema: table_ref.schema.to_string(),
+                table_name: table_ref.table.to_string(),
+            })
+            .<span class="kw">await
+            </span>.with_context(|<span class="kw">_</span>| error::DeregisterTableSnafu {
+                table_name: table_ref.to_string(),
+            })
     }
 }
 </code></pre></div></section></main></body></html>

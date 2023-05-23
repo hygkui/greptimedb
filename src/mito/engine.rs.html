@@ -758,6 +758,12 @@
 <a href="#758" id="758">758</a>
 <a href="#759" id="759">759</a>
 <a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1499,6 +1505,12 @@
 
         <span class="kw">if </span>table.is_releasable() {
             <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>table_ref.to_string());
+
+            <span class="macro">logging::info!</span>(
+                <span class="string">&quot;Mito engine closed table: {} in schema: {}&quot;</span>,
+                table_ref.table,
+                table_ref.schema,
+            );
             <span class="kw">return </span><span class="prelude-val">Ok</span>(CloseTableResult::Released(removed_regions));
         }
 
