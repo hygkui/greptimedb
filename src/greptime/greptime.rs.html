@@ -251,13 +251,13 @@
 }
 
 <span class="kw">impl </span>Application {
-    <span class="kw">async fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            Application::Datanode(instance) =&gt; instance.run().<span class="kw">await</span>,
-            Application::Frontend(instance) =&gt; instance.run().<span class="kw">await</span>,
-            Application::Metasrv(instance) =&gt; instance.run().<span class="kw">await</span>,
-            Application::Standalone(instance) =&gt; instance.run().<span class="kw">await</span>,
-            Application::Cli(instance) =&gt; instance.run().<span class="kw">await</span>,
+            Application::Datanode(instance) =&gt; instance.start().<span class="kw">await</span>,
+            Application::Frontend(instance) =&gt; instance.start().<span class="kw">await</span>,
+            Application::Metasrv(instance) =&gt; instance.start().<span class="kw">await</span>,
+            Application::Standalone(instance) =&gt; instance.start().<span class="kw">await</span>,
+            Application::Cli(instance) =&gt; instance.start().<span class="kw">await</span>,
         }
     }
 
@@ -393,7 +393,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>app = cmd.build(opts).<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="macro">tokio::select! </span>{
-        result = app.run() =&gt; {
+        result = app.start() =&gt; {
             <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = result {
                 <span class="macro">error!</span>(err; <span class="string">&quot;Fatal error occurs!&quot;</span>);
             }
