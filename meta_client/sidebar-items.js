@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["client","error","rpc"],"struct":["MetaClientOptions"]};
+window.SIDEBAR_ITEMS = {"mod":["client","error"],"struct":["MetaClientOptions"]};

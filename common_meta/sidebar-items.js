@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["error","instruction","peer","router","table_name","util"],"type":["ClusterId","DatanodeId"]};
+window.SIDEBAR_ITEMS = {"mod":["error","instruction","peer","rpc","table_name"],"type":["ClusterId","DatanodeId"]};

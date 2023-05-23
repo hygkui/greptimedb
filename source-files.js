@@ -12,7 +12,7 @@ var sourcesIndex = JSON.parse('{\
 "common_grpc":["",[],["channel_manager.rs","error.rs","flight.rs","lib.rs","select.rs","writer.rs"]],\
 "common_grpc_expr":["",[],["alter.rs","delete.rs","error.rs","insert.rs","lib.rs"]],\
 "common_mem_prof":["",[],["error.rs","lib.rs"]],\
-"common_meta":["",[],["error.rs","instruction.rs","lib.rs","peer.rs","router.rs","table_name.rs","util.rs"]],\
+"common_meta":["",[["rpc",[],["lock.rs","router.rs","store.rs","util.rs"]]],["error.rs","instruction.rs","lib.rs","peer.rs","rpc.rs","table_name.rs"]],\
 "common_procedure":["",[["local",[],["lock.rs","runner.rs"]],["store",[],["state_store.rs"]]],["error.rs","lib.rs","local.rs","procedure.rs","store.rs","watcher.rs"]],\
 "common_procedure_test":["",[],["lib.rs"]],\
 "common_query":["",[["logical_plan",[],["accumulator.rs","expr.rs","udaf.rs","udf.rs"]]],["columnar_value.rs","error.rs","function.rs","lib.rs","logical_plan.rs","physical_plan.rs","prelude.rs","signature.rs"]],\
@@ -27,7 +27,7 @@ var sourcesIndex = JSON.parse('{\
 "frontend":["",[["instance",[],["distributed.rs","grpc.rs","influxdb.rs","opentsdb.rs","prometheus.rs","script.rs","standalone.rs"]],["service_config",[],["grpc.rs","influxdb.rs","mysql.rs","opentsdb.rs","postgres.rs","prom.rs","prometheus.rs"]],["statement",[],["copy_table_from.rs","copy_table_to.rs","describe.rs","show.rs","tql.rs"]],["table",[],["delete.rs","insert.rs","scan.rs"]]],["catalog.rs","datanode.rs","error.rs","expr_factory.rs","frontend.rs","heartbeat.rs","instance.rs","lib.rs","metrics.rs","script.rs","server.rs","service_config.rs","statement.rs","table.rs"]],\
 "greptime":["",[],["greptime.rs"]],\
 "log_store":["",[["raft_engine",[],["log_store.rs"]],["test_util",[],["log_store_util.rs"]]],["config.rs","error.rs","lib.rs","noop.rs","raft_engine.rs","test_util.rs"]],\
-"meta_client":["",[["client",[],["heartbeat.rs","load_balance.rs","lock.rs","router.rs","store.rs"]],["rpc",[],["lock.rs","store.rs"]]],["client.rs","error.rs","lib.rs","rpc.rs"]],\
+"meta_client":["",[["client",[],["heartbeat.rs","load_balance.rs","lock.rs","router.rs","store.rs"]]],["client.rs","error.rs","lib.rs"]],\
 "meta_srv":["",[["election",[],["etcd.rs"]],["handler",[["failure_handler",[],["runner.rs"]]],["check_leader_handler.rs","collect_stats_handler.rs","failure_handler.rs","keep_lease_handler.rs","mailbox_handler.rs","node_stat.rs","on_leader_start.rs","persist_stats_handler.rs","response_header_handler.rs"]],["lock",[],["etcd.rs"]],["metasrv",[],["builder.rs"]],["procedure",[["region_failover",[],["activate_region.rs","deactivate_region.rs","failover_end.rs","failover_start.rs","update_metadata.rs"]]],["region_failover.rs","state_store.rs"]],["selector",[],["lease_based.rs","load_based.rs"]],["service",[["admin",[],["health.rs","heartbeat.rs","leader.rs","meta.rs"]],["store",[],["etcd.rs","ext.rs","kv.rs","memory.rs"]]],["admin.rs","cluster.rs","heartbeat.rs","lock.rs","mailbox.rs","router.rs","store.rs"]]],["bootstrap.rs","cluster.rs","election.rs","error.rs","failure_detector.rs","handler.rs","keys.rs","lease.rs","lib.rs","lock.rs","metadata_service.rs","metasrv.rs","metrics.rs","mocks.rs","procedure.rs","selector.rs","sequence.rs","service.rs","table_routes.rs","util.rs"]],\
 "mito":["",[["engine",[["procedure",[],["alter.rs","create.rs","drop.rs"]]],["procedure.rs"]],["manifest",[],["action.rs"]],["table",[["test_util",[],["mock_engine.rs"]]],["test_util.rs"]]],["config.rs","engine.rs","error.rs","lib.rs","manifest.rs","metrics.rs","table.rs"]],\
 "nyc_taxi":["",[],["nyc-taxi.rs"]],\

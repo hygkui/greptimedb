@@ -921,6 +921,26 @@
 <a href="#921" id="921">921</a>
 <a href="#922" id="922">922</a>
 <a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -943,7 +963,14 @@
 
 <span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
-<span class="kw">use </span>common_meta::router::{CreateRequest, DeleteRequest, RouteRequest, RouteResponse};
+<span class="kw">use </span>common_meta::rpc::lock::{LockRequest, LockResponse, UnlockRequest};
+<span class="kw">use </span>common_meta::rpc::router::{CreateRequest, DeleteRequest, RouteRequest, RouteResponse};
+<span class="kw">use </span>common_meta::rpc::store::{
+    BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
+    BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
+    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
+    RangeRequest, RangeResponse,
+};
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>heartbeat::Client <span class="kw">as </span>HeartbeatClient;
 <span class="kw">use </span>lock::Client <span class="kw">as </span>LockClient;
@@ -954,13 +981,6 @@
 <span class="kw">pub use </span><span class="self">self</span>::heartbeat::{HeartbeatSender, HeartbeatStream};
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::{ConvertMetaRequestSnafu, ConvertMetaResponseSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::rpc::lock::{LockRequest, LockResponse, UnlockRequest};
-<span class="kw">use </span><span class="kw">crate</span>::rpc::{
-    BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
-    BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
-    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
-    RangeRequest, RangeResponse,
-};
 
 <span class="kw">pub type </span>Id = (u64, u64);
 
@@ -1174,22 +1194,38 @@
 
     <span class="doccomment">/// Range gets the keys in the range from the key-value store.
     </span><span class="kw">pub async fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: RangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RangeResponse&gt; {
-        <span class="self">self</span>.store_client()<span class="question-mark">?</span>.range(req.into()).<span class="kw">await</span><span class="question-mark">?</span>.try_into()
+        <span class="self">self</span>.store_client()<span class="question-mark">?
+            </span>.range(req.into())
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="doccomment">/// Put puts the given key into the key-value store.
     </span><span class="kw">pub async fn </span>put(<span class="kw-2">&amp;</span><span class="self">self</span>, req: PutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;PutResponse&gt; {
-        <span class="self">self</span>.store_client()<span class="question-mark">?</span>.put(req.into()).<span class="kw">await</span><span class="question-mark">?</span>.try_into()
+        <span class="self">self</span>.store_client()<span class="question-mark">?
+            </span>.put(req.into())
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="doccomment">/// BatchGet atomically get values by the given keys from the key-value store.
     </span><span class="kw">pub async fn </span>batch_get(<span class="kw-2">&amp;</span><span class="self">self</span>, req: BatchGetRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchGetResponse&gt; {
-        <span class="self">self</span>.store_client()<span class="question-mark">?</span>.batch_get(req.into()).<span class="kw">await</span><span class="question-mark">?</span>.try_into()
+        <span class="self">self</span>.store_client()<span class="question-mark">?
+            </span>.batch_get(req.into())
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="doccomment">/// BatchPut atomically puts the given keys into the key-value store.
     </span><span class="kw">pub async fn </span>batch_put(<span class="kw-2">&amp;</span><span class="self">self</span>, req: BatchPutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchPutResponse&gt; {
-        <span class="self">self</span>.store_client()<span class="question-mark">?</span>.batch_put(req.into()).<span class="kw">await</span><span class="question-mark">?</span>.try_into()
+        <span class="self">self</span>.store_client()<span class="question-mark">?
+            </span>.batch_put(req.into())
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="doccomment">/// BatchDelete atomically deletes the given keys from the key-value store.
@@ -1198,6 +1234,7 @@
             </span>.batch_delete(req.into())
             .<span class="kw">await</span><span class="question-mark">?
             </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="doccomment">/// CompareAndPut atomically puts the value to the given updated
@@ -1210,6 +1247,7 @@
             </span>.compare_and_put(req.into())
             .<span class="kw">await</span><span class="question-mark">?
             </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="doccomment">/// DeleteRange deletes the given range from the key-value store.
@@ -1218,6 +1256,7 @@
             </span>.delete_range(req.into())
             .<span class="kw">await</span><span class="question-mark">?
             </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="doccomment">/// MoveValue atomically renames the key to the given updated key.
@@ -1226,6 +1265,7 @@
             </span>.move_value(req.into())
             .<span class="kw">await</span><span class="question-mark">?
             </span>.try_into()
+            .context(ConvertMetaResponseSnafu)
     }
 
     <span class="kw">pub async fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>, req: LockRequest) -&gt; <span class="prelude-ty">Result</span>&lt;LockResponse&gt; {
@@ -1283,7 +1323,7 @@
 
     <span class="kw">use </span>api::v1::meta::{HeartbeatRequest, Peer};
     <span class="kw">use </span>chrono::DateTime;
-    <span class="kw">use </span>common_meta::router::Partition;
+    <span class="kw">use </span>common_meta::rpc::router::Partition;
     <span class="kw">use </span>common_meta::table_name::TableName;
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
     <span class="kw">use </span>datatypes::schema::{ColumnSchema, RawSchema};
