@@ -910,6 +910,12 @@
 <a href="#910" id="910">910</a>
 <a href="#911" id="911">911</a>
 <a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1255,6 +1261,7 @@
 <span class="doccomment">/// Config for [LocalManager].
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>ManagerConfig {
+    <span class="kw">pub </span>parent_path: String,
     <span class="kw">pub </span>max_retry_times: usize,
     <span class="kw">pub </span>retry_delay: Duration,
     <span class="kw">pub </span>remove_outdated_meta_task_interval: Duration,
@@ -1264,6 +1271,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>ManagerConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
+            parent_path: <span class="string">&quot;&quot;</span>.to_string(),
             max_retry_times: <span class="number">3</span>,
             retry_delay: Duration::from_millis(<span class="number">500</span>),
             remove_outdated_meta_task_interval: Duration::from_secs(<span class="number">60 </span>* <span class="number">10</span>),
@@ -1275,7 +1283,7 @@
 <span class="doccomment">/// A [ProcedureManager] that maintains procedure states locally.
 </span><span class="kw">pub struct </span>LocalManager {
     manager_ctx: Arc&lt;ManagerContext&gt;,
-    state_store: StateStoreRef,
+    procedure_store: Arc&lt;ProcedureStore&gt;,
     max_retry_times: usize,
     retry_delay: Duration,
     remove_outdated_meta_task: RepeatedTask&lt;Error&gt;,
@@ -1294,7 +1302,7 @@
         );
         LocalManager {
             manager_ctx,
-            state_store,
+            procedure_store: Arc::new(ProcedureStore::new(<span class="kw-2">&amp;</span>config.parent_path, state_store)),
             max_retry_times: config.max_retry_times,
             retry_delay: config.retry_delay,
             remove_outdated_meta_task,
@@ -1317,7 +1325,7 @@
             exponential_builder: ExponentialBuilder::default()
                 .with_min_delay(<span class="self">self</span>.retry_delay)
                 .with_max_times(<span class="self">self</span>.max_retry_times),
-            store: ProcedureStore::new(<span class="self">self</span>.state_store.clone()),
+            store: <span class="self">self</span>.procedure_store.clone(),
             rolling_back: <span class="bool-val">false</span>,
         };
 
@@ -1378,8 +1386,7 @@
         <span class="macro">logging::info!</span>(<span class="string">&quot;LocalManager start to recover&quot;</span>);
         <span class="kw">let </span>recover_start = Instant::now();
 
-        <span class="kw">let </span>procedure_store = ProcedureStore::new(<span class="self">self</span>.state_store.clone());
-        <span class="kw">let </span>(messages, finished_ids) = procedure_store.load_messages().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>(messages, finished_ids) = <span class="self">self</span>.procedure_store.load_messages().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">for </span>(procedure_id, message) <span class="kw">in </span><span class="kw-2">&amp;</span>messages {
             <span class="kw">if </span>message.parent_id.is_none() {
@@ -1414,7 +1421,7 @@
             );
 
             <span class="kw">for </span>procedure_id <span class="kw">in </span>finished_ids {
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = procedure_store.delete_procedure(procedure_id).<span class="kw">await </span>{
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.procedure_store.delete_procedure(procedure_id).<span class="kw">await </span>{
                     <span class="macro">logging::error!</span>(e; <span class="string">&quot;Failed to delete procedure {}&quot;</span>, procedure_id);
                 }
             }
@@ -1483,7 +1490,7 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::error::Error;
-    <span class="kw">use </span><span class="kw">crate</span>::store::ObjectStateStore;
+    <span class="kw">use </span><span class="kw">crate</span>::store::state_store::ObjectStateStore;
     <span class="kw">use crate</span>::{Context, Procedure, Status};
 
     <span class="attr">#[test]
@@ -1592,6 +1599,7 @@
     </span><span class="kw">fn </span>test_register_loader() {
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;register&quot;</span>);
         <span class="kw">let </span>config = ManagerConfig {
+            parent_path: <span class="string">&quot;data/&quot;</span>.to_string(),
             max_retry_times: <span class="number">3</span>,
             retry_delay: Duration::from_millis(<span class="number">500</span>),
             ..Default::default()
@@ -1614,6 +1622,7 @@
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;recover&quot;</span>);
         <span class="kw">let </span>object_store = test_util::new_object_store(<span class="kw-2">&amp;</span>dir);
         <span class="kw">let </span>config = ManagerConfig {
+            parent_path: <span class="string">&quot;data/&quot;</span>.to_string(),
             max_retry_times: <span class="number">3</span>,
             retry_delay: Duration::from_millis(<span class="number">500</span>),
             ..Default::default()
@@ -1626,7 +1635,7 @@
             .unwrap();
 
         <span class="comment">// Prepare data
-        </span><span class="kw">let </span>procedure_store = ProcedureStore::from(object_store.clone());
+        </span><span class="kw">let </span>procedure_store = ProcedureStore::from_object_store(object_store.clone());
         <span class="kw">let </span>root: BoxedProcedure = Box::new(ProcedureToLoad::new(<span class="string">&quot;test recover manager&quot;</span>));
         <span class="kw">let </span>root_id = ProcedureId::random();
         <span class="comment">// Prepare data for the root procedure.
@@ -1661,6 +1670,7 @@
     </span><span class="kw">async fn </span>test_submit_procedure() {
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;submit&quot;</span>);
         <span class="kw">let </span>config = ManagerConfig {
+            parent_path: <span class="string">&quot;data/&quot;</span>.to_string(),
             max_retry_times: <span class="number">3</span>,
             retry_delay: Duration::from_millis(<span class="number">500</span>),
             ..Default::default()
@@ -1710,6 +1720,7 @@
     </span><span class="kw">async fn </span>test_state_changed_on_err() {
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;on_err&quot;</span>);
         <span class="kw">let </span>config = ManagerConfig {
+            parent_path: <span class="string">&quot;data/&quot;</span>.to_string(),
             max_retry_times: <span class="number">3</span>,
             retry_delay: Duration::from_millis(<span class="number">500</span>),
             ..Default::default()
@@ -1772,6 +1783,7 @@
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;remove_outdated_meta_task&quot;</span>);
         <span class="kw">let </span>object_store = test_util::new_object_store(<span class="kw-2">&amp;</span>dir);
         <span class="kw">let </span>config = ManagerConfig {
+            parent_path: <span class="string">&quot;data/&quot;</span>.to_string(),
             max_retry_times: <span class="number">3</span>,
             retry_delay: Duration::from_millis(<span class="number">500</span>),
             remove_outdated_meta_task_interval: Duration::from_millis(<span class="number">1</span>),

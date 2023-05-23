@@ -571,7 +571,7 @@
     <span class="attr">#[clap(short, long)]
     </span>config_file: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
-    </span>data_dir: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    </span>data_home: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
     </span>wal_dir: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
@@ -627,14 +627,14 @@
             .fail();
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(data_dir) = <span class="kw-2">&amp;</span><span class="self">self</span>.data_dir {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(data_home) = <span class="kw-2">&amp;</span><span class="self">self</span>.data_home {
             opts.storage.store = ObjectStoreConfig::File(FileConfig {
-                data_dir: data_dir.clone(),
+                data_home: data_home.clone(),
             });
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(wal_dir) = <span class="kw-2">&amp;</span><span class="self">self</span>.wal_dir {
-            opts.wal.dir = wal_dir.clone();
+            opts.wal.dir = <span class="prelude-val">Some</span>(wal_dir.clone());
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
@@ -694,7 +694,7 @@
             tcp_nodelay = true
 
             [wal]
-            dir = &quot;/tmp/greptimedb/wal&quot;
+            dir = &quot;/other/wal&quot;
             file_size = &quot;1GB&quot;
             purge_threshold = &quot;50GB&quot;
             purge_interval = &quot;10m&quot;
@@ -703,7 +703,7 @@
 
             [storage]
             type = &quot;File&quot;
-            data_dir = &quot;/tmp/greptimedb/data/&quot;
+            data_home = &quot;/tmp/greptimedb/&quot;
 
             [storage.compaction]
             max_inflight_tasks = 3
@@ -735,6 +735,7 @@
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, options.mysql_runtime_size);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">42</span>), options.node_id);
 
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;/other/wal&quot;</span>, options.wal.dir.unwrap());
         <span class="macro">assert_eq!</span>(Duration::from_secs(<span class="number">600</span>), options.wal.purge_interval);
         <span class="macro">assert_eq!</span>(<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">1024</span>, options.wal.file_size.<span class="number">0</span>);
         <span class="macro">assert_eq!</span>(<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">50</span>, options.wal.purge_threshold.<span class="number">0</span>);
@@ -753,8 +754,8 @@
         <span class="macro">assert!</span>(tcp_nodelay);
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>options.storage.store {
-            ObjectStoreConfig::File(FileConfig { data_dir, .. }) =&gt; {
-                <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/data/&quot;</span>, data_dir)
+            ObjectStoreConfig::File(FileConfig { data_home, .. }) =&gt; {
+                <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/&quot;</span>, data_home)
             }
             ObjectStoreConfig::S3 { .. } =&gt; <span class="macro">unreachable!</span>(),
             ObjectStoreConfig::Oss { .. } =&gt; <span class="macro">unreachable!</span>(),
@@ -854,7 +855,6 @@
             tcp_nodelay = true
 
             [wal]
-            dir = &quot;/tmp/greptimedb/wal&quot;
             file_size = &quot;1GB&quot;
             purge_threshold = &quot;50GB&quot;
             purge_interval = &quot;10m&quot;
@@ -863,7 +863,7 @@
 
             [storage]
             type = &quot;File&quot;
-            data_dir = &quot;/tmp/greptimedb/data/&quot;
+            data_home = &quot;/tmp/greptimedb/&quot;
 
             [storage.compaction]
             max_inflight_tasks = 3
@@ -944,7 +944,7 @@
                 </span><span class="macro">assert_eq!</span>(opts.storage.compaction.max_purge_tasks, <span class="number">32</span>);
 
                 <span class="comment">// Should be read from cli, cli &gt; config file &gt; env &gt; default values.
-                </span><span class="macro">assert_eq!</span>(opts.wal.dir, <span class="string">&quot;/other/wal/dir&quot;</span>);
+                </span><span class="macro">assert_eq!</span>(opts.wal.dir.unwrap(), <span class="string">&quot;/other/wal/dir&quot;</span>);
 
                 <span class="comment">// Should be default value.
                 </span><span class="macro">assert_eq!</span>(

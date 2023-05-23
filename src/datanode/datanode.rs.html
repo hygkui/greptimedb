@@ -431,6 +431,11 @@
 <a href="#431" id="431">431</a>
 <a href="#432" id="432">432</a>
 <a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -444,6 +449,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+</span><span class="doccomment">//! Datanode configurations
 
 </span><span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
@@ -468,6 +475,9 @@
 
 <span class="kw">pub const </span>DEFAULT_OBJECT_STORE_CACHE_SIZE: ReadableSize = ReadableSize(<span class="number">1024</span>);
 
+<span class="doccomment">/// Default data home in file storage
+</span><span class="kw">const </span>DEFAULT_DATA_HOME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;/tmp/greptimedb&quot;</span>;
+
 <span class="doccomment">/// Object storage config
 </span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = <span class="string">&quot;type&quot;</span>)]
@@ -491,7 +501,7 @@
 <span class="attr">#[derive(Debug, Clone, Serialize, Default, Deserialize)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>FileConfig {
-    <span class="kw">pub </span>data_dir: String,
+    <span class="kw">pub </span>data_home: String,
 }
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
@@ -555,7 +565,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>ObjectStoreConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         ObjectStoreConfig::File(FileConfig {
-            data_dir: <span class="string">&quot;/tmp/greptimedb/data/&quot;</span>.to_string(),
+            data_home: DEFAULT_DATA_HOME.to_string(),
         })
     }
 }
@@ -564,7 +574,7 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>WalConfig {
     <span class="comment">// wal directory
-    </span><span class="kw">pub </span>dir: String,
+    </span><span class="kw">pub </span>dir: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="comment">// wal file size in bytes
     </span><span class="kw">pub </span>file_size: ReadableSize,
     <span class="comment">// wal purge threshold in bytes
@@ -581,7 +591,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>WalConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            dir: <span class="string">&quot;/tmp/greptimedb/wal&quot;</span>.to_string(),
+            dir: <span class="prelude-val">None</span>,
             file_size: ReadableSize::gb(<span class="number">1</span>),        <span class="comment">// log file size 1G
             </span>purge_threshold: ReadableSize::gb(<span class="number">50</span>), <span class="comment">// purge threshold 50G
             </span>purge_interval: Duration::from_secs(<span class="number">600</span>),
@@ -775,7 +785,7 @@
 
 <span class="kw">impl </span>Datanode {
     <span class="kw">pub async fn </span>new(opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Datanode&gt; {
-        <span class="kw">let </span>instance = Arc::new(Instance::new(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>);
+        <span class="kw">let </span>instance = Arc::new(Instance::with_opts(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>);
         <span class="kw">let </span>services = <span class="kw">match </span>opts.mode {
             Mode::Distributed =&gt; <span class="prelude-val">Some</span>(Services::try_new(instance.clone(), <span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>),
             Mode::Standalone =&gt; <span class="prelude-val">None</span>,

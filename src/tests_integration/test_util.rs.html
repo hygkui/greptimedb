@@ -402,6 +402,7 @@
 <a href="#402" id="402">402</a>
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -418,7 +419,6 @@
 
 </span><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::net::SocketAddr;
-<span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
@@ -428,6 +428,7 @@
     DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MIN_USER_TABLE_ID, MITO_ENGINE,
 };
 <span class="kw">use </span>common_runtime::Builder <span class="kw">as </span>RuntimeBuilder;
+<span class="kw">use </span>common_test_util::ports;
 <span class="kw">use </span>common_test_util::temp_dir::{create_temp_dir, TempDir};
 <span class="kw">use </span>datanode::datanode::{
     DatanodeOptions, FileConfig, ObjectStoreConfig, OssConfig, ProcedureConfig, S3Config,
@@ -442,8 +443,6 @@
 <span class="kw">use </span>object_store::services::{Oss, S3};
 <span class="kw">use </span>object_store::test_util::TempFolder;
 <span class="kw">use </span>object_store::ObjectStore;
-<span class="kw">use </span>once_cell::sync::OnceCell;
-<span class="kw">use </span>rand::Rng;
 <span class="kw">use </span>secrecy::ExposeSecret;
 <span class="kw">use </span>servers::grpc::GrpcServer;
 <span class="kw">use </span>servers::http::{HttpOptions, HttpServerBuilder};
@@ -456,14 +455,6 @@
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::engine::{EngineContext, TableEngineRef};
 <span class="kw">use </span>table::requests::{CreateTableRequest, TableOptions};
-
-<span class="kw">static </span>PORTS: OnceCell&lt;AtomicUsize&gt; = OnceCell::new();
-
-<span class="kw">fn </span>get_port() -&gt; usize {
-    PORTS
-        .get_or_init(|| AtomicUsize::new(rand::thread_rng().gen_range(<span class="number">3500</span>..<span class="number">3900</span>)))
-        .fetch_add(<span class="number">1</span>, Ordering::Relaxed)
-}
 
 <span class="attr">#[derive(Debug, Eq, PartialEq)]
 </span><span class="kw">pub enum </span>StorageType {
@@ -571,7 +562,7 @@
 
             (
                 ObjectStoreConfig::File(FileConfig {
-                    data_dir: data_tmp_dir.path().to_str().unwrap().to_string(),
+                    data_home: data_tmp_dir.path().to_str().unwrap().to_string(),
                 }),
                 TempDirGuard::File(data_tmp_dir),
             )
@@ -624,7 +615,7 @@
 <span class="kw">pub fn </span>create_datanode_opts(store: ObjectStoreConfig, wal_dir: String) -&gt; DatanodeOptions {
     DatanodeOptions {
         wal: WalConfig {
-            dir: wal_dir,
+            dir: <span class="prelude-val">Some</span>(wal_dir),
             ..Default::default()
         },
         storage: StorageConfig {
@@ -704,7 +695,12 @@
         .<span class="kw">await
         </span>.unwrap();
     instance.start().<span class="kw">await</span>.unwrap();
-    <span class="kw">let </span>http_server = HttpServerBuilder::new(HttpOptions::default())
+
+    <span class="kw">let </span>http_opts = HttpOptions {
+        addr: <span class="macro">format!</span>(<span class="string">&quot;127.0.0.1:{}&quot;</span>, ports::get_port()),
+        ..Default::default()
+    };
+    <span class="kw">let </span>http_server = HttpServerBuilder::new(http_opts)
         .with_sql_handler(ServerSqlQueryHandlerAdaptor::arc(Arc::new(
             frontend_instance,
         )))
@@ -731,8 +727,14 @@
     )
     .<span class="kw">await
     </span>.unwrap();
+
+    <span class="kw">let </span>http_opts = HttpOptions {
+        addr: <span class="macro">format!</span>(<span class="string">&quot;127.0.0.1:{}&quot;</span>, ports::get_port()),
+        ..Default::default()
+    };
+
     <span class="kw">let </span>frontend_ref = Arc::new(frontend);
-    <span class="kw">let </span>http_server = HttpServerBuilder::new(HttpOptions::default())
+    <span class="kw">let </span>http_server = HttpServerBuilder::new(http_opts)
         .with_sql_handler(ServerSqlQueryHandlerAdaptor::arc(frontend_ref.clone()))
         .with_grpc_handler(ServerGrpcQueryHandlerAdaptor::arc(frontend_ref.clone()))
         .with_script_handler(frontend_ref)
@@ -780,7 +782,7 @@
             .unwrap(),
     );
 
-    <span class="kw">let </span>fe_grpc_addr = <span class="macro">format!</span>(<span class="string">&quot;127.0.0.1:{}&quot;</span>, get_port());
+    <span class="kw">let </span>fe_grpc_addr = <span class="macro">format!</span>(<span class="string">&quot;127.0.0.1:{}&quot;</span>, ports::get_port());
 
     <span class="kw">let </span>fe_instance = FeInstance::try_new_standalone(instance.clone())
         .<span class="kw">await

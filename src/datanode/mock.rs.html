@@ -90,7 +90,7 @@
     <span class="kw">pub async fn </span>with_mock_meta_server(opts: <span class="kw-2">&amp;</span>DatanodeOptions, meta_srv: MockInfo) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>meta_client = Arc::new(mock_meta_client(meta_srv, opts.node_id.unwrap_or(<span class="number">42</span>)).<span class="kw">await</span>);
         <span class="kw">let </span>compaction_scheduler = Arc::new(NoopCompactionScheduler::default());
-        Instance::new_with(opts, <span class="prelude-val">Some</span>(meta_client), compaction_scheduler).<span class="kw">await
+        Instance::new(opts, <span class="prelude-val">Some</span>(meta_client), compaction_scheduler).<span class="kw">await
     </span>}
 }
 

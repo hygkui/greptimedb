@@ -546,6 +546,10 @@
 <a href="#546" id="546">546</a>
 <a href="#547" id="547">547</a>
 <a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -977,6 +981,9 @@
     </span>StopProcedureManager {
         source: common_procedure::error::Error,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Missing WAL dir config&quot;</span>))]
+    </span>MissingWalDirConfig { location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1031,6 +1038,7 @@
             | MissingNodeId { .. }
             | MissingMetasrvOpts { .. }
             | ColumnNoneDefaultValue { .. }
+            | MissingWalDirConfig { .. }
             | PrepareImmutableTable { .. } =&gt; StatusCode::InvalidArguments,
 
             EncodeJson { .. } | DecodeJson { .. } | PayloadNotExist { .. } =&gt; {

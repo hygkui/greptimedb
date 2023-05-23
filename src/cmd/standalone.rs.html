@@ -1021,7 +1021,7 @@
         );
         <span class="macro">assert!</span>(fe_opts.influxdb_options.as_ref().unwrap().enable);
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/wal&quot;</span>, dn_opts.wal.dir);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/wal&quot;</span>, dn_opts.wal.dir.unwrap());
         <span class="kw">match </span><span class="kw-2">&amp;</span>dn_opts.storage.store {
             datanode::datanode::ObjectStoreConfig::S3(s3_config) =&gt; {
                 <span class="macro">assert_eq!</span>(
