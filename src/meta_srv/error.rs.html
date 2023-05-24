@@ -462,6 +462,12 @@
 <a href="#462" id="462">462</a>
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -476,13 +482,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::string::FromUtf8Error;
-
-<span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+</span><span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>snafu::Location;
 <span class="kw">use </span>tokio::sync::mpsc::error::SendError;
 <span class="kw">use </span>tonic::codegen::http;
-<span class="kw">use </span>tonic::{Code, Status};
+<span class="kw">use </span>tonic::Code;
 
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
@@ -737,7 +741,7 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid utf-8 value, source: {:?}&quot;</span>, source))]
     </span>InvalidUtf8Value {
-        source: FromUtf8Error,
+        source: std::string::FromUtf8Error,
         location: Location,
     },
 
@@ -817,13 +821,21 @@
         <span class="attr">#[snafu(backtrace)]
         </span>source: common_meta::error::Error,
     },
+
+    <span class="comment">// this error is used for custom error mapping
+    // please do not delete it
+    </span><span class="attr">#[snafu(display(<span class="string">&quot;Other error, source: {}&quot;</span>, source))]
+    </span>Other {
+        source: BoxedError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
 
-<span class="kw">impl </span>From&lt;Error&gt; <span class="kw">for </span>Status {
+<span class="kw">impl </span>From&lt;Error&gt; <span class="kw">for </span>tonic::Status {
     <span class="kw">fn </span>from(err: Error) -&gt; <span class="self">Self </span>{
-        Status::new(Code::Internal, err.to_string())
+        tonic::Status::new(Code::Internal, err.to_string())
     }
 }
 
@@ -897,14 +909,14 @@
             Error::RegionFailoverCandidatesNotFound { .. } =&gt; StatusCode::RuntimeResourcesExhausted,
 
             Error::RegisterProcedureLoader { source, .. } =&gt; source.status_code(),
-
             Error::TableRouteConversion { source } =&gt; source.status_code(),
+            Error::Other { source, .. } =&gt; source.status_code(),
         }
     }
 }
 
 <span class="comment">// for form tonic
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>match_for_io_error(err_status: <span class="kw-2">&amp;</span>Status) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>std::io::Error&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>match_for_io_error(err_status: <span class="kw-2">&amp;</span>tonic::Status) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>std::io::Error&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>err: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>) = err_status;
 
     <span class="kw">loop </span>{
