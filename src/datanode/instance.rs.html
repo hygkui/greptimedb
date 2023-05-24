@@ -476,6 +476,8 @@
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MIN_USER_TABLE_ID};
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
+<span class="kw">use </span>common_meta::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
+<span class="kw">use </span>common_meta::heartbeat::handler::HandlerGroupExecutor;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 <span class="kw">use </span>common_procedure::store::state_store::ObjectStateStore;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
@@ -512,8 +514,6 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::close_region::CloseRegionHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::open_region::OpenRegionHandler;
-<span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
-<span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::HandlerGroupExecutor;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
 <span class="kw">use </span><span class="kw">crate</span>::sql::{SqlHandler, SqlRequest};
 <span class="kw">use </span><span class="kw">crate</span>::store;

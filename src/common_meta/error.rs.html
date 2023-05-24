@@ -49,6 +49,32 @@
 <a href="#49" id="49">49</a>
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -64,11 +90,30 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>serde_json::error::Error <span class="kw">as </span>JsonError;
 <span class="kw">use </span>snafu::Location;
 
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json, source: {}&quot;</span>, source))]
+    </span>EncodeJson {
+        location: Location,
+        source: JsonError,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode object from json, source: {}&quot;</span>, source))]
+    </span>DecodeJson {
+        location: Location,
+        source: JsonError,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Payload not exist&quot;</span>))]
+    </span>PayloadNotExist { location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to send message: {err_msg}&quot;</span>))]
+    </span>SendMessage { err_msg: String, location: Location },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serde json, source: {}&quot;</span>, source))]
     </span>SerdeJson {
         source: serde_json::error::Error,
@@ -90,9 +135,16 @@
 
 <span class="kw">impl </span>ErrorExt <span class="kw">for </span>Error {
     <span class="kw">fn </span>status_code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
+        <span class="kw">use </span>Error::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="self">self </span>{
-            Error::IllegalServerState { .. } =&gt; StatusCode::Internal,
-            Error::SerdeJson { .. } | Error::RouteInfoCorrupted { .. } =&gt; StatusCode::Unexpected,
+            IllegalServerState { .. } =&gt; StatusCode::Internal,
+            SerdeJson { .. } | RouteInfoCorrupted { .. } =&gt; StatusCode::Unexpected,
+
+            SendMessage { .. } =&gt; StatusCode::Internal,
+
+            EncodeJson { .. } | DecodeJson { .. } | PayloadNotExist { .. } =&gt; {
+                StatusCode::Unexpected
+            }
         }
     }
 

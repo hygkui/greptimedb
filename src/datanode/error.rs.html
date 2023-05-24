@@ -581,6 +581,17 @@
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
 <a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -608,14 +619,6 @@
 </span><span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to check region in table: {}, source: {}&quot;</span>, table_name, source))]
-    </span>CheckRegion {
-        table_name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: TableError,
-        region_number: RegionNumber,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to access catalog, source: {}&quot;</span>, source))]
     </span>AccessCatalog {
         <span class="attr">#[snafu(backtrace)]
@@ -629,6 +632,13 @@
         </span>source: catalog::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to register table: {}, source: {}&quot;</span>, table_name, source))]
+    </span>RegisterTable {
+        table_name: String,
+        location: Location,
+        source: catalog::error::Error,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open table: {}, source: {}&quot;</span>, table_name, source))]
     </span>OpenTable {
         table_name: String,
@@ -636,11 +646,11 @@
         </span>source: TableError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to register table: {}, source: {}&quot;</span>, table_name, source))]
-    </span>RegisterTable {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get table: {}, source: {}&quot;</span>, table_name, source))]
+    </span>GetTable {
         table_name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: catalog::error::Error,
+        location: Location,
+        source: TableError,
     },
 
     <span class="attr">#[snafu(display(
@@ -656,8 +666,24 @@
         </span>source: TableError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to send message: {err_msg}&quot;</span>))]
-    </span>SendMessage { err_msg: String, location: Location },
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to check region {} in table: {}, source: {}&quot;</span>,
+        region_number,
+        table_name,
+        source
+    ))]
+    </span>CheckRegion {
+        table_name: String,
+        location: Location,
+        source: TableError,
+        region_number: RegionNumber,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response, source: {}&quot;</span>, source))]
+    </span>HandleHeartbeatResponse {
+        location: Location,
+        source: common_meta::error::Error,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute sql, source: {}&quot;</span>, source))]
     </span>ExecuteSql {
@@ -706,13 +732,6 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create table: {}, source: {}&quot;</span>, table_name, source))]
     </span>CreateTable {
-        table_name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: TableError,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get table: {}, source: {}&quot;</span>, table_name, source))]
-    </span>GetTable {
         table_name: String,
         <span class="attr">#[snafu(backtrace)]
         </span>source: TableError,
@@ -1021,7 +1040,7 @@
         source: JsonError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode object into json, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode object from json, source: {}&quot;</span>, source))]
     </span>DecodeJson {
         location: Location,
         source: JsonError,
@@ -1055,19 +1074,14 @@
             | ExecuteStatement { source }
             | ExecuteLogicalPlan { source } =&gt; source.status_code(),
 
-            OpenTable { source, .. } =&gt; source.status_code(),
-            RegisterTable { source, .. }
-            | DeregisterTable { source, .. }
-            | AccessCatalog { source, .. } =&gt; source.status_code(),
+            HandleHeartbeatResponse { source, .. } =&gt; source.status_code(),
 
             DecodeLogicalPlan { source } =&gt; source.status_code(),
             NewCatalog { source } | RegisterSchema { source } =&gt; source.status_code(),
             FindTable { source, .. } =&gt; source.status_code(),
-            CreateTable { source, .. } | CheckRegion { source, .. } =&gt; source.status_code(),
+            CreateTable { source, .. } =&gt; source.status_code(),
             DropTable { source, .. } =&gt; source.status_code(),
             FlushTable { source, .. } =&gt; source.status_code(),
-            GetTable { source, .. } =&gt; source.status_code(),
-            CloseTable { source, .. } =&gt; source.status_code(),
 
             Insert { source, .. } =&gt; source.status_code(),
             Delete { source, .. } =&gt; source.status_code(),
@@ -1107,6 +1121,15 @@
                 StatusCode::Unexpected
             }
 
+            AccessCatalog { source, .. }
+            | DeregisterTable { source, .. }
+            | RegisterTable { source, .. } =&gt; source.status_code(),
+
+            CheckRegion { source, .. }
+            | OpenTable { source, .. }
+            | CloseTable { source, .. }
+            | GetTable { source, .. } =&gt; source.status_code(),
+
             <span class="comment">// TODO(yingwen): Further categorize http error.
             </span>StartServer { .. }
             | ParseAddr { .. }
@@ -1117,8 +1140,7 @@
             | IncorrectInternalState { .. }
             | ShutdownServer { .. }
             | ShutdownInstance { .. }
-            | CloseTableEngine { .. }
-            | SendMessage { .. } =&gt; StatusCode::Internal,
+            | CloseTableEngine { .. } =&gt; StatusCode::Internal,
 
             InitBackend { .. } =&gt; StatusCode::StorageUnavailable,
 

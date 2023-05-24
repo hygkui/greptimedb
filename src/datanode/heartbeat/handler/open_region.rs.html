@@ -213,6 +213,8 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -232,6 +234,10 @@
 <span class="kw">use </span>catalog::error::Error <span class="kw">as </span>CatalogError;
 <span class="kw">use </span>catalog::{CatalogManagerRef, RegisterTableRequest};
 <span class="kw">use </span>common_catalog::format_full_table_name;
+<span class="kw">use </span>common_meta::error::Result <span class="kw">as </span>MetaResult;
+<span class="kw">use </span>common_meta::heartbeat::handler::{
+    HandleControl, HeartbeatResponseHandler, HeartbeatResponseHandlerContext,
+};
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, RegionIdent, SimpleReply};
 <span class="kw">use </span>common_telemetry::{error, warn};
 <span class="kw">use </span>snafu::ResultExt;
@@ -241,8 +247,6 @@
 <span class="kw">use </span>table::requests::OpenTableRequest;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::{HandleControl, HeartbeatResponseHandler};
-<span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatResponseHandlerContext;
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>OpenRegionHandler {
@@ -258,7 +262,7 @@
         )
     }
 
-    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
+    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; MetaResult&lt;HandleControl&gt; {
         <span class="kw">let </span><span class="prelude-val">Some</span>((meta, Instruction::OpenRegion(region_ident))) = ctx.incoming_message.take() <span class="kw">else </span>{
             <span class="macro">unreachable!</span>(<span class="string">&quot;OpenRegionHandler: should be guarded by &#39;is_acceptable&#39;&quot;</span>);
         };

@@ -277,7 +277,6 @@
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -298,23 +297,20 @@
 
 <span class="kw">use </span>api::v1::meta::{HeartbeatRequest, NodeStat, Peer};
 <span class="kw">use </span>catalog::{datanode_stat, CatalogManagerRef};
+<span class="kw">use </span>common_meta::heartbeat::handler::{
+    HeartbeatResponseHandlerContext, HeartbeatResponseHandlerExecutorRef,
+};
+<span class="kw">use </span>common_meta::heartbeat::mailbox::{HeartbeatMailbox, MailboxRef};
+<span class="kw">use </span>common_meta::heartbeat::utils::outgoing_message_to_mailbox_message;
 <span class="kw">use </span>common_telemetry::{error, info, trace, warn};
-<span class="kw">use </span>mailbox::{HeartbeatMailbox, MailboxRef};
 <span class="kw">use </span>meta_client::client::{HeartbeatSender, MetaClient};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>tokio::sync::mpsc;
 <span class="kw">use </span>tokio::time::Instant;
 
-<span class="kw">use </span><span class="self">self</span>::handler::{HeartbeatResponseHandlerContext, HeartbeatResponseHandlerExecutorRef};
-<span class="kw">use </span><span class="self">self</span>::utils::outgoing_message_to_mailbox_message;
-<span class="kw">use </span><span class="kw">crate</span>::error::{MetaClientInitSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MetaClientInitSnafu, <span class="prelude-ty">Result</span>};
 
-<span class="kw">pub mod </span>handler;
-<span class="kw">pub mod </span>utils;
-
-<span class="comment">// TODO(weny): remove allow dead_code
-</span><span class="attr">#[allow(dead_code)]
-</span><span class="kw">pub mod </span>mailbox;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>handler;
 
 <span class="kw">pub struct </span>HeartbeatTask {
     node_id: u64,
@@ -394,7 +390,9 @@
         handler_executor: HeartbeatResponseHandlerExecutorRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">trace!</span>(<span class="string">&quot;heartbeat response: {:?}&quot;</span>, ctx.response);
-        handler_executor.handle(ctx)
+        handler_executor
+            .handle(ctx)
+            .context(error::HandleHeartbeatResponseSnafu)
     }
 
     <span class="doccomment">/// Start heartbeat task, spawn background task.

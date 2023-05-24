@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"common_meta":[],
+"datanode":[["impl HeartbeatResponseHandler for <a class=\"struct\" href=\"datanode/heartbeat/handler/open_region/struct.OpenRegionHandler.html\" title=\"struct datanode::heartbeat::handler::open_region::OpenRegionHandler\">OpenRegionHandler</a>"],["impl HeartbeatResponseHandler for <a class=\"struct\" href=\"datanode/heartbeat/handler/close_region/struct.CloseRegionHandler.html\" title=\"struct datanode::heartbeat::handler::close_region::CloseRegionHandler\">CloseRegionHandler</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

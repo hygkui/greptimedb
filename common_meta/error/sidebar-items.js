@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["IllegalServerStateSnafu","RouteInfoCorruptedSnafu","SerdeJsonSnafu"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["DecodeJsonSnafu","EncodeJsonSnafu","IllegalServerStateSnafu","PayloadNotExistSnafu","RouteInfoCorruptedSnafu","SendMessageSnafu","SerdeJsonSnafu"],"type":["Result"]};
