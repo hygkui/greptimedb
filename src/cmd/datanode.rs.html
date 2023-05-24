@@ -478,6 +478,7 @@
 <a href="#478" id="478">478</a>
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -593,8 +594,9 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_opts.log_dir {
             opts.logging.dir = dir;
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(level) = top_level_opts.log_level {
-            opts.logging.level = level;
+
+        <span class="kw">if </span>top_level_opts.log_level.is_some() {
+            opts.logging.level = top_level_opts.log_level;
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.rpc_addr {
@@ -780,7 +782,7 @@
             options.storage.manifest,
         );
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>.to_string(), options.logging.level);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, options.logging.level.unwrap());
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>.to_string(), options.logging.dir);
     }
 
@@ -833,7 +835,7 @@
 
         <span class="kw">let </span>logging_opt = options.logging_options();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, logging_opt.dir);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opt.level);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opt.level.as_ref().unwrap());
     }
 
     <span class="attr">#[test]

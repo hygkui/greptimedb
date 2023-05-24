@@ -570,6 +570,7 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -799,8 +800,9 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_options.log_dir {
             opts.logging.dir = dir;
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(level) = top_level_options.log_level {
-            opts.logging.level = level;
+
+        <span class="kw">if </span>top_level_options.log_level.is_some() {
+            opts.logging.level = top_level_options.log_level;
         }
 
         <span class="kw">let </span>tls_opts = TlsOption::new(
@@ -1034,7 +1036,7 @@
             }
         }
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>.to_string(), logging_opts.level);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opts.level.as_ref().unwrap());
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>.to_string(), logging_opts.dir);
     }
 
@@ -1055,7 +1057,7 @@
         };
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, opts.logging.dir);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, opts.logging.level);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, opts.logging.level.unwrap());
     }
 
     <span class="attr">#[test]
@@ -1125,7 +1127,7 @@
                 </span><span class="macro">assert_eq!</span>(opts.logging.dir, <span class="string">&quot;/other/log/dir&quot;</span>);
 
                 <span class="comment">// Should be read from config file, config file &gt; env &gt; default values.
-                </span><span class="macro">assert_eq!</span>(opts.logging.level, <span class="string">&quot;debug&quot;</span>);
+                </span><span class="macro">assert_eq!</span>(opts.logging.level.as_ref().unwrap(), <span class="string">&quot;debug&quot;</span>);
 
                 <span class="comment">// Should be read from cli, cli &gt; config file &gt; env &gt; default values.
                 </span><span class="macro">assert_eq!</span>(

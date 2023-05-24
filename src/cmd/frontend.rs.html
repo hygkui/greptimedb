@@ -478,6 +478,7 @@
 <a href="#478" id="478">478</a>
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -614,8 +615,9 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_opts.log_dir {
             opts.logging.dir = dir;
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(level) = top_level_opts.log_level {
-            opts.logging.level = level;
+
+        <span class="kw">if </span>top_level_opts.log_level.is_some() {
+            opts.logging.level = top_level_opts.log_level;
         }
 
         <span class="kw">let </span>tls_opts = TlsOption::new(
@@ -776,7 +778,7 @@
             [http_options]
             addr = &quot;127.0.0.1:4000&quot;
             timeout = &quot;30s&quot;
-            
+
             [logging]
             level = &quot;debug&quot;
             dir = &quot;/tmp/greptimedb/test/logs&quot;
@@ -801,7 +803,7 @@
             fe_opts.http_options.as_ref().unwrap().timeout
         );
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>.to_string(), fe_opts.logging.level);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, fe_opts.logging.level.as_ref().unwrap());
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>.to_string(), fe_opts.logging.dir);
     }
 
@@ -845,7 +847,7 @@
 
         <span class="kw">let </span>logging_opt = options.logging_options();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, logging_opt.dir);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opt.level);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, logging_opt.level.as_ref().unwrap());
     }
 
     <span class="attr">#[test]
@@ -856,7 +858,7 @@
 
             [http_options]
             addr = &quot;127.0.0.1:4000&quot;
-            
+
             [meta_client_options]
             timeout_millis = 3000
             connect_timeout_millis = 5000
