@@ -129,6 +129,17 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -147,7 +158,7 @@
 <span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">pub use </span>client::MetaKvBackend;
+<span class="kw">pub use </span>client::CachedMetaKvBackend;
 <span class="kw">use </span>futures::Stream;
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">pub use </span>manager::{RemoteCatalogManager, RemoteCatalogProvider, RemoteSchemaProvider};
@@ -205,6 +216,13 @@
 
 <span class="kw">pub type </span>KvBackendRef = Arc&lt;<span class="kw">dyn </span>KvBackend&gt;;
 
+<span class="attr">#[async_trait::async_trait]
+</span><span class="kw">pub trait </span>KvCacheInvalidator: Send + Sync {
+    <span class="kw">async fn </span>invalidate_key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]);
+}
+
+<span class="kw">pub type </span>KvCacheInvalidatorRef = Arc&lt;<span class="kw">dyn </span>KvCacheInvalidator&gt;;
+
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>async_stream::stream;
@@ -250,12 +268,16 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_get() {
         <span class="kw">let </span>backend = MockKvBackend {};
+
         <span class="kw">let </span>result = backend.get(<span class="number">0</span>.to_string().as_bytes()).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(<span class="number">0</span>.to_string().as_bytes(), result.unwrap().unwrap().<span class="number">0</span>);
+
         <span class="kw">let </span>result = backend.get(<span class="number">1</span>.to_string().as_bytes()).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(<span class="number">1</span>.to_string().as_bytes(), result.unwrap().unwrap().<span class="number">0</span>);
+
         <span class="kw">let </span>result = backend.get(<span class="number">2</span>.to_string().as_bytes()).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(<span class="number">2</span>.to_string().as_bytes(), result.unwrap().unwrap().<span class="number">0</span>);
+
         <span class="kw">let </span>result = backend.get(<span class="number">3</span>.to_string().as_bytes()).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.unwrap().is_none());
     }

@@ -274,7 +274,6 @@
 <a href="#274" id="274">274</a>
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -293,7 +292,7 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Instant;
 
-<span class="kw">use </span>catalog::remote::MetaKvBackend;
+<span class="kw">use </span>catalog::remote::CachedMetaKvBackend;
 <span class="kw">use </span>client::{Client, Database, DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::ErrorExt;
 <span class="kw">use </span>common_query::Output;
@@ -530,9 +529,7 @@
         </span>.context(StartMetaClientSnafu)<span class="question-mark">?</span>;
     <span class="kw">let </span>meta_client = Arc::new(meta_client);
 
-    <span class="kw">let </span>backend = Arc::new(MetaKvBackend {
-        client: meta_client.clone(),
-    });
+    <span class="kw">let </span>cached_meta_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
 
     <span class="kw">let </span>table_routes = Arc::new(TableRoutes::new(meta_client));
     <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(table_routes));
@@ -540,7 +537,8 @@
     <span class="kw">let </span>datanode_clients = Arc::new(DatanodeClients::default());
 
     <span class="kw">let </span>catalog_list = Arc::new(FrontendCatalogManager::new(
-        backend,
+        cached_meta_backend.clone(),
+        cached_meta_backend,
         partition_manager,
         datanode_clients,
     ));
