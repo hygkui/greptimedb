@@ -201,6 +201,7 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -274,7 +275,9 @@
         </span><span class="kw">let </span>dir =
             env::var(<span class="string">&quot;UNITTEST_LOG_DIR&quot;</span>).unwrap_or_else(|<span class="kw">_</span>| <span class="string">&quot;/tmp/__unittest_logs&quot;</span>.to_string());
 
-        <span class="kw">let </span>level = env::var(<span class="string">&quot;UNITTEST_LOG_LEVEL&quot;</span>).unwrap_or_else(|<span class="kw">_</span>| <span class="string">&quot;DEBUG&quot;</span>.to_string());
+        <span class="kw">let </span>level = env::var(<span class="string">&quot;UNITTEST_LOG_LEVEL&quot;</span>).unwrap_or_else(|<span class="kw">_</span>|
+            <span class="string">&quot;debug,hyper=warn,tower=warn,datafusion=warn,reqwest=warn,sqlparser=warn,h2=info,opendal=info&quot;</span>.to_string()
+        );
         <span class="kw">let </span>opts = LoggingOptions {
             dir: dir.clone(),
             level: <span class="prelude-val">Some</span>(level),
@@ -293,8 +296,7 @@
 <span class="kw">static </span>GLOBAL_UT_LOG_GUARD: Lazy&lt;Arc&lt;Mutex&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;WorkerGuard&gt;&gt;&gt;&gt;&gt; =
     Lazy::new(|| Arc::new(Mutex::new(<span class="prelude-val">None</span>)));
 
-<span class="kw">const </span>DEFAULT_LOG_TARGETS: <span class="kw-2">&amp;</span>str =
-    <span class="string">&quot;info,hyper=warn,tower=warn,datafusion=warn,reqwest=warn,sqlparser=warn,h2=info,opendal=info&quot;</span>;
+<span class="kw">const </span>DEFAULT_LOG_TARGETS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;info&quot;</span>;
 
 <span class="attr">#[allow(clippy::print_stdout)]
 </span><span class="kw">pub fn </span>init_global_logging(
