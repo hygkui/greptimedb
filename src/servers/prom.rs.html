@@ -814,6 +814,10 @@
 <a href="#814" id="814">814</a>
 <a href="#815" id="815">815</a>
 <a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -836,7 +840,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>axum::body::BoxBody;
 <span class="kw">use </span>axum::extract::{Path, Query, State};
-<span class="kw">use </span>axum::{routing, Form, Json, Router};
+<span class="kw">use </span>axum::{middleware, routing, Form, Json, Router};
 <span class="kw">use </span>common_catalog::consts::DEFAULT_SCHEMA_NAME;
 <span class="kw">use </span>common_error::prelude::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
@@ -872,6 +876,7 @@
     StartHttpSnafu, UnexpectedResultSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::http::authorize::HttpAuth;
+<span class="kw">use </span><span class="kw">crate</span>::http::track_metrics;
 <span class="kw">use </span><span class="kw">crate</span>::prometheus::{FIELD_COLUMN_NAME, TIMESTAMP_COLUMN_NAME};
 <span class="kw">use </span><span class="kw">crate</span>::server::Server;
 
@@ -930,6 +935,9 @@
                         HttpAuth::&lt;BoxBody&gt;::new(<span class="self">self</span>.user_provider.clone()),
                     )),
             )
+            <span class="comment">// We need to register the metrics layer again since start a new http server
+            // for the PromServer.
+            </span>.route_layer(middleware::from_fn(track_metrics))
     }
 }
 

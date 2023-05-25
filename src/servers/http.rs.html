@@ -807,6 +807,47 @@
 <a href="#807" id="807">807</a>
 <a href="#808" id="808">808</a>
 <a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -836,20 +877,23 @@
 
 <span class="kw">use </span>std::net::SocketAddr;
 <span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::time::Duration;
+<span class="kw">use </span>std::time::{Duration, Instant};
 
 <span class="kw">use </span>aide::axum::{routing <span class="kw">as </span>apirouting, ApiRouter, IntoApiResponse};
 <span class="kw">use </span>aide::openapi::{Info, OpenApi, Server <span class="kw">as </span>OpenAPIServer};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>axum::body::BoxBody;
 <span class="kw">use </span>axum::error_handling::HandleErrorLayer;
-<span class="kw">use </span>axum::response::{Html, Json};
+<span class="kw">use </span>axum::extract::MatchedPath;
+<span class="kw">use </span>axum::http::Request;
+<span class="kw">use </span>axum::middleware::{<span class="self">self</span>, Next};
+<span class="kw">use </span>axum::response::{Html, IntoResponse, Json};
 <span class="kw">use </span>axum::{routing, BoxError, Extension, Router};
 <span class="kw">use </span>common_error::prelude::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::{util, RecordBatch};
-<span class="kw">use </span>common_telemetry::logging::info;
+<span class="kw">use </span>common_telemetry::logging::{<span class="self">self</span>, info};
 <span class="kw">use </span>datatypes::data_type::DataType;
 <span class="kw">use </span>futures::FutureExt;
 <span class="kw">use </span>schemars::JsonSchema;
@@ -870,6 +914,10 @@
 <span class="kw">use </span><span class="kw">crate</span>::configurator::ConfiguratorRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{AlreadyStartedSnafu, <span class="prelude-ty">Result</span>, StartHttpSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::http::admin::flush;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{
+    METRIC_HTTP_REQUESTS_ELAPSED, METRIC_HTTP_REQUESTS_TOTAL, METRIC_METHOD_LABEL,
+    METRIC_PATH_LABEL, METRIC_STATUS_LABEL,
+};
 <span class="kw">use </span><span class="kw">crate</span>::metrics_handler::MetricsHandler;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::grpc::ServerGrpcQueryHandlerRef;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::sql::ServerSqlQueryHandlerRef;
@@ -1338,6 +1386,10 @@
                 );
             }
         }
+
+        <span class="comment">// Add a layer to collect HTTP metrics for axum.
+        </span>router = router.route_layer(middleware::from_fn(track_metrics));
+
         router
     }
 
@@ -1409,6 +1461,34 @@
     }
 }
 
+<span class="doccomment">/// A middleware to record metrics for HTTP.
+</span><span class="comment">// Based on https://github.com/tokio-rs/axum/blob/axum-v0.6.16/examples/prometheus-metrics/src/main.rs
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>track_metrics&lt;B&gt;(req: Request&lt;B&gt;, next: Next&lt;B&gt;) -&gt; <span class="kw">impl </span>IntoResponse {
+    <span class="kw">let </span>start = Instant::now();
+    <span class="kw">let </span>path = <span class="kw">if let </span><span class="prelude-val">Some</span>(matched_path) = req.extensions().get::&lt;MatchedPath&gt;() {
+        matched_path.as_str().to_owned()
+    } <span class="kw">else </span>{
+        req.uri().path().to_owned()
+    };
+    <span class="kw">let </span>method = req.method().clone();
+
+    <span class="kw">let </span>response = next.run(req).<span class="kw">await</span>;
+
+    <span class="kw">let </span>latency = start.elapsed().as_secs_f64();
+    <span class="kw">let </span>status = response.status().as_u16().to_string();
+
+    <span class="kw">let </span>labels = [
+        (METRIC_METHOD_LABEL, method.to_string()),
+        (METRIC_PATH_LABEL, path),
+        (METRIC_STATUS_LABEL, status),
+    ];
+
+    <span class="macro">metrics::increment_counter!</span>(METRIC_HTTP_REQUESTS_TOTAL, <span class="kw-2">&amp;</span>labels);
+    <span class="macro">metrics::histogram!</span>(METRIC_HTTP_REQUESTS_ELAPSED, latency, <span class="kw-2">&amp;</span>labels);
+
+    response
+}
+
 <span class="kw">pub const </span>HTTP_SERVER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;HTTP_SERVER&quot;</span>;
 
 <span class="attr">#[async_trait]
@@ -1461,6 +1541,8 @@
 
 <span class="doccomment">/// handle error middleware
 </span><span class="kw">async fn </span>handle_error(err: BoxError) -&gt; Json&lt;JsonResponse&gt; {
+    <span class="macro">logging::error!</span>(<span class="string">&quot;Unhandled internal error: {}&quot;</span>, err);
+
     Json(JsonResponse::with_error(
         <span class="macro">format!</span>(<span class="string">&quot;Unhandled internal error: {err}&quot;</span>),
         StatusCode::Unexpected,
