@@ -320,7 +320,7 @@
     meta_client: Arc&lt;MetaClient&gt;,
     catalog_manager: CatalogManagerRef,
     interval: u64,
-    heartbeat_response_handler_exector: HeartbeatResponseHandlerExecutorRef,
+    resp_handler_executor: HeartbeatResponseHandlerExecutorRef,
 }
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>HeartbeatTask {
@@ -337,7 +337,7 @@
         server_hostname: <span class="prelude-ty">Option</span>&lt;String&gt;,
         meta_client: Arc&lt;MetaClient&gt;,
         catalog_manager: CatalogManagerRef,
-        heartbeat_response_handler_exector: HeartbeatResponseHandlerExecutorRef,
+        resp_handler_executor: HeartbeatResponseHandlerExecutorRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             node_id,
@@ -347,7 +347,7 @@
             meta_client,
             catalog_manager,
             interval: <span class="number">5_000</span>, <span class="comment">// default interval is set to 5 secs
-            </span>heartbeat_response_handler_exector,
+            </span>resp_handler_executor,
         }
     }
 
@@ -374,7 +374,7 @@
 
                 <span class="kw">let </span>ctx = HeartbeatResponseHandlerContext::new(mailbox.clone(), res);
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">Self</span>::handle_response(ctx, handler_executor.clone()) {
-                    <span class="macro">error!</span>(e;<span class="string">&quot;Error while handling heartbeat response&quot;</span>);
+                    <span class="macro">error!</span>(e; <span class="string">&quot;Error while handling heartbeat response&quot;</span>);
                 }
                 <span class="kw">if </span>!running.load(Ordering::Acquire) {
                     <span class="macro">info!</span>(<span class="string">&quot;Heartbeat task shutdown&quot;</span>);
@@ -413,7 +413,7 @@
         <span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.clone();
         <span class="kw">let </span>catalog_manager_clone = <span class="self">self</span>.catalog_manager.clone();
 
-        <span class="kw">let </span>handler_executor = <span class="self">self</span>.heartbeat_response_handler_exector.clone();
+        <span class="kw">let </span>handler_executor = <span class="self">self</span>.resp_handler_executor.clone();
 
         <span class="kw">let </span>(outgoing_tx, <span class="kw-2">mut </span>outgoing_rx) = mpsc::channel(<span class="number">16</span>);
         <span class="kw">let </span>mailbox = Arc::new(HeartbeatMailbox::new(outgoing_tx));

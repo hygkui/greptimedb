@@ -642,6 +642,14 @@
 <a href="#642" id="642">642</a>
 <a href="#643" id="643">643</a>
 <a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -668,6 +676,12 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response, source: {}&quot;</span>, source))]
+    </span>HandleHeartbeatResponse {
+        location: Location,
+        source: common_meta::error::Error,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;{source}&quot;</span>))]
     </span>External {
         <span class="attr">#[snafu(backtrace)]
@@ -1184,6 +1198,8 @@
             | Error::ProjectSchema { .. } =&gt; StatusCode::InvalidArguments,
 
             Error::NotSupported { .. } =&gt; StatusCode::Unsupported,
+
+            Error::HandleHeartbeatResponse { source, .. } =&gt; source.status_code(),
 
             Error::RuntimeResource { source, .. } =&gt; source.status_code(),
             Error::ExecutePromql { source, .. } =&gt; source.status_code(),

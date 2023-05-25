@@ -134,6 +134,39 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -183,6 +216,33 @@
     }
 }
 
+<span class="attr">#[derive(Eq, Hash, PartialEq, Clone, Debug, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>TableIdent {
+    <span class="kw">pub </span>cluster_id: ClusterId,
+    <span class="kw">pub </span>datanode_id: DatanodeId,
+    <span class="kw">pub </span>catalog: String,
+    <span class="kw">pub </span>schema: String,
+    <span class="kw">pub </span>table: String,
+    <span class="kw">pub </span>table_id: u32,
+    <span class="kw">pub </span>engine: String,
+}
+
+<span class="kw">impl </span>Display <span class="kw">for </span>TableIdent {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="macro">write!</span>(
+            f,
+            <span class="string">&quot;TableIdent(datanode_id=&#39;{}.{}&#39;, table_id=&#39;{}&#39;, table_name=&#39;{}.{}.{}&#39;, table_engine=&#39;{}&#39;)&quot;</span>,
+            <span class="self">self</span>.cluster_id,
+            <span class="self">self</span>.datanode_id,
+            <span class="self">self</span>.table_id,
+            <span class="self">self</span>.catalog,
+            <span class="self">self</span>.schema,
+            <span class="self">self</span>.table,
+            <span class="self">self</span>.engine,
+        )
+    }
+}
+
 <span class="attr">#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 </span><span class="kw">pub struct </span>SimpleReply {
     <span class="kw">pub </span>result: bool,
@@ -200,6 +260,7 @@
 </span><span class="kw">pub enum </span>Instruction {
     OpenRegion(RegionIdent),
     CloseRegion(RegionIdent),
+    InvalidateTableCache(TableIdent),
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>Instruction {
@@ -207,6 +268,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::OpenRegion(region) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Instruction::OpenRegion({})&quot;</span>, region),
             <span class="self">Self</span>::CloseRegion(region) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Instruction::CloseRegion({})&quot;</span>, region),
+            <span class="self">Self</span>::InvalidateTableCache(table) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Instruction::Invalidate({})&quot;</span>, table),
         }
     }
 }
@@ -216,6 +278,7 @@
 </span><span class="kw">pub enum </span>InstructionReply {
     OpenRegion(SimpleReply),
     CloseRegion(SimpleReply),
+    InvalidateTableCache(SimpleReply),
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>InstructionReply {
@@ -223,6 +286,9 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::OpenRegion(reply) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;InstructionReply::OpenRegion({})&quot;</span>, reply),
             <span class="self">Self</span>::CloseRegion(reply) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;InstructionReply::CloseRegion({})&quot;</span>, reply),
+            <span class="self">Self</span>::InvalidateTableCache(reply) =&gt; {
+                <span class="macro">write!</span>(f, <span class="string">&quot;InstructionReply::Invalidate({})&quot;</span>, reply)
+            }
         }
     }
 }
