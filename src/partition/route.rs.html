@@ -79,6 +79,12 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -98,11 +104,13 @@
 
 <span class="kw">use </span>common_meta::rpc::router::{RouteRequest, TableRoute};
 <span class="kw">use </span>common_meta::table_name::TableName;
+<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>meta_client::client::MetaClient;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics;
 
 <span class="kw">pub struct </span>TableRoutes {
     meta_client: Arc&lt;MetaClient&gt;,
@@ -123,6 +131,8 @@
     }
 
     <span class="kw">pub async fn </span>get_route(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: <span class="kw-2">&amp;</span>TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;TableRoute&gt;&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_TABLE_ROUTE_GET);
+
         <span class="self">self</span>.cache
             .try_get_with_by_ref(table_name, <span class="self">self</span>.get_from_meta(table_name))
             .<span class="kw">await
@@ -135,6 +145,8 @@
     }
 
     <span class="kw">async fn </span>get_from_meta(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: <span class="kw-2">&amp;</span>TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;TableRoute&gt;&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_TABLE_ROUTE_GET_REMOTE);
+
         <span class="kw">let </span><span class="kw-2">mut </span>resp = <span class="self">self
             </span>.meta_client
             .route(RouteRequest {
