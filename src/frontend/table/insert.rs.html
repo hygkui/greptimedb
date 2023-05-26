@@ -188,6 +188,8 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -210,6 +212,7 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, VectorRef};
 <span class="kw">use </span>futures::future;
+<span class="kw">use </span>metrics::counter;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::storage::RegionNumber;
 <span class="kw">use </span>table::requests::InsertRequest;
@@ -237,6 +240,7 @@
         </span>.context(JoinTaskSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>affected_rows = results.into_iter().sum::&lt;<span class="prelude-ty">Result</span>&lt;u32&gt;&gt;()<span class="question-mark">?</span>;
+        <span class="macro">counter!</span>(<span class="kw">crate</span>::metrics::DIST_INGEST_ROW_COUNT, affected_rows <span class="kw">as </span>u64);
         <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows <span class="kw">as _</span>))
     }
 }
