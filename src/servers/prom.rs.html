@@ -818,6 +818,8 @@
 <a href="#818" id="818">818</a>
 <a href="#819" id="819">819</a>
 <a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1208,11 +1210,13 @@
             .map(|(tags, <span class="kw-2">mut </span>values)| {
                 <span class="kw">let </span>metric = tags.into_iter().collect();
                 <span class="kw">match </span>result_type {
-                    <span class="prelude-val">Some</span>(ValueType::Vector) =&gt; <span class="prelude-val">Ok</span>(PromSeries {
-                        metric,
-                        value: values.pop(),
-                        ..Default::default()
-                    }),
+                    <span class="prelude-val">Some</span>(ValueType::Vector) | <span class="prelude-val">Some</span>(ValueType::Scalar) | <span class="prelude-val">Some</span>(ValueType::String) =&gt; {
+                        <span class="prelude-val">Ok</span>(PromSeries {
+                            metric,
+                            value: values.pop(),
+                            ..Default::default()
+                        })
+                    }
                     <span class="prelude-val">Some</span>(ValueType::Matrix) =&gt; <span class="prelude-val">Ok</span>(PromSeries {
                         metric,
                         values,
@@ -1510,8 +1514,8 @@
         }
         PromqlExpr::Paren(ParenExpr { expr }) =&gt; promql_expr_to_metric_name(expr),
         PromqlExpr::Subquery(SubqueryExpr { expr, .. }) =&gt; promql_expr_to_metric_name(expr),
-        PromqlExpr::NumberLiteral(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
-        PromqlExpr::StringLiteral(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+        PromqlExpr::NumberLiteral(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(String::new()),
+        PromqlExpr::StringLiteral(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(String::new()),
         PromqlExpr::Extension(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
         PromqlExpr::VectorSelector(VectorSelector { matchers, .. }) =&gt; {
             matchers.find_matchers(METRIC_NAME).pop().cloned()
