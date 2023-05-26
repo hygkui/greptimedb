@@ -115,7 +115,7 @@
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>InvalidateTableCacheHandler {
-    backend_cache_invalidtor: KvCacheInvalidatorRef,
+    backend_cache_invalidator: KvCacheInvalidatorRef,
 }
 
 <span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>InvalidateTableCacheHandler {
@@ -163,9 +163,9 @@
 }
 
 <span class="kw">impl </span>InvalidateTableCacheHandler {
-    <span class="kw">pub fn </span>new(backend_cache_invalidtor: KvCacheInvalidatorRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(backend_cache_invalidator: KvCacheInvalidatorRef) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            backend_cache_invalidtor,
+            backend_cache_invalidator,
         }
     }
 
@@ -179,7 +179,7 @@
 
         <span class="kw">let </span>tg_key = tg_key.as_bytes();
 
-        <span class="self">self</span>.backend_cache_invalidtor.invalidate_key(tg_key).<span class="kw">await</span>;
+        <span class="self">self</span>.backend_cache_invalidator.invalidate_key(tg_key).<span class="kw">await</span>;
     }
 }
 </code></pre></div></section></main></body></html>
