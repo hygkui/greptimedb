@@ -229,7 +229,7 @@
 
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
             <span class="kw">crate</span>::metrics::METRIC_SERVER_GRPC_DB_REQUEST_TIMER,
-            <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, <span class="kw-2">&amp;</span>query_ctx.get_db_string())]
+            <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, query_ctx.get_db_string())]
         );
         <span class="kw">let </span>handler = <span class="self">self</span>.handler.clone();
 

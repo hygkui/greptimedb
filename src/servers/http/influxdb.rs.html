@@ -151,7 +151,7 @@
         .unwrap_or_else(|| DEFAULT_SCHEMA_NAME.to_string());
     <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
         <span class="kw">crate</span>::metrics::METRIC_HTTP_INFLUXDB_WRITE_ELAPSED,
-        <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, <span class="kw-2">&amp;</span>db)]
+        <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, db.clone())]
     );
     <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_client_database_name(<span class="kw-2">&amp;</span>db);
     <span class="kw">let </span>ctx = Arc::new(QueryContext::with(catalog, schema));
