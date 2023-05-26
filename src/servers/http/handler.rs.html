@@ -144,6 +144,10 @@
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -172,6 +176,7 @@
 <span class="kw">use </span>session::context::UserInfo;
 
 <span class="kw">use </span><span class="kw">crate</span>::http::{ApiState, JsonResponse};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::PROCESS_COLLECTOR;
 <span class="kw">use </span><span class="kw">crate</span>::metrics_handler::MetricsHandler;
 
 <span class="attr">#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
@@ -274,6 +279,9 @@
     State(state): State&lt;MetricsHandler&gt;,
     Query(_params): Query&lt;HashMap&lt;String, String&gt;&gt;,
 ) -&gt; String {
+    <span class="comment">// Collect process metrics.
+    </span>PROCESS_COLLECTOR.collect();
+
     state.render()
 }
 
