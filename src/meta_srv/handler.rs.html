@@ -600,18 +600,18 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;HeartbeatResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>acc = HeartbeatAccumulator::default();
         <span class="kw">let </span>handlers = <span class="self">self</span>.handlers.read().<span class="kw">await</span>;
+        <span class="kw">let </span>role = req
+            .header
+            .as_ref()
+            .and_then(|h| Role::from_i32(h.role))
+            .context(error::InvalidArgumentsSnafu {
+                err_msg: <span class="macro">format!</span>(<span class="string">&quot;invalid role: {:?}&quot;</span>, req.header),
+            })<span class="question-mark">?</span>;
+
         <span class="kw">for </span>h <span class="kw">in </span>handlers.iter() {
             <span class="kw">if </span>ctx.is_skip_all() {
                 <span class="kw">break</span>;
             }
-
-            <span class="kw">let </span>role = req
-                .header
-                .as_ref()
-                .and_then(|h| Role::from_i32(h.role))
-                .context(error::InvalidArgumentsSnafu {
-                    err_msg: <span class="macro">format!</span>(<span class="string">&quot;invalid role: {:?}&quot;</span>, req.header),
-                })<span class="question-mark">?</span>;
 
             <span class="kw">if </span>h.is_acceptable(role) {
                 h.handle(<span class="kw-2">&amp;</span>req, <span class="kw-2">&amp;mut </span>ctx, <span class="kw-2">&amp;mut </span>acc).<span class="kw">await</span><span class="question-mark">?</span>;
