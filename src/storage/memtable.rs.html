@@ -299,6 +299,7 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -324,6 +325,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_time::range::TimestampRange;
+<span class="kw">use </span>common_time::Timestamp;
 <span class="kw">use </span>datatypes::vectors::VectorRef;
 <span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>store_api::storage::{consts, OpType, SequenceNumber};
@@ -340,16 +342,16 @@
 <span class="doccomment">/// Unique id for memtables under same region.
 </span><span class="kw">pub type </span>MemtableId = u32;
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Debug, Default)]
 </span><span class="kw">pub struct </span>MemtableStats {
     <span class="doccomment">/// The  estimated bytes allocated by this memtable from heap. Result
     /// of this method may be larger than the estimated based on [`num_rows`] because
     /// of the implementor&#39;s pre-alloc behavior.
-    </span>estimated_bytes: usize,
+    </span><span class="kw">pub </span>estimated_bytes: usize,
     <span class="doccomment">/// The max timestamp that this memtable contains.
-    </span><span class="kw">pub </span>max_timestamp: i64,
+    </span><span class="kw">pub </span>max_timestamp: Timestamp,
     <span class="doccomment">/// The min timestamp that this memtable contains.
-    </span><span class="kw">pub </span>min_timestamp: i64,
+    </span><span class="kw">pub </span>min_timestamp: Timestamp,
 }
 
 <span class="kw">impl </span>MemtableStats {

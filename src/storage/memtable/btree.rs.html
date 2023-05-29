@@ -560,6 +560,15 @@
 <a href="#560" id="560">560</a>
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -720,10 +729,19 @@
     }
 
     <span class="kw">fn </span>stats(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MemtableStats {
+        <span class="kw">let </span>ts_meta = <span class="self">self</span>.schema.column_metadata(<span class="self">self</span>.schema.timestamp_index());
+
+        <span class="kw">let </span><span class="prelude-val">Some</span>(timestamp_type) = ts_meta.desc.data_type.as_timestamp() <span class="kw">else </span>{
+            <span class="comment">// safety: timestamp column always has timestamp type, otherwise it&#39;s a bug.
+            </span><span class="macro">panic!</span>(<span class="string">&quot;Timestamp column is not a valid timestamp type: {:?}&quot;</span>, <span class="self">self</span>.schema);
+        };
+
         MemtableStats {
             estimated_bytes: <span class="self">self</span>.alloc_tracker.bytes_allocated(),
-            max_timestamp: <span class="self">self</span>.max_timestamp.load(AtomicOrdering::Relaxed),
-            min_timestamp: <span class="self">self</span>.min_timestamp.load(AtomicOrdering::Relaxed),
+            max_timestamp: timestamp_type
+                .create_timestamp(<span class="self">self</span>.max_timestamp.load(AtomicOrdering::Relaxed)),
+            min_timestamp: timestamp_type
+                .create_timestamp(<span class="self">self</span>.min_timestamp.load(AtomicOrdering::Relaxed)),
         }
     }
 

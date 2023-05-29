@@ -488,6 +488,7 @@
 <a href="#488" id="488">488</a>
 <a href="#489" id="489">489</a>
 <a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -711,6 +712,7 @@
     }
 
     <span class="doccomment">/// Shortcut method to create a timestamp range with given start/end value and time unit.
+    /// Returns empty iff `start` &gt; `end`.
     </span><span class="kw">pub fn </span>with_unit(start: i64, end: i64, unit: TimeUnit) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>start = Timestamp::new(start, unit);
         <span class="kw">let </span>end = Timestamp::new(end, unit);

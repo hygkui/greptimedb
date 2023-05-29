@@ -1085,7 +1085,7 @@
     }
 
     <span class="doccomment">/// Subtracts current timestamp with another timestamp, yielding a duration.
-    </span><span class="kw">pub fn </span>sub(<span class="kw-2">&amp;</span><span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;chrono::Duration&gt; {
+    </span><span class="kw">pub fn </span>sub(<span class="kw-2">&amp;</span><span class="self">self</span>, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;chrono::Duration&gt; {
         <span class="kw">let </span>lhs = <span class="self">self</span>.to_chrono_datetime()<span class="question-mark">?</span>;
         <span class="kw">let </span>rhs = rhs.to_chrono_datetime()<span class="question-mark">?</span>;
         <span class="prelude-val">Some</span>(lhs - rhs)
@@ -1947,12 +1947,12 @@
     </span><span class="kw">fn </span>test_subtract_timestamp() {
         <span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(chrono::Duration::milliseconds(<span class="number">42</span>)),
-            Timestamp::new_millisecond(<span class="number">100</span>).sub(Timestamp::new_millisecond(<span class="number">58</span>))
+            Timestamp::new_millisecond(<span class="number">100</span>).sub(<span class="kw-2">&amp;</span>Timestamp::new_millisecond(<span class="number">58</span>))
         );
 
         <span class="macro">assert_eq!</span>(
             <span class="prelude-val">Some</span>(chrono::Duration::milliseconds(-<span class="number">42</span>)),
-            Timestamp::new_millisecond(<span class="number">58</span>).sub(Timestamp::new_millisecond(<span class="number">100</span>))
+            Timestamp::new_millisecond(<span class="number">58</span>).sub(<span class="kw-2">&amp;</span>Timestamp::new_millisecond(<span class="number">100</span>))
         );
     }
 

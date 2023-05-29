@@ -423,8 +423,8 @@
         min_ts: i64,
     ) {
         <span class="kw">let </span>iter = mem.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
-        <span class="macro">assert_eq!</span>(min_ts, mem.stats().min_timestamp);
-        <span class="macro">assert_eq!</span>(max_ts, mem.stats().max_timestamp);
+        <span class="macro">assert_eq!</span>(min_ts, mem.stats().min_timestamp.value());
+        <span class="macro">assert_eq!</span>(max_ts, mem.stats().max_timestamp.value());
 
         <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="number">0</span>;
         <span class="kw">for </span>batch <span class="kw">in </span>iter {

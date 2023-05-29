@@ -138,6 +138,11 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -173,7 +178,12 @@
 }
 
 <span class="kw">impl</span>&lt;R&gt; WindowedReader&lt;R&gt; {
-    <span class="kw">pub fn </span>new(schema: ProjectedSchemaRef, readers: Vec&lt;R&gt;) -&gt; <span class="self">Self </span>{
+    <span class="doccomment">/// Creates a new [WindowedReader] from given schema and a set of boxed readers.
+    ///
+    /// ### Note
+    /// [WindowedReader] always reads the readers in a reverse order. The last reader in `readers`
+    /// gets polled first.
+    </span><span class="kw">pub fn </span>new(schema: ProjectedSchemaRef, readers: Vec&lt;R&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ schema, readers }
     }
 }
