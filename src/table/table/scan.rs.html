@@ -145,6 +145,7 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -172,22 +173,23 @@
 <span class="kw">use </span>datatypes::schema::SchemaRef;
 <span class="kw">use </span>snafu::OptionExt;
 
-<span class="kw">pub struct </span>SimpleTableScan {
+<span class="doccomment">/// Adapt greptime&#39;s [SendableRecordBatchStream] to DataFusion&#39;s [PhysicalPlan].
+</span><span class="kw">pub struct </span>StreamScanAdapter {
     stream: Mutex&lt;<span class="prelude-ty">Option</span>&lt;SendableRecordBatchStream&gt;&gt;,
     schema: SchemaRef,
     output_ordering: <span class="prelude-ty">Option</span>&lt;Vec&lt;PhysicalSortExpr&gt;&gt;,
 }
 
-<span class="kw">impl </span>Debug <span class="kw">for </span>SimpleTableScan {
+<span class="kw">impl </span>Debug <span class="kw">for </span>StreamScanAdapter {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-        f.debug_struct(<span class="string">&quot;SimpleTableScan&quot;</span>)
+        f.debug_struct(<span class="string">&quot;StreamScanAdapter&quot;</span>)
             .field(<span class="string">&quot;stream&quot;</span>, <span class="kw-2">&amp;</span><span class="string">&quot;&lt;SendableRecordBatchStream&gt;&quot;</span>)
             .field(<span class="string">&quot;schema&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.schema)
             .finish()
     }
 }
 
-<span class="kw">impl </span>SimpleTableScan {
+<span class="kw">impl </span>StreamScanAdapter {
     <span class="kw">pub fn </span>new(stream: SendableRecordBatchStream) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>schema = stream.schema();
 
@@ -204,7 +206,7 @@
     </span>}
 }
 
-<span class="kw">impl </span>PhysicalPlan <span class="kw">for </span>SimpleTableScan {
+<span class="kw">impl </span>PhysicalPlan <span class="kw">for </span>StreamScanAdapter {
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
         <span class="self">self
     </span>}
@@ -273,7 +275,7 @@
             RecordBatches::try_new(schema.clone(), <span class="macro">vec!</span>[batch1.clone(), batch2.clone()]).unwrap();
         <span class="kw">let </span>stream = recordbatches.as_stream();
 
-        <span class="kw">let </span>scan = SimpleTableScan::new(stream);
+        <span class="kw">let </span>scan = StreamScanAdapter::new(stream);
 
         <span class="macro">assert_eq!</span>(scan.schema(), schema);
 

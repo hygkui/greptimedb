@@ -586,6 +586,11 @@
 <a href="#586" id="586">586</a>
 <a href="#587" id="587">587</a>
 <a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -618,12 +623,13 @@
 <span class="kw">use </span>datatypes::vectors::{BinaryVector, TimestampMillisecondVector, UInt8Vector};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>store_api::storage::ScanRequest;
 <span class="kw">use </span>table::engine::{EngineContext, TableEngineRef};
 <span class="kw">use </span>table::metadata::{TableId, TableInfoRef};
 <span class="kw">use </span>table::requests::{
     CreateTableRequest, DeleteRequest, InsertRequest, OpenTableRequest, TableOptions,
 };
-<span class="kw">use </span>table::{Table, TableRef};
+<span class="kw">use </span>table::{<span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, CreateSystemCatalogSnafu, EmptyValueSnafu, Error, InvalidEntryTypeSnafu, InvalidKeySnafu,
@@ -656,8 +662,12 @@
         <span class="self">self</span>.<span class="number">0</span>.scan(projection, filters, limit).<span class="kw">await
     </span>}
 
+    <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {
+        <span class="self">self</span>.<span class="number">0</span>.scan_to_stream(request).<span class="kw">await
+    </span>}
+
     <span class="doccomment">/// Insert values into table.
-    </span><span class="kw">async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, request: InsertRequest) -&gt; table::error::Result&lt;usize&gt; {
+    </span><span class="kw">async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, request: InsertRequest) -&gt; TableResult&lt;usize&gt; {
         <span class="self">self</span>.<span class="number">0</span>.insert(request).<span class="kw">await
     </span>}
 
@@ -665,7 +675,7 @@
         <span class="self">self</span>.<span class="number">0</span>.table_info()
     }
 
-    <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest) -&gt; table::Result&lt;usize&gt; {
+    <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest) -&gt; TableResult&lt;usize&gt; {
         <span class="self">self</span>.<span class="number">0</span>.delete(request).<span class="kw">await
     </span>}
 

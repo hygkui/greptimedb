@@ -176,6 +176,11 @@
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -257,6 +262,9 @@
         location: Location,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Duplicated call to plan execute method. table: {}&quot;</span>, table))]
+    </span>DuplicatedExecuteCall { location: Location, table: String },
+
     <span class="attr">#[snafu(display(
         <span class="string">&quot;Not allowed to remove index column {} from table {}&quot;</span>,
         column_name,
@@ -319,7 +327,9 @@
             Error::RemoveColumnInIndex { .. } | Error::BuildColumnDescriptor { .. } =&gt; {
                 StatusCode::InvalidArguments
             }
-            Error::TablesRecordBatch { .. } =&gt; StatusCode::Unexpected,
+            Error::TablesRecordBatch { .. } | Error::DuplicatedExecuteCall { .. } =&gt; {
+                StatusCode::Unexpected
+            }
             Error::ColumnExists { .. } =&gt; StatusCode::TableColumnExists,
             Error::SchemaBuild { source, .. } =&gt; source.status_code(),
             Error::TableOperation { source } =&gt; source.status_code(),

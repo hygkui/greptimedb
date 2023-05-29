@@ -889,6 +889,77 @@
 <a href="#889" id="889">889</a>
 <a href="#890" id="890">890</a>
 <a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -905,6 +976,7 @@
 
 </span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::iter;
+<span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::AlterExpr;
@@ -919,7 +991,12 @@
 <span class="kw">use </span>common_query::physical_plan::{PhysicalPlan, PhysicalPlanRef};
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::adapter::AsyncRecordBatchStreamAdapter;
-<span class="kw">use </span>common_recordbatch::{RecordBatches, SendableRecordBatchStream};
+<span class="kw">use </span>common_recordbatch::error::{
+    InitRecordbatchStreamSnafu, PollStreamSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>RecordBatchResult,
+};
+<span class="kw">use </span>common_recordbatch::{
+    RecordBatch, RecordBatchStreamAdaptor, RecordBatches, SendableRecordBatchStream,
+};
 <span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>datafusion::execution::context::TaskContext;
 <span class="kw">use </span>datafusion::physical_plan::{
@@ -927,10 +1004,11 @@
 };
 <span class="kw">use </span>datafusion_common::DataFusionError;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, Schema, SchemaRef};
+<span class="kw">use </span>futures_util::{Stream, StreamExt};
 <span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
 <span class="kw">use </span>partition::splitter::WriteSplitter;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>store_api::storage::RegionNumber;
+<span class="kw">use </span>store_api::storage::{RegionNumber, ScanRequest};
 <span class="kw">use </span>table::error::TableOperationSnafu;
 <span class="kw">use </span>table::metadata::{FilterPushDownType, TableInfo, TableInfoRef};
 <span class="kw">use </span>table::requests::{AlterKind, AlterTableRequest, DeleteRequest, InsertRequest};
@@ -1044,6 +1122,70 @@
             partition_execs,
         };
         <span class="prelude-val">Ok</span>(Arc::new(dist_scan))
+    }
+
+    <span class="comment">// TODO(ruihang): DistTable should not call this method directly
+    </span><span class="kw">async fn </span>scan_to_stream(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        request: ScanRequest,
+    ) -&gt; table::Result&lt;SendableRecordBatchStream&gt; {
+        <span class="kw">let </span>partition_rule = <span class="self">self
+            </span>.partition_manager
+            .find_table_partition_rule(<span class="kw-2">&amp;</span><span class="self">self</span>.table_name)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(TableOperationSnafu)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>regions = <span class="self">self
+            </span>.partition_manager
+            .find_regions_by_filters(partition_rule, <span class="kw-2">&amp;</span>request.filters)
+            .map_err(BoxedError::new)
+            .context(TableOperationSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>datanodes = <span class="self">self
+            </span>.partition_manager
+            .find_region_datanodes(<span class="kw-2">&amp;</span><span class="self">self</span>.table_name, regions)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(TableOperationSnafu)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span><span class="self">self</span>.table_name;
+        <span class="kw">let </span><span class="kw-2">mut </span>partition_execs = Vec::with_capacity(datanodes.len());
+        <span class="kw">for </span>(datanode, _regions) <span class="kw">in </span>datanodes.iter() {
+            <span class="kw">let </span>client = <span class="self">self</span>.datanode_clients.get_client(datanode).<span class="kw">await</span>;
+            <span class="kw">let </span>db = Database::new(<span class="kw-2">&amp;</span>table_name.catalog_name, <span class="kw-2">&amp;</span>table_name.schema_name, client);
+            <span class="kw">let </span>datanode_instance = DatanodeInstance::new(Arc::new(<span class="self">self</span>.clone()) <span class="kw">as _</span>, db);
+
+            partition_execs.push(Arc::new(PartitionExec {
+                table_name: table_name.clone(),
+                datanode_instance,
+                projection: request.projection.clone(),
+                filters: request.filters.clone(),
+                limit: request.limit,
+                batches: Arc::new(RwLock::new(<span class="prelude-val">None</span>)),
+            }));
+        }
+
+        <span class="kw">let </span>schema = project_schema(<span class="self">self</span>.schema(), request.projection.as_ref());
+        <span class="kw">let </span>schema_to_move = schema.clone();
+        <span class="kw">let </span>stream: Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = RecordBatchResult&lt;RecordBatch&gt;&gt; + Send&gt;&gt; = Box::pin(
+            <span class="macro">async_stream::try_stream! </span>{
+                <span class="kw">for </span>partition_exec <span class="kw">in </span>partition_execs {
+                    partition_exec
+                        .maybe_init()
+                        .<span class="kw">await
+                        </span>.map_err(|e| DataFusionError::External(Box::new(e)))
+                        .context(InitRecordbatchStreamSnafu)<span class="question-mark">?</span>;
+                    <span class="kw">let </span><span class="kw-2">mut </span>stream = partition_exec.as_stream().<span class="kw">await</span>.context(InitRecordbatchStreamSnafu)<span class="question-mark">?</span>;
+
+                    <span class="kw">while let </span><span class="prelude-val">Some</span>(batch) = stream.next().<span class="kw">await</span>{
+                        <span class="kw">yield </span>RecordBatch::try_from_df_record_batch(schema_to_move.clone(),batch.context(PollStreamSnafu)<span class="question-mark">?</span>)<span class="question-mark">?
+                    </span>}
+                }
+            },
+        );
+        <span class="kw">let </span>record_batch_stream = RecordBatchStreamAdaptor { schema, stream };
+
+        <span class="prelude-val">Ok</span>(Box::pin(record_batch_stream))
     }
 
     <span class="kw">fn </span>supports_filters_pushdown(

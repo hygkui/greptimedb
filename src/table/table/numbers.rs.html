@@ -175,6 +175,14 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -195,7 +203,7 @@
 
 <span class="kw">use </span>common_query::physical_plan::PhysicalPlanRef;
 <span class="kw">use </span>common_recordbatch::error::Result <span class="kw">as </span>RecordBatchResult;
-<span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatchStream};
+<span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatchStream, SendableRecordBatchStream};
 <span class="kw">use </span>datafusion::arrow::compute::SortOptions;
 <span class="kw">use </span>datafusion::arrow::record_batch::RecordBatch <span class="kw">as </span>DfRecordBatch;
 <span class="kw">use </span>datafusion_common::from_slice::FromSlice;
@@ -206,11 +214,11 @@
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, SchemaBuilder, SchemaRef};
 <span class="kw">use </span>futures::task::{Context, Poll};
 <span class="kw">use </span>futures::Stream;
-<span class="kw">use </span>store_api::storage::RegionNumber;
+<span class="kw">use </span>store_api::storage::{RegionNumber, ScanRequest};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::metadata::{TableId, TableInfoBuilder, TableInfoRef, TableMetaBuilder, TableType};
-<span class="kw">use </span><span class="kw">crate</span>::table::scan::SimpleTableScan;
+<span class="kw">use </span><span class="kw">crate</span>::table::scan::StreamScanAdapter;
 <span class="kw">use </span><span class="kw">crate</span>::table::{Expr, Table};
 
 <span class="kw">const </span>NUMBER_COLUMN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;number&quot;</span>;
@@ -309,8 +317,16 @@
         )
         .into()];
         <span class="prelude-val">Ok</span>(Arc::new(
-            SimpleTableScan::new(stream).with_output_ordering(output_ordering),
+            StreamScanAdapter::new(stream).with_output_ordering(output_ordering),
         ))
+    }
+
+    <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
+        <span class="prelude-val">Ok</span>(Box::pin(NumbersStream {
+            limit: request.limit.unwrap_or(<span class="number">100</span>) <span class="kw">as </span>u32,
+            schema: <span class="self">self</span>.schema.clone(),
+            already_run: <span class="bool-val">false</span>,
+        }))
     }
 
     <span class="kw">async fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>, _region_number: <span class="prelude-ty">Option</span>&lt;RegionNumber&gt;, _wait: <span class="prelude-ty">Option</span>&lt;bool&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {

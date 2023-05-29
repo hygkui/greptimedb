@@ -359,6 +359,7 @@
 <a href="#359" id="359">359</a>
 <a href="#360" id="360">360</a>
 <a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -432,7 +433,8 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt;;
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// Adapt DataFusion&#39;s [`ExecutionPlan`](DfPhysicalPlan) to GreptimeDB&#39;s [`PhysicalPlan`].
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>PhysicalPlanAdapter {
     schema: SchemaRef,
     df_plan: Arc&lt;<span class="kw">dyn </span>DfPhysicalPlan&gt;,
