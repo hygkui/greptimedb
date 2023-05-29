@@ -839,6 +839,9 @@
 <a href="#839" id="839">839</a>
 <a href="#840" id="840">840</a>
 <a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -988,7 +991,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>catalog_manager = FrontendCatalogManager::new(
             meta_backend.clone(),
             meta_backend.clone(),
-            partition_manager,
+            partition_manager.clone(),
             datanode_clients.clone(),
         );
 
@@ -1019,7 +1022,10 @@
 
         <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
             Arc::new(ParseMailboxMessageHandler::default()),
-            Arc::new(InvalidateTableCacheHandler::new(meta_backend)),
+            Arc::new(InvalidateTableCacheHandler::new(
+                meta_backend,
+                partition_manager,
+            )),
         ]);
 
         <span class="kw">let </span>heartbeat_task = <span class="prelude-val">Some</span>(HeartbeatTask::new(
