@@ -391,7 +391,7 @@
                     <span class="kw">let </span>value = kv.value;
                     <span class="macro">ensure!</span>(
                         value.len() == std::mem::size_of::&lt;u64&gt;(),
-                        error::UnexceptedSequenceValueSnafu {
+                        error::UnexpectedSequenceValueSnafu {
                             err_msg: <span class="macro">format!</span>(<span class="string">&quot;key={}, unexpected value={:?}&quot;</span>, <span class="self">self</span>.name, value)
                         }
                     );

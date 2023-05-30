@@ -363,6 +363,13 @@
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -608,6 +615,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
+    <span class="kw">use </span>common_meta::instruction::TableIdent;
     <span class="kw">use </span>rand::Rng;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -617,13 +625,15 @@
     </span><span class="kw">fn </span>test_default_failure_detector_container() {
         <span class="kw">let </span>container = FailureDetectorContainer(DashMap::new());
         <span class="kw">let </span>ident = RegionIdent {
-            catalog: <span class="string">&quot;a&quot;</span>.to_string(),
-            schema: <span class="string">&quot;b&quot;</span>.to_string(),
-            table: <span class="string">&quot;c&quot;</span>.to_string(),
+            table_ident: TableIdent {
+                catalog: <span class="string">&quot;a&quot;</span>.to_string(),
+                schema: <span class="string">&quot;b&quot;</span>.to_string(),
+                table: <span class="string">&quot;c&quot;</span>.to_string(),
+                table_id: <span class="number">1</span>,
+                engine: MITO_ENGINE.to_string(),
+            },
             cluster_id: <span class="number">3</span>,
             datanode_id: <span class="number">2</span>,
-            table_id: <span class="number">1</span>,
-            engine: MITO_ENGINE.to_string(),
             region_number: <span class="number">1</span>,
         };
         <span class="kw">let _ </span>= container.get_failure_detector(ident.clone());
@@ -644,13 +654,15 @@
         <span class="kw">let </span>container = FailureDetectorContainer(DashMap::new());
 
         <span class="kw">let </span>ident = RegionIdent {
-            catalog: <span class="string">&quot;a&quot;</span>.to_string(),
-            schema: <span class="string">&quot;b&quot;</span>.to_string(),
-            table: <span class="string">&quot;c&quot;</span>.to_string(),
+            table_ident: TableIdent {
+                catalog: <span class="string">&quot;a&quot;</span>.to_string(),
+                schema: <span class="string">&quot;b&quot;</span>.to_string(),
+                table: <span class="string">&quot;c&quot;</span>.to_string(),
+                table_id: <span class="number">1</span>,
+                engine: MITO_ENGINE.to_string(),
+            },
             cluster_id: <span class="number">3</span>,
             datanode_id: <span class="number">2</span>,
-            table_id: <span class="number">1</span>,
-            engine: MITO_ENGINE.to_string(),
             region_number: <span class="number">1</span>,
         };
         container.get_failure_detector(ident.clone());
@@ -683,13 +695,15 @@
                     region_idents: region_ids
                         .iter()
                         .map(|<span class="kw-2">&amp;</span>region_number| RegionIdent {
-                            catalog: <span class="string">&quot;a&quot;</span>.to_string(),
-                            schema: <span class="string">&quot;b&quot;</span>.to_string(),
-                            table: <span class="string">&quot;c&quot;</span>.to_string(),
+                            table_ident: TableIdent {
+                                catalog: <span class="string">&quot;a&quot;</span>.to_string(),
+                                schema: <span class="string">&quot;b&quot;</span>.to_string(),
+                                table: <span class="string">&quot;c&quot;</span>.to_string(),
+                                table_id: <span class="number">0</span>,
+                                engine: MITO_ENGINE.to_string(),
+                            },
                             cluster_id: <span class="number">1</span>,
                             datanode_id,
-                            table_id: <span class="number">0</span>,
-                            engine: MITO_ENGINE.to_string(),
                             region_number,
                         })
                         .collect(),

@@ -129,6 +129,23 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -143,7 +160,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::ops::Range;
+</span><span class="kw">use </span>std::fmt::{Display, Formatter};
+<span class="kw">use </span>std::ops::Range;
 <span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::task::{Context, Poll};
@@ -159,9 +177,23 @@
 
 <span class="kw">pub type </span>MessageId = u64;
 
-<span class="kw">pub enum </span>Channel {
+<span class="attr">#[derive(Debug, PartialEq, Clone, Copy)]
+</span><span class="kw">pub enum </span>Channel {
     Datanode(u64),
     Frontend(u64),
+}
+
+<span class="kw">impl </span>Display <span class="kw">for </span>Channel {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            Channel::Datanode(id) =&gt; {
+                <span class="macro">write!</span>(f, <span class="string">&quot;Datanode-{}&quot;</span>, id)
+            }
+            Channel::Frontend(id) =&gt; {
+                <span class="macro">write!</span>(f, <span class="string">&quot;Frontend-{}&quot;</span>, id)
+            }
+        }
+    }
 }
 
 <span class="kw">impl </span>Channel {
@@ -172,7 +204,6 @@
         }
     }
 }
-
 <span class="kw">pub enum </span>BroadcastChannel {
     Datanode,
     Frontend,
@@ -196,15 +227,24 @@
 <span class="kw">pub struct </span>MailboxReceiver {
     message_id: MessageId,
     rx: oneshot::Receiver&lt;<span class="prelude-ty">Result</span>&lt;MailboxMessage&gt;&gt;,
+    ch: Channel,
 }
 
 <span class="kw">impl </span>MailboxReceiver {
-    <span class="kw">pub fn </span>new(message_id: MessageId, rx: oneshot::Receiver&lt;<span class="prelude-ty">Result</span>&lt;MailboxMessage&gt;&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ message_id, rx }
+    <span class="kw">pub fn </span>new(
+        message_id: MessageId,
+        rx: oneshot::Receiver&lt;<span class="prelude-ty">Result</span>&lt;MailboxMessage&gt;&gt;,
+        ch: Channel,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ message_id, rx, ch }
     }
 
     <span class="kw">pub fn </span>message_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MessageId {
         <span class="self">self</span>.message_id
+    }
+
+    <span class="kw">pub fn </span>channel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Channel {
+        <span class="self">self</span>.ch
     }
 }
 
@@ -241,12 +281,6 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_channel_pusher_id() {
-        <span class="macro">assert_eq!</span>(Channel::Datanode(<span class="number">42</span>).pusher_id(), <span class="string">&quot;0-42&quot;</span>);
-        <span class="macro">assert_eq!</span>(Channel::Frontend(<span class="number">42</span>).pusher_id(), <span class="string">&quot;1-42&quot;</span>);
-    }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_channel_pusher_range() {

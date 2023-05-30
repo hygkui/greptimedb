@@ -468,6 +468,10 @@
 <a href="#468" id="468">468</a>
 <a href="#469" id="469">469</a>
 <a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -604,8 +608,8 @@
         </span>source: common_catalog::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unexcepted sequence value: {}&quot;</span>, err_msg))]
-    </span>UnexceptedSequenceValue { err_msg: String, location: Location },
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected sequence value: {}&quot;</span>, err_msg))]
+    </span>UnexpectedSequenceValue { err_msg: String, location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode table route, source: {}&quot;</span>, source))]
     </span>DecodeTableRoute {
@@ -816,6 +820,9 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Expected to retry later, reason: {}&quot;</span>, reason))]
     </span>RetryLater { reason: String, location: Location },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Combine error: {}&quot;</span>, err_msg))]
+    </span>Combine { err_msg: String, location: Location },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert table route, source: {}&quot;</span>, source))]
     </span>TableRouteConversion {
         <span class="attr">#[snafu(backtrace)]
@@ -874,7 +881,8 @@
             | Error::MailboxTimeout { .. }
             | Error::MailboxReceiver { .. }
             | Error::RetryLater { .. }
-            | Error::StartGrpc { .. } =&gt; StatusCode::Internal,
+            | Error::StartGrpc { .. }
+            | Error::Combine { .. } =&gt; StatusCode::Internal,
             Error::EmptyKey { .. }
             | Error::MissingRequiredParameter { .. }
             | Error::MissingRequestHeader { .. }
@@ -888,7 +896,7 @@
             | Error::LeaseValueFromUtf8 { .. }
             | Error::StatKeyFromUtf8 { .. }
             | Error::StatValueFromUtf8 { .. }
-            | Error::UnexceptedSequenceValue { .. }
+            | Error::UnexpectedSequenceValue { .. }
             | Error::TableRouteNotFound { .. }
             | Error::CorruptedTableRoute { .. }
             | Error::NextSequence { .. }

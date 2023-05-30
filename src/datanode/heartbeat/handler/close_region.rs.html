@@ -226,6 +226,12 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -248,7 +254,9 @@
 <span class="kw">use </span>common_meta::heartbeat::handler::{
     HandleControl, HeartbeatResponseHandler, HeartbeatResponseHandlerContext,
 };
-<span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, RegionIdent, SimpleReply};
+<span class="kw">use </span>common_meta::instruction::{
+    Instruction, InstructionReply, RegionIdent, SimpleReply, TableIdent,
+};
 <span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionNumber;
@@ -281,10 +289,14 @@
         <span class="kw">let </span>self_ref = Arc::new(<span class="self">self</span>.clone());
 
         <span class="kw">let </span>RegionIdent {
-            engine,
-            catalog,
-            schema,
-            table,
+            table_ident:
+                TableIdent {
+                    engine,
+                    catalog,
+                    schema,
+                    table,
+                    ..
+                },
             region_number,
             ..
         } = region_ident;
