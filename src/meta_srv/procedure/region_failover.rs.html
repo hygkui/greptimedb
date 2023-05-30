@@ -620,6 +620,9 @@
 <a href="#620" id="620">620</a>
 <a href="#621" id="621">621</a>
 <a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -660,6 +663,7 @@
 <span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, RegisterProcedureLoaderSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::lock::DistLockRef;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{SelectorContext, SelectorRef};
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 
@@ -671,6 +675,7 @@
     procedure_manager: ProcedureManagerRef,
     selector: SelectorRef,
     selector_ctx: SelectorContext,
+    dist_lock: DistLockRef,
     running_procedures: Arc&lt;Mutex&lt;HashSet&lt;RegionIdent&gt;&gt;&gt;,
 }
 
@@ -694,33 +699,35 @@
         procedure_manager: ProcedureManagerRef,
         selector: SelectorRef,
         selector_ctx: SelectorContext,
+        dist_lock: DistLockRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mailbox,
             procedure_manager,
             selector,
             selector_ctx,
+            dist_lock,
             running_procedures: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 
+    <span class="kw">fn </span>create_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionFailoverContext {
+        RegionFailoverContext {
+            mailbox: <span class="self">self</span>.mailbox.clone(),
+            selector: <span class="self">self</span>.selector.clone(),
+            selector_ctx: <span class="self">self</span>.selector_ctx.clone(),
+            dist_lock: <span class="self">self</span>.dist_lock.clone(),
+        }
+    }
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>mailbox = <span class="self">self</span>.mailbox.clone();
-        <span class="kw">let </span>selector = <span class="self">self</span>.selector.clone();
-        <span class="kw">let </span>selector_ctx = <span class="self">self</span>.selector_ctx.clone();
+        <span class="kw">let </span>context = <span class="self">self</span>.create_context();
         <span class="self">self</span>.procedure_manager
             .register_loader(
                 RegionFailoverProcedure::TYPE_NAME,
                 Box::new(<span class="kw">move </span>|json| {
-                    RegionFailoverProcedure::from_json(
-                        json,
-                        RegionFailoverContext {
-                            mailbox: mailbox.clone(),
-                            selector: selector.clone(),
-                            selector_ctx: selector_ctx.clone(),
-                        },
-                    )
-                    .map(|p| Box::new(p) <span class="kw">as _</span>)
+                    <span class="kw">let </span>context = context.clone();
+                    RegionFailoverProcedure::from_json(json, context).map(|p| Box::new(p) <span class="kw">as _</span>)
                 }),
             )
             .context(RegisterProcedureLoaderSnafu {
@@ -742,14 +749,8 @@
             <span class="kw">return</span>;
         }
 
-        <span class="kw">let </span>procedure = RegionFailoverProcedure::new(
-            failed_region.clone(),
-            RegionFailoverContext {
-                mailbox: <span class="self">self</span>.mailbox.clone(),
-                selector: <span class="self">self</span>.selector.clone(),
-                selector_ctx: <span class="self">self</span>.selector_ctx.clone(),
-            },
-        );
+        <span class="kw">let </span>context = <span class="self">self</span>.create_context();
+        <span class="kw">let </span>procedure = RegionFailoverProcedure::new(failed_region.clone(), context);
         <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
         <span class="kw">let </span>procedure_id = procedure_with_id.id;
         <span class="macro">info!</span>(<span class="string">&quot;Starting region failover procedure {procedure_id} for region {failed_region:?}&quot;</span>);
@@ -794,6 +795,7 @@
     <span class="kw">pub </span>mailbox: MailboxRef,
     <span class="kw">pub </span>selector: SelectorRef,
     <span class="kw">pub </span>selector_ctx: SelectorContext,
+    <span class="kw">pub </span>dist_lock: DistLockRef,
 }
 
 <span class="doccomment">/// The state machine of region failover procedure. Driven by the call to `next`.
@@ -938,6 +940,7 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatMailbox, Pusher, Pushers};
+    <span class="kw">use </span><span class="kw">crate</span>::lock::memory::MemLock;
     <span class="kw">use </span><span class="kw">crate</span>::selector::{Namespace, Selector};
     <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
     <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::Channel;
@@ -978,31 +981,59 @@
 
     <span class="kw">pub struct </span>TestingEnv {
         <span class="kw">pub </span>context: RegionFailoverContext,
-        <span class="kw">pub </span>failed_region: RegionIdent,
         <span class="kw">pub </span>heartbeat_receivers: HashMap&lt;DatanodeId, Receiver&lt;tonic::Result&lt;HeartbeatResponse&gt;&gt;&gt;,
+    }
+
+    <span class="kw">impl </span>TestingEnv {
+        <span class="kw">pub async fn </span>failed_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_number: u32) -&gt; RegionIdent {
+            <span class="kw">let </span>table = <span class="string">&quot;my_table&quot;</span>;
+            <span class="kw">let </span>key = TableGlobalKey {
+                catalog_name: DEFAULT_CATALOG_NAME.to_string(),
+                schema_name: DEFAULT_SCHEMA_NAME.to_string(),
+                table_name: table.to_string(),
+            };
+            <span class="kw">let </span>value =
+                table_routes::get_table_global_value(<span class="kw-2">&amp;</span><span class="self">self</span>.context.selector_ctx.kv_store, <span class="kw-2">&amp;</span>key)
+                    .<span class="kw">await
+                    </span>.unwrap()
+                    .unwrap();
+
+            <span class="kw">let </span>failed_datanode = value
+                .regions_id_map
+                .iter()
+                .find_map(|(<span class="kw-2">&amp;</span>datanode_id, regions)| {
+                    <span class="kw">if </span>regions.contains(<span class="kw-2">&amp;</span>region_number) {
+                        <span class="prelude-val">Some</span>(datanode_id)
+                    } <span class="kw">else </span>{
+                        <span class="prelude-val">None
+                    </span>}
+                })
+                .unwrap();
+            RegionIdent {
+                cluster_id: <span class="number">0</span>,
+                datanode_id: failed_datanode,
+                table_id: <span class="number">1</span>,
+                engine: MITO_ENGINE.to_string(),
+                region_number,
+                catalog: DEFAULT_CATALOG_NAME.to_string(),
+                schema: DEFAULT_SCHEMA_NAME.to_string(),
+                table: table.to_string(),
+            }
+        }
     }
 
     <span class="kw">pub struct </span>TestingEnvBuilder {
         selector: <span class="prelude-ty">Option</span>&lt;SelectorRef&gt;,
-        failed_region: <span class="prelude-ty">Option</span>&lt;u32&gt;,
     }
 
     <span class="kw">impl </span>TestingEnvBuilder {
         <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-            <span class="self">Self </span>{
-                selector: <span class="prelude-val">None</span>,
-                failed_region: <span class="prelude-val">None</span>,
-            }
+            <span class="self">Self </span>{ selector: <span class="prelude-val">None </span>}
         }
 
         <span class="attr">#[allow(unused)]
         </span><span class="kw">pub fn </span>with_selector(<span class="kw-2">mut </span><span class="self">self</span>, selector: SelectorRef) -&gt; <span class="self">Self </span>{
             <span class="self">self</span>.selector = <span class="prelude-val">Some</span>(selector);
-            <span class="self">self
-        </span>}
-
-        <span class="kw">pub fn </span>with_failed_region(<span class="kw-2">mut </span><span class="self">self</span>, failed_region: u32) -&gt; <span class="self">Self </span>{
-            <span class="self">self</span>.failed_region = <span class="prelude-val">Some</span>(failed_region);
             <span class="self">self
         </span>}
 
@@ -1031,29 +1062,6 @@
                 Sequence::new(<span class="string">&quot;test_heartbeat_mailbox&quot;</span>, <span class="number">0</span>, <span class="number">100</span>, kv_store.clone());
             <span class="kw">let </span>mailbox = HeartbeatMailbox::create(pushers, mailbox_sequence);
 
-            <span class="kw">let </span>failed_region = <span class="self">self</span>.failed_region.unwrap_or(<span class="number">1</span>);
-            <span class="kw">let </span>failed_datanode = table_global_value
-                .regions_id_map
-                .iter()
-                .find_map(|(datanode_id, regions)| {
-                    <span class="kw">if </span>regions.contains(<span class="kw-2">&amp;</span>failed_region) {
-                        <span class="prelude-val">Some</span>(<span class="kw-2">*</span>datanode_id)
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>}
-                })
-                .unwrap();
-            <span class="kw">let </span>failed_region = RegionIdent {
-                cluster_id: <span class="number">0</span>,
-                datanode_id: failed_datanode,
-                table_id: <span class="number">1</span>,
-                engine: MITO_ENGINE.to_string(),
-                region_number: failed_region,
-                catalog: DEFAULT_CATALOG_NAME.to_string(),
-                schema: DEFAULT_SCHEMA_NAME.to_string(),
-                table: table.to_string(),
-            };
-
             <span class="kw">let </span>selector = <span class="self">self</span>.selector.unwrap_or_else(|| {
                 <span class="kw">let </span>nodes = (<span class="number">1</span>..=table_global_value.regions_id_map.len())
                     .map(|id| Peer {
@@ -1076,8 +1084,8 @@
                     mailbox,
                     selector,
                     selector_ctx,
+                    dist_lock: Arc::new(MemLock::default()),
                 },
-                failed_region,
                 heartbeat_receivers,
             }
         }
@@ -1087,21 +1095,19 @@
     </span><span class="kw">async fn </span>test_region_failover_procedure() {
         common_telemetry::init_default_ut_logging();
 
-        <span class="kw">let </span>TestingEnv {
-            context,
-            failed_region,
-            <span class="kw-2">mut </span>heartbeat_receivers,
-        } = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>env = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span>failed_region = env.failed_region(<span class="number">1</span>).<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>procedure = Box::new(RegionFailoverProcedure::new(
             failed_region.clone(),
-            context.clone(),
+            env.context.clone(),
         )) <span class="kw">as </span>BoxedProcedure;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>failed_datanode = heartbeat_receivers
+        <span class="kw">let </span><span class="kw-2">mut </span>failed_datanode = env
+            .heartbeat_receivers
             .remove(<span class="kw-2">&amp;</span>failed_region.datanode_id)
             .unwrap();
-        <span class="kw">let </span>mailbox_clone = context.mailbox.clone();
+        <span class="kw">let </span>mailbox_clone = env.context.mailbox.clone();
         <span class="kw">let </span>failed_region_clone = failed_region.clone();
         common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>resp = failed_datanode.recv().<span class="kw">await</span>.unwrap().unwrap();
@@ -1138,8 +1144,8 @@
         });
 
         <span class="kw">let </span>(candidate_tx, <span class="kw-2">mut </span>candidate_rx) = tokio::sync::mpsc::channel(<span class="number">1</span>);
-        <span class="kw">for </span>(datanode_id, <span class="kw-2">mut </span>recv) <span class="kw">in </span>heartbeat_receivers.into_iter() {
-            <span class="kw">let </span>mailbox_clone = context.mailbox.clone();
+        <span class="kw">for </span>(datanode_id, <span class="kw-2">mut </span>recv) <span class="kw">in </span>env.heartbeat_receivers.into_iter() {
+            <span class="kw">let </span>mailbox_clone = env.context.mailbox.clone();
             <span class="kw">let </span>failed_region_clone = failed_region.clone();
             <span class="kw">let </span>candidate_tx = candidate_tx.clone();
             common_runtime::spawn_bg(<span class="kw">async move </span>{
@@ -1197,7 +1203,7 @@
             schema_name: failed_region.schema.clone(),
             table_name: failed_region.table.clone(),
         };
-        <span class="kw">let </span>value = table_routes::get_table_global_value(<span class="kw-2">&amp;</span>context.selector_ctx.kv_store, <span class="kw-2">&amp;</span>key)
+        <span class="kw">let </span>value = table_routes::get_table_global_value(<span class="kw-2">&amp;</span>env.context.selector_ctx.kv_store, <span class="kw-2">&amp;</span>key)
             .<span class="kw">await
             </span>.unwrap()
             .unwrap();
@@ -1217,18 +1223,18 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_state_serde() {
-        <span class="kw">let </span>TestingEnv {
-            context,
-            failed_region,
-            heartbeat_receivers: <span class="kw">_</span>,
-        } = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span>env = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span>failed_region = env.failed_region(<span class="number">1</span>).<span class="kw">await</span>;
 
         <span class="kw">let </span>state = RegionFailoverStart::new();
         <span class="kw">let </span>node = Node {
             failed_region,
             state: <span class="prelude-val">Some</span>(Box::new(state)),
         };
-        <span class="kw">let </span>procedure = RegionFailoverProcedure { node, context };
+        <span class="kw">let </span>procedure = RegionFailoverProcedure {
+            node,
+            context: env.context,
+        };
 
         <span class="kw">let </span>s = procedure.dump().unwrap();
         <span class="macro">assert_eq!</span>(

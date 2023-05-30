@@ -398,7 +398,7 @@
     handler_group: HeartbeatHandlerGroup,
     election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
     meta_peer_client: <span class="prelude-ty">Option</span>&lt;MetaPeerClient&gt;,
-    lock: <span class="prelude-ty">Option</span>&lt;DistLockRef&gt;,
+    lock: DistLockRef,
     procedure_manager: ProcedureManagerRef,
     metadata_service: MetadataServiceRef,
     mailbox: MailboxRef,
@@ -522,8 +522,8 @@
     }
 
     <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;DistLockRef&gt; {
-        <span class="self">self</span>.lock.clone()
+    </span><span class="kw">pub fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>DistLockRef {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.lock
     }
 
     <span class="attr">#[inline]

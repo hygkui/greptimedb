@@ -247,10 +247,6 @@
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
 <a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -389,29 +385,27 @@
     <span class="kw">use </span>api::v1::meta::mailbox_message::Payload;
     <span class="kw">use </span>common_meta::instruction::SimpleReply;
 
-    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::tests::{TestingEnv, TestingEnvBuilder};
+    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::tests::TestingEnvBuilder;
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_deactivate_region_success() {
         common_telemetry::init_default_ut_logging();
 
-        <span class="kw">let </span>TestingEnv {
-            context,
-            failed_region,
-            <span class="kw-2">mut </span>heartbeat_receivers,
-        } = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>env = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span>failed_region = env.failed_region(<span class="number">1</span>).<span class="kw">await</span>;
 
         <span class="kw">let </span>state = DeactivateRegion::new(Peer::new(<span class="number">2</span>, <span class="string">&quot;&quot;</span>));
         <span class="kw">let </span>mailbox_receiver = state
-            .send_close_region_message(<span class="kw-2">&amp;</span>context, <span class="kw-2">&amp;</span>failed_region, Duration::from_millis(<span class="number">100</span>))
+            .send_close_region_message(<span class="kw-2">&amp;</span>env.context, <span class="kw-2">&amp;</span>failed_region, Duration::from_millis(<span class="number">100</span>))
             .<span class="kw">await
             </span>.unwrap();
 
         <span class="kw">let </span>message_id = mailbox_receiver.message_id();
 
         <span class="comment">// verify that the close region message is sent
-        </span><span class="kw">let </span>rx = heartbeat_receivers
+        </span><span class="kw">let </span>rx = env
+            .heartbeat_receivers
             .get_mut(<span class="kw-2">&amp;</span>failed_region.datanode_id)
             .unwrap();
         <span class="kw">let </span>resp = rx.recv().<span class="kw">await</span>.unwrap().unwrap();
@@ -428,7 +422,7 @@
         );
 
         <span class="comment">// simulating response from Datanode
-        </span>context
+        </span>env.context
             .mailbox
             .on_recv(
                 message_id,
@@ -464,20 +458,18 @@
     </span><span class="kw">async fn </span>test_deactivate_region_timeout() {
         common_telemetry::init_default_ut_logging();
 
-        <span class="kw">let </span>TestingEnv {
-            context,
-            failed_region,
-            <span class="kw-2">mut </span>heartbeat_receivers,
-        } = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>env = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span>failed_region = env.failed_region(<span class="number">1</span>).<span class="kw">await</span>;
 
         <span class="kw">let </span>state = DeactivateRegion::new(Peer::new(<span class="number">2</span>, <span class="string">&quot;&quot;</span>));
         <span class="kw">let </span>mailbox_receiver = state
-            .send_close_region_message(<span class="kw-2">&amp;</span>context, <span class="kw-2">&amp;</span>failed_region, Duration::from_millis(<span class="number">100</span>))
+            .send_close_region_message(<span class="kw-2">&amp;</span>env.context, <span class="kw-2">&amp;</span>failed_region, Duration::from_millis(<span class="number">100</span>))
             .<span class="kw">await
             </span>.unwrap();
 
         <span class="comment">// verify that the open region message is sent
-        </span><span class="kw">let </span>rx = heartbeat_receivers
+        </span><span class="kw">let </span>rx = env
+            .heartbeat_receivers
             .get_mut(<span class="kw-2">&amp;</span>failed_region.datanode_id)
             .unwrap();
         <span class="kw">let </span>resp = rx.recv().<span class="kw">await</span>.unwrap().unwrap();
