@@ -201,6 +201,18 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -385,6 +397,11 @@
 }
 
 <span class="attr">#[inline]
+</span><span class="kw">pub fn </span>table_id(region_id: RegionId) -&gt; TableId {
+    (region_id &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>u32
+}
+
+<span class="attr">#[inline]
 </span><span class="kw">pub fn </span>table_dir(catalog_name: <span class="kw-2">&amp;</span>str, schema_name: <span class="kw-2">&amp;</span>str, table_id: TableId) -&gt; String {
     <span class="macro">format!</span>(<span class="string">&quot;{DATA_DIR}{catalog_name}/{schema_name}/{table_id}/&quot;</span>)
 }
@@ -402,6 +419,13 @@
         };
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;greptime.public.test&quot;</span>, table_ref.to_string());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_table_id() {
+        <span class="kw">let </span>region_id = region_id(u32::MAX, <span class="number">1</span>);
+        <span class="kw">let </span>table_id = table_id(region_id);
+        <span class="macro">assert_eq!</span>(u32::MAX, table_id);
     }
 }
 </code></pre></div></section></main></body></html>
