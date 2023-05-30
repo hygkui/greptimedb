@@ -105,6 +105,7 @@
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -138,7 +139,8 @@
 <span class="kw">use </span>pgwire::api::store::MemPortalStore;
 <span class="kw">use </span>pgwire::api::{ClientInfo, MakeHandler};
 <span class="kw">pub use </span>server::PostgresServer;
-<span class="kw">use </span>session::context::{QueryContext, QueryContextRef};
+<span class="kw">use </span>session::context::Channel;
+<span class="kw">use </span>session::Session;
 <span class="kw">use </span>sql::statements::statement::Statement;
 
 <span class="kw">use </span><span class="self">self</span>::auth_handler::PgLoginVerifier;
@@ -180,7 +182,7 @@
     force_tls: bool,
     param_provider: Arc&lt;GreptimeDBStartupParameters&gt;,
 
-    query_ctx: QueryContextRef,
+    session: Session,
     portal_store: Arc&lt;MemPortalStore&lt;(Statement, String)&gt;&gt;,
     query_parser: Arc&lt;POCQueryParser&gt;,
 }
@@ -197,19 +199,19 @@
 }
 
 <span class="kw">impl </span>MakeHandler <span class="kw">for </span>MakePostgresServerHandler {
-    <span class="kw">type </span>Handler = Arc&lt;PostgresServerHandler&gt;;
+    <span class="kw">type </span>Handler = PostgresServerHandler;
 
     <span class="kw">fn </span>make(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::Handler {
-        Arc::new(PostgresServerHandler {
+        PostgresServerHandler {
             query_handler: <span class="self">self</span>.query_handler.clone(),
             login_verifier: PgLoginVerifier::new(<span class="self">self</span>.user_provider.clone()),
             force_tls: <span class="self">self</span>.force_tls,
             param_provider: <span class="self">self</span>.param_provider.clone(),
 
-            query_ctx: QueryContext::arc(),
+            session: Session::new(<span class="prelude-val">None</span>, Channel::Postgres),
             portal_store: Arc::new(MemPortalStore::new()),
             query_parser: <span class="self">self</span>.query_parser.clone(),
-        })
+        }
     }
 }
 </code></pre></div></section></main></body></html>

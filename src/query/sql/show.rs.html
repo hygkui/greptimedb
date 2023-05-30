@@ -357,7 +357,7 @@
     ColumnDef, ColumnOption, ColumnOptionDef, Expr, ObjectName, SqlOption, TableConstraint,
     Value <span class="kw">as </span>SqlValue,
 };
-<span class="kw">use </span>sql::dialect::GenericDialect;
+<span class="kw">use </span>sql::dialect::GreptimeDbDialect;
 <span class="kw">use </span>sql::parser::ParserContext;
 <span class="kw">use </span>sql::statements::create::{CreateTable, TIME_INDEX};
 <span class="kw">use </span>sql::statements::{<span class="self">self</span>};
@@ -445,7 +445,7 @@
                     .with_context(|<span class="kw">_</span>| ConvertSqlValueSnafu { value: v.clone() })<span class="question-mark">?</span>,
             ),
             ColumnDefaultConstraint::Function(expr) =&gt; {
-                ParserContext::parse_function(expr, <span class="kw-2">&amp;</span>GenericDialect {}).context(SqlSnafu)<span class="question-mark">?
+                ParserContext::parse_function(expr, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).context(SqlSnafu)<span class="question-mark">?
             </span>}
         };
 

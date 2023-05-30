@@ -382,7 +382,7 @@
 <span class="kw">use </span>promql_parser::parser::Expr::Extension;
 <span class="kw">use </span>promql_parser::parser::{EvalStmt, Expr, ValueType};
 <span class="kw">use </span>snafu::ResultExt;
-<span class="kw">use </span>sql::dialect::GenericDialect;
+<span class="kw">use </span>sql::dialect::GreptimeDbDialect;
 <span class="kw">use </span>sql::parser::ParserContext;
 <span class="kw">use </span>sql::statements::statement::Statement;
 
@@ -464,7 +464,7 @@
 <span class="kw">impl </span>QueryLanguageParser {
     <span class="kw">pub fn </span>parse_sql(sql: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;QueryStatement&gt; {
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(METRIC_PARSE_SQL_ELAPSED);
-        <span class="kw">let </span><span class="kw-2">mut </span>statement = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span><span class="kw-2">mut </span>statement = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .map_err(BoxedError::new)
             .context(QueryParseSnafu {
                 query: sql.to_string(),

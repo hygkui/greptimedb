@@ -669,7 +669,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>session::context::QueryContext;
-    <span class="kw">use </span>sql::dialect::GenericDialect;
+    <span class="kw">use </span>sql::dialect::GreptimeDbDialect;
     <span class="kw">use </span>sql::parser::ParserContext;
     <span class="kw">use </span>sql::statements::statement::Statement;
 
@@ -678,7 +678,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_create_to_expr() {
         <span class="kw">let </span>sql = <span class="string">&quot;CREATE TABLE monitor (host STRING,ts TIMESTAMP,TIME INDEX (ts),PRIMARY KEY(host)) ENGINE=mito WITH(regions=1, ttl=&#39;3days&#39;, write_buffer_size=&#39;1024KB&#39;);&quot;</span>;
-        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .pop()
             .unwrap();

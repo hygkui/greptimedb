@@ -1072,16 +1072,16 @@
     <span class="kw">use </span>sqlparser::ast::{
         Ident, ObjectName, Query <span class="kw">as </span>SpQuery, Statement <span class="kw">as </span>SpStatement, WildcardAdditionalOptions,
     };
-    <span class="kw">use </span>sqlparser::dialect::GenericDialect;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::dialect::GreptimeDbDialect;
     <span class="kw">use </span><span class="kw">crate</span>::statements::create::CreateTable;
     <span class="kw">use </span><span class="kw">crate</span>::statements::sql_data_type_to_concrete_data_type;
 
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_show_database_all() {
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW DATABASES&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1096,7 +1096,7 @@
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_show_database_like() {
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW DATABASES LIKE test_database&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1114,7 +1114,7 @@
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_show_database_where() {
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW DATABASES WHERE Database LIKE &#39;%whatever1%&#39; OR Database LIKE &#39;%whatever2%&#39;&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1133,7 +1133,7 @@
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_show_tables_all() {
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1149,7 +1149,7 @@
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_show_tables_like() {
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES LIKE test_table&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1165,7 +1165,7 @@
         );
 
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES in test_db LIKE test_table&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1184,7 +1184,7 @@
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_show_tables_where() {
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES where name like test_table&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1197,7 +1197,7 @@
         );
 
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES in test_db where name LIKE test_table&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1213,7 +1213,7 @@
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_explain() {
         <span class="kw">let </span>sql = <span class="string">&quot;EXPLAIN select * from foo&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
@@ -1268,7 +1268,7 @@
     <span class="attr">#[test]
     </span><span class="kw">pub fn </span>test_drop_table() {
         <span class="kw">let </span>sql = <span class="string">&quot;DROP TABLE foo&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span><span class="kw-2">mut </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(
             stmts.pop().unwrap(),
@@ -1276,7 +1276,7 @@
         );
 
         <span class="kw">let </span>sql = <span class="string">&quot;DROP TABLE my_schema.foo&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span><span class="kw-2">mut </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(
             stmts.pop().unwrap(),
@@ -1287,7 +1287,7 @@
         );
 
         <span class="kw">let </span>sql = <span class="string">&quot;DROP TABLE my_catalog.my_schema.foo&quot;</span>;
-        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {});
+        <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {});
         <span class="kw">let </span><span class="kw-2">mut </span>stmts = result.unwrap();
         <span class="macro">assert_eq!</span>(
             stmts.pop().unwrap(),
@@ -1300,7 +1300,7 @@
     }
 
     <span class="kw">fn </span>test_timestamp_precision(sql: <span class="kw-2">&amp;</span>str, expected_type: ConcreteDataType) {
-        <span class="kw">match </span>ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">match </span>ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .pop()
             .unwrap()
@@ -1352,7 +1352,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_parse_function() {
         <span class="kw">let </span>expr =
-            ParserContext::parse_function(<span class="string">&quot;current_timestamp()&quot;</span>, <span class="kw-2">&amp;</span>GenericDialect {}).unwrap();
+            ParserContext::parse_function(<span class="string">&quot;current_timestamp()&quot;</span>, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(expr, Expr::Function(<span class="kw">_</span>)));
     }
 }

@@ -243,7 +243,6 @@
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -382,9 +381,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>sqlparser::dialect::GenericDialect;
-
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::dialect::GreptimeDbDialect;
     <span class="kw">use </span><span class="kw">crate</span>::parser::ParserContext;
     <span class="kw">use </span><span class="kw">crate</span>::statements::statement::Statement;
 
@@ -392,7 +390,7 @@
     </span><span class="kw">fn </span>test_insert_value_with_unary_op() {
         <span class="comment">// insert &quot;-1&quot;
         </span><span class="kw">let </span>sql = <span class="string">&quot;INSERT INTO my_table VALUES(-1)&quot;</span>;
-        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .remove(<span class="number">0</span>);
         <span class="kw">match </span>stmt {
@@ -405,7 +403,7 @@
 
         <span class="comment">// insert &quot;+1&quot;
         </span><span class="kw">let </span>sql = <span class="string">&quot;INSERT INTO my_table VALUES(+1)&quot;</span>;
-        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .remove(<span class="number">0</span>);
         <span class="kw">match </span>stmt {
@@ -421,7 +419,7 @@
     </span><span class="kw">fn </span>test_insert_value_with_default() {
         <span class="comment">// insert &quot;default&quot;
         </span><span class="kw">let </span>sql = <span class="string">&quot;INSERT INTO my_table VALUES(default)&quot;</span>;
-        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .remove(<span class="number">0</span>);
         <span class="kw">match </span>stmt {
@@ -437,7 +435,7 @@
     </span><span class="kw">fn </span>test_insert_value_with_default_uppercase() {
         <span class="comment">// insert &quot;DEFAULT&quot;
         </span><span class="kw">let </span>sql = <span class="string">&quot;INSERT INTO my_table VALUES(DEFAULT)&quot;</span>;
-        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .remove(<span class="number">0</span>);
         <span class="kw">match </span>stmt {
@@ -453,7 +451,7 @@
     </span><span class="kw">fn </span>test_insert_value_with_quoted_string() {
         <span class="comment">// insert &quot;&#39;default&#39;&quot;
         </span><span class="kw">let </span>sql = <span class="string">&quot;INSERT INTO my_table VALUES(&#39;default&#39;)&quot;</span>;
-        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .remove(<span class="number">0</span>);
         <span class="kw">match </span>stmt {
@@ -471,7 +469,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_insert_select() {
         <span class="kw">let </span>sql = <span class="string">&quot;INSERT INTO my_table select * from other_table&quot;</span>;
-        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
             .unwrap()
             .remove(<span class="number">0</span>);
         <span class="kw">match </span>stmt {

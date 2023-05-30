@@ -681,7 +681,7 @@
 <span class="kw">use </span>pgwire::api::store::MemPortalStore;
 <span class="kw">use </span>pgwire::api::{ClientInfo, Type};
 <span class="kw">use </span>pgwire::error::{ErrorInfo, PgWireError, PgWireResult};
-<span class="kw">use </span>sql::dialect::GenericDialect;
+<span class="kw">use </span>sql::dialect::PostgreSqlDialect;
 <span class="kw">use </span>sql::parser::ParserContext;
 <span class="kw">use </span>sql::statements::statement::Statement;
 
@@ -703,13 +703,13 @@
                 ),
                 (
                     <span class="kw">crate</span>::metrics::METRIC_DB_LABEL,
-                    <span class="self">self</span>.query_ctx.get_db_string()
+                    <span class="self">self</span>.session.context().get_db_string()
                 )
             ]
         );
         <span class="kw">let </span>outputs = <span class="self">self
             </span>.query_handler
-            .do_query(query, <span class="self">self</span>.query_ctx.clone())
+            .do_query(query, <span class="self">self</span>.session.context())
             .<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::with_capacity(outputs.len());
@@ -908,7 +908,7 @@
 
     <span class="kw">fn </span>parse_sql(<span class="kw-2">&amp;</span><span class="self">self</span>, sql: <span class="kw-2">&amp;</span>str, types: <span class="kw-2">&amp;</span>[Type]) -&gt; PgWireResult&lt;<span class="self">Self</span>::Statement&gt; {
         <span class="macro">increment_counter!</span>(<span class="kw">crate</span>::metrics::METRIC_POSTGRES_PREPARED_COUNT);
-        <span class="kw">let </span><span class="kw-2">mut </span>stmts = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {})
+        <span class="kw">let </span><span class="kw-2">mut </span>stmts = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>PostgreSqlDialect {})
             .map_err(|e| PgWireError::ApiError(Box::new(e)))<span class="question-mark">?</span>;
         <span class="kw">if </span>stmts.len() != <span class="number">1 </span>{
             <span class="prelude-val">Err</span>(PgWireError::UserError(Box::new(ErrorInfo::new(
@@ -1009,7 +1009,7 @@
                 ),
                 (
                     <span class="kw">crate</span>::metrics::METRIC_DB_LABEL,
-                    <span class="self">self</span>.query_ctx.get_db_string()
+                    <span class="self">self</span>.session.context().get_db_string()
                 )
             ]
         );
@@ -1024,7 +1024,7 @@
 
         <span class="kw">let </span>output = <span class="self">self
             </span>.query_handler
-            .do_query(<span class="kw-2">&amp;</span>sql, <span class="self">self</span>.query_ctx.clone())
+            .do_query(<span class="kw-2">&amp;</span>sql, <span class="self">self</span>.session.context())
             .<span class="kw">await
             </span>.remove(<span class="number">0</span>);
 
@@ -1055,7 +1055,7 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(schema) = <span class="self">self
             </span>.query_handler
-            .do_describe(stmt.clone(), <span class="self">self</span>.query_ctx.clone())
+            .do_describe(stmt.clone(), <span class="self">self</span>.session.context())
             .<span class="kw">await
             </span>.map_err(|e| PgWireError::ApiError(Box::new(e)))<span class="question-mark">?
         </span>{

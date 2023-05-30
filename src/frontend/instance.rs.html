@@ -842,6 +842,7 @@
 <a href="#842" id="842">842</a>
 <a href="#843" id="843">843</a>
 <a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -908,7 +909,7 @@
 };
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>sql::dialect::GenericDialect;
+<span class="kw">use </span>sql::dialect::Dialect;
 <span class="kw">use </span>sql::parser::ParserContext;
 <span class="kw">use </span>sql::statements::copy::CopyTable;
 <span class="kw">use </span>sql::statements::statement::Statement;
@@ -1291,8 +1292,8 @@
     }
 }
 
-<span class="kw">fn </span>parse_stmt(sql: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Statement&gt;&gt; {
-    ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {}).context(ParseSqlSnafu)
+<span class="kw">fn </span>parse_stmt(sql: <span class="kw-2">&amp;</span>str, dialect: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Dialect + Send + Sync)) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Statement&gt;&gt; {
+    ParserContext::create_with_dialect(sql, dialect).context(ParseSqlSnafu)
 }
 
 <span class="kw">impl </span>Instance {
@@ -1317,7 +1318,7 @@
             <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="macro">vec!</span>[<span class="prelude-val">Err</span>(e)],
         };
 
-        <span class="kw">match </span>parse_stmt(query.as_ref())
+        <span class="kw">match </span>parse_stmt(query.as_ref(), query_ctx.sql_dialect())
             .and_then(|stmts| query_interceptor.post_parsing(stmts, query_ctx.clone()))
         {
             <span class="prelude-val">Ok</span>(stmts) =&gt; {
@@ -1508,6 +1509,7 @@
     <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema};
     <span class="kw">use </span>query::query_engine::options::QueryOptions;
     <span class="kw">use </span>session::context::QueryContext;
+    <span class="kw">use </span>sql::dialect::GreptimeDbDialect;
     <span class="kw">use </span>strfmt::Format;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -1592,7 +1594,7 @@
         CREATE DATABASE test_database;
         SHOW DATABASES;
         &quot;#</span>;
-        <span class="kw">let </span>stmts = parse_stmt(sql).unwrap();
+        <span class="kw">let </span>stmts = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="macro">assert_eq!</span>(stmts.len(), <span class="number">4</span>);
         <span class="kw">for </span>stmt <span class="kw">in </span>stmts {
             <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt, <span class="kw-2">&amp;</span>query_ctx);
@@ -1603,7 +1605,7 @@
         SHOW CREATE TABLE demo;
         ALTER TABLE demo ADD COLUMN new_col INT;
         &quot;#</span>;
-        <span class="kw">let </span>stmts = parse_stmt(sql).unwrap();
+        <span class="kw">let </span>stmts = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="macro">assert_eq!</span>(stmts.len(), <span class="number">2</span>);
         <span class="kw">for </span>stmt <span class="kw">in </span>stmts {
             <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt, <span class="kw-2">&amp;</span>query_ctx);
@@ -1611,7 +1613,7 @@
         }
 
         <span class="kw">let </span>sql = <span class="string">&quot;USE randomschema&quot;</span>;
-        <span class="kw">let </span>stmts = parse_stmt(sql).unwrap();
+        <span class="kw">let </span>stmts = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmts[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx);
         <span class="macro">assert!</span>(re.is_ok());
 
@@ -1644,7 +1646,7 @@
         }
 
         <span class="kw">fn </span>do_test(sql: <span class="kw-2">&amp;</span>str, plugins: Arc&lt;Plugins&gt;, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef, is_ok: bool) {
-            <span class="kw">let </span>stmt = <span class="kw-2">&amp;</span>parse_stmt(sql).unwrap()[<span class="number">0</span>];
+            <span class="kw">let </span>stmt = <span class="kw-2">&amp;</span>parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap()[<span class="number">0</span>];
             <span class="kw">let </span>re = check_permission(plugins, stmt, query_ctx);
             <span class="kw">if </span>is_ok {
                 <span class="macro">assert!</span>(re.is_ok());
@@ -1672,12 +1674,12 @@
 
         <span class="comment">// test show tables
         </span><span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES FROM public&quot;</span>;
-        <span class="kw">let </span>stmt = parse_stmt(sql).unwrap();
+        <span class="kw">let </span>stmt = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx);
         <span class="macro">assert!</span>(re.is_ok());
 
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES FROM wrongschema&quot;</span>;
-        <span class="kw">let </span>stmt = parse_stmt(sql).unwrap();
+        <span class="kw">let </span>stmt = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx);
         <span class="macro">assert!</span>(re.is_err());
 

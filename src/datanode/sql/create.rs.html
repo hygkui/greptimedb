@@ -755,7 +755,7 @@
     <span class="kw">use </span>query::parser::{QueryLanguageParser, QueryStatement};
     <span class="kw">use </span>query::query_engine::SqlStatementExecutor;
     <span class="kw">use </span>session::context::QueryContext;
-    <span class="kw">use </span>sql::dialect::GenericDialect;
+    <span class="kw">use </span>sql::dialect::GreptimeDbDialect;
     <span class="kw">use </span>sql::parser::ParserContext;
     <span class="kw">use </span>sql::statements::statement::Statement;
 
@@ -764,7 +764,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::tests::test_util::MockInstance;
 
     <span class="kw">fn </span>sql_to_statement(sql: <span class="kw-2">&amp;</span>str) -&gt; CreateTable {
-        <span class="kw">let </span><span class="kw-2">mut </span>res = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GenericDialect {}).unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>res = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, res.len());
         <span class="kw">match </span>res.pop().unwrap() {
             Statement::CreateTable(c) =&gt; c,
