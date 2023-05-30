@@ -106,6 +106,17 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -122,7 +133,8 @@
 
 </span><span class="doccomment">//! object storage utilities
 
-</span><span class="kw">mod </span>fs;
+</span><span class="kw">mod </span>azblob;
+<span class="kw">mod </span>fs;
 <span class="kw">mod </span>oss;
 <span class="kw">mod </span>s3;
 
@@ -144,6 +156,9 @@
         ObjectStoreConfig::File(file_config) =&gt; fs::new_fs_object_store(file_config).<span class="kw">await</span>,
         ObjectStoreConfig::S3(s3_config) =&gt; s3::new_s3_object_store(s3_config).<span class="kw">await</span>,
         ObjectStoreConfig::Oss(oss_config) =&gt; oss::new_oss_object_store(oss_config).<span class="kw">await</span>,
+        ObjectStoreConfig::Azblob(azblob_config) =&gt; {
+            azblob::new_azblob_object_store(azblob_config).<span class="kw">await
+        </span>}
     }<span class="question-mark">?</span>;
 
     <span class="comment">// Enable retry layer and cache layer for non-fs object storages
@@ -180,6 +195,13 @@
         ObjectStoreConfig::Oss(oss_config) =&gt; {
             <span class="kw">let </span>path = oss_config.cache_path.as_ref();
             <span class="kw">let </span>capacity = oss_config
+                .cache_capacity
+                .unwrap_or(DEFAULT_OBJECT_STORE_CACHE_SIZE);
+            (path, capacity)
+        }
+        ObjectStoreConfig::Azblob(azblob_config) =&gt; {
+            <span class="kw">let </span>path = azblob_config.cache_path.as_ref();
+            <span class="kw">let </span>capacity = azblob_config
                 .cache_capacity
                 .unwrap_or(DEFAULT_OBJECT_STORE_CACHE_SIZE);
             (path, capacity)
