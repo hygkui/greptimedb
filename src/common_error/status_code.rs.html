@@ -177,6 +177,10 @@
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -212,6 +216,8 @@
     </span>Internal = <span class="number">1003</span>,
     <span class="doccomment">/// Invalid arguments.
     </span>InvalidArguments = <span class="number">1004</span>,
+    <span class="doccomment">/// The task is cancelled.
+    </span>Cancelled = <span class="number">1005</span>,
     <span class="comment">// ====== End of common status code ================
 
     // ====== Begin of SQL related status code =========
@@ -279,6 +285,7 @@
             | StatusCode::Unsupported
             | StatusCode::Unexpected
             | StatusCode::InvalidArguments
+            | StatusCode::Cancelled
             | StatusCode::InvalidSyntax
             | StatusCode::PlanQuery
             | StatusCode::EngineExecuteQuery
@@ -304,6 +311,7 @@
             | StatusCode::Unsupported
             | StatusCode::Unexpected
             | StatusCode::Internal
+            | StatusCode::Cancelled
             | StatusCode::PlanQuery
             | StatusCode::EngineExecuteQuery
             | StatusCode::StorageUnavailable

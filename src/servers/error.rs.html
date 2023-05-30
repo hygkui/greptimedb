@@ -380,6 +380,50 @@
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
 <a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -636,6 +680,12 @@
         source: BoxedError,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task, source: {}&quot;</span>, source))]
+    </span>JoinTask {
+        source: tokio::task::JoinError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -699,6 +749,16 @@
             Other { source, .. } =&gt; source.status_code(),
 
             UnexpectedResult { .. } =&gt; StatusCode::Unexpected,
+
+            JoinTask { source, .. } =&gt; {
+                <span class="kw">if </span>source.is_cancelled() {
+                    StatusCode::Cancelled
+                } <span class="kw">else if </span>source.is_panic() {
+                    StatusCode::Unexpected
+                } <span class="kw">else </span>{
+                    StatusCode::Unknown
+                }
+            }
         }
     }
 
@@ -707,13 +767,41 @@
     </span>}
 }
 
+<span class="doccomment">/// Returns the tonic [Code] of a [StatusCode].
+</span><span class="kw">fn </span>status_to_tonic_code(status_code: StatusCode) -&gt; Code {
+    <span class="kw">match </span>status_code {
+        StatusCode::Success =&gt; Code::Ok,
+        StatusCode::Unknown =&gt; Code::Unknown,
+        StatusCode::Unsupported =&gt; Code::Unimplemented,
+        StatusCode::Unexpected
+        | StatusCode::Internal
+        | StatusCode::PlanQuery
+        | StatusCode::EngineExecuteQuery =&gt; Code::Internal,
+        StatusCode::InvalidArguments | StatusCode::InvalidSyntax =&gt; Code::InvalidArgument,
+        StatusCode::Cancelled =&gt; Code::Cancelled,
+        StatusCode::TableAlreadyExists | StatusCode::TableColumnExists =&gt; Code::AlreadyExists,
+        StatusCode::TableNotFound
+        | StatusCode::TableColumnNotFound
+        | StatusCode::DatabaseNotFound
+        | StatusCode::UserNotFound =&gt; Code::NotFound,
+        StatusCode::StorageUnavailable =&gt; Code::Unavailable,
+        StatusCode::RuntimeResourcesExhausted =&gt; Code::ResourceExhausted,
+        StatusCode::UnsupportedPasswordType
+        | StatusCode::UserPasswordMismatch
+        | StatusCode::AuthHeaderNotFound
+        | StatusCode::InvalidAuthHeader =&gt; Code::Unauthenticated,
+        StatusCode::AccessDenied =&gt; Code::PermissionDenied,
+    }
+}
+
 <span class="kw">impl </span>From&lt;Error&gt; <span class="kw">for </span>tonic::Status {
     <span class="kw">fn </span>from(err: Error) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>headers = HeaderMap::&lt;HeaderValue&gt;::with_capacity(<span class="number">2</span>);
 
         <span class="comment">// If either of the status_code or error msg cannot convert to valid HTTP header value
         // (which is a very rare case), just ignore. Client will use Tonic status code and message.
-        </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(code) = HeaderValue::from_bytes(err.status_code().to_string().as_bytes()) {
+        </span><span class="kw">let </span>status_code = err.status_code();
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>(code) = HeaderValue::from_bytes(status_code.to_string().as_bytes()) {
             headers.insert(INNER_ERROR_CODE, code);
         }
         <span class="kw">let </span>root_error = err.iter_chain().last().unwrap();
@@ -722,7 +810,7 @@
         }
 
         <span class="kw">let </span>metadata = MetadataMap::from_headers(headers);
-        tonic::Status::with_metadata(Code::Internal, err.to_string(), metadata)
+        tonic::Status::with_metadata(status_to_tonic_code(status_code), err.to_string(), metadata)
     }
 }
 
