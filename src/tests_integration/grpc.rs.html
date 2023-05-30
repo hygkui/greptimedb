@@ -856,6 +856,8 @@
 <a href="#856" id="856">856</a>
 <a href="#857" id="857">857</a>
 <a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -892,6 +894,7 @@
     <span class="kw">use </span>query::parser::QueryLanguageParser;
     <span class="kw">use </span>servers::query_handler::grpc::GrpcQueryHandler;
     <span class="kw">use </span>session::context::QueryContext;
+    <span class="kw">use </span>store_api::storage::RegionNumber;
     <span class="kw">use </span>tests::{has_parquet_file, test_region_dir};
 
     <span class="kw">use </span><span class="kw">crate</span>::tests;
@@ -973,6 +976,7 @@
                             default_constraint: <span class="macro">vec!</span>[],
                         }),
                         is_key: <span class="bool-val">false</span>,
+                        location: <span class="prelude-val">None</span>,
                     }],
                 })),
             })),
@@ -1264,14 +1268,14 @@ CREATE TABLE {table_name} (
         catalog_name: <span class="kw-2">&amp;</span>str,
         schema_name: <span class="kw-2">&amp;</span>str,
         table_name: <span class="kw-2">&amp;</span>str,
-        region_id: <span class="prelude-ty">Option</span>&lt;u32&gt;,
+        region_number: <span class="prelude-ty">Option</span>&lt;RegionNumber&gt;,
     ) {
         <span class="kw">let </span>request = Request::Ddl(DdlRequest {
             expr: <span class="prelude-val">Some</span>(DdlExpr::FlushTable(FlushTableExpr {
                 catalog_name: catalog_name.to_string(),
                 schema_name: schema_name.to_string(),
                 table_name: table_name.to_string(),
-                region_id,
+                region_number,
             })),
         });
 

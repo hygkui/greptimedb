@@ -257,6 +257,7 @@
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -422,10 +423,10 @@
         <span class="prelude-val">Some</span>(expr.desc)
     };
 
-    <span class="kw">let </span>region_ids = <span class="kw">if </span>expr.region_ids.is_empty() {
+    <span class="kw">let </span>region_numbers = <span class="kw">if </span>expr.region_numbers.is_empty() {
         <span class="macro">vec!</span>[<span class="number">0</span>]
     } <span class="kw">else </span>{
-        expr.region_ids
+        expr.region_numbers
     };
 
     <span class="kw">let </span>table_options =
@@ -437,7 +438,7 @@
         table_name: expr.table_name,
         desc,
         schema,
-        region_numbers: region_ids,
+        region_numbers,
         primary_key_indices,
         create_if_not_exists: expr.create_if_not_exists,
         table_options,
@@ -468,6 +469,7 @@
                         default_constraint: <span class="macro">vec!</span>[],
                     }),
                     is_key: <span class="bool-val">false</span>,
+                    location: <span class="prelude-val">None</span>,
                 }],
             })),
         };

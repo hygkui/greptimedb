@@ -559,7 +559,7 @@
         <span class="kw">return </span><span class="prelude-val">Ok</span>(RouteResponse {
             header: <span class="prelude-val">Some</span>(ResponseHeader::failed(
                 cluster_id,
-                Error::no_active_datanodes(),
+                Error::not_enough_active_datanodes(<span class="number">0</span>),
             )),
             ..Default::default()
         });

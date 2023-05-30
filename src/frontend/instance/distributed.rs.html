@@ -921,6 +921,11 @@
 <a href="#921" id="921">921</a>
 <a href="#922" id="922">922</a>
 <a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -977,7 +982,8 @@
 <span class="kw">use </span>sql::statements::create::{PartitionEntry, Partitions};
 <span class="kw">use </span>sql::statements::statement::Statement;
 <span class="kw">use </span>sql::statements::{<span class="self">self</span>, sql_value_to_value};
-<span class="kw">use </span>table::engine::TableReference;
+<span class="kw">use </span>store_api::storage::RegionNumber;
+<span class="kw">use </span>table::engine::{<span class="self">self</span>, TableReference};
 <span class="kw">use </span>table::metadata::{RawTableInfo, RawTableMeta, TableIdent, TableType};
 <span class="kw">use </span>table::requests::TableOptions;
 <span class="kw">use </span>table::table::AlterContext;
@@ -1112,11 +1118,11 @@
 
             <span class="kw">let </span>regions = table_route.find_leader_regions(<span class="kw-2">&amp;</span>datanode);
             <span class="kw">let </span><span class="kw-2">mut </span>create_expr_for_region = create_table.clone();
-            create_expr_for_region.region_ids = regions;
+            create_expr_for_region.region_numbers = regions;
 
             <span class="macro">debug!</span>(
                 <span class="string">&quot;Creating table {:?} on Datanode {:?} with regions {:?}&quot;</span>,
-                create_table, datanode, create_expr_for_region.region_ids,
+                create_table, datanode, create_expr_for_region.region_numbers,
             );
 
             <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE_IN_DATANODE);
@@ -1211,7 +1217,11 @@
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">1</span>))
     }
 
-    <span class="kw">async fn </span>flush_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName, region_id: <span class="prelude-ty">Option</span>&lt;u32&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">async fn </span>flush_table(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        table_name: TableName,
+        region_number: <span class="prelude-ty">Option</span>&lt;RegionNumber&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let _ </span>= <span class="self">self
             </span>.catalog_manager
             .table(
@@ -1237,13 +1247,13 @@
             catalog_name: table_name.catalog_name.clone(),
             schema_name: table_name.schema_name.clone(),
             table_name: table_name.table_name.clone(),
-            region_id,
+            region_number,
         };
 
         <span class="kw">for </span>table_route <span class="kw">in </span><span class="kw-2">&amp;</span>route_response.table_routes {
             <span class="kw">let </span>should_send_rpc = table_route.region_routes.iter().any(|route| {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(region_id) = region_id {
-                    region_id == route.region.id <span class="kw">as </span>u32
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(n) = region_number {
+                    n == engine::region_number(route.region.id)
                 } <span class="kw">else </span>{
                     <span class="bool-val">true
                 </span>}
@@ -1594,7 +1604,7 @@
                     DdlExpr::FlushTable(expr) =&gt; {
                         <span class="kw">let </span>table_name =
                             TableName::new(<span class="kw-2">&amp;</span>expr.catalog_name, <span class="kw-2">&amp;</span>expr.schema_name, <span class="kw-2">&amp;</span>expr.table_name);
-                        <span class="self">self</span>.flush_table(table_name, expr.region_id).<span class="kw">await
+                        <span class="self">self</span>.flush_table(table_name, expr.region_number).<span class="kw">await
                     </span>}
                 }
             }

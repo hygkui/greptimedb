@@ -213,6 +213,14 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -387,18 +395,26 @@
 
 <span class="doccomment">/// Generate region name in the form of &quot;{TABLE_ID}_{REGION_NUMBER}&quot;
 </span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>region_name(table_id: TableId, n: u32) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;{table_id}_{n:010}&quot;</span>)
+</span><span class="kw">pub fn </span>region_name(table_id: TableId, region_number: RegionNumber) -&gt; String {
+    <span class="macro">format!</span>(<span class="string">&quot;{table_id}_{region_number:010}&quot;</span>)
 }
 
-<span class="attr">#[inline]
-</span><span class="kw">pub fn </span>region_id(table_id: TableId, n: u32) -&gt; RegionId {
-    (u64::from(table_id) &lt;&lt; <span class="number">32</span>) | u64::from(n)
+<span class="doccomment">/// Construct a [RegionId] from specific `table_id` and `region_number`.
+</span><span class="attr">#[inline]
+</span><span class="kw">pub fn </span>region_id(table_id: TableId, region_number: RegionNumber) -&gt; RegionId {
+    (u64::from(table_id) &lt;&lt; <span class="number">32</span>) | u64::from(region_number)
 }
 
-<span class="attr">#[inline]
+<span class="doccomment">/// Retrieve the table id from specific `region_id`.
+</span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>table_id(region_id: RegionId) -&gt; TableId {
-    (region_id &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>u32
+    (region_id &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>RegionNumber
+}
+
+<span class="doccomment">/// Retrieve the region_number from specific `region_id`.
+</span><span class="attr">#[inline]
+</span><span class="kw">pub fn </span>region_number(region_id: RegionId) -&gt; RegionNumber {
+    region_id <span class="kw">as </span>RegionNumber
 }
 
 <span class="attr">#[inline]

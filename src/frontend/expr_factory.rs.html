@@ -345,6 +345,7 @@
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -462,7 +463,7 @@
         create_if_not_exists: create.if_not_exists,
         table_options: options,
         table_id: <span class="prelude-val">None</span>,
-        region_ids: <span class="macro">vec!</span>[],
+        region_numbers: <span class="macro">vec!</span>[],
         engine: create.engine.to_string(),
     };
     <span class="prelude-val">Ok</span>(expr)
@@ -491,7 +492,7 @@
         create_if_not_exists: create.if_not_exists,
         table_options,
         table_id: <span class="prelude-val">None</span>,
-        region_ids: <span class="macro">vec!</span>[],
+        region_numbers: <span class="macro">vec!</span>[],
         engine: create.engine.to_string(),
     };
     <span class="prelude-val">Ok</span>(expr)
@@ -646,6 +647,7 @@
                         .context(ExternalSnafu)<span class="question-mark">?</span>,
                 ),
                 is_key: <span class="bool-val">false</span>,
+                location: <span class="prelude-val">None</span>,
             }],
         }),
         AlterTableOperation::DropColumn { name } =&gt; Kind::DropColumns(DropColumns {

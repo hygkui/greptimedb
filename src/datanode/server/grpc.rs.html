@@ -359,7 +359,7 @@
             catalog_name: expr.catalog_name,
             schema_name: expr.schema_name,
             table_name,
-            region_number: expr.region_id,
+            region_number: expr.region_number,
             wait: <span class="prelude-val">None</span>,
         };
         <span class="self">self</span>.sql_handler()
@@ -501,7 +501,7 @@
             table_id: <span class="prelude-val">Some</span>(TableId {
                 id: MIN_USER_TABLE_ID,
             }),
-            region_ids: <span class="macro">vec!</span>[<span class="number">0</span>],
+            region_numbers: <span class="macro">vec!</span>[<span class="number">0</span>],
             engine: MITO_ENGINE.to_string(),
         }
     }

@@ -113,7 +113,7 @@
     <span class="comment">// if table name is not present, flush all tables inside schema
     </span><span class="kw">let </span>table_name = params.get(<span class="string">&quot;table&quot;</span>).cloned().unwrap_or_default();
 
-    <span class="kw">let </span>region_id: <span class="prelude-ty">Option</span>&lt;u32&gt; = params
+    <span class="kw">let </span>region_number: <span class="prelude-ty">Option</span>&lt;u32&gt; = params
         .get(<span class="string">&quot;region&quot;</span>)
         .map(|v| v.parse())
         .transpose()
@@ -125,7 +125,7 @@
             catalog_name: catalog_name.clone(),
             schema_name: schema_name.clone(),
             table_name: table_name.clone(),
-            region_id,
+            region_number,
         })),
     });
 
