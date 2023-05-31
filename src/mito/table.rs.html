@@ -774,6 +774,7 @@
 <a href="#774" id="774">774</a>
 <a href="#775" id="775">775</a>
 <a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -835,7 +836,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::manifest::TableManifest;
 <span class="attr">#[inline]
 </span><span class="kw">fn </span>table_manifest_dir(table_dir: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;{table_dir}/manifest/&quot;</span>)
+    <span class="macro">assert!</span>(table_dir.ends_with(<span class="string">&#39;/&#39;</span>));
+    <span class="macro">format!</span>(<span class="string">&quot;{table_dir}manifest/&quot;</span>)
 }
 
 <span class="doccomment">/// [Table] implementation.
@@ -1546,8 +1548,8 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_table_manifest_dir() {
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;demo/manifest/&quot;</span>, table_manifest_dir(<span class="string">&quot;demo&quot;</span>));
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;numbers/manifest/&quot;</span>, table_manifest_dir(<span class="string">&quot;numbers&quot;</span>));
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;demo/manifest/&quot;</span>, table_manifest_dir(<span class="string">&quot;demo/&quot;</span>));
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;numbers/manifest/&quot;</span>, table_manifest_dir(<span class="string">&quot;numbers/&quot;</span>));
     }
 }
 </code></pre></div></section></main></body></html>

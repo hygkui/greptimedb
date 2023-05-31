@@ -118,6 +118,7 @@
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -146,7 +147,7 @@
 <span class="kw">use </span>common_telemetry::logging::info;
 <span class="kw">use </span>object_store::layers::{LoggingLayer, LruCacheLayer, MetricsLayer, RetryLayer, TracingLayer};
 <span class="kw">use </span>object_store::services::Fs <span class="kw">as </span>FsBuilder;
-<span class="kw">use </span>object_store::{ObjectStore, ObjectStoreBuilder};
+<span class="kw">use </span>object_store::{util, ObjectStore, ObjectStoreBuilder};
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
 
 <span class="kw">use </span><span class="kw">crate</span>::datanode::{ObjectStoreConfig, DEFAULT_OBJECT_STORE_CACHE_SIZE};
@@ -212,10 +213,11 @@
     };
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = cache_path {
-        <span class="kw">let </span>atomic_temp_dir = <span class="macro">format!</span>(<span class="string">&quot;{path}/.tmp/&quot;</span>);
+        <span class="kw">let </span>path = util::normalize_dir(path);
+        <span class="kw">let </span>atomic_temp_dir = <span class="macro">format!</span>(<span class="string">&quot;{path}.tmp/&quot;</span>);
         clean_temp_dir(<span class="kw-2">&amp;</span>atomic_temp_dir)<span class="question-mark">?</span>;
         <span class="kw">let </span>cache_store = FsBuilder::default()
-            .root(path)
+            .root(<span class="kw-2">&amp;</span>path)
             .atomic_write_dir(<span class="kw-2">&amp;</span>atomic_temp_dir)
             .build()
             .context(error::InitBackendSnafu)<span class="question-mark">?</span>;

@@ -72,7 +72,7 @@
         .context(error::CreateDirSnafu { dir: <span class="kw-2">&amp;</span>data_home })<span class="question-mark">?</span>;
     <span class="macro">info!</span>(<span class="string">&quot;The file storage home is: {}&quot;</span>, <span class="kw-2">&amp;</span>data_home);
 
-    <span class="kw">let </span>atomic_write_dir = <span class="macro">format!</span>(<span class="string">&quot;{data_home}/.tmp/&quot;</span>);
+    <span class="kw">let </span>atomic_write_dir = <span class="macro">format!</span>(<span class="string">&quot;{data_home}.tmp/&quot;</span>);
     store::clean_temp_dir(<span class="kw-2">&amp;</span>atomic_write_dir)<span class="question-mark">?</span>;
 
     <span class="kw">let </span><span class="kw-2">mut </span>builder = FsBuilder::default();
