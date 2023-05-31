@@ -571,6 +571,7 @@
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -875,6 +876,7 @@
     <span class="kw">async fn </span>build(<span class="self">self</span>, fe_opts: FrontendOptions, dn_opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
         <span class="kw">let </span>plugins = Arc::new(load_frontend_plugins(<span class="kw-2">&amp;</span><span class="self">self</span>.user_provider)<span class="question-mark">?</span>);
 
+        <span class="macro">info!</span>(<span class="string">&quot;Standalone start command: {:#?}&quot;</span>, <span class="self">self</span>);
         <span class="macro">info!</span>(
             <span class="string">&quot;Standalone frontend options: {:#?}, datanode options: {:#?}&quot;</span>,
             fe_opts, dn_opts

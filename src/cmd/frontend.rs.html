@@ -479,6 +479,10 @@
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -497,6 +501,7 @@
 
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_base::Plugins;
+<span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>frontend::service_config::{InfluxdbOptions, PromOptions};
@@ -683,6 +688,9 @@
     }
 
     <span class="kw">async fn </span>build(<span class="self">self</span>, opts: FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="macro">logging::info!</span>(<span class="string">&quot;Frontend start command: {:#?}&quot;</span>, <span class="self">self</span>);
+        <span class="macro">logging::info!</span>(<span class="string">&quot;Frontend options: {:#?}&quot;</span>, opts);
+
         <span class="kw">let </span>plugins = Arc::new(load_frontend_plugins(<span class="kw-2">&amp;</span><span class="self">self</span>.user_provider)<span class="question-mark">?</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>instance = FeInstance::try_new_distributed(<span class="kw-2">&amp;</span>opts, plugins.clone())

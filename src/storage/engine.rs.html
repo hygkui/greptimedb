@@ -659,6 +659,9 @@
 <a href="#659" id="659">659</a>
 <a href="#660" id="660">660</a>
 <a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1126,7 +1129,7 @@
         write_buffer_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
         region_name: <span class="kw-2">&amp;</span>str,
         config: <span class="kw-2">&amp;</span>EngineConfig,
-        ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+        region_ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
         compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;StoreConfig&lt;S&gt;&gt; {
         <span class="kw">let </span>parent_dir = util::normalize_dir(parent_dir);
@@ -1143,6 +1146,9 @@
         );
         manifest.start().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>flush_strategy = <span class="self">self</span>.flush_strategy.clone();
+
+        <span class="comment">// If region_ttl is `None`, the global ttl takes effect.
+        </span><span class="kw">let </span>ttl = region_ttl.or(<span class="self">self</span>.config.global_ttl);
 
         <span class="prelude-val">Ok</span>(StoreConfig {
             log_store: <span class="self">self</span>.log_store.clone(),
