@@ -408,11 +408,6 @@
 <a href="#408" id="408">408</a>
 <a href="#409" id="409">409</a>
 <a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -433,6 +428,7 @@
 <span class="kw">use </span>datafusion::config::ConfigOptions;
 <span class="kw">use </span>datafusion_common::tree_node::{Transformed, TreeNode, TreeNodeRewriter};
 <span class="kw">use </span>datafusion_common::{DFSchemaRef, DataFusionError, <span class="prelude-ty">Result</span>, ScalarValue};
+<span class="kw">use </span>datafusion_expr::expr::InList;
 <span class="kw">use </span>datafusion_expr::{
     Between, BinaryExpr, Expr, ExprSchemable, Filter, LogicalPlan, Operator, TableScan,
 };
@@ -491,7 +487,6 @@
             | LogicalPlan::Window { .. }
             | LogicalPlan::Aggregate { .. }
             | LogicalPlan::Repartition { .. }
-            | LogicalPlan::CreateExternalTable { .. }
             | LogicalPlan::Extension { .. }
             | LogicalPlan::Sort { .. }
             | LogicalPlan::Explain { .. }
@@ -499,9 +494,6 @@
             | LogicalPlan::Union { .. }
             | LogicalPlan::Join { .. }
             | LogicalPlan::CrossJoin { .. }
-            | LogicalPlan::CreateMemoryTable { .. }
-            | LogicalPlan::DropTable { .. }
-            | LogicalPlan::DropView { .. }
             | LogicalPlan::Distinct { .. }
             | LogicalPlan::Values { .. }
             | LogicalPlan::Analyze { .. } =&gt; {
@@ -520,15 +512,13 @@
 
             LogicalPlan::Subquery { .. }
             | LogicalPlan::SubqueryAlias { .. }
-            | LogicalPlan::CreateView { .. }
-            | LogicalPlan::CreateCatalogSchema { .. }
-            | LogicalPlan::CreateCatalog { .. }
             | LogicalPlan::EmptyRelation(<span class="kw">_</span>)
             | LogicalPlan::Prepare(<span class="kw">_</span>)
             | LogicalPlan::Dml(<span class="kw">_</span>)
             | LogicalPlan::DescribeTable(<span class="kw">_</span>)
             | LogicalPlan::Unnest(<span class="kw">_</span>)
-            | LogicalPlan::Statement(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Transformed::No(plan)),
+            | LogicalPlan::Statement(<span class="kw">_</span>)
+            | LogicalPlan::Ddl(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Transformed::No(plan)),
         })
     }
 
@@ -644,21 +634,21 @@
                     high: Box::new(high),
                 })
             }
-            Expr::InList {
+            Expr::InList(InList {
                 expr,
                 list,
                 negated,
-            } =&gt; {
+            }) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>list_expr = Vec::with_capacity(list.len());
                 <span class="kw">for </span>e <span class="kw">in </span>list {
                     <span class="kw">let </span>(<span class="kw">_</span>, expr_conversion) = <span class="self">self</span>.convert_type(<span class="kw-2">&amp;</span>expr, <span class="kw-2">&amp;</span>e)<span class="question-mark">?</span>;
                     list_expr.push(expr_conversion);
                 }
-                Expr::InList {
+                Expr::InList(InList {
                     expr,
                     list: list_expr,
                     negated,
-                }
+                })
             }
             Expr::Literal(value) =&gt; <span class="kw">match </span>value {
                 ScalarValue::TimestampSecond(<span class="prelude-val">Some</span>(i), <span class="kw">_</span>) =&gt; {

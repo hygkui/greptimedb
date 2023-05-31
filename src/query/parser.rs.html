@@ -354,6 +354,7 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -611,7 +612,7 @@
         <span class="kw">let </span>expected = String::from(<span class="string">&quot;Sql(Query(Query { \
             inner: Query { \
                 with: None, body: Select(Select { \
-                    distinct: false, \
+                    distinct: None, \
                     top: None, \
                     projection: \
                     [Wildcard(WildcardAdditionalOptions { opt_exclude: None, opt_except: None, opt_rename: None, opt_replace: None })], \
@@ -630,6 +631,7 @@
             distribute_by: [], \
             sort_by: [], \
             having: None, \
+            named_window: [], \
             qualify: None \
             }), order_by: [], limit: None, offset: None, fetch: None, locks: [] }, param_types: [] }))&quot;</span>);
 

@@ -2028,6 +2028,7 @@
 <a href="#2028" id="2028">2028</a>
 <a href="#2029" id="2029">2029</a>
 <a href="#2030" id="2030">2030</a>
+<a href="#2031" id="2031">2031</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2051,11 +2052,11 @@
 <span class="kw">use </span>catalog::table_source::DfTableSourceProvider;
 <span class="kw">use </span>datafusion::common::{DFSchemaRef, OwnedTableReference, <span class="prelude-ty">Result </span><span class="kw">as </span>DfResult};
 <span class="kw">use </span>datafusion::datasource::DefaultTableSource;
-<span class="kw">use </span>datafusion::logical_expr::expr::AggregateFunction;
+<span class="kw">use </span>datafusion::logical_expr::expr::{AggregateFunction, ScalarFunction, ScalarUDF};
 <span class="kw">use </span>datafusion::logical_expr::expr_rewriter::normalize_cols;
 <span class="kw">use </span>datafusion::logical_expr::{
     AggregateFunction <span class="kw">as </span>AggregateFunctionEnum, BinaryExpr, BuiltinScalarFunction, Cast, Extension,
-    LogicalPlan, LogicalPlanBuilder, Operator, ScalarUDF,
+    LogicalPlan, LogicalPlanBuilder, Operator, ScalarUDF <span class="kw">as </span>ScalarUdfDef,
 };
 <span class="kw">use </span>datafusion::optimizer::utils;
 <span class="kw">use </span>datafusion::prelude <span class="kw">as </span>df_prelude;
@@ -2957,10 +2958,10 @@
             <span class="kw">match </span>scalar_func.clone() {
                 ScalarFunc::DataFusionBuiltin(fun) =&gt; {
                     other_input_exprs.insert(field_column_pos, col_expr);
-                    <span class="kw">let </span>fn_expr = DfExpr::ScalarFunction {
+                    <span class="kw">let </span>fn_expr = DfExpr::ScalarFunction(ScalarFunction {
                         fun,
                         args: other_input_exprs.clone(),
-                    };
+                    });
                     exprs.push(fn_expr);
                     other_input_exprs.remove(field_column_pos);
                 }
@@ -2972,10 +2973,10 @@
                     ));
                     other_input_exprs.insert(field_column_pos, ts_range_expr);
                     other_input_exprs.insert(field_column_pos + <span class="number">1</span>, col_expr);
-                    <span class="kw">let </span>fn_expr = DfExpr::ScalarUDF {
+                    <span class="kw">let </span>fn_expr = DfExpr::ScalarUDF(ScalarUDF {
                         fun: Arc::new(fun),
                         args: other_input_exprs.clone(),
-                    };
+                    });
                     exprs.push(fn_expr);
                     other_input_exprs.remove(field_column_pos + <span class="number">1</span>);
                     other_input_exprs.remove(field_column_pos);
@@ -2990,10 +2991,10 @@
                     other_input_exprs.insert(field_column_pos + <span class="number">1</span>, col_expr);
                     other_input_exprs
                         .insert(field_column_pos + <span class="number">2</span>, <span class="self">self</span>.create_time_index_column_expr()<span class="question-mark">?</span>);
-                    <span class="kw">let </span>fn_expr = DfExpr::ScalarUDF {
+                    <span class="kw">let </span>fn_expr = DfExpr::ScalarUDF(ScalarUDF {
                         fun: Arc::new(fun),
                         args: other_input_exprs.clone(),
-                    };
+                    });
                     exprs.push(fn_expr);
                     other_input_exprs.remove(field_column_pos + <span class="number">2</span>);
                     other_input_exprs.remove(field_column_pos + <span class="number">1</span>);
@@ -3099,6 +3100,7 @@
                     args: <span class="macro">vec!</span>[DfExpr::Column(Column::from_name(col))],
                     distinct: <span class="bool-val">false</span>,
                     filter: <span class="prelude-val">None</span>,
+                    order_by: <span class="prelude-val">None</span>,
                 })
             })
             .collect();
@@ -3311,10 +3313,10 @@
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">enum </span>ScalarFunc {
     DataFusionBuiltin(BuiltinScalarFunction),
-    Udf(ScalarUDF),
+    Udf(ScalarUdfDef),
     <span class="comment">// todo(ruihang): maybe merge with Udf later
     </span><span class="doccomment">/// UDF that require extra information like range length to be evaluated.
-    </span>ExtrapolateUdf(ScalarUDF),
+    </span>ExtrapolateUdf(ScalarUdfDef),
 }
 
 <span class="attr">#[cfg(test)]
@@ -3698,12 +3700,12 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>aggregate_stddev() {
-        do_aggregate_expr_plan(<span class="string">&quot;stddev&quot;</span>, <span class="string">&quot;STDDEVPOP&quot;</span>).<span class="kw">await</span>;
+        do_aggregate_expr_plan(<span class="string">&quot;stddev&quot;</span>, <span class="string">&quot;STDDEV_POP&quot;</span>).<span class="kw">await</span>;
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>aggregate_stdvar() {
-        do_aggregate_expr_plan(<span class="string">&quot;stdvar&quot;</span>, <span class="string">&quot;VARIANCEPOP&quot;</span>).<span class="kw">await</span>;
+        do_aggregate_expr_plan(<span class="string">&quot;stdvar&quot;</span>, <span class="string">&quot;VARIANCE_POP&quot;</span>).<span class="kw">await</span>;
     }
 
     <span class="attr">#[tokio::test]

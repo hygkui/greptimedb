@@ -677,6 +677,7 @@
 <a href="#677" id="677">677</a>
 <a href="#678" id="678">678</a>
 <a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1218,7 +1219,7 @@
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, stmts.len());
 
         <span class="kw">let </span>select = sqlparser::ast::Select {
-            distinct: <span class="bool-val">false</span>,
+            distinct: <span class="prelude-val">None</span>,
             top: <span class="prelude-val">None</span>,
             projection: <span class="macro">vec!</span>[sqlparser::ast::SelectItem::Wildcard(
                 WildcardAdditionalOptions::default(),
@@ -1241,6 +1242,7 @@
             sort_by: <span class="macro">vec!</span>[],
             having: <span class="prelude-val">None</span>,
             qualify: <span class="prelude-val">None</span>,
+            named_window: <span class="macro">vec!</span>[],
         };
 
         <span class="kw">let </span>sp_statement = SpStatement::Query(Box::new(SpQuery {
