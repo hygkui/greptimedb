@@ -3,7 +3,9 @@
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Add an immutable in-memory index for underlying storage services.</p>
 <p>Especially useful for services without list capability like HTTP.</p>
 <h2 id="examples"><a href="#examples">Examples</a></h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>opendal::layers::ImmutableIndexLayer;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span>opendal::layers::ImmutableIndexLayer;
 <span class="kw">use </span>opendal::services;
 <span class="kw">use </span>opendal::Operator;
 
@@ -13,7 +15,7 @@
     iil.insert(i.to_string())
 }
 
-<span class="kw">let </span>op = Operator::from_env::&lt;services::Http&gt;()
+<span class="kw">let </span>op = Operator::from_map::&lt;services::Http&gt;(HashMap::default())
     .unwrap()
     .layer(iil)
     .finish();</code></pre></div>

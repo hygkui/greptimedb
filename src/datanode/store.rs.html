@@ -117,6 +117,7 @@
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -175,7 +176,8 @@
             LoggingLayer::default()
                 <span class="comment">// Print the expected error only in DEBUG level.
                 // See https://docs.rs/opendal/latest/opendal/layers/struct.LoggingLayer.html#method.with_error_level
-                </span>.with_error_level(<span class="prelude-val">Some</span>(log::Level::Debug)),
+                </span>.with_error_level(<span class="prelude-val">Some</span>(<span class="string">&quot;debug&quot;</span>))
+                .expect(<span class="string">&quot;input error level must be valid&quot;</span>),
         )
         .layer(TracingLayer))
 }
