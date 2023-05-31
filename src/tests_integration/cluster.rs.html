@@ -295,6 +295,9 @@
 <a href="#295" id="295">295</a>
 <a href="#296" id="296">296</a>
 <a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -325,7 +328,7 @@
 <span class="kw">use </span>datanode::datanode::{DatanodeOptions, ObjectStoreConfig};
 <span class="kw">use </span>datanode::instance::Instance <span class="kw">as </span>DatanodeInstance;
 <span class="kw">use </span>frontend::datanode::DatanodeClients;
-<span class="kw">use </span>frontend::instance::Instance <span class="kw">as </span>FrontendInstance;
+<span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
 <span class="kw">use </span>meta_srv::metasrv::{MetaSrv, MetaSrvOptions};
 <span class="kw">use </span>meta_srv::mocks::MockInfo;
@@ -348,7 +351,7 @@
     <span class="kw">pub </span>datanode_instances: HashMap&lt;DatanodeId, Arc&lt;DatanodeInstance&gt;&gt;,
     <span class="kw">pub </span>kv_store: KvStoreRef,
     <span class="kw">pub </span>meta_srv: MetaSrv,
-    <span class="kw">pub </span>frontend: Arc&lt;FrontendInstance&gt;,
+    <span class="kw">pub </span>frontend: Arc&lt;FeInstance&gt;,
 }
 
 <span class="kw">pub struct </span>GreptimeDbClusterBuilder {
@@ -393,6 +396,8 @@
         <span class="kw">let </span>frontend = <span class="self">self
             </span>.build_frontend(meta_srv.clone(), datanode_clients)
             .<span class="kw">await</span>;
+
+        frontend.start().<span class="kw">await</span>.unwrap();
 
         GreptimeDbCluster {
             storage_guards,
@@ -494,17 +499,18 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         meta_srv: MockInfo,
         datanode_clients: Arc&lt;DatanodeClients&gt;,
-    ) -&gt; Arc&lt;FrontendInstance&gt; {
+    ) -&gt; Arc&lt;FeInstance&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">1000</span>, <span class="number">0</span>, Role::Frontend)
             .enable_router()
             .enable_store()
+            .enable_heartbeat()
             .channel_manager(meta_srv.channel_manager)
             .build();
         meta_client.start(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>meta_srv.server_addr]).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>meta_client = Arc::new(meta_client);
 
         Arc::new(
-            FrontendInstance::try_new_distributed_with(
+            FeInstance::try_new_distributed_with(
                 meta_client,
                 datanode_clients,
                 Arc::new(Plugins::default()),

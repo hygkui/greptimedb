@@ -498,7 +498,7 @@
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>FrontendCatalogManager {
     backend: KvBackendRef,
-    backend_cache_invalidtor: KvCacheInvalidatorRef,
+    backend_cache_invalidator: KvCacheInvalidatorRef,
     partition_manager: PartitionRuleManagerRef,
     datanode_clients: Arc&lt;DatanodeClients&gt;,
 
@@ -512,13 +512,13 @@
 <span class="kw">impl </span>FrontendCatalogManager {
     <span class="kw">pub fn </span>new(
         backend: KvBackendRef,
-        backend_cache_invalidtor: KvCacheInvalidatorRef,
+        backend_cache_invalidator: KvCacheInvalidatorRef,
         partition_manager: PartitionRuleManagerRef,
         datanode_clients: Arc&lt;DatanodeClients&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             backend,
-            backend_cache_invalidtor,
+            backend_cache_invalidator,
             partition_manager,
             datanode_clients,
             dist_instance: <span class="prelude-val">None</span>,
@@ -550,7 +550,7 @@
 
         <span class="kw">let </span>key = schema_key.as_bytes();
 
-        <span class="self">self</span>.backend_cache_invalidtor.invalidate_key(key).<span class="kw">await</span>;
+        <span class="self">self</span>.backend_cache_invalidator.invalidate_key(key).<span class="kw">await</span>;
     }
 
     <span class="kw">pub async fn </span>invalidate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str, table: <span class="kw-2">&amp;</span>str) {
@@ -563,7 +563,7 @@
 
         <span class="kw">let </span>tg_key = tg_key.as_bytes();
 
-        <span class="self">self</span>.backend_cache_invalidtor.invalidate_key(tg_key).<span class="kw">await</span>;
+        <span class="self">self</span>.backend_cache_invalidator.invalidate_key(tg_key).<span class="kw">await</span>;
     }
 }
 

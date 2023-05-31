@@ -85,6 +85,12 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -112,10 +118,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
 
+<span class="kw">type </span>TableRouteCache = Cache&lt;TableName, Arc&lt;TableRoute&gt;&gt;;
+
 <span class="kw">pub struct </span>TableRoutes {
     meta_client: Arc&lt;MetaClient&gt;,
     <span class="comment">// TODO(LFC): Use table id as cache key, then remove all the manually invoked cache invalidations.
-    </span>cache: Cache&lt;TableName, Arc&lt;TableRoute&gt;&gt;,
+    </span>cache: TableRouteCache,
 }
 
 <span class="comment">// TODO(hl): maybe periodically refresh table route cache?
@@ -171,5 +179,9 @@
     <span class="kw">pub async fn </span>invalidate_table_route(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: <span class="kw-2">&amp;</span>TableName) {
         <span class="self">self</span>.cache.invalidate(table_name).<span class="kw">await
     </span>}
+
+    <span class="kw">pub fn </span>cache(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableRouteCache {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.cache
+    }
 }
 </code></pre></div></section></main></body></html>

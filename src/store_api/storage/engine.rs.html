@@ -101,6 +101,18 @@
 <a href="#101" id="101">101</a>
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -144,7 +156,12 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Region&gt;, <span class="self">Self</span>::Error&gt;;
 
     <span class="doccomment">/// Closes given region.
-    </span><span class="kw">async fn </span>close_region(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>EngineContext, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;;
+    </span><span class="kw">async fn </span>close_region(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        ctx: <span class="kw-2">&amp;</span>EngineContext,
+        name: <span class="kw-2">&amp;</span>str,
+        opts: <span class="kw-2">&amp;</span>CloseOptions,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;;
 
     <span class="doccomment">/// Creates and returns the created region.
     ///
@@ -203,5 +220,12 @@
     <span class="doccomment">/// Region SST files TTL
     </span><span class="kw">pub </span>ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+}
+
+<span class="doccomment">/// Options to close a region.
+</span><span class="attr">#[derive(Debug, Clone, Default)]
+</span><span class="kw">pub struct </span>CloseOptions {
+    <span class="doccomment">/// Flush region
+    </span><span class="kw">pub </span>flush: bool,
 }
 </code></pre></div></section></main></body></html>

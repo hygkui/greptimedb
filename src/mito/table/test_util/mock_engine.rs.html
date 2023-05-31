@@ -337,6 +337,11 @@
 <a href="#337" id="337">337</a>
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -365,9 +370,9 @@
 <span class="kw">use </span>storage::metadata::{RegionMetaImpl, RegionMetadata};
 <span class="kw">use </span>storage::write_batch::WriteBatch;
 <span class="kw">use </span>store_api::storage::{
-    AlterRequest, Chunk, ChunkReader, CreateOptions, EngineContext, FlushContext, GetRequest,
-    GetResponse, OpenOptions, ReadContext, Region, RegionDescriptor, RegionId, ScanRequest,
-    ScanResponse, SchemaRef, Snapshot, StorageEngine, WriteContext, WriteResponse,
+    AlterRequest, Chunk, ChunkReader, CloseOptions, CreateOptions, EngineContext, FlushContext,
+    GetRequest, GetResponse, OpenOptions, ReadContext, Region, RegionDescriptor, RegionId,
+    ScanRequest, ScanResponse, SchemaRef, Snapshot, StorageEngine, WriteContext, WriteResponse,
 };
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, MockError&gt;;
@@ -630,7 +635,12 @@
         <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
     }
 
-    <span class="kw">async fn </span>close_region(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>EngineContext, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">async fn </span>close_region(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        _ctx: <span class="kw-2">&amp;</span>EngineContext,
+        name: <span class="kw-2">&amp;</span>str,
+        _opts: <span class="kw-2">&amp;</span>CloseOptions,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.regions.lock().unwrap();
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(region) = regions.opened_regions.remove(name) {

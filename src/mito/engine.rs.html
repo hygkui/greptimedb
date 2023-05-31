@@ -763,6 +763,9 @@
 <a href="#763" id="763">763</a>
 <a href="#764" id="764">764</a>
 <a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -797,8 +800,8 @@
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>storage::manifest::manifest_compress_type;
 <span class="kw">use </span>store_api::storage::{
-    ColumnDescriptorBuilder, ColumnFamilyDescriptor, ColumnFamilyDescriptorBuilder, ColumnId,
-    EngineContext <span class="kw">as </span>StorageEngineContext, OpenOptions, RegionNumber, RowKeyDescriptor,
+    CloseOptions, ColumnDescriptorBuilder, ColumnFamilyDescriptor, ColumnFamilyDescriptorBuilder,
+    ColumnId, EngineContext <span class="kw">as </span>StorageEngineContext, OpenOptions, RegionNumber, RowKeyDescriptor,
     RowKeyDescriptorBuilder, StorageEngine,
 };
 <span class="kw">use </span>table::engine::{
@@ -1397,10 +1400,11 @@
 
             <span class="kw">let </span>ctx = StorageEngineContext::default();
 
+            <span class="kw">let </span>opts = CloseOptions::default();
             <span class="comment">// Releases regions in storage engine
             </span><span class="kw">for </span>region_number <span class="kw">in </span>regions {
                 <span class="self">self</span>.storage_engine
-                    .close_region(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>region_name(table_id, region_number))
+                    .close_region(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>region_name(table_id, region_number), <span class="kw-2">&amp;</span>opts)
                     .<span class="kw">await
                     </span>.map_err(BoxedError::new)
                     .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
@@ -1446,7 +1450,7 @@
         futures::future::try_join_all(
             <span class="self">self</span>.tables
                 .iter()
-                .map(|item| <span class="self">self</span>.close_table_inner(item.value().clone(), <span class="prelude-val">None</span>)),
+                .map(|item| <span class="self">self</span>.close_table_inner(item.value().clone(), <span class="prelude-val">None</span>, <span class="bool-val">false</span>)),
         )
         .<span class="kw">await
         </span>.map_err(BoxedError::new)
@@ -1465,7 +1469,7 @@
         <span class="kw">let </span>table_ref = request.table_ref();
         <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_mito_table(<span class="kw-2">&amp;</span>table_ref) {
             <span class="kw">return </span><span class="self">self
-                </span>.close_table_inner(table, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>request.region_numbers))
+                </span>.close_table_inner(table, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>request.region_numbers), request.flush)
                 .<span class="kw">await</span>;
         }
         <span class="comment">// table doesn&#39;t exist
@@ -1476,6 +1480,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table: Arc&lt;MitoTable&lt;S::Region&gt;&gt;,
         regions: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[RegionNumber]&gt;,
+        flush: bool,
     ) -&gt; TableResult&lt;CloseTableResult&gt; {
         <span class="kw">let </span>info = table.table_info();
         <span class="kw">let </span>table_ref = TableReference {
@@ -1492,10 +1497,11 @@
         <span class="kw">let </span>removed_regions = removed.keys().cloned().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>ctx = StorageEngineContext::default();
 
+        <span class="kw">let </span>opts = CloseOptions { flush };
         <span class="comment">// Releases regions in storage engine
         </span><span class="kw">for </span>region_number <span class="kw">in </span>regions {
             <span class="self">self</span>.storage_engine
-                .close_region(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>region_name(table_id, <span class="kw-2">*</span>region_number))
+                .close_region(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>region_name(table_id, <span class="kw-2">*</span>region_number), <span class="kw-2">&amp;</span>opts)
                 .<span class="kw">await
                 </span>.map_err(BoxedError::new)
                 .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;

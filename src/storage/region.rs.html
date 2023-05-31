@@ -738,6 +738,14 @@
 <a href="#738" id="738">738</a>
 <a href="#739" id="739">739</a>
 <a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -770,8 +778,8 @@
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::manifest::{<span class="self">self</span>, Manifest, ManifestVersion, MetaActionIterator};
 <span class="kw">use </span>store_api::storage::{
-    AlterRequest, FlushContext, OpenOptions, ReadContext, Region, RegionId, SequenceNumber,
-    WriteContext, WriteResponse,
+    AlterRequest, CloseContext, FlushContext, FlushReason, OpenOptions, ReadContext, Region,
+    RegionId, SequenceNumber, WriteContext, WriteResponse,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionSchedulerRef;
@@ -1276,9 +1284,9 @@
         <span class="self">self</span>.inner.compact(ctx).<span class="kw">await
     </span>}
 
-    <span class="kw">pub async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">pub async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>CloseContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
-        <span class="self">self</span>.inner.close().<span class="kw">await
+        <span class="self">self</span>.inner.close(ctx).<span class="kw">await
     </span>}
 }
 
@@ -1429,8 +1437,16 @@
         <span class="self">self</span>.writer.alter(alter_ctx, request).<span class="kw">await
     </span>}
 
-    <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>CloseContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.writer.close().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">if </span>ctx.flush {
+            <span class="kw">let </span>ctx = FlushContext {
+                wait: <span class="bool-val">true</span>,
+                reason: FlushReason::Manually,
+                force: <span class="bool-val">true</span>,
+            };
+            <span class="self">self</span>.flush(<span class="kw-2">&amp;</span>ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+        }
         <span class="self">self</span>.manifest.stop().<span class="kw">await
     </span>}
 

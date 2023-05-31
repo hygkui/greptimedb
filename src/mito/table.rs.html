@@ -773,6 +773,7 @@
 <a href="#773" id="773">773</a>
 <a href="#774" id="774">774</a>
 <a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1148,6 +1149,7 @@
             .map(|wait| FlushContext {
                 wait,
                 reason: FlushReason::Manually,
+                ..Default::default()
             })
             .unwrap_or_default();
         <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CreateOptions","EngineContext","OpenOptions"],"trait":["StorageEngine"]};
+window.SIDEBAR_ITEMS = {"struct":["CloseOptions","CreateOptions","EngineContext","OpenOptions"],"trait":["StorageEngine"]};

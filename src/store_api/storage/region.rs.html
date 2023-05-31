@@ -150,6 +150,15 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -256,6 +265,12 @@
     }
 }
 
+<span class="attr">#[derive(Debug, Clone, Default)]
+</span><span class="kw">pub struct </span>CloseContext {
+    <span class="doccomment">/// If true, flush the closing region.
+    </span><span class="kw">pub </span>flush: bool,
+}
+
 <span class="doccomment">/// Context for flush operations.
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>FlushContext {
@@ -264,6 +279,8 @@
     </span><span class="kw">pub </span>wait: bool,
     <span class="doccomment">/// Flush reason.
     </span><span class="kw">pub </span>reason: FlushReason,
+    <span class="doccomment">/// If true, allows to flush a closed region
+    </span><span class="kw">pub </span>force: bool,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>FlushContext {
@@ -271,6 +288,7 @@
         FlushContext {
             wait: <span class="bool-val">true</span>,
             reason: FlushReason::Others,
+            force: <span class="bool-val">false</span>,
         }
     }
 }

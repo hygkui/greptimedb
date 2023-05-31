@@ -134,6 +134,11 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -152,6 +157,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_meta::instruction::{Instruction, TableIdent};
 <span class="kw">use </span>common_meta::RegionIdent;
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::ResultExt;
 
@@ -197,6 +203,10 @@
         failed_region: <span class="kw-2">&amp;</span>RegionIdent,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
         <span class="kw">let </span>table_ident = TableIdent::from(failed_region.clone());
+        <span class="macro">info!</span>(
+            <span class="string">&quot;Broadcast invalidate table({}) cache message to frontend&quot;</span>,
+            table_ident
+        );
         <span class="self">self</span>.broadcast_invalidate_table_cache_messages(ctx, <span class="kw-2">&amp;</span>table_ident)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
