@@ -143,6 +143,19 @@
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -160,6 +173,7 @@
 </span><span class="kw">use </span>arrow::compute::SortOptions;
 <span class="kw">use </span>arrow::row::{RowConverter, SortField};
 <span class="kw">use </span>arrow_array::{Array, ArrayRef};
+<span class="kw">use </span>common_recordbatch::OrderOption;
 <span class="kw">use </span>datatypes::data_type::DataType;
 <span class="kw">use </span>datatypes::vectors::Helper;
 <span class="kw">use </span>snafu::ResultExt;
@@ -175,6 +189,8 @@
     </span><span class="kw">pub </span>schema: ProjectedSchemaRef,
     <span class="doccomment">/// Each reader reads a slice of time window
     </span><span class="kw">pub </span>readers: Vec&lt;R&gt;,
+    <span class="doccomment">/// `order_options` defines how records within windows are sorted.
+    </span><span class="kw">pub </span>order_options: Vec&lt;OrderOption&gt;,
 }
 
 <span class="kw">impl</span>&lt;R&gt; WindowedReader&lt;R&gt; {
@@ -183,8 +199,16 @@
     /// ### Note
     /// [WindowedReader] always reads the readers in a reverse order. The last reader in `readers`
     /// gets polled first.
-    </span><span class="kw">pub fn </span>new(schema: ProjectedSchemaRef, readers: Vec&lt;R&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ schema, readers }
+    </span><span class="kw">pub fn </span>new(
+        schema: ProjectedSchemaRef,
+        readers: Vec&lt;R&gt;,
+        order_options: Vec&lt;OrderOption&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            schema,
+            readers,
+            order_options,
+        }
     }
 }
 
@@ -219,7 +243,7 @@
             vectors_in_batch
                 .push(arrow::compute::concat(<span class="kw-2">&amp;</span>columns).context(error::ConvertColumnsToRowsSnafu)<span class="question-mark">?</span>);
         }
-        <span class="kw">let </span>sorted = sort_by_rows(<span class="kw-2">&amp;</span><span class="self">self</span>.schema, vectors_in_batch)<span class="question-mark">?</span>;
+        <span class="kw">let </span>sorted = sort_by_rows(<span class="kw-2">&amp;</span><span class="self">self</span>.schema, vectors_in_batch, <span class="kw-2">&amp;</span><span class="self">self</span>.order_options)<span class="question-mark">?</span>;
         <span class="kw">let </span>vectors = sorted
             .iter()
             .zip(store_schema.columns().iter().map(|c| <span class="kw-2">&amp;</span>c.desc.name))
@@ -231,8 +255,12 @@
     }
 }
 
-<span class="kw">fn </span>sort_by_rows(schema: <span class="kw-2">&amp;</span>ProjectedSchemaRef, arrays: Vec&lt;ArrayRef&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ArrayRef&gt;&gt; {
-    <span class="kw">let </span>sort_columns = build_sort_columns(schema);
+<span class="kw">fn </span>sort_by_rows(
+    schema: <span class="kw-2">&amp;</span>ProjectedSchemaRef,
+    arrays: Vec&lt;ArrayRef&gt;,
+    order_options: <span class="kw-2">&amp;</span>[OrderOption],
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ArrayRef&gt;&gt; {
+    <span class="kw">let </span>sort_columns = build_sorted_columns(order_options);
     <span class="kw">let </span>store_schema = schema.schema_to_read();
     <span class="comment">// Convert columns to rows to speed lexicographic sort
     // TODO(hl): maybe optimize to lexsort_to_index when only timestamp column is involved.
@@ -278,14 +306,12 @@
     <span class="prelude-val">Ok</span>(sorted)
 }
 
-<span class="doccomment">/// [&lt;PK_1&gt;, &lt;PK_2&gt;, TS] to [TS, &lt;PK_1&gt;, &lt;PK_2&gt;].
-/// Returns a vector of sort column indices and sort orders (true means descending order).
-</span><span class="kw">fn </span>build_sort_columns(schema: <span class="kw-2">&amp;</span>ProjectedSchemaRef) -&gt; Vec&lt;(usize, bool)&gt; {
-    <span class="kw">let </span>ts_col_index = schema.schema_to_read().timestamp_index();
-    <span class="kw">let </span><span class="kw-2">mut </span>res = (<span class="number">0</span>..(ts_col_index))
-        .map(|idx| (idx, <span class="bool-val">false</span>))
-        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-    res.insert(<span class="number">0</span>, (ts_col_index, <span class="bool-val">true</span>));
-    res
+<span class="doccomment">/// Builds sorted columns from `order_options`.
+/// Returns a vector of columns indices to sort and sort orders (true means descending order).
+</span><span class="kw">fn </span>build_sorted_columns(order_options: <span class="kw-2">&amp;</span>[OrderOption]) -&gt; Vec&lt;(usize, bool)&gt; {
+    order_options
+        .iter()
+        .map(|o| (o.index, o.options.descending))
+        .collect()
 }
 </code></pre></div></section></main></body></html>

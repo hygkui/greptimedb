@@ -772,6 +772,7 @@
 <a href="#772" id="772">772</a>
 <a href="#773" id="773">773</a>
 <a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1010,6 +1011,7 @@
             <span class="kw">let </span>scan_request = ScanRequest {
                 projection,
                 filters,
+                output_ordering: request.output_ordering.clone(),
                 ..Default::default()
             };
 
