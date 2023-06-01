@@ -203,6 +203,26 @@
 <a href="#203" id="203">203</a>
 <a href="#204" id="204">204</a>
 <a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -226,6 +246,7 @@
 <span class="kw">use </span>cmd::options::{Options, TopLevelOptions};
 <span class="kw">use </span>cmd::{cli, datanode, frontend, metasrv, standalone};
 <span class="kw">use </span>common_telemetry::logging::{error, info, TracingOptions};
+<span class="kw">use </span>metrics::gauge;
 
 <span class="attr">#[derive(Parser)]
 #[clap(name = <span class="string">&quot;greptimedb&quot;</span>, version = print_version())]
@@ -368,6 +389,22 @@
     )
 }
 
+<span class="kw">fn </span>short_version() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)
+}
+
+<span class="comment">// {app_name}-{branch_name}-{commit_short}
+// The branch name (tag) of a release build should already contain the short
+// version so the full version doesn&#39;t concat the short version explicitly.
+</span><span class="kw">fn </span>full_version() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    <span class="macro">concat!</span>(
+        <span class="string">&quot;greptimedb-&quot;</span>,
+        <span class="macro">env!</span>(<span class="string">&quot;GIT_BRANCH&quot;</span>),
+        <span class="string">&quot;-&quot;</span>,
+        <span class="macro">env!</span>(<span class="string">&quot;GIT_COMMIT_SHORT&quot;</span>)
+    )
+}
+
 <span class="attr">#[cfg(feature = <span class="string">&quot;mem-prof&quot;</span>)]
 #[global_allocator]
 </span><span class="kw">static </span>ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
@@ -389,6 +426,9 @@
     common_telemetry::set_panic_hook();
     common_telemetry::init_default_metrics_recorder();
     <span class="kw">let </span>_guard = common_telemetry::init_global_logging(app_name, logging_opts, tracing_opts);
+
+    <span class="comment">// Report app version as gauge.
+    </span><span class="macro">gauge!</span>(<span class="string">&quot;app_version&quot;</span>, <span class="number">1.0</span>, <span class="string">&quot;short_version&quot; </span>=&gt; short_version(), <span class="string">&quot;version&quot; </span>=&gt; full_version());
 
     <span class="kw">let </span><span class="kw-2">mut </span>app = cmd.build(opts).<span class="kw">await</span><span class="question-mark">?</span>;
 
