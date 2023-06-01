@@ -2019,13 +2019,6 @@
 <a href="#2019" id="2019">2019</a>
 <a href="#2020" id="2020">2020</a>
 <a href="#2021" id="2021">2021</a>
-<a href="#2022" id="2022">2022</a>
-<a href="#2023" id="2023">2023</a>
-<a href="#2024" id="2024">2024</a>
-<a href="#2025" id="2025">2025</a>
-<a href="#2026" id="2026">2026</a>
-<a href="#2027" id="2027">2027</a>
-<a href="#2028" id="2028">2028</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2085,8 +2078,6 @@
     Increase, LastOverTime, MaxOverTime, MinOverTime, PredictLinear, PresentOverTime,
     QuantileOverTime, Rate, Resets, StddevOverTime, StdvarOverTime, SumOverTime,
 };
-
-<span class="kw">const </span>LEFT_PLAN_JOIN_ALIAS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;lhs&quot;</span>;
 
 <span class="doccomment">/// `time()` function in PromQL.
 </span><span class="kw">const </span>SPECIAL_TIME_FUNCTION: <span class="kw-2">&amp;</span>str = <span class="string">&quot;time&quot;</span>;
@@ -3179,7 +3170,6 @@
     }
 
     <span class="doccomment">/// Build a inner join on time index column and tag columns to concat two logical plans.
-    /// The left plan will be alised as [`LEFT_PLAN_JOIN_ALIAS`].
     </span><span class="kw">fn </span>join_on_non_field_columns(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         left: LogicalPlan,
@@ -3199,13 +3189,10 @@
 
         <span class="comment">// Inner Join on time index column to concat two operator
         </span>LogicalPlanBuilder::from(left)
-            .alias(LEFT_PLAN_JOIN_ALIAS)
-            .context(DataFusionPlanningSnafu)<span class="question-mark">?
-            </span>.join(
+            .join(
                 right,
                 JoinType::Inner,
-                <span class="comment">// (vec![time_index_column.clone()], vec![time_index_column]),
-                </span>(tag_columns.clone(), tag_columns),
+                (tag_columns.clone(), tag_columns),
                 <span class="prelude-val">None</span>,
             )
             .context(DataFusionPlanningSnafu)<span class="question-mark">?
@@ -3770,14 +3757,13 @@
 
         <span class="kw">let  </span>expected = String::from(
             <span class="string">&quot;Projection: some_metric.tag_0, some_metric.timestamp, some_metric.field_0 + some_metric.field_0 AS some_metric.field_0 + some_metric.field_0 [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), some_metric.field_0 + some_metric.field_0:Float64;N]\
-            \n  Inner Join: lhs.tag_0 = some_metric.tag_0, lhs.timestamp = some_metric.timestamp [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n    SubqueryAlias: lhs [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n      PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n        PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n          PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n            Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n              Filter: some_metric.tag_0 = Utf8(\&quot;foo\&quot;) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
-            \n                TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;foo\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n  Inner Join: some_metric.tag_0 = some_metric.tag_0, some_metric.timestamp = some_metric.timestamp [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n    PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n          Sort: some_metric.tag_0 DESC NULLS LAST, some_metric.timestamp DESC NULLS LAST [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n            Filter: some_metric.tag_0 = Utf8(\&quot;foo\&quot;) [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
+            \n              TableScan: some_metric, unsupported_filters=[tag_0 = Utf8(\&quot;foo\&quot;), timestamp &gt;= TimestampMillisecond(-1000, None), timestamp &lt;= TimestampMillisecond(100001000, None)] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n    PromInstantManipulate: range=[0..100000000], lookback=[1000], interval=[5000], time index=[timestamp] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n      PromSeriesNormalize: offset=[0], time index=[timestamp], filter NaN: [false] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
             \n        PromSeriesDivide: tags=[\&quot;tag_0\&quot;] [tag_0:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N]\
