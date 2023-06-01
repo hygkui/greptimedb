@@ -366,6 +366,8 @@
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
 <a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -387,6 +389,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
+<span class="kw">use </span>common_query::AddColumnLocation;
 <span class="kw">use </span>datatypes::prelude::VectorRef;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, RawSchema};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -575,6 +578,7 @@
 </span><span class="kw">pub struct </span>AddColumnRequest {
     <span class="kw">pub </span>column_schema: ColumnSchema,
     <span class="kw">pub </span>is_key: bool,
+    <span class="kw">pub </span>location: <span class="prelude-ty">Option</span>&lt;AddColumnLocation&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]

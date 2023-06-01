@@ -515,6 +515,47 @@
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -838,6 +879,7 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::engine::procedure::procedure_test_util::{<span class="self">self</span>, TestEnv};
+    <span class="kw">use </span><span class="kw">crate</span>::engine::tests::new_add_columns_req_with_location;
     <span class="kw">use </span><span class="kw">crate</span>::table::test_util;
 
     <span class="kw">fn </span>new_add_columns_req() -&gt; AlterTableRequest {
@@ -848,10 +890,12 @@
                 AddColumnRequest {
                     column_schema: new_tag,
                     is_key: <span class="bool-val">true</span>,
+                    location: <span class="prelude-val">None</span>,
                 },
                 AddColumnRequest {
                     column_schema: new_field,
                     is_key: <span class="bool-val">false</span>,
+                    location: <span class="prelude-val">None</span>,
                 },
             ],
         };
@@ -911,6 +955,44 @@
         <span class="macro">assert!</span>(new_schema.column_schema_by_name(<span class="string">&quot;my_field&quot;</span>).is_some());
         <span class="macro">assert_eq!</span>(new_schema.version(), schema.version() + <span class="number">1</span>);
         <span class="macro">assert_eq!</span>(new_meta.next_column_id, old_meta.next_column_id + <span class="number">2</span>);
+
+        <span class="comment">// Alter the table.
+        </span><span class="kw">let </span>new_tag = ColumnSchema::new(<span class="string">&quot;my_tag_first&quot;</span>, ConcreteDataType::string_datatype(), <span class="bool-val">true</span>);
+        <span class="kw">let </span>new_field = ColumnSchema::new(
+            <span class="string">&quot;my_field_after_ts&quot;</span>,
+            ConcreteDataType::string_datatype(),
+            <span class="bool-val">true</span>,
+        );
+        <span class="kw">let </span>request = new_add_columns_req_with_location(<span class="kw-2">&amp;</span>new_tag, <span class="kw-2">&amp;</span>new_field);
+        <span class="kw">let </span><span class="kw-2">mut </span>procedure = table_engine
+            .alter_table_procedure(<span class="kw-2">&amp;</span>engine_ctx, request.clone())
+            .unwrap();
+        procedure_test_util::execute_procedure_until_done(<span class="kw-2">&amp;mut </span>procedure).<span class="kw">await</span>;
+
+        <span class="comment">// Validate.
+        </span><span class="kw">let </span>table = table_engine
+            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
+            .unwrap()
+            .unwrap();
+        <span class="kw">let </span>new_info = table.table_info();
+        <span class="kw">let </span>new_meta = <span class="kw-2">&amp;</span>new_info.meta;
+        <span class="kw">let </span>new_schema = <span class="kw-2">&amp;</span>new_meta.schema;
+
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">6</span>], <span class="kw-2">&amp;</span>new_meta.primary_key_indices[..]);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">7</span>], <span class="kw-2">&amp;</span>new_meta.value_indices[..]);
+        <span class="macro">assert!</span>(new_schema.column_schema_by_name(<span class="string">&quot;my_tag_first&quot;</span>).is_some());
+        <span class="macro">assert!</span>(new_schema
+            .column_schema_by_name(<span class="string">&quot;my_field_after_ts&quot;</span>)
+            .is_some());
+        <span class="macro">assert_eq!</span>(new_schema.version(), schema.version() + <span class="number">2</span>);
+        <span class="macro">assert_eq!</span>(new_meta.next_column_id, old_meta.next_column_id + <span class="number">4</span>);
+        <span class="macro">assert_eq!</span>(new_schema.column_index_by_name(<span class="string">&quot;my_tag_first&quot;</span>).unwrap(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(
+            new_schema
+                .column_index_by_name(<span class="string">&quot;my_field_after_ts&quot;</span>)
+                .unwrap(),
+            new_schema.column_index_by_name(<span class="string">&quot;ts&quot;</span>).unwrap() + <span class="number">1
+        </span>);
     }
 
     <span class="attr">#[tokio::test]

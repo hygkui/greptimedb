@@ -113,6 +113,12 @@
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -198,6 +204,12 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;The column name already exists, column: {}&quot;</span>, column))]
     </span>ColumnAlreadyExists { column: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unknown location type: {}&quot;</span>, location_type))]
+    </span>UnknownLocationType {
+        location_type: i32,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -218,9 +230,9 @@
             Error::MissingField { .. } =&gt; StatusCode::InvalidArguments,
             Error::InvalidColumnDef { source, .. } =&gt; source.status_code(),
             Error::UnrecognizedTableOption { .. } =&gt; StatusCode::InvalidArguments,
-            Error::UnexpectedValuesLength { .. } | Error::ColumnAlreadyExists { .. } =&gt; {
-                StatusCode::InvalidArguments
-            }
+            Error::UnexpectedValuesLength { .. }
+            | Error::ColumnAlreadyExists { .. }
+            | Error::UnknownLocationType { .. } =&gt; StatusCode::InvalidArguments,
         }
     }
 

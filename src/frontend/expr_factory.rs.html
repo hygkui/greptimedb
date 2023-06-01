@@ -346,6 +346,9 @@
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -639,7 +642,10 @@
             }
             .fail();
         }
-        AlterTableOperation::AddColumn { column_def } =&gt; Kind::AddColumns(AddColumns {
+        AlterTableOperation::AddColumn {
+            column_def,
+            location,
+        } =&gt; Kind::AddColumns(AddColumns {
             add_columns: <span class="macro">vec!</span>[AddColumn {
                 column_def: <span class="prelude-val">Some</span>(
                     sql_column_def_to_grpc_column_def(column_def)
@@ -647,7 +653,7 @@
                         .context(ExternalSnafu)<span class="question-mark">?</span>,
                 ),
                 is_key: <span class="bool-val">false</span>,
-                location: <span class="prelude-val">None</span>,
+                location: location.as_ref().map(From::from),
             }],
         }),
         AlterTableOperation::DropColumn { name } =&gt; Kind::DropColumns(DropColumns {
