@@ -370,6 +370,9 @@
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -525,13 +528,16 @@
                         .collect::&lt;Vec&lt;RegionIdent&gt;&gt;();
 
                     <span class="kw">for </span>r <span class="kw">in </span>failed_regions {
-                        <span class="comment">// Now that we know the region is failed, remove it from the failure
-                        // detectors, avoiding the failover procedure to be triggered again.
-                        // If the region is back alive (the failover procedure runs successfully),
-                        // it will be added back to the failure detectors again.
-                        </span>failure_detectors.remove(<span class="kw-2">&amp;</span>r);
-
-                        region_failover_manager.fire_region_failover(r)
+                        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region_failover_manager.do_region_failover(<span class="kw-2">&amp;</span>r).<span class="kw">await </span>{
+                            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to do region failover for {r}&quot;</span>);
+                        } <span class="kw">else </span>{
+                            <span class="comment">// Now that we know the region is starting to do failover, remove it
+                            // from the failure detectors, avoiding the failover procedure to be
+                            // triggered again.
+                            // If the region is back alive (the failover procedure runs successfully),
+                            // it will be added back to the failure detectors again.
+                            </span>failure_detectors.remove(<span class="kw-2">&amp;</span>r);
+                        }
                     }
                 }
 
