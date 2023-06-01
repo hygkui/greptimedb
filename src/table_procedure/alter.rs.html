@@ -352,6 +352,7 @@
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
 <a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -370,6 +371,7 @@
 
 </span><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::{CatalogManagerRef, RenameTableRequest};
+<span class="kw">use </span>common_procedure::error::SubprocedureFailedSnafu;
 <span class="kw">use </span>common_procedure::{
     Context, Error, LockKey, Procedure, ProcedureId, ProcedureManager, ProcedureState,
     ProcedureWithId, <span class="prelude-ty">Result</span>, Status,
@@ -383,7 +385,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     AccessCatalogSnafu, CatalogNotFoundSnafu, DeserializeProcedureSnafu, SchemaNotFoundSnafu,
-    SerializeProcedureSnafu, SubprocedureFailedSnafu, TableExistsSnafu, TableNotFoundSnafu,
+    SerializeProcedureSnafu, TableExistsSnafu, TableNotFoundSnafu,
 };
 
 <span class="doccomment">/// Procedure to alter a table.

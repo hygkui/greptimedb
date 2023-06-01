@@ -325,6 +325,7 @@
 
 </span><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::{CatalogManagerRef, DeregisterTableRequest};
+<span class="kw">use </span>common_procedure::error::SubprocedureFailedSnafu;
 <span class="kw">use </span>common_procedure::{
     Context, Error, LockKey, Procedure, ProcedureId, ProcedureManager, ProcedureState,
     ProcedureWithId, <span class="prelude-ty">Result</span>, Status,
@@ -336,8 +337,7 @@
 <span class="kw">use </span>table::requests::DropTableRequest;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    AccessCatalogSnafu, DeserializeProcedureSnafu, SerializeProcedureSnafu,
-    SubprocedureFailedSnafu, TableNotFoundSnafu,
+    AccessCatalogSnafu, DeserializeProcedureSnafu, SerializeProcedureSnafu, TableNotFoundSnafu,
 };
 
 <span class="doccomment">/// Procedure to drop a table.

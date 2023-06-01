@@ -190,6 +190,15 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -319,6 +328,13 @@
         source: common_runtime::error::Error,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Subprocedure {} failed, source: {}&quot;</span>, subprocedure_id, source))]
+    </span>SubprocedureFailed {
+        subprocedure_id: ProcedureId,
+        source: Arc&lt;Error&gt;,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -326,7 +342,7 @@
 <span class="kw">impl </span>ErrorExt <span class="kw">for </span>Error {
     <span class="kw">fn </span>status_code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
         <span class="kw">match </span><span class="self">self </span>{
-            Error::External { source }
+            Error::External { source, .. }
             | Error::PutState { source, .. }
             | Error::DeleteStates { source, .. }
             | Error::ListState { source, .. } =&gt; source.status_code(),
@@ -344,6 +360,8 @@
             Error::ProcedureExec { source, .. } =&gt; source.status_code(),
             Error::StartRemoveOutdatedMetaTask { source, .. }
             | Error::StopRemoveOutdatedMetaTask { source, .. } =&gt; source.status_code(),
+
+            Error::SubprocedureFailed { source, .. } =&gt; source.status_code(),
         }
     }
 
