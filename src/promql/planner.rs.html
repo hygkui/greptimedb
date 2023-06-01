@@ -2026,9 +2026,6 @@
 <a href="#2026" id="2026">2026</a>
 <a href="#2027" id="2027">2027</a>
 <a href="#2028" id="2028">2028</a>
-<a href="#2029" id="2029">2029</a>
-<a href="#2030" id="2030">2030</a>
-<a href="#2031" id="2031">2031</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2171,9 +2168,6 @@
 
                 <span class="comment">// convert op and value columns to aggregate exprs
                 </span><span class="kw">let </span>aggr_exprs = <span class="self">self</span>.create_aggregate_exprs(<span class="kw-2">*</span>op, <span class="kw-2">&amp;</span>input)<span class="question-mark">?</span>;
-
-                <span class="comment">// remove time index column from context
-                </span><span class="self">self</span>.ctx.time_index_column = <span class="prelude-val">None</span>;
 
                 <span class="comment">// create plan
                 </span><span class="kw">let </span>group_sort_expr = group_exprs
