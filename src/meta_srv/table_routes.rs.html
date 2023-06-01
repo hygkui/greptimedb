@@ -282,12 +282,12 @@
 
 </span><span class="kw">use </span>api::v1::meta::{PutRequest, TableRouteValue};
 <span class="kw">use </span>catalog::helper::{TableGlobalKey, TableGlobalValue};
+<span class="kw">use </span>common_meta::key::TableRouteKey;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     DecodeTableRouteSnafu, InvalidCatalogValueSnafu, <span class="prelude-ty">Result</span>, TableRouteNotFoundSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::keys::TableRouteKey;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::ext::KvStoreExt;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStoreRef;
 

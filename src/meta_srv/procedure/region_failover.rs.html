@@ -636,6 +636,7 @@
 <a href="#636" id="636">636</a>
 <a href="#637" id="637">637</a>
 <a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1100,8 +1101,9 @@
                 datanode_lease_secs: <span class="number">10</span>,
                 server_addr: <span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string(),
                 kv_store,
-                catalog: <span class="prelude-val">None</span>,
-                schema: <span class="prelude-val">None</span>,
+                catalog: <span class="prelude-val">Some</span>(DEFAULT_CATALOG_NAME.to_string()),
+                schema: <span class="prelude-val">Some</span>(DEFAULT_SCHEMA_NAME.to_string()),
+                table: <span class="prelude-val">Some</span>(table.to_string()),
             };
 
             TestingEnv {

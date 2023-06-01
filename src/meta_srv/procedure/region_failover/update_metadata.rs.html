@@ -540,6 +540,7 @@
 <a href="#540" id="540">540</a>
 <a href="#541" id="541">541</a>
 <a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -557,6 +558,7 @@
 </span><span class="kw">use </span>api::v1::meta::{TableName, TableRouteValue};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::helper::TableGlobalKey;
+<span class="kw">use </span>common_meta::key::TableRouteKey;
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::router::TableRoute;
 <span class="kw">use </span>common_meta::RegionIdent;
@@ -570,7 +572,6 @@
     CorruptedTableRouteSnafu, <span class="prelude-ty">Result</span>, RetryLaterSnafu, TableNotFoundSnafu,
     TableRouteConversionSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::keys::TableRouteKey;
 <span class="kw">use </span><span class="kw">crate</span>::lock::keys::table_metadata_lock_key;
 <span class="kw">use </span><span class="kw">crate</span>::lock::Opts;
 <span class="kw">use </span><span class="kw">crate</span>::table_routes;
@@ -763,6 +764,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>api::v1::meta::TableRouteValue;
     <span class="kw">use </span>catalog::helper::TableGlobalValue;
+    <span class="kw">use </span>common_meta::key::TableRouteKey;
 
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::tests::{TestingEnv, TestingEnvBuilder};
     <span class="kw">use super</span>::{State, <span class="kw-2">*</span>};

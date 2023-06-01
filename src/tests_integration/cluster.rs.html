@@ -459,7 +459,7 @@
     <span class="kw">async fn </span>wait_datanodes_alive(<span class="kw-2">&amp;</span><span class="self">self</span>, expected_datanodes: u32) {
         <span class="kw">let </span>kv_store = <span class="self">self</span>.kv_store();
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">10 </span>{
-            <span class="kw">let </span>alive_datanodes = meta_srv::lease::alive_datanodes(<span class="number">1000</span>, <span class="kw-2">&amp;</span>kv_store, |<span class="kw">_</span>, <span class="kw">_</span>| <span class="bool-val">true</span>)
+            <span class="kw">let </span>alive_datanodes = meta_srv::lease::filter_datanodes(<span class="number">1000</span>, <span class="kw-2">&amp;</span>kv_store, |<span class="kw">_</span>, <span class="kw">_</span>| <span class="bool-val">true</span>)
                 .<span class="kw">await
                 </span>.unwrap()
                 .len() <span class="kw">as </span>u32;
