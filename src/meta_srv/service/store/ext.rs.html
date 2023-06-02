@@ -112,6 +112,29 @@
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -127,14 +150,17 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>api::v1::meta::{KeyValue, RangeRequest};
-<span class="kw">use </span>snafu::ensure;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStore;
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">pub trait </span>KvStoreExt {
-    <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt;;
+    <span class="doccomment">/// Get the value by the given key.
+    </span><span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt;;
+
+    <span class="doccomment">/// Check if a key exists, it does not return the value.
+    </span><span class="kw">async fn </span>exists(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt;;
 }
 
 <span class="attr">#[async_trait::async_trait]
@@ -150,20 +176,19 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>kvs = <span class="self">self</span>.range(req).<span class="kw">await</span><span class="question-mark">?</span>.kvs;
 
-        <span class="kw">if </span>kvs.is_empty() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
-        }
+        <span class="prelude-val">Ok</span>(kvs.pop())
+    }
 
-        <span class="macro">ensure!</span>(
-            kvs.len() == <span class="number">1</span>,
-            error::InvalidKvsLengthSnafu {
-                expected: <span class="number">1_usize</span>,
-                actual: kvs.len(),
-            }
-        );
+    <span class="kw">async fn </span>exists(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="kw">let </span>req = RangeRequest {
+            key,
+            keys_only: <span class="bool-val">true</span>,
+            ..Default::default()
+        };
 
-        <span class="comment">// Safety: the length check has been performed before using unwrap()
-        </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(kvs.pop().unwrap()))
+        <span class="kw">let </span>kvs = <span class="self">self</span>.range(req).<span class="kw">await</span><span class="question-mark">?</span>.kvs;
+
+        <span class="prelude-val">Ok</span>(!kvs.is_empty())
     }
 }
 
@@ -204,6 +229,27 @@
         <span class="kw">let </span>may_kv = in_mem.get(<span class="string">&quot;test_key3&quot;</span>.as_bytes().to_vec()).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert!</span>(may_kv.is_none());
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_exists() {
+        <span class="kw">let </span><span class="kw-2">mut </span>in_mem = Arc::new(MemStore::new()) <span class="kw">as </span>KvStoreRef;
+
+        put_stats_to_store(<span class="kw-2">&amp;mut </span>in_mem).<span class="kw">await</span>;
+
+        <span class="macro">assert!</span>(in_mem
+            .exists(<span class="string">&quot;test_key1&quot;</span>.as_bytes().to_vec())
+            .<span class="kw">await
+            </span>.unwrap());
+        <span class="macro">assert!</span>(in_mem
+            .exists(<span class="string">&quot;test_key2&quot;</span>.as_bytes().to_vec())
+            .<span class="kw">await
+            </span>.unwrap());
+        <span class="macro">assert!</span>(!in_mem
+            .exists(<span class="string">&quot;test_key3&quot;</span>.as_bytes().to_vec())
+            .<span class="kw">await
+            </span>.unwrap());
+        <span class="macro">assert!</span>(!in_mem.exists(<span class="string">&quot;test_key&quot;</span>.as_bytes().to_vec()).<span class="kw">await</span>.unwrap());
     }
 
     <span class="kw">async fn </span>put_stats_to_store(store: <span class="kw-2">&amp;mut </span>KvStoreRef) {
