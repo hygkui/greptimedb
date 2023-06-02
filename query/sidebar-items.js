@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["datafusion","dist_plan","error","executor","logical_optimizer","metrics","optimizer","parser","physical_optimizer","physical_planner","plan","planner","query_engine","sql"]};
+window.SIDEBAR_ITEMS = {"mod":["datafusion","dist_plan","error","executor","extension_serializer","logical_optimizer","metrics","optimizer","parser","physical_optimizer","physical_planner","plan","planner","query_engine","sql"]};

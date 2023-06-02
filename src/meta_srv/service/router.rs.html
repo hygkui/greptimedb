@@ -573,7 +573,7 @@
         <span class="kw">return </span><span class="prelude-val">Ok</span>(RouteResponse {
             header: <span class="prelude-val">Some</span>(ResponseHeader::failed(
                 cluster_id,
-                Error::not_enough_available_datanodes(partitions.len(), peers.len()),
+                Error::not_enough_active_datanodes(peers.len() <span class="kw">as _</span>),
             )),
             ..Default::default()
         });

@@ -693,6 +693,49 @@
 <a href="#693" id="693">693</a>
 <a href="#694" id="694">694</a>
 <a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -716,10 +759,10 @@
 <span class="kw">use </span>datafusion::arrow::array::{Array, Float64Array, TimestampMillisecondArray, UInt64Array};
 <span class="kw">use </span>datafusion::arrow::datatypes::SchemaRef;
 <span class="kw">use </span>datafusion::arrow::record_batch::RecordBatch;
-<span class="kw">use </span>datafusion::common::DFSchemaRef;
+<span class="kw">use </span>datafusion::common::{DFSchema, DFSchemaRef};
 <span class="kw">use </span>datafusion::error::{DataFusionError, <span class="prelude-ty">Result </span><span class="kw">as </span>DataFusionResult};
 <span class="kw">use </span>datafusion::execution::context::TaskContext;
-<span class="kw">use </span>datafusion::logical_expr::{Expr, LogicalPlan, UserDefinedLogicalNodeCore};
+<span class="kw">use </span>datafusion::logical_expr::{EmptyRelation, Expr, LogicalPlan, UserDefinedLogicalNodeCore};
 <span class="kw">use </span>datafusion::physical_expr::PhysicalSortExpr;
 <span class="kw">use </span>datafusion::physical_plan::metrics::{BaselineMetrics, ExecutionPlanMetricsSet, MetricsSet};
 <span class="kw">use </span>datafusion::physical_plan::{
@@ -729,7 +772,11 @@
 <span class="kw">use </span>datatypes::arrow::compute;
 <span class="kw">use </span>datatypes::arrow::error::Result <span class="kw">as </span>ArrowResult;
 <span class="kw">use </span>futures::{Stream, StreamExt};
+<span class="kw">use </span>greptime_proto::substrait_extension <span class="kw">as </span>pb;
+<span class="kw">use </span>prost::Message;
+<span class="kw">use </span>snafu::ResultExt;
 
+<span class="kw">use </span><span class="kw">crate</span>::error::{DeserializeSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::extension_plan::Millisecond;
 
 <span class="doccomment">/// Manipulate the input record batch to make it suitable for Instant Operator.
@@ -751,8 +798,8 @@
 
 <span class="kw">impl </span>UserDefinedLogicalNodeCore <span class="kw">for </span>InstantManipulate {
     <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;InstantManipulate&quot;
-    </span>}
+        <span class="self">Self</span>::name()
+    }
 
     <span class="kw">fn </span>inputs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;<span class="kw-2">&amp;</span>LogicalPlan&gt; {
         <span class="macro">vec!</span>[<span class="kw-2">&amp;</span><span class="self">self</span>.input]
@@ -810,6 +857,10 @@
         }
     }
 
+    <span class="kw">pub const fn </span>name() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+        <span class="string">&quot;InstantManipulate&quot;
+    </span>}
+
     <span class="kw">pub fn </span>to_execution_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, exec_input: Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt;) -&gt; Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt; {
         Arc::new(InstantManipulateExec {
             start: <span class="self">self</span>.start,
@@ -820,6 +871,41 @@
             field_column: <span class="self">self</span>.field_column.clone(),
             input: exec_input,
             metric: ExecutionPlanMetricsSet::new(),
+        })
+    }
+
+    <span class="kw">pub fn </span>serialize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
+        pb::InstantManipulate {
+            start: <span class="self">self</span>.start,
+            end: <span class="self">self</span>.end,
+            interval: <span class="self">self</span>.interval,
+            lookback_delta: <span class="self">self</span>.lookback_delta,
+            time_index: <span class="self">self</span>.time_index_column.clone(),
+            field_index: <span class="self">self</span>.field_column.clone().unwrap_or_default(),
+        }
+        .encode_to_vec()
+    }
+
+    <span class="kw">pub fn </span>deserialize(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>pb_instant_manipulate =
+            pb::InstantManipulate::decode(bytes).context(DeserializeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>placeholder_plan = LogicalPlan::EmptyRelation(EmptyRelation {
+            produce_one_row: <span class="bool-val">false</span>,
+            schema: Arc::new(DFSchema::empty()),
+        });
+        <span class="kw">let </span>field_column = <span class="kw">if </span>pb_instant_manipulate.field_index.is_empty() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">Some</span>(pb_instant_manipulate.field_index)
+        };
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            start: pb_instant_manipulate.start,
+            end: pb_instant_manipulate.end,
+            lookback_delta: pb_instant_manipulate.lookback_delta,
+            interval: pb_instant_manipulate.interval,
+            time_index_column: pb_instant_manipulate.time_index,
+            field_column,
+            input: placeholder_plan,
         })
     }
 }

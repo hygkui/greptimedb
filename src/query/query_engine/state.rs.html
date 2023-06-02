@@ -172,6 +172,8 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -210,6 +212,7 @@
 <span class="kw">use </span>promql::extension_plan::PromExtensionPlanner;
 
 <span class="kw">use </span><span class="kw">crate</span>::dist_plan::{DistExtensionPlanner, DistPlannerAnalyzer};
+<span class="kw">use </span><span class="kw">crate</span>::extension_serializer::ExtensionSerializer;
 <span class="kw">use </span><span class="kw">crate</span>::optimizer::order_hint::OrderHintRule;
 <span class="kw">use </span><span class="kw">crate</span>::optimizer::type_conversion::TypeConversionRule;
 <span class="kw">use </span><span class="kw">crate</span>::query_engine::options::QueryOptions;
@@ -257,6 +260,7 @@
             runtime_env,
             Arc::new(MemoryCatalogList::default()), <span class="comment">// pass a dummy catalog list
         </span>)
+        .with_serializer_registry(Arc::new(ExtensionSerializer))
         .with_analyzer_rules(analyzer.rules)
         .with_query_planner(Arc::new(DfQueryPlanner::new(
             partition_manager,

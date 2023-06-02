@@ -79,6 +79,19 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -96,6 +109,9 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>datafusion_expr::{LogicalPlan, UserDefinedLogicalNode};
+<span class="kw">use </span>promql::extension_plan::{
+    EmptyMetric, InstantManipulate, RangeManipulate, SeriesDivide, SeriesNormalize,
+};
 
 <span class="attr">#[allow(dead_code)]
 </span><span class="kw">pub enum </span>Commutativity {
@@ -150,8 +166,18 @@
         }
     }
 
-    <span class="kw">pub fn </span>check_extension_plan(_plan: <span class="kw-2">&amp;</span><span class="kw">dyn </span>UserDefinedLogicalNode) -&gt; Commutativity {
-        <span class="macro">todo!</span>(<span class="string">&quot;enumerate all the extension plans here&quot;</span>)
+    <span class="kw">pub fn </span>check_extension_plan(plan: <span class="kw-2">&amp;</span><span class="kw">dyn </span>UserDefinedLogicalNode) -&gt; Commutativity {
+        <span class="kw">match </span>plan.name() {
+            name <span class="kw">if </span>name == EmptyMetric::name()
+                || name == InstantManipulate::name()
+                || name == SeriesNormalize::name()
+                || name == RangeManipulate::name()
+                || name == SeriesDivide::name() =&gt;
+            {
+                Commutativity::Commutative
+            }
+            <span class="kw">_ </span>=&gt; Commutativity::Unsupported,
+        }
     }
 }
 

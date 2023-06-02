@@ -451,6 +451,34 @@
 <a href="#451" id="451">451</a>
 <a href="#452" id="452">452</a>
 <a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -473,10 +501,10 @@
 <span class="kw">use </span>datafusion::arrow::array::{Array, StringArray};
 <span class="kw">use </span>datafusion::arrow::datatypes::SchemaRef;
 <span class="kw">use </span>datafusion::arrow::record_batch::RecordBatch;
-<span class="kw">use </span>datafusion::common::DFSchemaRef;
+<span class="kw">use </span>datafusion::common::{DFSchema, DFSchemaRef};
 <span class="kw">use </span>datafusion::error::Result <span class="kw">as </span>DataFusionResult;
 <span class="kw">use </span>datafusion::execution::context::TaskContext;
-<span class="kw">use </span>datafusion::logical_expr::{Expr, LogicalPlan, UserDefinedLogicalNodeCore};
+<span class="kw">use </span>datafusion::logical_expr::{EmptyRelation, Expr, LogicalPlan, UserDefinedLogicalNodeCore};
 <span class="kw">use </span>datafusion::physical_expr::PhysicalSortExpr;
 <span class="kw">use </span>datafusion::physical_plan::metrics::{BaselineMetrics, ExecutionPlanMetricsSet, MetricsSet};
 <span class="kw">use </span>datafusion::physical_plan::{
@@ -485,6 +513,11 @@
 };
 <span class="kw">use </span>datatypes::arrow::compute;
 <span class="kw">use </span>futures::{ready, Stream, StreamExt};
+<span class="kw">use </span>greptime_proto::substrait_extension <span class="kw">as </span>pb;
+<span class="kw">use </span>prost::Message;
+<span class="kw">use </span>snafu::ResultExt;
+
+<span class="kw">use </span><span class="kw">crate</span>::error::{DeserializeSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="attr">#[derive(Debug, PartialEq, Eq, Hash)]
 </span><span class="kw">pub struct </span>SeriesDivide {
@@ -494,8 +527,8 @@
 
 <span class="kw">impl </span>UserDefinedLogicalNodeCore <span class="kw">for </span>SeriesDivide {
     <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;SeriesDivide&quot;
-    </span>}
+        <span class="self">Self</span>::name()
+    }
 
     <span class="kw">fn </span>inputs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;<span class="kw-2">&amp;</span>LogicalPlan&gt; {
         <span class="macro">vec!</span>[<span class="kw-2">&amp;</span><span class="self">self</span>.input]
@@ -528,11 +561,34 @@
         <span class="self">Self </span>{ tag_columns, input }
     }
 
+    <span class="kw">pub const fn </span>name() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+        <span class="string">&quot;SeriesDivide&quot;
+    </span>}
+
     <span class="kw">pub fn </span>to_execution_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, exec_input: Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt;) -&gt; Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt; {
         Arc::new(SeriesDivideExec {
             tag_columns: <span class="self">self</span>.tag_columns.clone(),
             input: exec_input,
             metric: ExecutionPlanMetricsSet::new(),
+        })
+    }
+
+    <span class="kw">pub fn </span>serialize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
+        pb::SeriesDivide {
+            tag_columns: <span class="self">self</span>.tag_columns.clone(),
+        }
+        .encode_to_vec()
+    }
+
+    <span class="kw">pub fn </span>deserialize(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>pb_series_divide = pb::SeriesDivide::decode(bytes).context(DeserializeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>placeholder_plan = LogicalPlan::EmptyRelation(EmptyRelation {
+            produce_one_row: <span class="bool-val">false</span>,
+            schema: Arc::new(DFSchema::empty()),
+        });
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            tag_columns: pb_series_divide.tag_columns,
+            input: placeholder_plan,
         })
     }
 }
