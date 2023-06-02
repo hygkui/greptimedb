@@ -274,6 +274,8 @@
 <a href="#274" id="274">274</a>
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -293,6 +295,7 @@
 <span class="kw">use </span>std::time::Instant;
 
 <span class="kw">use </span>catalog::remote::CachedMetaKvBackend;
+<span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::{Client, Database, DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::ErrorExt;
 <span class="kw">use </span>common_query::Output;
@@ -300,7 +303,6 @@
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>either::Either;
 <span class="kw">use </span>frontend::catalog::FrontendCatalogManager;
-<span class="kw">use </span>frontend::datanode::DatanodeClients;
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
 <span class="kw">use </span>partition::manager::PartitionRuleManager;
 <span class="kw">use </span>partition::route::TableRoutes;
@@ -545,6 +547,8 @@
     <span class="kw">let </span>state = Arc::new(QueryEngineState::new(
         catalog_list,
         <span class="bool-val">false</span>,
+        <span class="prelude-val">None</span>,
+        <span class="prelude-val">None</span>,
         Default::default(),
     ));
 

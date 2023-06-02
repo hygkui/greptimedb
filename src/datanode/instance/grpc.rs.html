@@ -636,7 +636,7 @@
 <span class="kw">use </span>query::plan::LogicalPlan;
 <span class="kw">use </span>query::query_engine::SqlStatementExecutor;
 <span class="kw">use </span>servers::query_handler::grpc::GrpcQueryHandler;
-<span class="kw">use </span>session::context::{QueryContext, QueryContextRef};
+<span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sql::statements::statement::Statement;
 <span class="kw">use </span>substrait::{DFLogicalSubstraitConvertor, SubstraitPlan};
@@ -682,7 +682,7 @@
             </span>.context(DecodeLogicalPlanSnafu)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.query_engine
-            .execute(LogicalPlan::DfPlan(logical_plan), QueryContext::arc())
+            .execute(LogicalPlan::DfPlan(logical_plan), ctx.clone())
             .<span class="kw">await
             </span>.context(ExecuteLogicalPlanSnafu)
     }

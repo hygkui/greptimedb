@@ -196,6 +196,13 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -228,6 +235,7 @@
 <span class="kw">use </span>table::metadata::TableType;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{CreateRecordBatchSnafu, InternalSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::information_schema::InformationStreamBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::CatalogProviderRef;
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>InformationSchemaTables {
@@ -260,9 +268,15 @@
             <span class="self">self</span>.catalog_provider.clone(),
         )
     }
+}
 
-    <span class="kw">pub fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
-        <span class="kw">let </span>schema = <span class="self">self</span>.schema().clone();
+<span class="kw">impl </span>InformationStreamBuilder <span class="kw">for </span>InformationSchemaTables {
+    <span class="kw">fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SchemaRef {
+        <span class="self">self</span>.schema.clone()
+    }
+
+    <span class="kw">fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
+        <span class="kw">let </span>schema = <span class="self">self</span>.schema.arrow_schema().clone();
         <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder();
         <span class="kw">let </span>stream = Box::pin(DfRecordBatchStreamAdapter::new(
             schema,
@@ -380,7 +394,7 @@
     }
 
     <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: Arc&lt;TaskContext&gt;) -&gt; DfSendableRecordBatchStream {
-        <span class="kw">let </span>schema = <span class="self">self</span>.schema().clone();
+        <span class="kw">let </span>schema = <span class="self">self</span>.schema.arrow_schema().clone();
         <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder();
         Box::pin(DfRecordBatchStreamAdapter::new(
             schema,

@@ -954,6 +954,7 @@
 <span class="kw">use </span>catalog::helper::{SchemaKey, SchemaValue};
 <span class="kw">use </span>catalog::{CatalogManager, DeregisterTableRequest, RegisterTableRequest};
 <span class="kw">use </span>chrono::DateTime;
+<span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::Database;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_catalog::format_full_table_name;
@@ -990,7 +991,6 @@
 <span class="kw">use </span>table::TableRef;
 
 <span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
-<span class="kw">use </span><span class="kw">crate</span>::datanode::DatanodeClients;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, AlterExprToRequestSnafu, CatalogEntrySerdeSnafu, CatalogSnafu, ColumnDataTypeSnafu,
     DeserializePartitionSnafu, InvokeDatanodeSnafu, ParseSqlSnafu, PrimaryKeyNotFoundSnafu,

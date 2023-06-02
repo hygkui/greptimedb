@@ -479,6 +479,7 @@
     RegisterSchemaRequest, RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
     SchemaProvider, SchemaProviderRef,
 };
+<span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_meta::table_name::TableName;
@@ -490,7 +491,6 @@
 <span class="kw">use </span>table::table::numbers::NumbersTable;
 <span class="kw">use </span>table::TableRef;
 
-<span class="kw">use </span><span class="kw">crate</span>::datanode::DatanodeClients;
 <span class="kw">use </span><span class="kw">crate</span>::expr_factory;
 <span class="kw">use </span><span class="kw">crate</span>::instance::distributed::DistInstance;
 <span class="kw">use </span><span class="kw">crate</span>::table::DistTable;

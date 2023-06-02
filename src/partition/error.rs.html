@@ -161,6 +161,13 @@
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -294,12 +301,19 @@
         <span class="attr">#[snafu(backtrace)]
         </span>source: datatypes::error::Error,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find leader of table {} region {}&quot;</span>, table_name, region_id))]
+    </span>FindLeader {
+        table_name: String,
+        region_id: RegionId,
+        location: Location,
+    },
 }
 
 <span class="kw">impl </span>ErrorExt <span class="kw">for </span>Error {
     <span class="kw">fn </span>status_code(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
         <span class="kw">match </span><span class="self">self </span>{
-            Error::GetCache { .. } =&gt; StatusCode::StorageUnavailable,
+            Error::GetCache { .. } | Error::FindLeader { .. } =&gt; StatusCode::StorageUnavailable,
             Error::FindRegionRoutes { .. } =&gt; StatusCode::InvalidArguments,
             Error::FindTableRoutes { .. } =&gt; StatusCode::InvalidArguments,
             Error::RequestMeta { source, .. } =&gt; source.status_code(),

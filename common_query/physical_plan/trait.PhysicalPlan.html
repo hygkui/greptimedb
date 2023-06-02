@@ -16,11 +16,11 @@
 
     // Provided method
     fn <a href="#method.output_ordering" class="fn">output_ordering</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;[PhysicalSortExpr]&gt; { ... }
-}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>PhysicalPlan</code> represent nodes in the Physical Plan.</p>
-<p>Each <code>PhysicalPlan</code> is Partition-aware and is responsible for
-creating the actual <code>async</code> [<code>SendableRecordBatchStream</code>]s
-of [<code>RecordBatch</code>] that incrementally compute the operator’s
-output from its input partition.</p>
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><a href="trait.PhysicalPlan.html" title="trait common_query::physical_plan::PhysicalPlan"><code>PhysicalPlan</code></a> represent nodes in the Physical Plan.</p>
+<p>Each <a href="trait.PhysicalPlan.html" title="trait common_query::physical_plan::PhysicalPlan"><code>PhysicalPlan</code></a> is partition-aware and is responsible for
+creating the actual “async” [<code>SendableRecordBatchStream</code>]s
+of <a href="common_recordbatch::RecordBatch"><code>RecordBatch</code></a> that incrementally
+compute the operator’s  output from its input partition.</p>
 </div></details><h2 id="required-methods" class="small-section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.as_any" class="method"><a class="srclink rightside" href="../../src/common_query/physical_plan.rs.html#44">source</a><h4 class="code-header">fn <a href="#tymethod.as_any" class="fn">as_any</a>(&amp;self) -&gt; &amp;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html" title="trait core::any::Any">Any</a></h4></section></summary><div class="docblock"><p>Returns the physical plan as <a href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html" title="trait core::any::Any"><code>Any</code></a> so that it can be
 downcast to a specific implementation.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.schema" class="method"><a class="srclink rightside" href="../../src/common_query/physical_plan.rs.html#47">source</a><h4 class="code-header">fn <a href="#tymethod.schema" class="fn">schema</a>(&amp;self) -&gt; <a class="type" href="../../datatypes/schema/type.SchemaRef.html" title="type datatypes::schema::SchemaRef">SchemaRef</a></h4></section></summary><div class="docblock"><p>Get the schema for this physical plan</p>

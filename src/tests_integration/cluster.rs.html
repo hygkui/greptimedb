@@ -318,6 +318,7 @@
 
 <span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>catalog::remote::RemoteCatalogManager;
+<span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::Client;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
@@ -327,7 +328,6 @@
 <span class="kw">use </span>common_test_util::temp_dir::create_temp_dir;
 <span class="kw">use </span>datanode::datanode::{DatanodeOptions, ObjectStoreConfig};
 <span class="kw">use </span>datanode::instance::Instance <span class="kw">as </span>DatanodeInstance;
-<span class="kw">use </span>frontend::datanode::DatanodeClients;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
 <span class="kw">use </span>meta_srv::metasrv::{MetaSrv, MetaSrvOptions};

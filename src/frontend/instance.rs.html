@@ -843,6 +843,11 @@
 <a href="#843" id="843">843</a>
 <a href="#844" id="844">844</a>
 <a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -877,6 +882,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::remote::CachedMetaKvBackend;
 <span class="kw">use </span>catalog::CatalogManagerRef;
+<span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
 <span class="kw">use </span>common_error::ext::BoxedError;
@@ -915,7 +921,6 @@
 <span class="kw">use </span>sql::statements::statement::Statement;
 
 <span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
-<span class="kw">use </span><span class="kw">crate</span>::datanode::DatanodeClients;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, Error, ExecutePromqlSnafu, ExternalSnafu, InvalidInsertRequestSnafu,
     MissingMetasrvOptsSnafu, ParseSqlSnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>, SqlExecInterceptedSnafu,
@@ -999,16 +1004,21 @@
         <span class="kw">let </span>dist_instance = DistInstance::new(
             meta_client.clone(),
             Arc::new(catalog_manager.clone()),
-            datanode_clients,
+            datanode_clients.clone(),
         );
         <span class="kw">let </span>dist_instance = Arc::new(dist_instance);
 
         catalog_manager.set_dist_instance(dist_instance.clone());
         <span class="kw">let </span>catalog_manager = Arc::new(catalog_manager);
 
-        <span class="kw">let </span>query_engine =
-            QueryEngineFactory::new_with_plugins(catalog_manager.clone(), <span class="bool-val">false</span>, plugins.clone())
-                .query_engine();
+        <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
+            catalog_manager.clone(),
+            <span class="bool-val">true</span>,
+            <span class="prelude-val">Some</span>(partition_manager.clone()),
+            <span class="prelude-val">Some</span>(datanode_clients),
+            plugins.clone(),
+        )
+        .query_engine();
 
         <span class="kw">let </span>script_executor =
             Arc::new(ScriptExecutor::new(catalog_manager.clone(), query_engine.clone()).<span class="kw">await</span><span class="question-mark">?</span>);

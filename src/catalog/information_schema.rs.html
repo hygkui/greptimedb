@@ -167,7 +167,6 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -186,17 +185,18 @@
 <span class="kw">mod </span>tables;
 
 <span class="kw">use </span>std::any::Any;
-<span class="kw">use </span>std::sync::{Arc, Mutex};
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_query::physical_plan::PhysicalPlanRef;
 <span class="kw">use </span>common_query::prelude::Expr;
 <span class="kw">use </span>common_recordbatch::{RecordBatchStreamAdaptor, SendableRecordBatchStream};
 <span class="kw">use </span>datatypes::schema::SchemaRef;
 <span class="kw">use </span>futures_util::StreamExt;
-<span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::ScanRequest;
-<span class="kw">use </span>table::error::{DuplicatedExecuteCallSnafu, SchemaConversionSnafu};
+<span class="kw">use </span>table::error::{SchemaConversionSnafu, TablesRecordBatchSnafu};
 <span class="kw">use </span>table::{<span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
 
 <span class="kw">use </span><span class="self">self</span>::columns::InformationSchemaColumns;
@@ -234,23 +234,21 @@
     }
 
     <span class="kw">async fn </span>table(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
-        <span class="kw">let </span>stream = <span class="kw">match </span>name.to_ascii_lowercase().as_ref() {
-            TABLES =&gt; InformationSchemaTables::new(
+        <span class="kw">let </span>stream_builder = <span class="kw">match </span>name.to_ascii_lowercase().as_ref() {
+            TABLES =&gt; Arc::new(InformationSchemaTables::new(
                 <span class="self">self</span>.catalog_name.clone(),
                 <span class="self">self</span>.catalog_provider.clone(),
-            )
-            .to_stream()<span class="question-mark">?</span>,
-            COLUMNS =&gt; InformationSchemaColumns::new(
+            )) <span class="kw">as _</span>,
+            COLUMNS =&gt; Arc::new(InformationSchemaColumns::new(
                 <span class="self">self</span>.catalog_name.clone(),
                 <span class="self">self</span>.catalog_provider.clone(),
-            )
-            .to_stream()<span class="question-mark">?</span>,
+            )) <span class="kw">as _</span>,
             <span class="kw">_ </span>=&gt; {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
             }
         };
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(InformationTable::new(stream))))
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(InformationTable::new(stream_builder))))
     }
 
     <span class="kw">async fn </span>table_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
@@ -259,18 +257,21 @@
     }
 }
 
+<span class="comment">// TODO(ruihang): make it a more generic trait:
+// https://github.com/GreptimeTeam/greptimedb/pull/1639#discussion_r1205001903
+</span><span class="kw">pub trait </span>InformationStreamBuilder: Send + Sync {
+    <span class="kw">fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt;;
+
+    <span class="kw">fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SchemaRef;
+}
+
 <span class="kw">pub struct </span>InformationTable {
-    schema: SchemaRef,
-    stream: Arc&lt;Mutex&lt;<span class="prelude-ty">Option</span>&lt;SendableRecordBatchStream&gt;&gt;&gt;,
+    stream_builder: Arc&lt;<span class="kw">dyn </span>InformationStreamBuilder&gt;,
 }
 
 <span class="kw">impl </span>InformationTable {
-    <span class="kw">pub fn </span>new(stream: SendableRecordBatchStream) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>schema = stream.schema();
-        <span class="self">Self </span>{
-            schema,
-            stream: Arc::new(Mutex::new(<span class="prelude-val">Some</span>(stream))),
-        }
+    <span class="kw">pub fn </span>new(stream_builder: Arc&lt;<span class="kw">dyn </span>InformationStreamBuilder&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ stream_builder }
     }
 }
 
@@ -281,7 +282,7 @@
     </span>}
 
     <span class="kw">fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SchemaRef {
-        <span class="self">self</span>.schema.clone()
+        <span class="self">self</span>.stream_builder.schema()
     }
 
     <span class="kw">fn </span>table_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; table::metadata::TableInfoRef {
@@ -314,13 +315,10 @@
             <span class="self">self</span>.schema()
         };
         <span class="kw">let </span>stream = <span class="self">self
-            </span>.stream
-            .lock()
-            .unwrap()
-            .take()
-            .with_context(|| DuplicatedExecuteCallSnafu {
-                table: <span class="self">self</span>.table_info().name.clone(),
-            })<span class="question-mark">?
+            </span>.stream_builder
+            .to_stream()
+            .map_err(BoxedError::new)
+            .context(TablesRecordBatchSnafu)<span class="question-mark">?
             </span>.map(<span class="kw">move </span>|batch| {
                 batch.and_then(|batch| {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(projection) = <span class="kw-2">&amp;</span>projection {

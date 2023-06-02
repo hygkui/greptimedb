@@ -241,6 +241,38 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -258,6 +290,7 @@
 </span><span class="kw">use </span>std::any::Any;
 
 <span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>datafusion::error::DataFusionError;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>datatypes::value::Value;
@@ -357,6 +390,12 @@
         location: Location,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode Substrait logical plan, source: {}&quot;</span>, source))]
+    </span>EncodeSubstraitLogicalPlan {
+        source: substrait::error::Error,
+        location: Location,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;General SQL error: {}&quot;</span>, source))]
     </span>Sql {
         location: Location,
@@ -390,9 +429,29 @@
         location: Location,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to route partition of table {}, source: {}&quot;</span>, table, source))]
+    </span>RoutePartition {
+        table: TableName,
+        source: partition::error::Error,
+        location: Location,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL, source: {}&quot;</span>, source))]
     </span>ParseSql {
         source: sql::error::Error,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request remote peer, source: {}&quot;</span>, source))]
+    </span>RemoteRequest {
+        source: client::Error,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected query output. Expected: {}, Got: {}&quot;</span>, expected, got))]
+    </span>UnexpectedOutputKind {
+        expected: String,
+        got: String,
         location: Location,
     },
 
@@ -454,6 +513,7 @@
             | ConvertSchema { .. } =&gt; StatusCode::InvalidArguments,
 
             BuildBackend { .. } | ListObjects { .. } =&gt; StatusCode::StorageUnavailable,
+            EncodeSubstraitLogicalPlan { source, .. } =&gt; source.status_code(),
 
             ParseFileFormat { source, .. } | InferSchema { source, .. } =&gt; source.status_code(),
 
@@ -465,10 +525,14 @@
             ParseSql { source, .. } =&gt; source.status_code(),
             CreateRecordBatch { source, .. } =&gt; source.status_code(),
             QueryExecution { source, .. } | QueryPlan { source, .. } =&gt; source.status_code(),
-            DataFusion { .. } | MissingTimestampColumn { .. } =&gt; StatusCode::Internal,
+            DataFusion { .. } | MissingTimestampColumn { .. } | RoutePartition { .. } =&gt; {
+                StatusCode::Internal
+            }
             Sql { source, .. } =&gt; source.status_code(),
             PlanSql { .. } =&gt; StatusCode::PlanQuery,
             ConvertSqlType { source, .. } | ConvertSqlValue { source, .. } =&gt; source.status_code(),
+            RemoteRequest { source, .. } =&gt; source.status_code(),
+            UnexpectedOutputKind { .. } =&gt; StatusCode::Unexpected,
         }
     }
 

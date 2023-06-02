@@ -394,12 +394,12 @@
 
 <span class="kw">pub type </span>PhysicalPlanRef = Arc&lt;<span class="kw">dyn </span>PhysicalPlan&gt;;
 
-<span class="doccomment">/// `PhysicalPlan` represent nodes in the Physical Plan.
+<span class="doccomment">/// [`PhysicalPlan`] represent nodes in the Physical Plan.
 ///
-/// Each `PhysicalPlan` is Partition-aware and is responsible for
-/// creating the actual `async` [`SendableRecordBatchStream`]s
-/// of [`RecordBatch`] that incrementally compute the operator&#39;s
-/// output from its input partition.
+/// Each [`PhysicalPlan`] is partition-aware and is responsible for
+/// creating the actual &quot;async&quot; [`SendableRecordBatchStream`]s
+/// of [`RecordBatch`](common_recordbatch::RecordBatch) that incrementally
+/// compute the operator&#39;s  output from its input partition.
 </span><span class="kw">pub trait </span>PhysicalPlan: Debug + Send + Sync {
     <span class="doccomment">/// Returns the physical plan as [`Any`](std::any::Any) so that it can be
     /// downcast to a specific implementation.

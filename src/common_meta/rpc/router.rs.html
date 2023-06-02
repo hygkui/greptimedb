@@ -679,6 +679,7 @@
 <a href="#679" id="679">679</a>
 <a href="#680" id="680">680</a>
 <a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -703,6 +704,7 @@
 };
 <span class="kw">use </span>serde::{Deserialize, Serialize, Serializer};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>table::metadata::RawTableInfo;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
@@ -994,7 +996,7 @@
 
 <span class="attr">#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
 </span><span class="kw">pub struct </span>Region {
-    <span class="kw">pub </span>id: u64,
+    <span class="kw">pub </span>id: RegionId,
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>partition: <span class="prelude-ty">Option</span>&lt;Partition&gt;,
     <span class="kw">pub </span>attrs: HashMap&lt;String, String&gt;,

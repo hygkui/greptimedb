@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DistExtensionPlanner"]};
+window.SIDEBAR_ITEMS = {"struct":["DistExtensionPlanner","TableNameExtractor"]};

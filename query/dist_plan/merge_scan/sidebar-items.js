@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["MergeScanLogicalPlan"]};
+window.SIDEBAR_ITEMS = {"struct":["MergeScanExec","MergeScanLogicalPlan"]};
