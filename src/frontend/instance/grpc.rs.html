@@ -125,7 +125,7 @@
         interceptor.pre_execute(<span class="kw-2">&amp;</span>request, ctx.clone())<span class="question-mark">?</span>;
 
         <span class="kw">let </span>output = <span class="kw">match </span>request {
-            Request::Insert(request) =&gt; <span class="self">self</span>.handle_insert(request, ctx.clone()).<span class="kw">await</span><span class="question-mark">?</span>,
+            Request::Inserts(requests) =&gt; <span class="self">self</span>.handle_inserts(requests, ctx.clone()).<span class="kw">await</span><span class="question-mark">?</span>,
             Request::Query(query_request) =&gt; {
                 <span class="kw">let </span>query = query_request.query.context(IncompleteGrpcResultSnafu {
                     err_msg: <span class="string">&quot;Missing field &#39;QueryRequest.query&#39;&quot;</span>,

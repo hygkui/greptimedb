@@ -154,6 +154,9 @@
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -182,6 +185,9 @@
 
 <span class="kw">mod </span>client;
 <span class="kw">mod </span>manager;
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
+</span><span class="kw">pub mod </span>mock;
 
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>Kv(<span class="kw">pub </span>Vec&lt;u8&gt;, <span class="kw">pub </span>Vec&lt;u8&gt;);

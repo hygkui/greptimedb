@@ -79,6 +79,9 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -97,7 +100,7 @@
 <span class="kw">use </span>std::sync::{Arc, Mutex};
 <span class="kw">use </span>std::time::Duration;
 
-<span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
+<span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
@@ -112,8 +115,11 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>DatanodeClients {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="comment">// TODO(LFC): Make this channel config configurable.
+        </span><span class="kw">let </span>config = ChannelConfig::new().timeout(Duration::from_secs(<span class="number">8</span>));
+
         <span class="self">Self </span>{
-            channel_manager: ChannelManager::new(),
+            channel_manager: ChannelManager::with_config(config),
             clients: CacheBuilder::new(<span class="number">1024</span>)
                 .time_to_live(Duration::from_secs(<span class="number">30 </span>* <span class="number">60</span>))
                 .time_to_idle(Duration::from_secs(<span class="number">5 </span>* <span class="number">60</span>))

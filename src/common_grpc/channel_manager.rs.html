@@ -612,6 +612,7 @@
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -642,6 +643,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{CreateChannelSnafu, InvalidConfigFilePathSnafu, InvalidTlsConfigSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="kw">const </span>RECYCLE_CHANNEL_INTERVAL_SECS: u64 = <span class="number">60</span>;
+<span class="kw">const </span>DEFAULT_REQUEST_TIMEOUT_SECS: u64 = <span class="number">2</span>;
 
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>ChannelManager {
@@ -850,7 +852,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>ChannelConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            timeout: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">2</span>)),
+            timeout: <span class="prelude-val">Some</span>(Duration::from_secs(DEFAULT_REQUEST_TIMEOUT_SECS)),
             connect_timeout: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">4</span>)),
             concurrency_limit: <span class="prelude-val">None</span>,
             rate_limit: <span class="prelude-val">None</span>,
@@ -1111,7 +1113,7 @@
         <span class="kw">let </span>default_cfg = ChannelConfig::new();
         <span class="macro">assert_eq!</span>(
             ChannelConfig {
-                timeout: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">2</span>)),
+                timeout: <span class="prelude-val">Some</span>(Duration::from_secs(DEFAULT_REQUEST_TIMEOUT_SECS)),
                 connect_timeout: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">4</span>)),
                 concurrency_limit: <span class="prelude-val">None</span>,
                 rate_limit: <span class="prelude-val">None</span>,

@@ -592,6 +592,21 @@
 <a href="#592" id="592">592</a>
 <a href="#593" id="593">593</a>
 <a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -822,6 +837,12 @@
     </span>StartServer {
         <span class="attr">#[snafu(backtrace)]
         </span>source: servers::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait for GRPC serving, source: {}&quot;</span>, source))]
+    </span>WaitForGrpcServing {
+        source: servers::error::Error,
+        location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}, source: {}&quot;</span>, addr, source))]
@@ -1061,6 +1082,12 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing WAL dir config&quot;</span>))]
     </span>MissingWalDirConfig { location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task, source: {}&quot;</span>, source))]
+    </span>JoinTask {
+        source: common_runtime::JoinError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1131,16 +1158,19 @@
             | GetTable { source, .. } =&gt; source.status_code(),
 
             <span class="comment">// TODO(yingwen): Further categorize http error.
-            </span>StartServer { .. }
-            | ParseAddr { .. }
+            </span>ParseAddr { .. }
             | CreateDir { .. }
             | RemoveDir { .. }
             | Catalog { .. }
             | MissingRequiredField { .. }
             | IncorrectInternalState { .. }
-            | ShutdownServer { .. }
             | ShutdownInstance { .. }
-            | CloseTableEngine { .. } =&gt; StatusCode::Internal,
+            | CloseTableEngine { .. }
+            | JoinTask { .. } =&gt; StatusCode::Internal,
+
+            StartServer { source }
+            | ShutdownServer { source }
+            | WaitForGrpcServing { source, .. } =&gt; source.status_code(),
 
             InitBackend { .. } =&gt; StatusCode::StorageUnavailable,
 

@@ -200,6 +200,11 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -235,6 +240,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClientBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::election::etcd::EtcdElection;
 <span class="kw">use </span><span class="kw">crate</span>::lock::etcd::EtcdLock;
+<span class="kw">use </span><span class="kw">crate</span>::lock::memory::MemLock;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{MetaSrv, MetaSrvOptions, SelectorRef};
 <span class="kw">use </span><span class="kw">crate</span>::selector::lease_based::LeaseBasedSelector;
@@ -354,7 +360,11 @@
 
 <span class="kw">pub async fn </span>build_meta_srv(opts: <span class="kw-2">&amp;</span>MetaSrvOptions) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrv&gt; {
     <span class="kw">let </span>(kv_store, election, lock) = <span class="kw">if </span>opts.use_memory_store {
-        (Arc::new(MemStore::new()) <span class="kw">as _</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+        (
+            Arc::new(MemStore::new()) <span class="kw">as _</span>,
+            <span class="prelude-val">None</span>,
+            <span class="prelude-val">Some</span>(Arc::new(MemLock::default()) <span class="kw">as _</span>),
+        )
     } <span class="kw">else </span>{
         <span class="kw">let </span>etcd_endpoints = [<span class="kw-2">&amp;</span>opts.store_addr];
         <span class="kw">let </span>etcd_client = Client::connect(etcd_endpoints, <span class="prelude-val">None</span>)

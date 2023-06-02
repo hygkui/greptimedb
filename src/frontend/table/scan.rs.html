@@ -111,10 +111,6 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -132,7 +128,7 @@
 </span><span class="kw">use </span>std::fmt::Formatter;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>api::v1::{DeleteRequest, InsertRequest};
+<span class="kw">use </span>api::v1::DeleteRequest;
 <span class="kw">use </span>client::Database;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::prelude::Expr;
@@ -163,10 +159,6 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(table: TableRef, db: Database) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ table, db }
     }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>grpc_insert(<span class="kw-2">&amp;</span><span class="self">self</span>, request: InsertRequest) -&gt; client::Result&lt;u32&gt; {
-        <span class="self">self</span>.db.insert(request).<span class="kw">await
-    </span>}
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>grpc_delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest) -&gt; client::Result&lt;u32&gt; {
         <span class="self">self</span>.db.delete(request).<span class="kw">await

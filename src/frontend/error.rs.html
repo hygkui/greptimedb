@@ -650,6 +650,18 @@
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
 <a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -671,7 +683,7 @@
 <span class="kw">use </span>datatypes::arrow::error::ArrowError;
 <span class="kw">use </span>datatypes::value::Value;
 <span class="kw">use </span>snafu::Location;
-<span class="kw">use </span>store_api::storage::RegionId;
+<span class="kw">use </span>store_api::storage::RegionNumber;
 
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
@@ -748,6 +760,9 @@
         </span>source: api::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert vector to GRPC column, reason: {}&quot;</span>, reason))]
+    </span>VectorToGrpcColumn { reason: String, location: Location },
+
     <span class="attr">#[snafu(display(
         <span class="string">&quot;Failed to convert column default constraint, column: {}, source: {}&quot;</span>,
         column_name,
@@ -767,7 +782,7 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find Datanode by region: {:?}&quot;</span>, region))]
     </span>FindDatanode {
-        region: RegionId,
+        region: RegionNumber,
         location: Location,
     },
 
@@ -842,6 +857,12 @@
         table_name: String,
         <span class="attr">#[snafu(backtrace)]
         </span>source: partition::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to split insert request, source: {}&quot;</span>, source))]
+    </span>SplitInsert {
+        source: partition::error::Error,
+        location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create table info, source: {}&quot;</span>, source))]
@@ -1234,7 +1255,8 @@
             | Error::CreateTableRoute { .. }
             | Error::FindRegionRoute { .. }
             | Error::BuildDfLogicalPlan { .. }
-            | Error::BuildTableMeta { .. } =&gt; StatusCode::Internal,
+            | Error::BuildTableMeta { .. }
+            | Error::VectorToGrpcColumn { .. } =&gt; StatusCode::Internal,
 
             Error::IncompleteGrpcResult { .. }
             | Error::ContextValueNotFound { .. }
@@ -1275,7 +1297,9 @@
             Error::External { source } =&gt; source.status_code(),
             Error::DeserializePartition { source, .. }
             | Error::FindTablePartitionRule { source, .. }
-            | Error::FindTableRoute { source, .. } =&gt; source.status_code(),
+            | Error::FindTableRoute { source, .. }
+            | Error::SplitInsert { source, .. } =&gt; source.status_code(),
+
             Error::UnrecognizedTableOption { .. } =&gt; StatusCode::InvalidArguments,
 
             Error::StartScriptManager { source } =&gt; source.status_code(),

@@ -846,8 +846,6 @@
 <a href="#846" id="846">846</a>
 <a href="#847" id="847">847</a>
 <a href="#848" id="848">848</a>
-<a href="#849" id="849">849</a>
-<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -878,7 +876,7 @@
 <span class="kw">use </span>api::v1::ddl_request::Expr <span class="kw">as </span>DdlExpr;
 <span class="kw">use </span>api::v1::greptime_request::Request;
 <span class="kw">use </span>api::v1::meta::Role;
-<span class="kw">use </span>api::v1::{AddColumns, AlterExpr, Column, DdlRequest, InsertRequest};
+<span class="kw">use </span>api::v1::{AddColumns, AlterExpr, Column, DdlRequest, InsertRequest, InsertRequests};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::remote::CachedMetaKvBackend;
 <span class="kw">use </span>catalog::CatalogManagerRef;
@@ -897,6 +895,7 @@
 <span class="kw">use </span>datanode::instance::InstanceRef <span class="kw">as </span>DnInstanceRef;
 <span class="kw">use </span>datatypes::schema::Schema;
 <span class="kw">use </span>distributed::DistInstance;
+<span class="kw">use </span>futures::future;
 <span class="kw">use </span>meta_client::client::{MetaClient, MetaClientBuilder};
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>partition::manager::PartitionRuleManager;
@@ -1131,24 +1130,21 @@
     <span class="doccomment">/// Handle batch inserts
     </span><span class="kw">pub async fn </span>handle_inserts(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        requests: Vec&lt;InsertRequest&gt;,
+        requests: InsertRequests,
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>success = <span class="number">0</span>;
-        <span class="kw">for </span>request <span class="kw">in </span>requests {
-            <span class="kw">match </span><span class="self">self</span>.handle_insert(request, ctx.clone()).<span class="kw">await</span><span class="question-mark">? </span>{
-                Output::AffectedRows(rows) =&gt; success += rows,
-                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Insert should not yield output other than AffectedRows&quot;</span>),
-            }
-        }
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(success))
-    }
+        <span class="comment">// TODO(LFC): Optimize concurrent table creation and table alteration.
+        // Currently table creation is guarded by a distributed lock in Metasrv. However, table
+        // alteration is not. We should all switch to procedures in Metasrv.
+        </span><span class="kw">let _ </span>= future::join_all(
+            requests
+                .inserts
+                .iter()
+                .map(|x| <span class="self">self</span>.create_or_alter_table_on_demand(ctx.clone(), x)),
+        )
+        .<span class="kw">await</span>;
 
-    <span class="kw">async fn </span>handle_insert(<span class="kw-2">&amp;</span><span class="self">self</span>, request: InsertRequest, ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="self">self</span>.create_or_alter_table_on_demand(ctx.clone(), <span class="kw-2">&amp;</span>request)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">let </span>query = Request::Insert(request);
+        <span class="kw">let </span>query = Request::Inserts(requests);
         GrpcQueryHandler::do_query(<span class="kw-2">&amp;*</span><span class="self">self</span>.grpc_query_handler, query, ctx).<span class="kw">await
     </span>}
 

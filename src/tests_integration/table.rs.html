@@ -351,6 +351,7 @@
 <a href="#351" id="351">351</a>
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -371,7 +372,9 @@
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>api::v1::column::SemanticType;
-    <span class="kw">use </span>api::v1::{column, Column, ColumnDataType, InsertRequest <span class="kw">as </span>GrpcInsertRequest};
+    <span class="kw">use </span>api::v1::{
+        column, Column, ColumnDataType, InsertRequest <span class="kw">as </span>GrpcInsertRequest, InsertRequests,
+    };
     <span class="kw">use </span>common_meta::table_name::TableName;
     <span class="kw">use </span>common_query::logical_plan::Expr;
     <span class="kw">use </span>common_query::physical_plan::DfPhysicalPlanAdapter;
@@ -399,7 +402,6 @@
 
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_dist_table_scan() {
-        common_telemetry::init_default_ut_logging();
         <span class="kw">let </span>table = Arc::new(new_dist_table(<span class="string">&quot;test_dist_table_scan&quot;</span>).<span class="kw">await</span>);
         <span class="comment">// should scan all regions
         // select a, row_id from numbers
@@ -573,7 +575,6 @@
             .downcast_ref::&lt;FrontendCatalogManager&gt;()
             .unwrap();
         <span class="kw">let </span>partition_manager = catalog_manager.partition_manager();
-        <span class="kw">let </span>datanode_clients = catalog_manager.datanode_clients();
 
         <span class="kw">let </span>table_name = TableName::new(<span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="string">&quot;dist_numbers&quot;</span>);
 
@@ -648,9 +649,7 @@
         DistTable::new(
             table_name,
             Arc::new(table_info),
-            partition_manager,
-            datanode_clients,
-            catalog_manager.backend(),
+            Arc::new(catalog_manager.clone()),
         )
     }
 
@@ -698,8 +697,11 @@
             row_count,
             region_number,
         };
+        <span class="kw">let </span>requests = InsertRequests {
+            inserts: <span class="macro">vec!</span>[request],
+        };
         dn_instance
-            .handle_insert(request, QueryContext::arc())
+            .handle_inserts(requests, <span class="kw-2">&amp;</span>QueryContext::arc())
             .<span class="kw">await
             </span>.unwrap();
     }

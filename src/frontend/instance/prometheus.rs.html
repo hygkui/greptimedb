@@ -153,6 +153,10 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -176,6 +180,7 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::RecordBatches;
 <span class="kw">use </span>common_telemetry::logging;
+<span class="kw">use </span>metrics::counter;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>servers::error::{<span class="self">self</span>, <span class="prelude-ty">Result </span><span class="kw">as </span>ServerResult};
 <span class="kw">use </span>servers::prometheus::{<span class="self">self</span>, Metrics};
@@ -185,6 +190,7 @@
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::instance::Instance;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::PROMETHEUS_REMOTE_WRITE_SAMPLES;
 
 <span class="kw">const </span>SAMPLES_RESPONSE_TYPE: i32 = ResponseType::Samples <span class="kw">as </span>i32;
 
@@ -261,11 +267,13 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>PrometheusProtocolHandler <span class="kw">for </span>Instance {
     <span class="kw">async fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>, request: WriteRequest, ctx: QueryContextRef) -&gt; ServerResult&lt;()&gt; {
-        <span class="kw">let </span>requests = prometheus::to_grpc_insert_requests(request.clone())<span class="question-mark">?</span>;
+        <span class="kw">let </span>(requests, samples) = prometheus::to_grpc_insert_requests(request)<span class="question-mark">?</span>;
         <span class="self">self</span>.handle_inserts(requests, ctx)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(error::ExecuteGrpcQuerySnafu)<span class="question-mark">?</span>;
+
+        <span class="macro">counter!</span>(PROMETHEUS_REMOTE_WRITE_SAMPLES, samples <span class="kw">as </span>u64);
         <span class="prelude-val">Ok</span>(())
     }
 

@@ -443,8 +443,6 @@
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
 <a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -726,9 +724,7 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.backend.get(key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>.map(|<span class="kw">_</span>| {
             Arc::new(FrontendCatalogProvider {
                 catalog_name: catalog.to_string(),
-                backend: <span class="self">self</span>.backend.clone(),
-                partition_manager: <span class="self">self</span>.partition_manager.clone(),
-                datanode_clients: <span class="self">self</span>.datanode_clients.clone(),
+                catalog_manager: Arc::new(<span class="self">self</span>.clone()),
             }) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;
         }))
     }
@@ -767,9 +763,7 @@
 
 <span class="kw">pub struct </span>FrontendCatalogProvider {
     catalog_name: String,
-    backend: KvBackendRef,
-    partition_manager: PartitionRuleManagerRef,
-    datanode_clients: Arc&lt;DatanodeClients&gt;,
+    catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
 }
 
 <span class="attr">#[async_trait::async_trait]
@@ -780,7 +774,8 @@
 
     <span class="kw">async fn </span>schema_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; catalog::error::Result&lt;Vec&lt;String&gt;&gt; {
         <span class="kw">let </span>key = build_schema_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name);
-        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.backend.range(key.as_bytes());
+        <span class="kw">let </span>backend = <span class="self">self</span>.catalog_manager.backend();
+        <span class="kw">let </span><span class="kw-2">mut </span>iter = backend.range(key.as_bytes());
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashSet::new();
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = iter.next().<span class="kw">await </span>{
             <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
@@ -808,15 +803,17 @@
         }
         .to_string();
 
-        <span class="kw">let </span>val = <span class="self">self</span>.backend.get(schema_key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>val = <span class="self">self
+            </span>.catalog_manager
+            .backend()
+            .get(schema_key.as_bytes())
+            .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>provider = val.map(|<span class="kw">_</span>| {
             Arc::new(FrontendSchemaProvider {
                 catalog_name: catalog.clone(),
                 schema_name: name.to_string(),
-                backend: <span class="self">self</span>.backend.clone(),
-                partition_manager: <span class="self">self</span>.partition_manager.clone(),
-                datanode_clients: <span class="self">self</span>.datanode_clients.clone(),
+                catalog_manager: <span class="self">self</span>.catalog_manager.clone(),
             }) <span class="kw">as </span>Arc&lt;<span class="kw">dyn </span>SchemaProvider&gt;
         });
 
@@ -827,9 +824,7 @@
 <span class="kw">pub struct </span>FrontendSchemaProvider {
     catalog_name: String,
     schema_name: String,
-    backend: KvBackendRef,
-    partition_manager: PartitionRuleManagerRef,
-    datanode_clients: Arc&lt;DatanodeClients&gt;,
+    catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
 }
 
 <span class="attr">#[async_trait]
@@ -844,7 +839,8 @@
             tables.push(<span class="string">&quot;numbers&quot;</span>.to_string());
         }
         <span class="kw">let </span>key = build_table_global_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name, <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name);
-        <span class="kw">let </span>iter = <span class="self">self</span>.backend.range(key.as_bytes());
+        <span class="kw">let </span>backend = <span class="self">self</span>.catalog_manager.backend();
+        <span class="kw">let </span>iter = backend.range(key.as_bytes());
         <span class="kw">let </span>result = iter
             .map(|r| {
                 <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
@@ -871,7 +867,9 @@
             schema_name: <span class="self">self</span>.schema_name.clone(),
             table_name: name.to_string(),
         };
-        <span class="kw">let </span><span class="prelude-val">Some</span>(kv) = <span class="self">self</span>.backend.get(table_global_key.to_string().as_bytes()).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) };
+        <span class="kw">let </span><span class="prelude-val">Some</span>(kv) = <span class="self">self</span>.catalog_manager.backend().get(table_global_key.to_string().as_bytes()).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        };
         <span class="kw">let </span>v = TableGlobalValue::from_bytes(kv.<span class="number">1</span>).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>table_info = Arc::new(
             v.table_info
@@ -881,9 +879,7 @@
         <span class="kw">let </span>table = Arc::new(DistTable::new(
             TableName::new(<span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name, <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name, name),
             table_info,
-            <span class="self">self</span>.partition_manager.clone(),
-            <span class="self">self</span>.datanode_clients.clone(),
-            <span class="self">self</span>.backend.clone(),
+            <span class="self">self</span>.catalog_manager.clone(),
         ));
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(table))
     }

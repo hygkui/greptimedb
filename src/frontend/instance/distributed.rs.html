@@ -940,7 +940,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::collections::HashMap;
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>inserter;
+
+<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
@@ -948,7 +950,7 @@
 <span class="kw">use </span>api::v1::greptime_request::Request;
 <span class="kw">use </span>api::v1::{
     column_def, AlterExpr, CreateDatabaseExpr, CreateTableExpr, DeleteRequest, DropTableExpr,
-    FlushTableExpr, InsertRequest, TableId,
+    FlushTableExpr, InsertRequests, TableId,
 };
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::helper::{SchemaKey, SchemaValue};
@@ -966,7 +968,7 @@
 <span class="kw">use </span>common_meta::rpc::store::CompareAndPutRequest;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::debug;
+<span class="kw">use </span>common_telemetry::{debug, info, warn};
 <span class="kw">use </span>datanode::instance::sql::table_idents_to_full_name;
 <span class="kw">use </span>datanode::sql::SqlHandler;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
@@ -996,9 +998,10 @@
     DeserializePartitionSnafu, InvokeDatanodeSnafu, ParseSqlSnafu, PrimaryKeyNotFoundSnafu,
     RequestDatanodeSnafu, RequestMetaSnafu, <span class="prelude-ty">Result</span>, SchemaExistsSnafu, StartMetaClientSnafu,
     TableAlreadyExistSnafu, TableNotFoundSnafu, TableSnafu, ToTableDeleteRequestSnafu,
-    ToTableInsertRequestSnafu, UnrecognizedTableOptionSnafu,
+    UnrecognizedTableOptionSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::expr_factory;
+<span class="kw">use </span><span class="kw">crate</span>::instance::distributed::inserter::DistInserter;
 <span class="kw">use </span><span class="kw">crate</span>::table::DistTable;
 
 <span class="kw">const </span>MAX_VALUE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;MAXVALUE&quot;</span>;
@@ -1023,6 +1026,17 @@
         }
     }
 
+    <span class="kw">async fn </span>find_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: <span class="kw-2">&amp;</span>TableName) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
+        <span class="self">self</span>.catalog_manager
+            .table(
+                <span class="kw-2">&amp;</span>table_name.catalog_name,
+                <span class="kw-2">&amp;</span>table_name.schema_name,
+                <span class="kw-2">&amp;</span>table_name.table_name,
+            )
+            .<span class="kw">await
+            </span>.context(CatalogSnafu)
+    }
+
     <span class="kw">pub async fn </span>create_table(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         create_table: <span class="kw-2">&amp;mut </span>CreateTableExpr,
@@ -1035,16 +1049,7 @@
             <span class="kw-2">&amp;</span>create_table.table_name,
         );
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self
-            </span>.catalog_manager
-            .table(
-                <span class="kw-2">&amp;</span>table_name.catalog_name,
-                <span class="kw-2">&amp;</span>table_name.schema_name,
-                <span class="kw-2">&amp;</span>table_name.table_name,
-            )
-            .<span class="kw">await
-            </span>.context(CatalogSnafu)<span class="question-mark">?
-        </span>{
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.find_table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span>{
             <span class="kw">return if </span>create_table.create_if_not_exists {
                 <span class="prelude-val">Ok</span>(table)
             } <span class="kw">else </span>{
@@ -1059,7 +1064,19 @@
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.create_table_in_meta(create_table, partitions, <span class="kw-2">&amp;</span>table_info)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await</span>;
+        <span class="kw">let </span>response = <span class="kw">match </span>response {
+            <span class="prelude-val">Ok</span>(response) =&gt; response,
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="kw">return if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.find_table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span>{
+                    <span class="macro">warn!</span>(<span class="string">&quot;Table &#39;{table_name}&#39; is created concurrently by other Frontend nodes!&quot;</span>);
+                    <span class="prelude-val">Ok</span>(table)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">Err</span>(e)
+                }
+            }
+        };
+
         <span class="kw">let </span>table_routes = response.table_routes;
         <span class="macro">ensure!</span>(
             table_routes.len() == <span class="number">1</span>,
@@ -1068,7 +1085,7 @@
             }
         );
         <span class="kw">let </span>table_route = table_routes.first().unwrap();
-        <span class="macro">debug!</span>(
+        <span class="macro">info!</span>(
             <span class="string">&quot;Creating distributed table {table_name} with table routes: {}&quot;</span>,
             serde_json::to_string_pretty(table_route)
                 .unwrap_or_else(|<span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{table_route:#?}&quot;</span>))
@@ -1090,9 +1107,7 @@
         <span class="kw">let </span>table = Arc::new(DistTable::new(
             table_name.clone(),
             table_info,
-            <span class="self">self</span>.catalog_manager.partition_manager(),
-            <span class="self">self</span>.catalog_manager.datanode_clients(),
-            <span class="self">self</span>.catalog_manager.backend(),
+            <span class="self">self</span>.catalog_manager.clone(),
         ));
 
         <span class="kw">let </span>request = RegisterTableRequest {
@@ -1497,37 +1512,22 @@
             </span>.context(RequestMetaSnafu)
     }
 
-    <span class="comment">// TODO(LFC): Refactor GRPC insertion and deletion implementation here,
-    // Take insertion as an example. GRPC insertion is converted to Table InsertRequest here,
-    // than split the Table InsertRequest in DistTable, than assemble each GRPC InsertRequest there.
-    // Rather inefficient, should operate on GRPC InsertRequest directly.
-    </span><span class="kw">async fn </span>handle_dist_insert(
+    <span class="kw">async fn </span>handle_dist_insert(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        request: InsertRequest,
+        requests: InsertRequests,
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>catalog = <span class="kw-2">&amp;</span>ctx.current_catalog();
-        <span class="kw">let </span>schema = <span class="kw-2">&amp;</span>ctx.current_schema();
-        <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>request.table_name;
-        <span class="kw">let </span>table_ref = TableReference::full(catalog, schema, table_name);
-
-        <span class="kw">let </span>table = <span class="self">self
-            </span>.catalog_manager
-            .table(catalog, schema, table_name)
-            .<span class="kw">await
-            </span>.context(CatalogSnafu)<span class="question-mark">?
-            </span>.with_context(|| TableNotFoundSnafu {
-                table_name: table_ref.to_string(),
-            })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>request = common_grpc_expr::insert::to_table_insert_request(catalog, schema, request)
-            .context(ToTableInsertRequestSnafu)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>affected_rows = table.insert(request).<span class="kw">await</span>.context(TableSnafu)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows))
+        <span class="kw">let </span>inserter = DistInserter::new(
+            ctx.current_catalog(),
+            ctx.current_schema(),
+            <span class="self">self</span>.catalog_manager.clone(),
+        );
+        <span class="kw">let </span>affected_rows = inserter.grpc_insert(requests).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows <span class="kw">as </span>usize))
     }
 
-    <span class="kw">async fn </span>handle_dist_delete(
+    <span class="comment">// TODO(LFC): Like insertions above, refactor GRPC deletion impl here.
+    </span><span class="kw">async fn </span>handle_dist_delete(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         request: DeleteRequest,
         ctx: QueryContextRef,
@@ -1578,7 +1578,7 @@
 
     <span class="kw">async fn </span>do_query(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request, ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">match </span>request {
-            Request::Insert(request) =&gt; <span class="self">self</span>.handle_dist_insert(request, ctx).<span class="kw">await</span>,
+            Request::Inserts(requests) =&gt; <span class="self">self</span>.handle_dist_insert(requests, ctx).<span class="kw">await</span>,
             Request::Delete(request) =&gt; <span class="self">self</span>.handle_dist_delete(request, ctx).<span class="kw">await</span>,
             Request::Query(<span class="kw">_</span>) =&gt; {
                 <span class="macro">unreachable!</span>(<span class="string">&quot;Query should have been handled directly in Frontend Instance!&quot;</span>)

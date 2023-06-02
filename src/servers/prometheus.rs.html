@@ -690,6 +690,15 @@
 <a href="#690" id="690">690</a>
 <a href="#691" id="691">691</a>
 <a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -713,7 +722,7 @@
 <span class="kw">use </span>api::prometheus::remote::label_matcher::Type <span class="kw">as </span>MatcherType;
 <span class="kw">use </span>api::prometheus::remote::{Label, Query, Sample, TimeSeries, WriteRequest};
 <span class="kw">use </span>api::v1::column::SemanticType;
-<span class="kw">use </span>api::v1::{column, Column, ColumnDataType, InsertRequest <span class="kw">as </span>GrpcInsertRequest};
+<span class="kw">use </span>api::v1::{column, Column, ColumnDataType, InsertRequest <span class="kw">as </span>GrpcInsertRequest, InsertRequests};
 <span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatches};
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, Value};
@@ -975,15 +984,23 @@
     <span class="prelude-val">Ok</span>(timeseries_map.into_values().collect())
 }
 
-<span class="kw">pub fn </span>to_grpc_insert_requests(<span class="kw-2">mut </span>request: WriteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;GrpcInsertRequest&gt;&gt; {
-    <span class="kw">let </span>timeseries = std::mem::take(<span class="kw-2">&amp;mut </span>request.timeseries);
-    timeseries.into_iter().map(to_grpc_insert_request).collect()
+<span class="kw">pub fn </span>to_grpc_insert_requests(request: WriteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;(InsertRequests, usize)&gt; {
+    <span class="kw">let </span>(inserts, samples_counts) = itertools::process_results(
+        request.timeseries.into_iter().map(to_grpc_insert_request),
+        |x| x.unzip::&lt;<span class="kw">_</span>, <span class="kw">_</span>, Vec&lt;<span class="kw">_</span>&gt;, Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+    )<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>((
+        InsertRequests { inserts },
+        samples_counts.into_iter().sum::&lt;usize&gt;(),
+    ))
 }
 
-<span class="kw">fn </span>to_grpc_insert_request(<span class="kw-2">mut </span>timeseries: TimeSeries) -&gt; <span class="prelude-ty">Result</span>&lt;GrpcInsertRequest&gt; {
+<span class="kw">fn </span>to_grpc_insert_request(timeseries: TimeSeries) -&gt; <span class="prelude-ty">Result</span>&lt;(GrpcInsertRequest, usize)&gt; {
+    <span class="kw">let </span>samples_count = timeseries.samples.len();
+
     <span class="comment">// TODO(dennis): save exemplars into a column
-    </span><span class="kw">let </span>labels = std::mem::take(<span class="kw-2">&amp;mut </span>timeseries.labels);
-    <span class="kw">let </span>samples = std::mem::take(<span class="kw-2">&amp;mut </span>timeseries.samples);
+    </span><span class="kw">let </span>labels = timeseries.labels;
+    <span class="kw">let </span>samples = timeseries.samples;
 
     <span class="kw">let </span>row_count = samples.len();
     <span class="kw">let </span><span class="kw-2">mut </span>columns = Vec::with_capacity(<span class="number">2 </span>+ labels.len());
@@ -1036,14 +1053,15 @@
         });
     }
 
-    <span class="prelude-val">Ok</span>(GrpcInsertRequest {
+    <span class="kw">let </span>request = GrpcInsertRequest {
         table_name: table_name.context(error::InvalidPromRemoteRequestSnafu {
             msg: <span class="string">&quot;missing &#39;__name__&#39; label in timeseries&quot;</span>,
         })<span class="question-mark">?</span>,
         region_number: <span class="number">0</span>,
         columns,
         row_count: row_count <span class="kw">as </span>u32,
-    })
+    };
+    <span class="prelude-val">Ok</span>((request, samples_count))
 }
 
 <span class="attr">#[inline]
@@ -1199,7 +1217,7 @@
             ..Default::default()
         };
 
-        <span class="kw">let </span>exprs = to_grpc_insert_requests(write_request).unwrap();
+        <span class="kw">let </span>exprs = to_grpc_insert_requests(write_request).unwrap().<span class="number">0</span>.inserts;
         <span class="macro">assert_eq!</span>(<span class="number">3</span>, exprs.len());
         <span class="macro">assert_eq!</span>(<span class="string">&quot;metric1&quot;</span>, exprs[<span class="number">0</span>].table_name);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;metric2&quot;</span>, exprs[<span class="number">1</span>].table_name);
