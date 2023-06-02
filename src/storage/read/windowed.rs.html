@@ -180,7 +180,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::read::{Batch, BatchReader};
-<span class="kw">use </span><span class="kw">crate</span>::schema::ProjectedSchemaRef;
+<span class="kw">use </span><span class="kw">crate</span>::schema::{ProjectedSchemaRef, StoreSchema};
 
 <span class="doccomment">/// [WindowedReader] provides a windowed record batch reader that scans all rows within a window
 /// at a time and sort these rows ordered in `[&lt;timestamp&gt;, &lt;PK&gt;]` order.
@@ -260,8 +260,8 @@
     arrays: Vec&lt;ArrayRef&gt;,
     order_options: <span class="kw-2">&amp;</span>[OrderOption],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ArrayRef&gt;&gt; {
-    <span class="kw">let </span>sort_columns = build_sorted_columns(order_options);
     <span class="kw">let </span>store_schema = schema.schema_to_read();
+    <span class="kw">let </span>sort_columns = build_sorted_columns(store_schema, order_options);
     <span class="comment">// Convert columns to rows to speed lexicographic sort
     // TODO(hl): maybe optimize to lexsort_to_index when only timestamp column is involved.
     </span><span class="kw">let </span><span class="kw-2">mut </span>row_converter = RowConverter::new(
@@ -308,10 +308,10 @@
 
 <span class="doccomment">/// Builds sorted columns from `order_options`.
 /// Returns a vector of columns indices to sort and sort orders (true means descending order).
-</span><span class="kw">fn </span>build_sorted_columns(order_options: <span class="kw-2">&amp;</span>[OrderOption]) -&gt; Vec&lt;(usize, bool)&gt; {
+</span><span class="kw">fn </span>build_sorted_columns(schema: <span class="kw-2">&amp;</span>StoreSchema, order_options: <span class="kw-2">&amp;</span>[OrderOption]) -&gt; Vec&lt;(usize, bool)&gt; {
     order_options
         .iter()
-        .map(|o| (o.index, o.options.descending))
+        .map(|o| (schema.column_index(<span class="kw-2">&amp;</span>o.name), o.options.descending))
         .collect()
 }
 </code></pre></div></section></main></body></html>

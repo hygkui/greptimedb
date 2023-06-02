@@ -154,6 +154,11 @@
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -186,10 +191,12 @@
 <span class="kw">use </span>datafusion::physical_plan::{ExecutionPlan, PhysicalPlanner};
 <span class="kw">use </span>datafusion_expr::LogicalPlan <span class="kw">as </span>DfLogicalPlan;
 <span class="kw">use </span>datafusion_optimizer::analyzer::Analyzer;
+<span class="kw">use </span>datafusion_optimizer::optimizer::Optimizer;
 <span class="kw">use </span>promql::extension_plan::PromExtensionPlanner;
 
 <span class="kw">use </span><span class="kw">crate</span>::dist_plan::{DistExtensionPlanner, DistPlannerAnalyzer};
-<span class="kw">use </span><span class="kw">crate</span>::optimizer::TypeConversionRule;
+<span class="kw">use </span><span class="kw">crate</span>::optimizer::order_hint::OrderHintRule;
+<span class="kw">use </span><span class="kw">crate</span>::optimizer::type_conversion::TypeConversionRule;
 <span class="kw">use </span><span class="kw">crate</span>::query_engine::options::QueryOptions;
 
 <span class="doccomment">/// Query engine global state
@@ -225,6 +232,8 @@
             analyzer.rules.insert(<span class="number">0</span>, Arc::new(DistPlannerAnalyzer));
         }
         analyzer.rules.insert(<span class="number">0</span>, Arc::new(TypeConversionRule));
+        <span class="kw">let </span><span class="kw-2">mut </span>optimizer = Optimizer::new();
+        optimizer.rules.push(Arc::new(OrderHintRule));
 
         <span class="kw">let </span>session_state = SessionState::with_config_rt_and_catalog_list(
             session_config,
@@ -232,6 +241,7 @@
             Arc::new(MemoryCatalogList::default()), <span class="comment">// pass a dummy catalog list
         </span>)
         .with_analyzer_rules(analyzer.rules)
+        .with_optimizer_rules(optimizer.rules)
         .with_query_planner(Arc::new(DfQueryPlanner::new()));
 
         <span class="kw">let </span>df_context = SessionContext::with_state(session_state);

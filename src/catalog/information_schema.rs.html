@@ -167,6 +167,7 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -332,6 +333,7 @@
         <span class="kw">let </span>stream = RecordBatchStreamAdaptor {
             schema: projected_schema,
             stream: Box::pin(stream),
+            output_ordering: <span class="prelude-val">None</span>,
         };
         <span class="prelude-val">Ok</span>(Box::pin(stream))
     }

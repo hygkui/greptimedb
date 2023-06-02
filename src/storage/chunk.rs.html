@@ -266,6 +266,22 @@
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -306,6 +322,7 @@
 </span><span class="kw">pub struct </span>ChunkReaderImpl {
     schema: ProjectedSchemaRef,
     batch_reader: BoxedBatchReader,
+    output_ordering: <span class="prelude-ty">Option</span>&lt;Vec&lt;OrderOption&gt;&gt;,
 }
 
 <span class="attr">#[async_trait]
@@ -330,13 +347,22 @@
         };
         <span class="self">self</span>.schema.batch_to_chunk(<span class="kw-2">&amp;</span>batch)
     }
+
+    <span class="kw">fn </span>output_ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;OrderOption&gt;&gt; {
+        <span class="self">self</span>.output_ordering.clone()
+    }
 }
 
 <span class="kw">impl </span>ChunkReaderImpl {
-    <span class="kw">pub fn </span>new(schema: ProjectedSchemaRef, batch_reader: BoxedBatchReader) -&gt; ChunkReaderImpl {
+    <span class="kw">pub fn </span>new(
+        schema: ProjectedSchemaRef,
+        batch_reader: BoxedBatchReader,
+        output_ordering: <span class="prelude-ty">Option</span>&lt;Vec&lt;OrderOption&gt;&gt;,
+    ) -&gt; ChunkReaderImpl {
         ChunkReaderImpl {
             schema,
             batch_reader,
+            output_ordering,
         }
     }
 
@@ -429,12 +455,16 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">fn </span>infer_time_windows(<span class="kw-2">&amp;</span><span class="self">self</span>, output_ordering: <span class="kw-2">&amp;</span>[OrderOption]) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;TimestampRange&gt;&gt; {
+    <span class="doccomment">/// Try to infer time window from output ordering. If the result
+    /// is `None` means the output ordering is not obeyed, otherwise
+    /// means the output ordering is obeyed and is same with request.
+    </span><span class="kw">fn </span>infer_time_windows(<span class="kw-2">&amp;</span><span class="self">self</span>, output_ordering: <span class="kw-2">&amp;</span>[OrderOption]) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;TimestampRange&gt;&gt; {
         <span class="kw">if </span>output_ordering.is_empty() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
-        <span class="kw">let </span>OrderOption { index, options } = <span class="kw-2">&amp;</span>output_ordering[<span class="number">0</span>];
-        <span class="kw">if </span><span class="kw-2">*</span>index != <span class="self">self</span>.schema.timestamp_index() {
+        <span class="kw">let </span>OrderOption { name, options } = <span class="kw-2">&amp;</span>output_ordering[<span class="number">0</span>];
+
+        <span class="kw">if </span>name != <span class="self">self</span>.schema.timestamp_column_name() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">let </span>memtable_stats = <span class="self">self</span>.memtables.iter().map(|m| m.stats()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -506,15 +536,17 @@
         );
         <span class="self">self</span>.iter_ctx.projected_schema = <span class="prelude-val">Some</span>(schema.clone());
 
+        <span class="kw">let </span><span class="kw-2">mut </span>output_ordering = <span class="prelude-val">None</span>;
         <span class="kw">let </span>reader = <span class="kw">if let </span><span class="prelude-val">Some</span>(ordering) = <span class="self">self</span>.output_ordering.take() &amp;&amp;
             <span class="kw">let </span><span class="prelude-val">Some</span>(windows) = <span class="self">self</span>.infer_time_windows(<span class="kw-2">&amp;</span>ordering) {
-            <span class="self">self</span>.build_windowed(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>time_range_predicate, windows, ordering)
-                .<span class="kw">await</span><span class="question-mark">?
+                output_ordering = <span class="prelude-val">Some</span>(ordering.clone());
+                <span class="self">self</span>.build_windowed(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>time_range_predicate, windows, ordering)
+                    .<span class="kw">await</span><span class="question-mark">?
         </span>} <span class="kw">else </span>{
             <span class="self">self</span>.build_reader(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>time_range_predicate).<span class="kw">await</span><span class="question-mark">?
         </span>};
 
-        <span class="prelude-val">Ok</span>(ChunkReaderImpl::new(schema, reader))
+        <span class="prelude-val">Ok</span>(ChunkReaderImpl::new(schema, reader, output_ordering))
     }
 
     <span class="doccomment">/// Build time range predicate from schema and filters.

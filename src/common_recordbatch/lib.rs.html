@@ -303,6 +303,11 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -348,9 +353,9 @@
 
 <span class="kw">pub type </span>SendableRecordBatchStream = Pin&lt;Box&lt;<span class="kw">dyn </span>RecordBatchStream + Send&gt;&gt;;
 
-<span class="attr">#[derive(Debug, Clone, Copy)]
+<span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>OrderOption {
-    <span class="kw">pub </span>index: usize,
+    <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>options: SortOptions,
 }
 
@@ -501,11 +506,16 @@
 </span><span class="kw">pub struct </span>RecordBatchStreamAdaptor {
     <span class="kw">pub </span>schema: SchemaRef,
     <span class="kw">pub </span>stream: Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;RecordBatch&gt;&gt; + Send&gt;&gt;,
+    <span class="kw">pub </span>output_ordering: <span class="prelude-ty">Option</span>&lt;Vec&lt;OrderOption&gt;&gt;,
 }
 
 <span class="kw">impl </span>RecordBatchStream <span class="kw">for </span>RecordBatchStreamAdaptor {
     <span class="kw">fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SchemaRef {
         <span class="self">self</span>.schema.clone()
+    }
+
+    <span class="kw">fn </span>output_ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[OrderOption]&gt; {
+        <span class="self">self</span>.output_ordering.as_deref()
     }
 }
 
