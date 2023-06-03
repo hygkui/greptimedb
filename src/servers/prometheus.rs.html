@@ -691,14 +691,6 @@
 <a href="#691" id="691">691</a>
 <a href="#692" id="692">692</a>
 <a href="#693" id="693">693</a>
-<a href="#694" id="694">694</a>
-<a href="#695" id="695">695</a>
-<a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
-<a href="#698" id="698">698</a>
-<a href="#699" id="699">699</a>
-<a href="#700" id="700">700</a>
-<a href="#701" id="701">701</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -716,13 +708,13 @@
 </span><span class="doccomment">//! prometheus protocol supportings
 //! handles prometheus remote_write, remote_read logic
 </span><span class="kw">use </span>std::cmp::Ordering;
-<span class="kw">use </span>std::collections::BTreeMap;
+<span class="kw">use </span>std::collections::{BTreeMap, HashMap};
 <span class="kw">use </span>std::hash::{Hash, Hasher};
 
 <span class="kw">use </span>api::prometheus::remote::label_matcher::Type <span class="kw">as </span>MatcherType;
 <span class="kw">use </span>api::prometheus::remote::{Label, Query, Sample, TimeSeries, WriteRequest};
-<span class="kw">use </span>api::v1::column::SemanticType;
-<span class="kw">use </span>api::v1::{column, Column, ColumnDataType, InsertRequest <span class="kw">as </span>GrpcInsertRequest, InsertRequests};
+<span class="kw">use </span>api::v1::{InsertRequest <span class="kw">as </span>GrpcInsertRequest, InsertRequests};
+<span class="kw">use </span>common_grpc::writer::{LinesWriter, Precision};
 <span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatches};
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, Value};
@@ -985,83 +977,68 @@
 }
 
 <span class="kw">pub fn </span>to_grpc_insert_requests(request: WriteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;(InsertRequests, usize)&gt; {
-    <span class="kw">let </span>(inserts, samples_counts) = itertools::process_results(
-        request.timeseries.into_iter().map(to_grpc_insert_request),
-        |x| x.unzip::&lt;<span class="kw">_</span>, <span class="kw">_</span>, Vec&lt;<span class="kw">_</span>&gt;, Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-    )<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>((
-        InsertRequests { inserts },
-        samples_counts.into_iter().sum::&lt;usize&gt;(),
-    ))
-}
+    <span class="kw">let </span><span class="kw-2">mut </span>writers: HashMap&lt;String, LinesWriter&gt; = HashMap::new();
+    <span class="kw">for </span>timeseries <span class="kw">in </span><span class="kw-2">&amp;</span>request.timeseries {
+        <span class="kw">let </span>table_name = timeseries
+            .labels
+            .iter()
+            .find(|label| {
+                <span class="comment">// The metric name is a special label
+                </span>label.name == METRIC_NAME_LABEL
+            })
+            .context(error::InvalidPromRemoteRequestSnafu {
+                msg: <span class="string">&quot;missing &#39;__name__&#39; label in timeseries&quot;</span>,
+            })<span class="question-mark">?
+            </span>.value
+            .clone();
 
-<span class="kw">fn </span>to_grpc_insert_request(timeseries: TimeSeries) -&gt; <span class="prelude-ty">Result</span>&lt;(GrpcInsertRequest, usize)&gt; {
-    <span class="kw">let </span>samples_count = timeseries.samples.len();
+        <span class="kw">let </span>writer = writers
+            .entry(table_name)
+            .or_insert_with(|| LinesWriter::with_lines(<span class="number">16</span>));
+        <span class="comment">// For each sample
+        </span><span class="kw">for </span>sample <span class="kw">in </span><span class="kw-2">&amp;</span>timeseries.samples {
+            <span class="comment">// Insert labels first.
+            </span><span class="kw">for </span>label <span class="kw">in </span><span class="kw-2">&amp;</span>timeseries.labels {
+                <span class="comment">// The metric name is a special label
+                </span><span class="kw">if </span>label.name == METRIC_NAME_LABEL {
+                    <span class="kw">continue</span>;
+                }
 
-    <span class="comment">// TODO(dennis): save exemplars into a column
-    </span><span class="kw">let </span>labels = timeseries.labels;
-    <span class="kw">let </span>samples = timeseries.samples;
+                writer
+                    .write_tag(<span class="kw-2">&amp;</span>label.name, <span class="kw-2">&amp;</span>label.value)
+                    .context(error::PromSeriesWriteSnafu)<span class="question-mark">?</span>;
+            }
+            <span class="comment">// Insert sample timestamp.
+            </span>writer
+                .write_ts(
+                    TIMESTAMP_COLUMN_NAME,
+                    (sample.timestamp, Precision::Millisecond),
+                )
+                .context(error::PromSeriesWriteSnafu)<span class="question-mark">?</span>;
+            <span class="comment">// Insert sample value.
+            </span>writer
+                .write_f64(FIELD_COLUMN_NAME, sample.value)
+                .context(error::PromSeriesWriteSnafu)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>row_count = samples.len();
-    <span class="kw">let </span><span class="kw-2">mut </span>columns = Vec::with_capacity(<span class="number">2 </span>+ labels.len());
-
-    <span class="kw">let </span>ts_column = Column {
-        column_name: TIMESTAMP_COLUMN_NAME.to_string(),
-        values: <span class="prelude-val">Some</span>(column::Values {
-            ts_millisecond_values: samples.iter().map(|x| x.timestamp).collect(),
-            ..Default::default()
-        }),
-        semantic_type: SemanticType::Timestamp <span class="kw">as </span>i32,
-        datatype: ColumnDataType::TimestampMillisecond <span class="kw">as </span>i32,
-        ..Default::default()
-    };
-    columns.push(ts_column);
-
-    <span class="kw">let </span>field_column = Column {
-        column_name: FIELD_COLUMN_NAME.to_string(),
-        values: <span class="prelude-val">Some</span>(column::Values {
-            f64_values: samples.iter().map(|x| x.value).collect(),
-            ..Default::default()
-        }),
-        semantic_type: SemanticType::Field <span class="kw">as </span>i32,
-        datatype: ColumnDataType::Float64 <span class="kw">as </span>i32,
-        ..Default::default()
-    };
-    columns.push(field_column);
-
-    <span class="kw">let </span><span class="kw-2">mut </span>table_name = <span class="prelude-val">None</span>;
-
-    <span class="kw">for </span>label <span class="kw">in </span>labels {
-        <span class="kw">let </span>tagk = label.name;
-        <span class="kw">let </span>tagv = label.value;
-
-        <span class="comment">// The metric name is a special label
-        </span><span class="kw">if </span>tagk == METRIC_NAME_LABEL {
-            table_name = <span class="prelude-val">Some</span>(tagv);
-            <span class="kw">continue</span>;
+            writer.commit();
         }
-
-        columns.push(Column {
-            column_name: tagk.to_string(),
-            values: <span class="prelude-val">Some</span>(column::Values {
-                string_values: std::iter::repeat(tagv).take(row_count).collect(),
-                ..Default::default()
-            }),
-            semantic_type: SemanticType::Tag <span class="kw">as </span>i32,
-            datatype: ColumnDataType::String <span class="kw">as </span>i32,
-            ..Default::default()
-        });
     }
 
-    <span class="kw">let </span>request = GrpcInsertRequest {
-        table_name: table_name.context(error::InvalidPromRemoteRequestSnafu {
-            msg: <span class="string">&quot;missing &#39;__name__&#39; label in timeseries&quot;</span>,
-        })<span class="question-mark">?</span>,
-        region_number: <span class="number">0</span>,
-        columns,
-        row_count: row_count <span class="kw">as </span>u32,
-    };
-    <span class="prelude-val">Ok</span>((request, samples_count))
+    <span class="kw">let </span><span class="kw-2">mut </span>sample_counts = <span class="number">0</span>;
+    <span class="kw">let </span>inserts = writers
+        .into_iter()
+        .map(|(table_name, writer)| {
+            <span class="kw">let </span>(columns, row_count) = writer.finish();
+            sample_counts += row_count <span class="kw">as </span>usize;
+            GrpcInsertRequest {
+                table_name,
+                region_number: <span class="number">0</span>,
+                columns,
+                row_count,
+            }
+        })
+        .collect();
+    <span class="prelude-val">Ok</span>((InsertRequests { inserts }, sample_counts))
 }
 
 <span class="attr">#[inline]
@@ -1217,13 +1194,16 @@
             ..Default::default()
         };
 
-        <span class="kw">let </span>exprs = to_grpc_insert_requests(write_request).unwrap().<span class="number">0</span>.inserts;
+        <span class="kw">let </span><span class="kw-2">mut </span>exprs = to_grpc_insert_requests(write_request).unwrap().<span class="number">0</span>.inserts;
+        exprs.sort_unstable_by(|l, r| l.table_name.cmp(<span class="kw-2">&amp;</span>r.table_name));
         <span class="macro">assert_eq!</span>(<span class="number">3</span>, exprs.len());
         <span class="macro">assert_eq!</span>(<span class="string">&quot;metric1&quot;</span>, exprs[<span class="number">0</span>].table_name);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;metric2&quot;</span>, exprs[<span class="number">1</span>].table_name);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;metric3&quot;</span>, exprs[<span class="number">2</span>].table_name);
 
-        <span class="kw">let </span>expr = exprs.get(<span class="number">0</span>).unwrap();
+        <span class="kw">let </span>expr = exprs.get_mut(<span class="number">0</span>).unwrap();
+        expr.columns
+            .sort_unstable_by(|l, r| l.column_name.cmp(<span class="kw-2">&amp;</span>r.column_name));
 
         <span class="kw">let </span>columns = <span class="kw-2">&amp;</span>expr.columns;
         <span class="kw">let </span>row_count = expr.row_count;
@@ -1249,7 +1229,9 @@
             <span class="macro">vec!</span>[<span class="string">&quot;spark&quot;</span>, <span class="string">&quot;spark&quot;</span>]
         );
 
-        <span class="kw">let </span>expr = exprs.get(<span class="number">1</span>).unwrap();
+        <span class="kw">let </span>expr = exprs.get_mut(<span class="number">1</span>).unwrap();
+        expr.columns
+            .sort_unstable_by(|l, r| l.column_name.cmp(<span class="kw-2">&amp;</span>r.column_name));
 
         <span class="kw">let </span>columns = <span class="kw-2">&amp;</span>expr.columns;
         <span class="kw">let </span>row_count = expr.row_count;
@@ -1269,18 +1251,20 @@
             <span class="macro">vec!</span>[<span class="number">3.0</span>, <span class="number">4.0</span>]
         );
 
-        <span class="macro">assert_eq!</span>(columns[<span class="number">2</span>].column_name, <span class="string">&quot;instance&quot;</span>);
+        <span class="macro">assert_eq!</span>(columns[<span class="number">2</span>].column_name, <span class="string">&quot;idc&quot;</span>);
         <span class="macro">assert_eq!</span>(
             columns[<span class="number">2</span>].values.as_ref().unwrap().string_values,
-            <span class="macro">vec!</span>[<span class="string">&quot;test_host1&quot;</span>, <span class="string">&quot;test_host1&quot;</span>]
-        );
-        <span class="macro">assert_eq!</span>(columns[<span class="number">3</span>].column_name, <span class="string">&quot;idc&quot;</span>);
-        <span class="macro">assert_eq!</span>(
-            columns[<span class="number">3</span>].values.as_ref().unwrap().string_values,
             <span class="macro">vec!</span>[<span class="string">&quot;z001&quot;</span>, <span class="string">&quot;z001&quot;</span>]
         );
+        <span class="macro">assert_eq!</span>(columns[<span class="number">3</span>].column_name, <span class="string">&quot;instance&quot;</span>);
+        <span class="macro">assert_eq!</span>(
+            columns[<span class="number">3</span>].values.as_ref().unwrap().string_values,
+            <span class="macro">vec!</span>[<span class="string">&quot;test_host1&quot;</span>, <span class="string">&quot;test_host1&quot;</span>]
+        );
 
-        <span class="kw">let </span>expr = exprs.get(<span class="number">2</span>).unwrap();
+        <span class="kw">let </span>expr = exprs.get_mut(<span class="number">2</span>).unwrap();
+        expr.columns
+            .sort_unstable_by(|l, r| l.column_name.cmp(<span class="kw-2">&amp;</span>r.column_name));
 
         <span class="kw">let </span>columns = <span class="kw-2">&amp;</span>expr.columns;
         <span class="kw">let </span>row_count = expr.row_count;
@@ -1288,27 +1272,27 @@
         <span class="macro">assert_eq!</span>(<span class="number">3</span>, row_count);
         <span class="macro">assert_eq!</span>(columns.len(), <span class="number">4</span>);
 
-        <span class="macro">assert_eq!</span>(columns[<span class="number">0</span>].column_name, TIMESTAMP_COLUMN_NAME);
+        <span class="macro">assert_eq!</span>(columns[<span class="number">0</span>].column_name, <span class="string">&quot;app&quot;</span>);
         <span class="macro">assert_eq!</span>(
-            columns[<span class="number">0</span>].values.as_ref().unwrap().ts_millisecond_values,
+            columns[<span class="number">0</span>].values.as_ref().unwrap().string_values,
+            <span class="macro">vec!</span>[<span class="string">&quot;biz&quot;</span>, <span class="string">&quot;biz&quot;</span>, <span class="string">&quot;biz&quot;</span>]
+        );
+        <span class="macro">assert_eq!</span>(columns[<span class="number">1</span>].column_name, TIMESTAMP_COLUMN_NAME);
+        <span class="macro">assert_eq!</span>(
+            columns[<span class="number">1</span>].values.as_ref().unwrap().ts_millisecond_values,
             <span class="macro">vec!</span>[<span class="number">1000</span>, <span class="number">2000</span>, <span class="number">3000</span>]
         );
 
-        <span class="macro">assert_eq!</span>(columns[<span class="number">1</span>].column_name, FIELD_COLUMN_NAME);
+        <span class="macro">assert_eq!</span>(columns[<span class="number">2</span>].column_name, FIELD_COLUMN_NAME);
         <span class="macro">assert_eq!</span>(
-            columns[<span class="number">1</span>].values.as_ref().unwrap().f64_values,
+            columns[<span class="number">2</span>].values.as_ref().unwrap().f64_values,
             <span class="macro">vec!</span>[<span class="number">5.0</span>, <span class="number">6.0</span>, <span class="number">7.0</span>]
         );
 
-        <span class="macro">assert_eq!</span>(columns[<span class="number">2</span>].column_name, <span class="string">&quot;idc&quot;</span>);
-        <span class="macro">assert_eq!</span>(
-            columns[<span class="number">2</span>].values.as_ref().unwrap().string_values,
-            <span class="macro">vec!</span>[<span class="string">&quot;z002&quot;</span>, <span class="string">&quot;z002&quot;</span>, <span class="string">&quot;z002&quot;</span>]
-        );
-        <span class="macro">assert_eq!</span>(columns[<span class="number">3</span>].column_name, <span class="string">&quot;app&quot;</span>);
+        <span class="macro">assert_eq!</span>(columns[<span class="number">3</span>].column_name, <span class="string">&quot;idc&quot;</span>);
         <span class="macro">assert_eq!</span>(
             columns[<span class="number">3</span>].values.as_ref().unwrap().string_values,
-            <span class="macro">vec!</span>[<span class="string">&quot;biz&quot;</span>, <span class="string">&quot;biz&quot;</span>, <span class="string">&quot;biz&quot;</span>]
+            <span class="macro">vec!</span>[<span class="string">&quot;z002&quot;</span>, <span class="string">&quot;z002&quot;</span>, <span class="string">&quot;z002&quot;</span>]
         );
     }
 
