@@ -922,6 +922,41 @@
 <a href="#922" id="922">922</a>
 <a href="#923" id="923">923</a>
 <a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -937,6 +972,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::collections::{HashMap, HashSet};
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
 <span class="kw">use </span>api::v1::column::{SemanticType, Values};
@@ -949,10 +985,16 @@
 <span class="kw">use </span>common_time::{Date, DateTime};
 <span class="kw">use </span>datatypes::data_type::{ConcreteDataType, DataType};
 <span class="kw">use </span>datatypes::prelude::{ValueRef, VectorRef};
+<span class="kw">use </span>datatypes::scalars::ScalarVector;
 <span class="kw">use </span>datatypes::schema::SchemaRef;
-<span class="kw">use </span>datatypes::types::TimestampType;
+<span class="kw">use </span>datatypes::types::{Int16Type, Int8Type, TimestampType, UInt16Type, UInt8Type};
 <span class="kw">use </span>datatypes::value::Value;
-<span class="kw">use </span>datatypes::vectors::MutableVector;
+<span class="kw">use </span>datatypes::vectors::{
+    BinaryVector, BooleanVector, DateTimeVector, DateVector, Float32Vector, Float64Vector,
+    Int32Vector, Int64Vector, PrimitiveVector, StringVector, TimestampMicrosecondVector,
+    TimestampMillisecondVector, TimestampNanosecondVector, TimestampSecondVector, UInt32Vector,
+    UInt64Vector,
+};
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>table::requests::InsertRequest;
@@ -1211,15 +1253,10 @@
         <span class="kw">let </span>datatype: ConcreteDataType = ColumnDataTypeWrapper::try_new(datatype)
             .context(ColumnDataTypeSnafu)<span class="question-mark">?
             </span>.into();
-
-        <span class="kw">let </span>vector_builder = <span class="kw-2">&amp;mut </span>datatype.create_mutable_vector(row_count);
-
-        add_values_to_builder(vector_builder, values, row_count, null_mask)<span class="question-mark">?</span>;
+        <span class="kw">let </span>vector = add_values_to_builder(datatype, values, row_count, null_mask)<span class="question-mark">?</span>;
 
         <span class="macro">ensure!</span>(
-            columns_values
-                .insert(column_name.clone(), vector_builder.to_vector())
-                .is_none(),
+            columns_values.insert(column_name.clone(), vector).is_none(),
             ColumnAlreadyExistsSnafu {
                 column: column_name
             }
@@ -1236,28 +1273,16 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>add_values_to_builder(
-    builder: <span class="kw-2">&amp;mut </span>Box&lt;<span class="kw">dyn </span>MutableVector&gt;,
+    data_type: ConcreteDataType,
     values: Values,
     row_count: usize,
     null_mask: Vec&lt;u8&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>data_type = builder.data_type();
-    <span class="kw">let </span>values = convert_values(<span class="kw-2">&amp;</span>data_type, values);
-
+) -&gt; <span class="prelude-ty">Result</span>&lt;VectorRef&gt; {
     <span class="kw">if </span>null_mask.is_empty() {
-        <span class="macro">ensure!</span>(
-            values.len() == row_count,
-            UnexpectedValuesLengthSnafu {
-                reason: <span class="string">&quot;If null_mask is empty, the length of values must be equal to row_count.&quot;
-            </span>}
-        );
-
-        values.iter().try_for_each(|value| {
-            builder
-                .try_push_value_ref(value.as_value_ref())
-                .context(CreateVectorSnafu)
-        })<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(values_to_vector(<span class="kw-2">&amp;</span>data_type, values))
     } <span class="kw">else </span>{
+        <span class="kw">let </span>builder = <span class="kw-2">&amp;mut </span>data_type.create_mutable_vector(row_count);
+        <span class="kw">let </span>values = convert_values(<span class="kw-2">&amp;</span>data_type, values);
         <span class="kw">let </span>null_mask = BitVec::from_vec(null_mask);
         <span class="macro">ensure!</span>(
             null_mask.count_ones() + values.len() == row_count,
@@ -1278,8 +1303,53 @@
                 </span>}
             }
         }
+        <span class="prelude-val">Ok</span>(builder.to_vector())
     }
-    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">fn </span>values_to_vector(data_type: <span class="kw-2">&amp;</span>ConcreteDataType, values: Values) -&gt; VectorRef {
+    <span class="kw">match </span>data_type {
+        ConcreteDataType::Boolean(<span class="kw">_</span>) =&gt; Arc::new(BooleanVector::from(values.bool_values)),
+        ConcreteDataType::Int8(<span class="kw">_</span>) =&gt; Arc::new(PrimitiveVector::&lt;Int8Type&gt;::from_iter_values(
+            values.i8_values.into_iter().map(|x| x <span class="kw">as </span>i8),
+        )),
+        ConcreteDataType::Int16(<span class="kw">_</span>) =&gt; Arc::new(PrimitiveVector::&lt;Int16Type&gt;::from_iter_values(
+            values.i16_values.into_iter().map(|x| x <span class="kw">as </span>i16),
+        )),
+        ConcreteDataType::Int32(<span class="kw">_</span>) =&gt; Arc::new(Int32Vector::from_vec(values.i32_values)),
+        ConcreteDataType::Int64(<span class="kw">_</span>) =&gt; Arc::new(Int64Vector::from_vec(values.i64_values)),
+        ConcreteDataType::UInt8(<span class="kw">_</span>) =&gt; Arc::new(PrimitiveVector::&lt;UInt8Type&gt;::from_iter_values(
+            values.u8_values.into_iter().map(|x| x <span class="kw">as </span>u8),
+        )),
+        ConcreteDataType::UInt16(<span class="kw">_</span>) =&gt; Arc::new(PrimitiveVector::&lt;UInt16Type&gt;::from_iter_values(
+            values.u16_values.into_iter().map(|x| x <span class="kw">as </span>u16),
+        )),
+        ConcreteDataType::UInt32(<span class="kw">_</span>) =&gt; Arc::new(UInt32Vector::from_vec(values.u32_values)),
+        ConcreteDataType::UInt64(<span class="kw">_</span>) =&gt; Arc::new(UInt64Vector::from_vec(values.u64_values)),
+        ConcreteDataType::Float32(<span class="kw">_</span>) =&gt; Arc::new(Float32Vector::from_vec(values.f32_values)),
+        ConcreteDataType::Float64(<span class="kw">_</span>) =&gt; Arc::new(Float64Vector::from_vec(values.f64_values)),
+        ConcreteDataType::Binary(<span class="kw">_</span>) =&gt; Arc::new(BinaryVector::from(values.binary_values)),
+        ConcreteDataType::String(<span class="kw">_</span>) =&gt; Arc::new(StringVector::from_vec(values.string_values)),
+        ConcreteDataType::Date(<span class="kw">_</span>) =&gt; Arc::new(DateVector::from_vec(values.date_values)),
+        ConcreteDataType::DateTime(<span class="kw">_</span>) =&gt; Arc::new(DateTimeVector::from_vec(values.datetime_values)),
+        ConcreteDataType::Timestamp(unit) =&gt; <span class="kw">match </span>unit {
+            TimestampType::Second(<span class="kw">_</span>) =&gt; {
+                Arc::new(TimestampSecondVector::from_vec(values.ts_second_values))
+            }
+            TimestampType::Millisecond(<span class="kw">_</span>) =&gt; Arc::new(TimestampMillisecondVector::from_vec(
+                values.ts_millisecond_values,
+            )),
+            TimestampType::Microsecond(<span class="kw">_</span>) =&gt; Arc::new(TimestampMicrosecondVector::from_vec(
+                values.ts_microsecond_values,
+            )),
+            TimestampType::Nanosecond(<span class="kw">_</span>) =&gt; Arc::new(TimestampNanosecondVector::from_vec(
+                values.ts_nanosecond_values,
+            )),
+        },
+        ConcreteDataType::Null(<span class="kw">_</span>) | ConcreteDataType::List(<span class="kw">_</span>) | ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; {
+            <span class="macro">unreachable!</span>()
+        }
+    }
 }
 
 <span class="kw">fn </span>convert_values(data_type: <span class="kw-2">&amp;</span>ConcreteDataType, values: Values) -&gt; Vec&lt;Value&gt; {
