@@ -110,6 +110,10 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -179,6 +183,9 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Illegal Database response: {err_msg}&quot;</span>))]
     </span>IllegalDatabaseResponse { err_msg: String },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to send request with streaming: {}&quot;</span>, err_msg))]
+    </span>ClientStreaming { err_msg: String, location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -189,7 +196,8 @@
             Error::IllegalFlightMessages { .. }
             | Error::ColumnDataType { .. }
             | Error::MissingField { .. }
-            | Error::IllegalDatabaseResponse { .. } =&gt; StatusCode::Internal,
+            | Error::IllegalDatabaseResponse { .. }
+            | Error::ClientStreaming { .. } =&gt; StatusCode::Internal,
 
             Error::Server { code, .. } =&gt; <span class="kw-2">*</span>code,
             Error::FlightGet { source, .. } =&gt; source.status_code(),
