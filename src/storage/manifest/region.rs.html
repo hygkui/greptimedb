@@ -513,6 +513,7 @@
 <a href="#513" id="513">513</a>
 <a href="#514" id="514">514</a>
 <a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -856,12 +857,13 @@
         builder.root(<span class="kw-2">&amp;</span>tmp_dir.path().to_string_lossy());
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
 
+        <span class="kw">let </span>test_gc_duration = Duration::from_millis(<span class="number">50</span>);
         <span class="kw">let </span>manifest = RegionManifest::with_checkpointer(
             <span class="string">&quot;/manifest/&quot;</span>,
             object_store,
             manifest_compress_type(compress),
             <span class="prelude-val">None</span>,
-            <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">50</span>)),
+            <span class="prelude-val">Some</span>(test_gc_duration),
         );
         manifest.start().<span class="kw">await</span>.unwrap();
 
@@ -1007,7 +1009,7 @@
         );
 
         <span class="comment">// wait for gc
-        </span>tokio::time::sleep(Duration::from_millis(<span class="number">60</span>)).<span class="kw">await</span>;
+        </span>tokio::time::sleep(test_gc_duration * <span class="number">3</span>).<span class="kw">await</span>;
 
         <span class="kw">for </span>v <span class="kw">in </span>checkpoint_versions {
             <span class="kw">if </span>v &lt; <span class="number">4 </span>{

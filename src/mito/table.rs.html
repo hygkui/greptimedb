@@ -784,6 +784,13 @@
 <a href="#784" id="784">784</a>
 <a href="#785" id="785">785</a>
 <a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -815,6 +822,7 @@
 <span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatchStreamAdaptor, SendableRecordBatchStream};
 <span class="kw">use </span>common_telemetry::{info, logging};
 <span class="kw">use </span>datatypes::schema::Schema;
+<span class="kw">use </span>metrics::histogram;
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::manifest::{<span class="self">self</span>, Manifest, ManifestVersion, MetaActionIterator};
@@ -843,6 +851,8 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::TableManifest;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{MITO_INSERT_BATCH_SIZE, MITO_INSERT_ELAPSED};
+
 <span class="attr">#[inline]
 </span><span class="kw">fn </span>table_manifest_dir(table_dir: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">assert!</span>(table_dir.ends_with(<span class="string">&#39;/&#39;</span>));
@@ -869,6 +879,8 @@
     }
 
     <span class="kw">async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, request: InsertRequest) -&gt; TableResult&lt;usize&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(MITO_INSERT_ELAPSED);
+
         <span class="kw">if </span>request.columns_values.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>);
         }
@@ -890,6 +902,8 @@
         <span class="kw">let </span>columns_values = request.columns_values;
         <span class="comment">// columns_values is not empty, it&#39;s safe to unwrap
         </span><span class="kw">let </span>rows_num = columns_values.values().next().unwrap().len();
+
+        <span class="macro">histogram!</span>(MITO_INSERT_BATCH_SIZE, rows_num <span class="kw">as </span>f64);
 
         <span class="macro">logging::trace!</span>(
             <span class="string">&quot;Insert into table {} region {} with data: {:?}&quot;</span>,
