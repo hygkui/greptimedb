@@ -433,6 +433,13 @@
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -701,6 +708,12 @@
         source: tokio::task::JoinError,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to update jemalloc metrics, source: {source}, location: {location}&quot;</span>))]
+    </span>UpdateJemallocMetrics {
+        source: tikv_jemalloc_ctl::Error,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -776,6 +789,7 @@
                     StatusCode::Unknown
                 }
             }
+            UpdateJemallocMetrics { .. } =&gt; StatusCode::Internal,
         }
     }
 
