@@ -435,7 +435,6 @@
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
 <a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -692,8 +691,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.client.make_flight_client()<span class="question-mark">?</span>;
 
-        <span class="comment">// TODO(LFC): Streaming get flight data.
-        </span><span class="kw">let </span>flight_data: Vec&lt;FlightData&gt; = client
+        <span class="kw">let </span>flight_data: Vec&lt;FlightData&gt; = client
             .mut_inner()
             .do_get(request)
             .and_then(|response| response.into_inner().try_collect())

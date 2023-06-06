@@ -123,7 +123,6 @@
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -169,8 +168,7 @@
         query_ctx: QueryContextRef,
     ) -&gt; Vec&lt;std::result::Result&lt;Output, <span class="self">Self</span>::Error&gt;&gt;;
 
-    <span class="comment">// TODO(LFC): revisit this for mysql prepared statement
-    </span><span class="kw">async fn </span>do_describe(
+    <span class="kw">async fn </span>do_describe(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         stmt: Statement,
         query_ctx: QueryContextRef,

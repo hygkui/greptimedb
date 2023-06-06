@@ -435,8 +435,6 @@
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
 <a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -535,8 +533,7 @@
     stmt: ShowDatabases,
     catalog_manager: CatalogManagerRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-    <span class="comment">// TODO(LFC): supports WHERE
-    </span><span class="macro">ensure!</span>(
+    <span class="macro">ensure!</span>(
         <span class="macro">matches!</span>(stmt.kind, ShowKind::All | ShowKind::Like(<span class="kw">_</span>)),
         error::UnsupportedExprSnafu {
             name: stmt.kind.to_string(),
@@ -575,8 +572,7 @@
     catalog_manager: CatalogManagerRef,
     query_ctx: QueryContextRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-    <span class="comment">// TODO(LFC): supports WHERE
-    </span><span class="macro">ensure!</span>(
+    <span class="macro">ensure!</span>(
         <span class="macro">matches!</span>(stmt.kind, ShowKind::All | ShowKind::Like(<span class="kw">_</span>)),
         error::UnsupportedExprSnafu {
             name: stmt.kind.to_string(),

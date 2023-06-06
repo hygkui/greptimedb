@@ -844,9 +844,6 @@
 <a href="#844" id="844">844</a>
 <a href="#845" id="845">845</a>
 <a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
-<a href="#849" id="849">849</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1134,10 +1131,7 @@
         requests: InsertRequests,
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="comment">// TODO(LFC): Optimize concurrent table creation and table alteration.
-        // Currently table creation is guarded by a distributed lock in Metasrv. However, table
-        // alteration is not. We should all switch to procedures in Metasrv.
-        </span><span class="kw">let _ </span>= future::join_all(
+        <span class="kw">let _ </span>= future::join_all(
             requests
                 .inserts
                 .iter()
