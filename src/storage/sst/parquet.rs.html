@@ -985,8 +985,6 @@
 <a href="#985" id="985">985</a>
 <a href="#986" id="986">986</a>
 <a href="#987" id="987">987</a>
-<a href="#988" id="988">988</a>
-<a href="#989" id="989">989</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1270,7 +1268,9 @@
             .with_row_groups(pruned_row_groups);
 
         <span class="comment">// if time range row filter is present, we can push down the filter to reduce rows to scan.
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(row_filter) = <span class="self">self</span>.build_time_range_row_filter(<span class="kw-2">&amp;</span>parquet_schema_desc) {
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(row_filter) =
+            build_time_range_row_filter(<span class="self">self</span>.time_range, <span class="kw-2">&amp;</span>store_schema, <span class="kw-2">&amp;</span>parquet_schema_desc)
+        {
             builder = builder.with_row_filter(row_filter);
         }
 
@@ -1286,59 +1286,55 @@
 
         ChunkStream::new(<span class="self">self</span>.file_handle.clone(), adapter, Box::pin(chunk_stream))
     }
+}
 
-    <span class="doccomment">/// Builds time range row filter.
-    </span><span class="kw">fn </span>build_time_range_row_filter(<span class="kw-2">&amp;</span><span class="self">self</span>, schema_desc: <span class="kw-2">&amp;</span>SchemaDescriptor) -&gt; <span class="prelude-ty">Option</span>&lt;RowFilter&gt; {
-        <span class="kw">let </span>ts_col_idx = <span class="self">self
-            </span>.projected_schema
-            .schema_to_read()
-            .schema()
-            .timestamp_index()<span class="question-mark">?</span>;
-        <span class="kw">let </span>ts_col = <span class="self">self
-            </span>.projected_schema
-            .schema_to_read()
-            .schema()
-            .timestamp_column()<span class="question-mark">?</span>;
+<span class="doccomment">/// Builds time range row filter.
+</span><span class="kw">fn </span>build_time_range_row_filter(
+    time_range: TimestampRange,
+    store_schema: <span class="kw-2">&amp;</span>Arc&lt;StoreSchema&gt;,
+    schema_desc: <span class="kw-2">&amp;</span>SchemaDescriptor,
+) -&gt; <span class="prelude-ty">Option</span>&lt;RowFilter&gt; {
+    <span class="kw">let </span>ts_col_idx = store_schema.timestamp_index();
 
-        <span class="kw">let </span>ts_col_unit = <span class="kw">match </span><span class="kw-2">&amp;</span>ts_col.data_type {
-            ConcreteDataType::Int64(<span class="kw">_</span>) =&gt; TimeUnit::Millisecond,
-            ConcreteDataType::Timestamp(ts_type) =&gt; ts_type.unit(),
-            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-        };
+    <span class="kw">let </span>ts_col = store_schema.columns().get(ts_col_idx)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>projection = ProjectionMask::roots(schema_desc, <span class="macro">vec!</span>[ts_col_idx]);
+    <span class="kw">let </span>ts_col_unit = <span class="kw">match </span><span class="kw-2">&amp;</span>ts_col.desc.data_type {
+        ConcreteDataType::Int64(<span class="kw">_</span>) =&gt; TimeUnit::Millisecond,
+        ConcreteDataType::Timestamp(ts_type) =&gt; ts_type.unit(),
+        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+    };
 
-        <span class="comment">// checks if converting time range unit into ts col unit will result into rounding error.
-        </span><span class="kw">if </span>time_unit_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.time_range, ts_col_unit) {
-            <span class="kw">let </span>filter = RowFilter::new(<span class="macro">vec!</span>[Box::new(PlainTimestampRowFilter::new(
-                <span class="self">self</span>.time_range,
-                projection,
-            ))]);
-            <span class="kw">return </span><span class="prelude-val">Some</span>(filter);
-        }
+    <span class="kw">let </span>projection = ProjectionMask::roots(schema_desc, <span class="macro">vec!</span>[ts_col_idx]);
 
-        <span class="comment">// If any of the conversion overflows, we cannot use arrow&#39;s computation method, instead
-        // we resort to plain filter that compares timestamp with given range, less efficient,
-        // but simpler.
-        // TODO(hl): If the range is gt_eq/lt, we also use PlainTimestampRowFilter, but these cases
-        // can also use arrow&#39;s gt_eq_scalar/lt_scalar methods.
-        </span><span class="kw">let </span>row_filter = <span class="kw">if let </span>(<span class="prelude-val">Some</span>(lower), <span class="prelude-val">Some</span>(upper)) = (
-            <span class="self">self</span>.time_range
-                .start()
-                .and_then(|s| s.convert_to(ts_col_unit))
-                .map(|t| t.value()),
-            <span class="self">self</span>.time_range
-                .end()
-                .and_then(|s| s.convert_to(ts_col_unit))
-                .map(|t| t.value()),
-        ) {
-            Box::new(FastTimestampRowFilter::new(projection, lower, upper)) <span class="kw">as _
-        </span>} <span class="kw">else </span>{
-            Box::new(PlainTimestampRowFilter::new(<span class="self">self</span>.time_range, projection)) <span class="kw">as _
-        </span>};
-        <span class="kw">let </span>filter = RowFilter::new(<span class="macro">vec!</span>[row_filter]);
-        <span class="prelude-val">Some</span>(filter)
+    <span class="comment">// checks if converting time range unit into ts col unit will result into rounding error.
+    </span><span class="kw">if </span>time_unit_lossy(<span class="kw-2">&amp;</span>time_range, ts_col_unit) {
+        <span class="kw">let </span>filter = RowFilter::new(<span class="macro">vec!</span>[Box::new(PlainTimestampRowFilter::new(
+            time_range, projection,
+        ))]);
+        <span class="kw">return </span><span class="prelude-val">Some</span>(filter);
     }
+
+    <span class="comment">// If any of the conversion overflows, we cannot use arrow&#39;s computation method, instead
+    // we resort to plain filter that compares timestamp with given range, less efficient,
+    // but simpler.
+    // TODO(hl): If the range is gt_eq/lt, we also use PlainTimestampRowFilter, but these cases
+    // can also use arrow&#39;s gt_eq_scalar/lt_scalar methods.
+    </span><span class="kw">let </span>row_filter = <span class="kw">if let </span>(<span class="prelude-val">Some</span>(lower), <span class="prelude-val">Some</span>(upper)) = (
+        time_range
+            .start()
+            .and_then(|s| s.convert_to(ts_col_unit))
+            .map(|t| t.value()),
+        time_range
+            .end()
+            .and_then(|s| s.convert_to(ts_col_unit))
+            .map(|t| t.value()),
+    ) {
+        Box::new(FastTimestampRowFilter::new(projection, lower, upper)) <span class="kw">as _
+    </span>} <span class="kw">else </span>{
+        Box::new(PlainTimestampRowFilter::new(time_range, projection)) <span class="kw">as _
+    </span>};
+    <span class="kw">let </span>filter = RowFilter::new(<span class="macro">vec!</span>[row_filter]);
+    <span class="prelude-val">Some</span>(filter)
 }
 
 <span class="kw">fn </span>time_unit_lossy(range: <span class="kw-2">&amp;</span>TimestampRange, ts_col_unit: TimeUnit) -&gt; bool {
