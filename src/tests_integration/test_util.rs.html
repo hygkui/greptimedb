@@ -555,6 +555,70 @@
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -569,7 +633,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::env;
+</span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::env;
 <span class="kw">use </span>std::net::SocketAddr;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
@@ -592,7 +657,11 @@
 <span class="kw">use </span>datanode::instance::Instance;
 <span class="kw">use </span>datanode::sql::SqlHandler;
 <span class="kw">use </span>datatypes::data_type::ConcreteDataType;
+<span class="kw">use </span>datatypes::scalars::ScalarVectorBuilder;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, RawSchema};
+<span class="kw">use </span>datatypes::vectors::{
+    Float64VectorBuilder, MutableVector, StringVectorBuilder, TimestampMillisecondVectorBuilder,
+};
 <span class="kw">use </span>frontend::instance::Instance <span class="kw">as </span>FeInstance;
 <span class="kw">use </span>frontend::service_config::{MysqlOptions, PostgresOptions};
 <span class="kw">use </span>object_store::services::{Azblob, Oss, S3};
@@ -611,7 +680,7 @@
 <span class="kw">use </span>servers::Mode;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::engine::{EngineContext, TableEngineRef};
-<span class="kw">use </span>table::requests::{CreateTableRequest, TableOptions};
+<span class="kw">use </span>table::requests::{CreateTableRequest, InsertRequest, TableOptions};
 
 <span class="attr">#[derive(Debug, Eq, PartialEq)]
 </span><span class="kw">pub enum </span>StorageType {
@@ -828,6 +897,7 @@
     catalog_manager: <span class="kw-2">&amp;</span>CatalogManagerRef,
     sql_handler: <span class="kw-2">&amp;</span>SqlHandler,
     ts_type: ConcreteDataType,
+    table_name: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>column_schemas = <span class="macro">vec!</span>[
         ColumnSchema::new(<span class="string">&quot;host&quot;</span>, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
@@ -835,8 +905,6 @@
         ColumnSchema::new(<span class="string">&quot;memory&quot;</span>, ConcreteDataType::float64_datatype(), <span class="bool-val">true</span>),
         ColumnSchema::new(<span class="string">&quot;ts&quot;</span>, ts_type, <span class="bool-val">true</span>).with_time_index(<span class="bool-val">true</span>),
     ];
-
-    <span class="kw">let </span>table_name = <span class="string">&quot;demo&quot;</span>;
     <span class="kw">let </span>table_engine: TableEngineRef = sql_handler
         .table_engine_manager()
         .engine(MITO_ENGINE)
@@ -884,6 +952,7 @@
         instance.catalog_manager(),
         instance.sql_handler(),
         ConcreteDataType::timestamp_millisecond_datatype(),
+        <span class="string">&quot;demo&quot;</span>,
     )
     .<span class="kw">await
     </span>.unwrap();
@@ -920,6 +989,7 @@
         frontend.catalog_manager(),
         instance.sql_handler(),
         ConcreteDataType::timestamp_millisecond_datatype(),
+        <span class="string">&quot;demo&quot;</span>,
     )
     .<span class="kw">await
     </span>.unwrap();
@@ -939,25 +1009,83 @@
     (app, guard)
 }
 
+<span class="kw">fn </span>mock_insert_request(host: <span class="kw-2">&amp;</span>str, cpu: f64, memory: f64, ts: i64) -&gt; InsertRequest {
+    <span class="kw">let </span><span class="kw-2">mut </span>columns_values = HashMap::with_capacity(<span class="number">4</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>builder = StringVectorBuilder::with_capacity(<span class="number">1</span>);
+    builder.push(<span class="prelude-val">Some</span>(host));
+    columns_values.insert(<span class="string">&quot;host&quot;</span>.to_string(), builder.to_vector());
+
+    <span class="kw">let </span><span class="kw-2">mut </span>builder = Float64VectorBuilder::with_capacity(<span class="number">1</span>);
+    builder.push(<span class="prelude-val">Some</span>(cpu));
+    columns_values.insert(<span class="string">&quot;cpu&quot;</span>.to_string(), builder.to_vector());
+
+    <span class="kw">let </span><span class="kw-2">mut </span>builder = Float64VectorBuilder::with_capacity(<span class="number">1</span>);
+    builder.push(<span class="prelude-val">Some</span>(memory));
+    columns_values.insert(<span class="string">&quot;memory&quot;</span>.to_string(), builder.to_vector());
+
+    <span class="kw">let </span><span class="kw-2">mut </span>builder = TimestampMillisecondVectorBuilder::with_capacity(<span class="number">1</span>);
+    builder.push(<span class="prelude-val">Some</span>(ts.into()));
+    columns_values.insert(<span class="string">&quot;ts&quot;</span>.to_string(), builder.to_vector());
+
+    InsertRequest {
+        catalog_name: common_catalog::consts::DEFAULT_CATALOG_NAME.to_string(),
+        schema_name: common_catalog::consts::DEFAULT_SCHEMA_NAME.to_string(),
+        table_name: <span class="string">&quot;demo&quot;</span>.to_string(),
+        columns_values,
+        region_number: <span class="number">0</span>,
+    }
+}
+
 <span class="kw">pub async fn </span>setup_test_prom_app_with_frontend(
     store_type: StorageType,
     name: <span class="kw-2">&amp;</span>str,
 ) -&gt; (Router, TestGuard) {
+    std::env::set_var(<span class="string">&quot;TZ&quot;</span>, <span class="string">&quot;UTC&quot;</span>);
     <span class="kw">let </span>(opts, guard) = create_tmp_dir_and_datanode_opts(store_type, name);
     <span class="kw">let </span>instance = Arc::new(Instance::with_mock_meta_client(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span>.unwrap());
     <span class="kw">let </span>frontend = FeInstance::try_new_standalone(instance.clone())
         .<span class="kw">await
         </span>.unwrap();
     instance.start().<span class="kw">await</span>.unwrap();
+
     create_test_table(
         frontend.catalog_manager(),
         instance.sql_handler(),
         ConcreteDataType::timestamp_millisecond_datatype(),
+        <span class="string">&quot;demo&quot;</span>,
     )
     .<span class="kw">await
     </span>.unwrap();
-    <span class="kw">let </span>prom_server = PromServer::create_server(Arc::new(frontend) <span class="kw">as _</span>);
-    <span class="kw">let </span>app = prom_server.make_app();
+    <span class="kw">let </span>demo = frontend
+        .catalog_manager()
+        .table(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, <span class="string">&quot;demo&quot;</span>)
+        .<span class="kw">await
+        </span>.unwrap()
+        .unwrap();
+
+    <span class="kw">let _ </span>= demo
+        .insert(mock_insert_request(<span class="string">&quot;host1&quot;</span>, <span class="number">1.1</span>, <span class="number">2.2</span>, <span class="number">0</span>))
+        .<span class="kw">await
+        </span>.unwrap();
+    <span class="kw">let _ </span>= demo
+        .insert(mock_insert_request(<span class="string">&quot;host2&quot;</span>, <span class="number">2.1</span>, <span class="number">4.3</span>, <span class="number">600000</span>))
+        .<span class="kw">await
+        </span>.unwrap();
+
+    <span class="kw">let </span>http_opts = HttpOptions {
+        addr: <span class="macro">format!</span>(<span class="string">&quot;127.0.0.1:{}&quot;</span>, ports::get_port()),
+        ..Default::default()
+    };
+    <span class="kw">let </span>frontend_ref = Arc::new(frontend);
+    <span class="kw">let </span>http_server = HttpServerBuilder::new(http_opts)
+        .with_sql_handler(ServerSqlQueryHandlerAdaptor::arc(frontend_ref.clone()))
+        .with_grpc_handler(ServerGrpcQueryHandlerAdaptor::arc(frontend_ref.clone()))
+        .with_script_handler(frontend_ref.clone())
+        .with_prom_handler(frontend_ref.clone())
+        .build();
+    <span class="kw">let </span>prom_server = PromServer::create_server(frontend_ref);
+    <span class="kw">let </span>app = http_server.build(http_server.make_app());
+    <span class="kw">let </span>app = app.merge(prom_server.make_app());
     (app, guard)
 }
 
