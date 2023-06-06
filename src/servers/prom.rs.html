@@ -919,7 +919,6 @@
 <a href="#919" id="919">919</a>
 <a href="#920" id="920">920</a>
 <a href="#921" id="921">921</a>
-<a href="#922" id="922">922</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -974,7 +973,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::auth::UserProviderRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    AlreadyStartedSnafu, CollectRecordbatchSnafu, Error, InternalSnafu, NotSupportedSnafu, <span class="prelude-ty">Result</span>,
+    AlreadyStartedSnafu, CollectRecordbatchSnafu, Error, InternalSnafu, InvalidQuerySnafu, <span class="prelude-ty">Result</span>,
     StartHttpSnafu, UnexpectedResultSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::http::authorize::HttpAuth;
@@ -1166,7 +1165,7 @@
     </span><span class="kw">pub async fn </span>from_query_result(
         result: <span class="prelude-ty">Result</span>&lt;Output&gt;,
         metric_name: String,
-        result_type: <span class="prelude-ty">Option</span>&lt;ValueType&gt;,
+        result_type: ValueType,
     ) -&gt; Json&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>response: <span class="prelude-ty">Result</span>&lt;Json&lt;<span class="self">Self</span>&gt;&gt; = <span class="kw">try </span>{
             <span class="kw">let </span>json = <span class="kw">match </span>result<span class="question-mark">? </span>{
@@ -1193,7 +1192,7 @@
             json
         };
 
-        <span class="kw">let </span>result_type_string = result_type.map(|t| t.to_string()).unwrap_or_default();
+        <span class="kw">let </span>result_type_string = result_type.to_string();
 
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(resp) =&gt; resp,
@@ -1217,7 +1216,7 @@
     </span><span class="kw">fn </span>record_batches_to_data(
         batches: RecordBatches,
         metric_name: String,
-        result_type: <span class="prelude-ty">Option</span>&lt;ValueType&gt;,
+        result_type: ValueType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;PromResponse&gt; {
         <span class="comment">// infer semantic type of each column from schema.
         // TODO(ruihang): wish there is a better way to do this.
@@ -1312,27 +1311,21 @@
             .map(|(tags, <span class="kw-2">mut </span>values)| {
                 <span class="kw">let </span>metric = tags.into_iter().collect();
                 <span class="kw">match </span>result_type {
-                    <span class="prelude-val">Some</span>(ValueType::Vector) | <span class="prelude-val">Some</span>(ValueType::Scalar) | <span class="prelude-val">Some</span>(ValueType::String) =&gt; {
-                        <span class="prelude-val">Ok</span>(PromSeries {
-                            metric,
-                            value: values.pop(),
-                            ..Default::default()
-                        })
-                    }
-                    <span class="prelude-val">Some</span>(ValueType::Matrix) =&gt; <span class="prelude-val">Ok</span>(PromSeries {
+                    ValueType::Vector | ValueType::Scalar | ValueType::String =&gt; <span class="prelude-val">Ok</span>(PromSeries {
+                        metric,
+                        value: values.pop(),
+                        ..Default::default()
+                    }),
+                    ValueType::Matrix =&gt; <span class="prelude-val">Ok</span>(PromSeries {
                         metric,
                         values,
                         ..Default::default()
                     }),
-                    other =&gt; NotSupportedSnafu {
-                        feat: <span class="macro">format!</span>(<span class="string">&quot;PromQL result type {other:?}&quot;</span>),
-                    }
-                    .fail(),
                 }
             })
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>result_type_string = result_type.map(|t| t.to_string()).unwrap_or_default();
+        <span class="kw">let </span>result_type_string = result_type.to_string();
         <span class="kw">let </span>data = PromResponse::PromData(PromData {
             result_type: result_type_string,
             result,
@@ -1374,8 +1367,10 @@
     <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, Arc::new(query_ctx)).<span class="kw">await</span>;
-    <span class="kw">let </span>(metric_name, result_type) =
-        retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query).unwrap_or_default();
+    <span class="kw">let </span>(metric_name, result_type) = <span class="kw">match </span>retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query) {
+        <span class="prelude-val">Ok</span>((metric_name, result_type)) =&gt; (metric_name.unwrap_or_default(), result_type),
+        <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>PromJsonResponse::error(err.status_code().to_string(), err.to_string()),
+    };
     PromJsonResponse::from_query_result(result, metric_name, result_type).<span class="kw">await
 </span>}
 
@@ -1408,9 +1403,11 @@
     <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, Arc::new(query_ctx)).<span class="kw">await</span>;
-    <span class="kw">let </span>(metric_name, <span class="kw">_</span>) =
-        retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query).unwrap_or_default();
-    PromJsonResponse::from_query_result(result, metric_name, <span class="prelude-val">Some</span>(ValueType::Matrix)).<span class="kw">await
+    <span class="kw">let </span>metric_name = <span class="kw">match </span>retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query) {
+        <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>PromJsonResponse::error(err.status_code().to_string(), err.to_string()),
+        <span class="prelude-val">Ok</span>((metric_name, <span class="kw">_</span>)) =&gt; metric_name.unwrap_or_default(),
+    };
+    PromJsonResponse::from_query_result(result, metric_name, ValueType::Matrix).<span class="kw">await
 </span>}
 
 <span class="attr">#[derive(Debug, Default, Serialize, JsonSchema)]
@@ -1645,12 +1642,13 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>retrieve_metric_name_and_result_type(
     promql: <span class="kw-2">&amp;</span>str,
-) -&gt; <span class="prelude-ty">Option</span>&lt;(String, <span class="prelude-ty">Option</span>&lt;ValueType&gt;)&gt; {
-    <span class="kw">let </span>promql_expr = promql_parser::parser::parse(promql).ok()<span class="question-mark">?</span>;
-    <span class="kw">let </span>metric_name = promql_expr_to_metric_name(<span class="kw-2">&amp;</span>promql_expr)<span class="question-mark">?</span>;
-    <span class="kw">let </span>result_type = <span class="prelude-val">Some</span>(promql_expr.value_type());
+) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;String&gt;, ValueType)&gt; {
+    <span class="kw">let </span>promql_expr = promql_parser::parser::parse(promql)
+        .map_err(|reason| InvalidQuerySnafu { reason }.build())<span class="question-mark">?</span>;
+    <span class="kw">let </span>metric_name = promql_expr_to_metric_name(<span class="kw-2">&amp;</span>promql_expr);
+    <span class="kw">let </span>result_type = promql_expr.value_type();
 
-    <span class="prelude-val">Some</span>((metric_name, result_type))
+    <span class="prelude-val">Ok</span>((metric_name, result_type))
 }
 
 <span class="kw">fn </span>promql_expr_to_metric_name(expr: <span class="kw-2">&amp;</span>PromqlExpr) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
