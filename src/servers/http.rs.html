@@ -849,6 +849,10 @@
 <a href="#849" id="849">849</a>
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -863,18 +867,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">pub mod </span>authorize;
+</span><span class="kw">mod </span>admin;
+<span class="kw">pub mod </span>authorize;
 <span class="kw">pub mod </span>handler;
 <span class="kw">pub mod </span>influxdb;
+<span class="kw">pub mod </span>mem_prof;
 <span class="kw">pub mod </span>opentsdb;
+<span class="kw">mod </span>pprof;
 <span class="kw">pub mod </span>prometheus;
 <span class="kw">pub mod </span>script;
 
-<span class="kw">mod </span>admin;
 <span class="attr">#[cfg(feature = <span class="string">&quot;dashboard&quot;</span>)]
 </span><span class="kw">mod </span>dashboard;
-<span class="attr">#[cfg(feature = <span class="string">&quot;mem-prof&quot;</span>)]
-</span><span class="kw">pub mod </span>mem_prof;
 
 <span class="kw">use </span>std::net::SocketAddr;
 <span class="kw">use </span>std::sync::Arc;
@@ -1354,15 +1358,6 @@
             );
         }
 
-        <span class="comment">// mem profiler
-        </span><span class="attr">#[cfg(feature = <span class="string">&quot;mem-prof&quot;</span>)]
-        </span>{
-            router = router.nest(
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{HTTP_API_VERSION}/prof&quot;</span>),
-                Router::new().route(<span class="string">&quot;/mem&quot;</span>, routing::get(<span class="kw">crate</span>::http::mem_prof::mem_prof)),
-            );
-        }
-
         <span class="kw">if let </span><span class="prelude-val">Some</span>(metrics_handler) = <span class="self">self</span>.metrics_handler {
             router = router.nest(<span class="string">&quot;&quot;</span>, <span class="self">self</span>.route_metrics(metrics_handler));
         }
@@ -1406,6 +1401,19 @@
                     </span>.layer(AsyncRequireAuthorizationLayer::new(
                         HttpAuth::&lt;BoxBody&gt;::new(<span class="self">self</span>.user_provider.clone()),
                     )),
+            )
+            <span class="comment">// Handlers for debug, we don&#39;t expect a timeout.
+            </span>.nest(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{HTTP_API_VERSION}/prof&quot;</span>),
+                Router::new()
+                    .route(
+                        <span class="string">&quot;/cpu&quot;</span>,
+                        routing::get(pprof::pprof_handler).post(pprof::pprof_handler),
+                    )
+                    .route(
+                        <span class="string">&quot;/mem&quot;</span>,
+                        routing::get(mem_prof::mem_prof_handler).post(mem_prof::mem_prof_handler),
+                    ),
             )
     }
 
