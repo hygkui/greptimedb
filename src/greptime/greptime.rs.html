@@ -222,6 +222,19 @@
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -404,15 +417,20 @@
     )
 }
 
+<span class="kw">fn </span>log_env_flags() {
+    <span class="macro">info!</span>(<span class="string">&quot;command line arguments&quot;</span>);
+    <span class="kw">for </span>argument <span class="kw">in </span>std::env::args() {
+        <span class="macro">info!</span>(<span class="string">&quot;argument: {}&quot;</span>, argument);
+    }
+}
+
 <span class="attr">#[global_allocator]
 </span><span class="kw">static </span>ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 <span class="attr">#[tokio::main]
 </span><span class="kw">async fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>cmd = Command::parse();
-    <span class="comment">// TODO(dennis):
-    // 1. adds ip/port to app
-    </span><span class="kw">let </span>app_name = <span class="kw-2">&amp;</span>cmd.subcmd.to_string();
+    <span class="kw">let </span>app_name = <span class="kw-2">&amp;</span>cmd.subcmd.to_string();
 
     <span class="kw">let </span>opts = cmd.load_options()<span class="question-mark">?</span>;
     <span class="kw">let </span>logging_opts = opts.logging_options();
@@ -427,6 +445,14 @@
 
     <span class="comment">// Report app version as gauge.
     </span><span class="macro">gauge!</span>(<span class="string">&quot;app_version&quot;</span>, <span class="number">1.0</span>, <span class="string">&quot;short_version&quot; </span>=&gt; short_version(), <span class="string">&quot;version&quot; </span>=&gt; full_version());
+
+    <span class="comment">// Log version and argument flags.
+    </span><span class="macro">info!</span>(
+        <span class="string">&quot;short_version: {}, full_version: {}&quot;</span>,
+        short_version(),
+        full_version()
+    );
+    log_env_flags();
 
     <span class="kw">let </span><span class="kw-2">mut </span>app = cmd.build(opts).<span class="kw">await</span><span class="question-mark">?</span>;
 
