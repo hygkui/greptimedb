@@ -499,8 +499,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown {} server, source: {}&quot;</span>, server, source))]
     </span>ShutdownServer {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: servers::error::Error,
+        location: Location,
+        source: servers::error::Error,
         server: String,
     },
 
@@ -533,8 +533,8 @@
     },
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start http server, source: {}&quot;</span>, source))]
     </span>StartHttp {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: servers::error::Error,
+        location: Location,
+        source: servers::error::Error,
     },
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}, source: {}&quot;</span>, addr, source))]
     </span>ParseAddr {
@@ -603,8 +603,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Cannot parse catalog value, source: {}&quot;</span>, source))]
     </span>InvalidCatalogValue {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_catalog::error::Error,
+        location: Location,
+        source: common_catalog::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected sequence value: {}&quot;</span>, err_msg))]
@@ -663,8 +663,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create gRPC channel, source: {}&quot;</span>, source))]
     </span>CreateChannel {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_grpc::error::Error,
+        location: Location,
+        source: common_grpc::error::Error,
     },
 
     <span class="attr">#[snafu(display(
@@ -746,8 +746,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to recover procedure, source: {source}&quot;</span>))]
     </span>RecoverProcedure {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_procedure::Error,
+        location: Location,
+        source: common_procedure::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Schema already exists, name: {schema_name}&quot;</span>))]
@@ -794,8 +794,8 @@
     ))]
     </span>RegisterProcedureLoader {
         type_name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_procedure::error::Error,
+        location: Location,
+        source: common_procedure::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find failover candidates for region: {}&quot;</span>, failed_region))]
@@ -823,8 +823,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert table route, source: {}&quot;</span>, source))]
     </span>TableRouteConversion {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_meta::error::Error,
+        location: Location,
+        source: common_meta::error::Error,
     },
 
     <span class="comment">// this error is used for custom error mapping
@@ -907,15 +907,15 @@
             | Error::Unexpected { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::InvalidCatalogValue { source, .. } =&gt; source.status_code(),
-            Error::RecoverProcedure { source } =&gt; source.status_code(),
-            Error::ShutdownServer { source, .. } | Error::StartHttp { source } =&gt; {
+            Error::RecoverProcedure { source, .. } =&gt; source.status_code(),
+            Error::ShutdownServer { source, .. } | Error::StartHttp { source, .. } =&gt; {
                 source.status_code()
             }
 
             Error::RegionFailoverCandidatesNotFound { .. } =&gt; StatusCode::RuntimeResourcesExhausted,
 
             Error::RegisterProcedureLoader { source, .. } =&gt; source.status_code(),
-            Error::TableRouteConversion { source } =&gt; source.status_code(),
+            Error::TableRouteConversion { source, .. } =&gt; source.status_code(),
             Error::Other { source, .. } =&gt; source.status_code(),
         }
     }

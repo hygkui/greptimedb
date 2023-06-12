@@ -322,6 +322,7 @@
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -343,7 +344,7 @@
 <span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>futures::{stream, Stream, TryStreamExt};
 <span class="kw">use </span>prost::Message;
-<span class="kw">use </span>snafu::{ensure, ResultExt};
+<span class="kw">use </span>snafu::{ensure, Location, ResultExt};
 <span class="kw">use </span>store_api::logstore::entry::{Entry, Id};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::{RegionId, SequenceNumber};
@@ -481,6 +482,7 @@
             </span>.map_err(|e| Error::ReadWal {
                 region_id: <span class="self">self</span>.region_id(),
                 source: BoxedError::new(e),
+                location: Location::default(),
             })
             .and_then(|entries| <span class="kw">async </span>{
                 <span class="kw">let </span>iter = entries.into_iter().map(|x| <span class="self">self</span>.decode_entry(x));

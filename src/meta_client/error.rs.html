@@ -129,8 +129,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create gRPC channel, source: {}&quot;</span>, source))]
     </span>CreateChannel {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_grpc::error::Error,
+        location: Location,
+        source: common_grpc::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;{} not started&quot;</span>, name))]
@@ -144,20 +144,20 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid response header, source: {}&quot;</span>, source))]
     </span>InvalidResponseHeader {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_meta::error::Error,
+        location: Location,
+        source: common_meta::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv request, source: {}&quot;</span>, source))]
     </span>ConvertMetaRequest {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_meta::error::Error,
+        location: Location,
+        source: common_meta::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv response, source: {}&quot;</span>, source))]
     </span>ConvertMetaResponse {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_meta::error::Error,
+        location: Location,
+        source: common_meta::error::Error,
     },
 }
 
@@ -180,9 +180,9 @@
             | Error::CreateHeartbeatStream { .. }
             | Error::CreateChannel { .. } =&gt; StatusCode::Internal,
 
-            Error::InvalidResponseHeader { source }
-            | Error::ConvertMetaRequest { source }
-            | Error::ConvertMetaResponse { source } =&gt; source.status_code(),
+            Error::InvalidResponseHeader { source, .. }
+            | Error::ConvertMetaRequest { source, .. }
+            | Error::ConvertMetaResponse { source, .. } =&gt; source.status_code(),
         }
     }
 }

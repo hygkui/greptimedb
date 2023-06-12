@@ -545,6 +545,7 @@
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
     <span class="kw">use </span>datatypes::schema::ColumnSchema;
     <span class="kw">use </span>datatypes::vectors::Int32Vector;
+    <span class="kw">use </span>snafu::IntoError;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::RecordBatches;
@@ -616,9 +617,8 @@
 
         <span class="kw">let </span>poll_err_stream = new_future_stream(<span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[
             <span class="prelude-val">Ok</span>(batch1.clone()),
-            <span class="prelude-val">Err</span>(error::Error::External {
-                source: BoxedError::new(MockError::new(StatusCode::Unknown)),
-            }),
+            <span class="prelude-val">Err</span>(error::ExternalSnafu
+                .into_error(BoxedError::new(MockError::new(StatusCode::Unknown)))),
         ]));
         <span class="kw">let </span>adapter = AsyncRecordBatchStreamAdapter::new(schema.clone(), poll_err_stream);
         <span class="kw">let </span>result = RecordBatches::try_collect(Box::pin(adapter)).<span class="kw">await</span>;
@@ -627,9 +627,9 @@
             <span class="string">&quot;Failed to poll stream, source: External error: External error, source: Unknown&quot;
         </span>);
 
-        <span class="kw">let </span>failed_to_init_stream = new_future_stream(<span class="prelude-val">Err</span>(error::Error::External {
-            source: BoxedError::new(MockError::new(StatusCode::Internal)),
-        }));
+        <span class="kw">let </span>failed_to_init_stream =
+            new_future_stream(<span class="prelude-val">Err</span>(error::ExternalSnafu
+                .into_error(BoxedError::new(MockError::new(StatusCode::Internal)))));
         <span class="kw">let </span>adapter = AsyncRecordBatchStreamAdapter::new(schema.clone(), failed_to_init_stream);
         <span class="kw">let </span>result = RecordBatches::try_collect(Box::pin(adapter)).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(

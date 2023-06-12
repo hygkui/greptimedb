@@ -339,14 +339,14 @@
         source
     ))]
     </span>ConvertRaw {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: table::metadata::ConvertError,
+        location: Location,
+        source: table::metadata::ConvertError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid schema, source: {}&quot;</span>, source))]
     </span>InvalidRawSchema {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field: {}&quot;</span>, name))]
@@ -354,8 +354,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build backend, source: {}&quot;</span>, source))]
     </span>BuildBackend {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_datasource::error::Error,
+        location: Location,
+        source: common_datasource::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build csv config: {}&quot;</span>, source))]
@@ -378,14 +378,14 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build stream adapter: {}&quot;</span>, source))]
     </span>BuildStreamAdapter {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_recordbatch::error::Error,
+        location: Location,
+        source: common_recordbatch::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse file format: {}&quot;</span>, source))]
     </span>ParseFileFormat {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_datasource::error::Error,
+        location: Location,
+        source: common_datasource::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to generate parquet scan plan: {}&quot;</span>, source))]

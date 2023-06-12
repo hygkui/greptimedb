@@ -120,14 +120,14 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid raw schema, source: {}&quot;</span>, source))]
     </span>InvalidRawSchema {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to access catalog, source: {}&quot;</span>, source))]
     </span>AccessCatalog {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: catalog::error::Error,
+        location: Location,
+        source: catalog::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Catalog {} not found&quot;</span>, name))]
@@ -152,7 +152,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             SerializeProcedure { .. } | DeserializeProcedure { .. } =&gt; StatusCode::Internal,
             InvalidRawSchema { source, .. } =&gt; source.status_code(),
-            AccessCatalog { source } =&gt; source.status_code(),
+            AccessCatalog { source, .. } =&gt; source.status_code(),
             CatalogNotFound { .. } | SchemaNotFound { .. } | TableExists { .. } =&gt; {
                 StatusCode::InvalidArguments
             }

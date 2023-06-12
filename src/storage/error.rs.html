@@ -668,8 +668,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid region descriptor, region: {}, source: {}&quot;</span>, region, source))]
     </span>InvalidRegionDesc {
         region: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: MetadataError,
+        location: Location,
+        source: MetadataError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing column {} in write batch&quot;</span>, column))]
@@ -683,8 +683,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write to buffer, source: {}&quot;</span>, source))]
     </span>WriteBuffer {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_datasource::error::Error,
+        location: Location,
+        source: common_datasource::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatch from vectors, source: {}&quot;</span>, source))]
@@ -777,8 +777,8 @@
     ))]
     </span>WriteWal {
         region_id: RegionId,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: BoxedError,
+        location: Location,
+        source: BoxedError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode WAL header, source {}&quot;</span>, source))]
@@ -848,8 +848,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read WAL, region_id: {}, source: {}&quot;</span>, region_id, source))]
     </span>ReadWal {
         region_id: RegionId,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: BoxedError,
+        location: Location,
+        source: BoxedError,
     },
 
     <span class="attr">#[snafu(display(
@@ -859,8 +859,8 @@
     ))]
     </span>MarkWalObsolete {
         region_id: u64,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: BoxedError,
+        location: Location,
+        source: BoxedError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;WAL data corrupted, region_id: {}, message: {}&quot;</span>, region_id, message))]
@@ -895,15 +895,15 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert store schema, file: {}, source: {}&quot;</span>, file, source))]
     </span>ConvertStoreSchema {
         file: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: MetadataError,
+        location: Location,
+        source: MetadataError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid raw region metadata, region: {}, source: {}&quot;</span>, region, source))]
     </span>InvalidRawRegion {
         region: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: MetadataError,
+        location: Location,
+        source: MetadataError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Try to write the closed region&quot;</span>))]
@@ -911,14 +911,14 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid projection, source: {}&quot;</span>, source))]
     </span>InvalidProjection {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: MetadataError,
+        location: Location,
+        source: MetadataError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to push data to batch builder, source: {}&quot;</span>, source))]
     </span>PushBatch {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build batch, {}&quot;</span>, msg))]
@@ -927,20 +927,20 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to filter column {}, source: {}&quot;</span>, name, source))]
     </span>FilterColumn {
         name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid alter request, source: {}&quot;</span>, source))]
     </span>InvalidAlterRequest {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: MetadataError,
+        location: Location,
+        source: MetadataError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to alter metadata, source: {}&quot;</span>, source))]
     </span>AlterMetadata {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: MetadataError,
+        location: Location,
+        source: MetadataError,
     },
 
     <span class="attr">#[snafu(display(
@@ -950,8 +950,8 @@
     ))]
     </span>CreateDefault {
         name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(
@@ -983,8 +983,8 @@
     ))]
     </span>CreateDefaultToRead {
         column: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read column {}, no proper default value for it&quot;</span>, column))]
@@ -997,8 +997,8 @@
     ))]
     </span>ConvertChunk {
         name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Unknown column {}&quot;</span>, name))]
@@ -1006,8 +1006,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create record batch for write batch, source:{}&quot;</span>, source))]
     </span>CreateRecordBatch {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_recordbatch::error::Error,
+        location: Location,
+        source: common_recordbatch::error::Error,
     },
 
     <span class="attr">#[snafu(display(
@@ -1081,14 +1081,14 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start manifest gc task: {}&quot;</span>, source))]
     </span>StartManifestGcTask {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: RuntimeError,
+        location: Location,
+        source: RuntimeError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop manifest gc task: {}&quot;</span>, source))]
     </span>StopManifestGcTask {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: RuntimeError,
+        location: Location,
+        source: RuntimeError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop scheduler, source: {}&quot;</span>, source))]
@@ -1105,8 +1105,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to calculate SST expire time, source: {}&quot;</span>, source))]
     </span>TtlCalculation {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_time::error::Error,
+        location: Location,
+        source: common_time::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create a checkpoint: {}&quot;</span>, msg))]
@@ -1131,14 +1131,14 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start picking task for flush: {}&quot;</span>, source))]
     </span>StartPickTask {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: RuntimeError,
+        location: Location,
+        source: RuntimeError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop picking task for flush: {}&quot;</span>, source))]
     </span>StopPickTask {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: RuntimeError,
+        location: Location,
+        source: RuntimeError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert columns to rows, source: {}&quot;</span>, source))]

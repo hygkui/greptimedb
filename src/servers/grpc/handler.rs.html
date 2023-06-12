@@ -232,8 +232,8 @@
 <span class="kw">use </span>tonic::Status;
 
 <span class="kw">use </span><span class="kw">crate</span>::auth::{Identity, Password, UserProviderRef};
-<span class="kw">use </span><span class="kw">crate</span>::error::Error::{Auth, UnsupportedAuthScheme};
-<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidQuerySnafu, JoinTaskSnafu, NotFoundAuthHeaderSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::error::Error::UnsupportedAuthScheme;
+<span class="kw">use </span><span class="kw">crate</span>::error::{AuthSnafu, InvalidQuerySnafu, JoinTaskSnafu, NotFoundAuthHeaderSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::grpc::TonicResult;
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{
     METRIC_AUTH_FAILURE, METRIC_CODE_LABEL, METRIC_SERVER_GRPC_DB_REQUEST_TIMER,
@@ -326,7 +326,7 @@
                     <span class="kw-2">&amp;</span>query_ctx.current_schema(),
                 )
                 .<span class="kw">await
-                </span>.map_err(|e| Auth { source: e }),
+                </span>.context(AuthSnafu),
             AuthScheme::Token(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(UnsupportedAuthScheme {
                 name: <span class="string">&quot;Token AuthScheme&quot;</span>.to_string(),
             }),

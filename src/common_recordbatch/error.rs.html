@@ -164,14 +164,14 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Data types error, source: {}&quot;</span>, source))]
     </span>DataTypes {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;External error, source: {}&quot;</span>, source))]
     </span>External {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: BoxedError,
+        location: Location,
+        source: BoxedError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatches, reason: {}&quot;</span>, reason))]
@@ -230,8 +230,8 @@
     </span>CastVector {
         from_type: ConcreteDataType,
         to_type: ConcreteDataType,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 }
 
@@ -248,7 +248,7 @@
             | Error::ColumnNotExists { .. }
             | Error::ProjectArrowRecordBatch { .. } =&gt; StatusCode::Internal,
 
-            Error::External { source } =&gt; source.status_code(),
+            Error::External { source, .. } =&gt; source.status_code(),
 
             Error::SchemaConversion { source, .. } | Error::CastVector { source, .. } =&gt; {
                 source.status_code()

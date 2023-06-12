@@ -272,8 +272,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Auth failed, source: {}&quot;</span>, source))]
     </span>AuthBackend {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: BoxedError,
+        location: Location,
+        source: BoxedError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;User not found, username: {}&quot;</span>, username))]

@@ -1387,8 +1387,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build schema, source: {}&quot;</span>, source))]
     </span>InvalidSchema {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Column name {} is reserved by the system&quot;</span>, name))]
@@ -1422,8 +1422,8 @@
     <span class="comment">// End of variants for validating `AlterRequest`.
     </span><span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert to column schema, source: {}&quot;</span>, source))]
     </span>ToColumnSchema {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(
@@ -1449,8 +1449,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert from arrow schema, source: {}&quot;</span>, source))]
     </span>ConvertArrowSchema {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid internal column index in arrow schema&quot;</span>))]
@@ -1463,14 +1463,14 @@
     ))]
     </span>ConvertChunk {
         name: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert schema, source: {}&quot;</span>, source))]
     </span>ConvertSchema {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid projection, {}&quot;</span>, msg))]

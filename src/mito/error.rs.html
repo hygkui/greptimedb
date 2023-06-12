@@ -317,8 +317,8 @@
         source,
     ))]
     </span>UpdateTableManifest {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: storage::error::Error,
+        location: Location,
+        source: storage::error::Error,
         table_name: String,
     },
 
@@ -328,8 +328,8 @@
         source,
     ))]
     </span>ScanTableManifest {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: storage::error::Error,
+        location: Location,
+        source: storage::error::Error,
         table_name: String,
     },
 
@@ -359,8 +359,8 @@
         source
     ))]
     </span>ConvertRaw {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: table::metadata::ConvertError,
+        location: Location,
+        source: table::metadata::ConvertError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find region, table: {}, region: {}&quot;</span>, table, region))]

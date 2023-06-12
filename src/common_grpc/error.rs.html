@@ -152,8 +152,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatch, source: {}&quot;</span>, source))]
     </span>CreateRecordBatch {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_recordbatch::error::Error,
+        location: Location,
+        source: common_recordbatch::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow type: {}&quot;</span>, from))]
@@ -170,8 +170,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow Schema, source: {}&quot;</span>, source))]
     </span>ConvertArrowSchema {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 }
 
@@ -187,8 +187,8 @@
             | Error::Conversion { .. }
             | Error::DecodeFlightData { .. } =&gt; StatusCode::Internal,
 
-            Error::CreateRecordBatch { source } =&gt; source.status_code(),
-            Error::ConvertArrowSchema { source } =&gt; source.status_code(),
+            Error::CreateRecordBatch { source, .. } =&gt; source.status_code(),
+            Error::ConvertArrowSchema { source, .. } =&gt; source.status_code(),
         }
     }
 

@@ -153,8 +153,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Column datatype error, source: {}&quot;</span>, source))]
     </span>ColumnDataType {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: api::error::Error,
+        location: Location,
+        source: api::error::Error,
     },
 
     <span class="attr">#[snafu(display(
@@ -175,8 +175,8 @@
     </span>InvalidColumnProto { err_msg: String, location: Location },
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create vector, source: {}&quot;</span>, source))]
     </span>CreateVector {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field in protobuf, field: {}&quot;</span>, field))]
@@ -189,14 +189,14 @@
     ))]
     </span>InvalidColumnDef {
         column: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: api::error::Error,
+        location: Location,
+        source: api::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Unrecognized table option: {}&quot;</span>, source))]
     </span>UnrecognizedTableOption {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: table::error::Error,
+        location: Location,
+        source: table::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected values length, reason: {}&quot;</span>, reason))]

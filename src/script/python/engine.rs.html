@@ -556,6 +556,12 @@
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
 <a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -598,7 +604,7 @@
 <span class="kw">use </span>sql::statements::statement::Statement;
 
 <span class="kw">use </span><span class="kw">crate</span>::engine::{CompileContext, EvalContext, Script, ScriptEngine};
-<span class="kw">use </span><span class="kw">crate</span>::python::error::{<span class="self">self</span>, PyRuntimeSnafu, <span class="prelude-ty">Result</span>, TokioJoinSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::python::error::{<span class="self">self</span>, DatabaseQuerySnafu, PyRuntimeSnafu, <span class="prelude-ty">Result</span>, TokioJoinSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::python::ffi_types::copr::{exec_parsed, parse, AnnotationInfo, CoprocessorRef};
 <span class="kw">use </span><span class="kw">crate</span>::python::utils::spawn_blocking_script;
 <span class="kw">const </span>PY_ENGINE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;python&quot;</span>;
@@ -848,8 +854,13 @@
                 </span>.query_engine
                 .planner()
                 .plan(stmt, QueryContext::arc())
-                .<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="kw">let </span>res = <span class="self">self</span>.query_engine.execute(plan, QueryContext::arc()).<span class="kw">await</span><span class="question-mark">?</span>;
+                .<span class="kw">await
+                </span>.context(DatabaseQuerySnafu)<span class="question-mark">?</span>;
+            <span class="kw">let </span>res = <span class="self">self
+                </span>.query_engine
+                .execute(plan, QueryContext::arc())
+                .<span class="kw">await
+                </span>.context(DatabaseQuerySnafu)<span class="question-mark">?</span>;
             <span class="kw">let </span>copr = <span class="self">self</span>.copr.clone();
             <span class="kw">match </span>res {
                 Output::Stream(stream) =&gt; <span class="prelude-val">Ok</span>(Output::Stream(Box::pin(CoprStream::try_new(
@@ -904,6 +915,7 @@
         })
     }
 }
+
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>tests::sample_script_engine;
 

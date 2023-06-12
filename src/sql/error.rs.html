@@ -280,14 +280,14 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid default constraint, column: {}, source: {}&quot;</span>, column, source))]
     </span>InvalidDefault {
         column: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize column default constraint, source: {}&quot;</span>, source))]
     </span>SerializeColumnDefaultConstraint {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(
@@ -295,8 +295,8 @@
         source
     ))]
     </span>ConvertToGrpcDataType {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: api::error::Error,
+        location: Location,
+        source: api::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid sql value: {}&quot;</span>, value))]

@@ -150,14 +150,14 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert FlightData, source: {}&quot;</span>, source))]
     </span>ConvertFlightData {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_grpc::Error,
+        location: Location,
+        source: common_grpc::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Column datatype error, source: {}&quot;</span>, source))]
     </span>ColumnDataType {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: api::error::Error,
+        location: Location,
+        source: api::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Illegal GRPC client state: {}&quot;</span>, err_msg))]
@@ -173,8 +173,8 @@
     ))]
     </span>CreateChannel {
         addr: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: common_grpc::error::Error,
+        location: Location,
+        source: common_grpc::error::Error,
     },
 
     <span class="comment">// Server error carried in Tonic Status&#39;s metadata.
@@ -201,7 +201,7 @@
 
             Error::Server { code, .. } =&gt; <span class="kw-2">*</span>code,
             Error::FlightGet { source, .. } =&gt; source.status_code(),
-            Error::CreateChannel { source, .. } | Error::ConvertFlightData { source } =&gt; {
+            Error::CreateChannel { source, .. } | Error::ConvertFlightData { source, .. } =&gt; {
                 source.status_code()
             }
             Error::IllegalGrpcClientState { .. } =&gt; StatusCode::Unexpected,

@@ -198,8 +198,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request Meta, source: {}&quot;</span>, source))]
     </span>RequestMeta {
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: meta_client::error::Error,
+        location: Location,
+        source: meta_client::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find Datanode, table: {} region: {:?}&quot;</span>, table, region))]
@@ -245,8 +245,8 @@
     ))]
     </span>CreateDefaultToRead {
         column: String,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;The column &#39;{}&#39; does not have a default value.&quot;</span>, column))]
@@ -298,8 +298,8 @@
     ))]
     </span>ConvertScalarValue {
         value: ScalarValue,
-        <span class="attr">#[snafu(backtrace)]
-        </span>source: datatypes::error::Error,
+        location: Location,
+        source: datatypes::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find leader of table {} region {}&quot;</span>, table_name, region_id))]
