@@ -985,6 +985,24 @@
 <a href="#985" id="985">985</a>
 <a href="#986" id="986">986</a>
 <a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1030,8 +1048,9 @@
 <span class="kw">use </span>parquet::file::metadata::KeyValue;
 <span class="kw">use </span>parquet::file::properties::WriterProperties;
 <span class="kw">use </span>parquet::format::FileMetaData;
-<span class="kw">use </span>parquet::schema::types::SchemaDescriptor;
+<span class="kw">use </span>parquet::schema::types::{ColumnPath, SchemaDescriptor};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>store_api::storage::consts::SEQUENCE_COLUMN_NAME;
 <span class="kw">use </span>table::predicate::Predicate;
 <span class="kw">use </span>tokio::io::BufReader;
 
@@ -1074,7 +1093,8 @@
         opts: <span class="kw-2">&amp;</span>sst::WriteOptions,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SstInfo&gt;&gt; {
         <span class="kw">let </span>schema = <span class="self">self</span>.source.schema();
-        <span class="kw">let </span>writer_props = WriterProperties::builder()
+
+        <span class="kw">let </span><span class="kw-2">mut </span>props_builder = WriterProperties::builder()
             .set_compression(Compression::ZSTD(ZstdLevel::default()))
             .set_encoding(Encoding::PLAIN)
             .set_max_row_group_size(<span class="self">self</span>.max_row_group_size)
@@ -1083,7 +1103,23 @@
                     .map(|(k, v)| KeyValue::new(k.clone(), v.clone()))
                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
             }))
-            .build();
+            .set_column_encoding(
+                ColumnPath::new(<span class="macro">vec!</span>[SEQUENCE_COLUMN_NAME.to_string()]),
+                Encoding::DELTA_BINARY_PACKED,
+            )
+            .set_column_dictionary_enabled(
+                ColumnPath::new(<span class="macro">vec!</span>[SEQUENCE_COLUMN_NAME.to_string()]),
+                <span class="bool-val">false</span>,
+            );
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(ts_col) = schema.timestamp_column() {
+            props_builder = props_builder.set_column_encoding(
+                ColumnPath::new(<span class="macro">vec!</span>[ts_col.name.clone()]),
+                Encoding::DELTA_BINARY_PACKED,
+            );
+        }
+
+        <span class="kw">let </span>writer_props = props_builder.build();
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffered_writer = BufferedWriter::try_new(
             <span class="self">self</span>.file_path.to_string(),
