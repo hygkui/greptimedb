@@ -673,6 +673,25 @@
 <a href="#673" id="673">673</a>
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -703,7 +722,7 @@
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionSchedulerRef;
-<span class="kw">use </span><span class="kw">crate</span>::config::{EngineConfig, DEFAULT_REGION_WRITE_BUFFER_SIZE};
+<span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, Error, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::file_purger::{FilePurgeHandler, FilePurgerRef};
 <span class="kw">use </span><span class="kw">crate</span>::flush::{
@@ -1181,7 +1200,7 @@
             ttl,
             compaction_time_window,
             write_buffer_size: write_buffer_size
-                .unwrap_or(DEFAULT_REGION_WRITE_BUFFER_SIZE.as_bytes() <span class="kw">as </span>usize),
+                .unwrap_or(<span class="self">self</span>.config.region_write_buffer_size.as_bytes() <span class="kw">as </span>usize),
         })
     }
 
@@ -1228,7 +1247,7 @@
         log_file_dir: <span class="kw-2">&amp;</span>TempDir,
         region_name: <span class="kw-2">&amp;</span>str,
         region_id: u64,
-        ctx: <span class="kw-2">&amp;</span>EngineContext,
+        config: EngineConfig,
     ) -&gt; (TestEngine, TestRegion) {
         <span class="kw">let </span>log_file_dir_path = log_file_dir.path().to_str().unwrap();
         <span class="kw">let </span>log_store = log_store_util::create_tmp_local_file_log_store(log_file_dir_path).<span class="kw">await</span>;
@@ -1238,8 +1257,6 @@
         <span class="kw">let </span><span class="kw-2">mut </span>builder = Fs::default();
         builder.root(<span class="kw-2">&amp;</span>store_dir);
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
-
-        <span class="kw">let </span>config = EngineConfig::default();
 
         <span class="kw">let </span>compaction_scheduler = Arc::new(NoopCompactionScheduler::default());
 
@@ -1259,7 +1276,7 @@
             .build();
 
         <span class="kw">let </span>region = engine
-            .create_region(ctx, desc, <span class="kw-2">&amp;</span>CreateOptions::default())
+            .create_region(<span class="kw-2">&amp;</span>EngineContext::default(), desc, <span class="kw-2">&amp;</span>CreateOptions::default())
             .<span class="kw">await
             </span>.unwrap();
 
@@ -1281,16 +1298,36 @@
 
         <span class="kw">let </span>region_name = <span class="string">&quot;region-0&quot;</span>;
         <span class="kw">let </span>region_id = <span class="number">123456</span>;
-        <span class="kw">let </span>ctx = EngineContext::default();
+        <span class="kw">let </span>config = EngineConfig::default();
 
         <span class="kw">let </span>(engine, region) =
-            create_engine_and_region(<span class="kw-2">&amp;</span>dir, <span class="kw-2">&amp;</span>log_file_dir, region_name, region_id, <span class="kw-2">&amp;</span>ctx).<span class="kw">await</span>;
+            create_engine_and_region(<span class="kw-2">&amp;</span>dir, <span class="kw-2">&amp;</span>log_file_dir, region_name, region_id, config).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(region_name, region.name());
 
+        <span class="kw">let </span>ctx = EngineContext::default();
         <span class="kw">let </span>region2 = engine.get_region(<span class="kw-2">&amp;</span>ctx, region_name).unwrap().unwrap();
         <span class="macro">assert_eq!</span>(region_name, region2.name());
 
         <span class="macro">assert!</span>(engine.get_region(<span class="kw-2">&amp;</span>ctx, <span class="string">&quot;no such region&quot;</span>).unwrap().is_none());
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_create_region_with_buffer_size() {
+        <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;test_buffer_size&quot;</span>);
+        <span class="kw">let </span>log_file_dir = create_temp_dir(<span class="string">&quot;test_buffer_wal&quot;</span>);
+
+        <span class="kw">let </span>region_name = <span class="string">&quot;region-0&quot;</span>;
+        <span class="kw">let </span>region_id = <span class="number">123456</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>config = EngineConfig::default();
+        <span class="kw">let </span>expect_buffer_size = config.region_write_buffer_size / <span class="number">2</span>;
+        config.region_write_buffer_size = expect_buffer_size;
+
+        <span class="kw">let </span>(_engine, region) =
+            create_engine_and_region(<span class="kw-2">&amp;</span>dir, <span class="kw-2">&amp;</span>log_file_dir, region_name, region_id, config).<span class="kw">await</span>;
+        <span class="macro">assert_eq!</span>(
+            expect_buffer_size.as_bytes() <span class="kw">as </span>usize,
+            region.write_buffer_size().<span class="kw">await
+        </span>);
     }
 
     <span class="attr">#[tokio::test]
@@ -1301,10 +1338,10 @@
 
         <span class="kw">let </span>region_name = <span class="string">&quot;test_region&quot;</span>;
         <span class="kw">let </span>region_id = <span class="number">123456</span>;
-        <span class="kw">let </span>ctx = EngineContext::default();
+        <span class="kw">let </span>config = EngineConfig::default();
 
         <span class="kw">let </span>(engine, region) =
-            create_engine_and_region(<span class="kw-2">&amp;</span>dir, <span class="kw-2">&amp;</span>log_file_dir, region_name, region_id, <span class="kw-2">&amp;</span>ctx).<span class="kw">await</span>;
+            create_engine_and_region(<span class="kw-2">&amp;</span>dir, <span class="kw-2">&amp;</span>log_file_dir, region_name, region_id, config).<span class="kw">await</span>;
 
         <span class="macro">assert_eq!</span>(region_name, region.name());
 
@@ -1323,6 +1360,7 @@
 
         <span class="comment">// Flush memtable to sst.
         </span>region.flush(<span class="kw-2">&amp;</span>FlushContext::default()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>ctx = EngineContext::default();
         engine
             .close_region(<span class="kw-2">&amp;</span>ctx, region.name(), <span class="kw-2">&amp;</span>CloseOptions::default())
             .<span class="kw">await

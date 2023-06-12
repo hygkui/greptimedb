@@ -897,6 +897,14 @@
 <a href="#897" id="897">897</a>
 <a href="#898" id="898">898</a>
 <a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1286,6 +1294,14 @@
         }
 
         <span class="prelude-val">Ok</span>(())
+    }
+}
+
+<span class="comment">// Methods for tests.
+</span><span class="attr">#[cfg(test)]
+</span><span class="kw">impl </span>RegionWriter {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>write_buffer_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.inner.lock().<span class="kw">await</span>.write_buffer_size
     }
 }
 
