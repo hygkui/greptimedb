@@ -710,7 +710,7 @@
             seq.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
         }
 
-        <span class="kw">let </span>iter = memtable.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
+        <span class="kw">let </span>iter = memtable.iter(IterContext::default()).unwrap();
         <span class="kw">let </span>file_path = sst_file_id.as_parquet();
         <span class="kw">let </span>writer = ParquetWriter::new(<span class="kw-2">&amp;</span>file_path, Source::Iter(iter), object_store.clone());
 

@@ -379,6 +379,8 @@
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -404,10 +406,11 @@
 <span class="kw">use </span><span class="kw">crate</span>::sst::FileMeta;
 
 <span class="doccomment">/// A set of predefined time windows.
-</span><span class="kw">const </span>TIME_WINDOW_SIZE: [i64; <span class="number">9</span>] = [
-    <span class="number">60</span>,               <span class="comment">// 1 minute
-    </span><span class="number">60 </span>* <span class="number">10</span>,          <span class="comment">// 10 minute
-    </span><span class="number">60 </span>* <span class="number">30</span>,          <span class="comment">// 30 minute
+</span><span class="kw">const </span>TIME_WINDOW_SIZE: [i64; <span class="number">10</span>] = [
+    <span class="number">1</span>,                <span class="comment">// 1 second
+    </span><span class="number">60</span>,               <span class="comment">// 1 minute
+    </span><span class="number">60 </span>* <span class="number">10</span>,          <span class="comment">// 10 minutes
+    </span><span class="number">60 </span>* <span class="number">30</span>,          <span class="comment">// 30 minutes
     </span><span class="number">60 </span>* <span class="number">60</span>,          <span class="comment">// 1 hour
     </span><span class="number">2 </span>* <span class="number">60 </span>* <span class="number">60</span>,      <span class="comment">// 2 hours
     </span><span class="number">6 </span>* <span class="number">60 </span>* <span class="number">60</span>,      <span class="comment">// 6 hours
@@ -541,11 +544,12 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_get_time_window_size() {
-        <span class="macro">assert_eq!</span>(<span class="number">60</span>, min_duration_to_window_size(<span class="number">0</span>));
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, min_duration_to_window_size(<span class="number">0</span>));
         <span class="kw">for </span>window <span class="kw">in </span>TIME_WINDOW_SIZE {
             <span class="macro">assert_eq!</span>(window, min_duration_to_window_size(window));
         }
-        <span class="macro">assert_eq!</span>(<span class="number">60</span>, min_duration_to_window_size(<span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, min_duration_to_window_size(<span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(<span class="number">60</span>, min_duration_to_window_size(<span class="number">60</span>));
         <span class="macro">assert_eq!</span>(<span class="number">60 </span>* <span class="number">10</span>, min_duration_to_window_size(<span class="number">100</span>));
         <span class="macro">assert_eq!</span>(<span class="number">60 </span>* <span class="number">30</span>, min_duration_to_window_size(<span class="number">1800</span>));
         <span class="macro">assert_eq!</span>(<span class="number">60 </span>* <span class="number">60</span>, min_duration_to_window_size(<span class="number">3000</span>));
@@ -625,7 +629,7 @@
             <span class="bool-val">true</span>,
         );
         <span class="macro">assert_eq!</span>(
-            <span class="macro">vec!</span>[TimestampRange::with_unit(<span class="number">0</span>, <span class="number">60</span>, TimeUnit::Second).unwrap()],
+            <span class="macro">vec!</span>[TimestampRange::with_unit(<span class="number">0</span>, <span class="number">60</span>, TimeUnit::Second).unwrap(),],
             res
         );
 
@@ -676,14 +680,14 @@
             }],
             <span class="bool-val">true</span>,
         );
-        <span class="macro">assert_eq!</span>(
-            <span class="macro">vec!</span>[
-                TimestampRange::with_unit(<span class="number">0</span>, <span class="number">60</span>, TimeUnit::Second).unwrap(),
-                TimestampRange::with_unit(<span class="number">60</span>, <span class="number">120</span>, TimeUnit::Second).unwrap(),
-                TimestampRange::with_unit(<span class="number">60 </span>* <span class="number">60</span>, <span class="number">61 </span>* <span class="number">60</span>, TimeUnit::Second).unwrap(),
-            ],
-            res
-        );
+
+        <span class="kw">let </span><span class="kw-2">mut </span>expect = (<span class="number">0</span>..=<span class="number">61</span>)
+            .map(|s| TimestampRange::with_unit(s, s + <span class="number">1</span>, TimeUnit::Second).unwrap())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        expect.push(TimestampRange::with_unit(<span class="number">60 </span>* <span class="number">60</span>, <span class="number">60 </span>* <span class="number">60 </span>+ <span class="number">1</span>, TimeUnit::Second).unwrap());
+        expect.push(TimestampRange::with_unit(<span class="number">60 </span>* <span class="number">60 </span>+ <span class="number">1</span>, <span class="number">60 </span>* <span class="number">60 </span>+ <span class="number">2</span>, TimeUnit::Second).unwrap());
+
+        <span class="macro">assert_eq!</span>(expect, res);
 
         <span class="kw">let </span>res = window_inference.infer_window(
             <span class="kw-2">&amp;</span>[

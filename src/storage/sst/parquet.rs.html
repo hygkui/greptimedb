@@ -1566,7 +1566,7 @@
 
         <span class="kw">let </span>object_store = create_object_store(path);
         <span class="kw">let </span>sst_file_name = <span class="string">&quot;test-flush.parquet&quot;</span>;
-        <span class="kw">let </span>iter = memtable.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
+        <span class="kw">let </span>iter = memtable.iter(IterContext::default()).unwrap();
         <span class="kw">let </span>writer = ParquetWriter::new(sst_file_name, Source::Iter(iter), object_store.clone());
 
         writer
@@ -1650,7 +1650,7 @@
         <span class="kw">let </span>object_store = create_object_store(path);
         <span class="kw">let </span>sst_file_handle = new_file_handle(FileId::random());
         <span class="kw">let </span>sst_file_name = sst_file_handle.file_name();
-        <span class="kw">let </span>iter = memtable.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
+        <span class="kw">let </span>iter = memtable.iter(IterContext::default()).unwrap();
         <span class="kw">let </span>writer = ParquetWriter::new(<span class="kw-2">&amp;</span>sst_file_name, Source::Iter(iter), object_store.clone());
 
         <span class="kw">let </span>SstInfo {
@@ -1736,7 +1736,7 @@
         <span class="kw">let </span>object_store = create_object_store(path);
         <span class="kw">let </span>file_handle = new_file_handle(FileId::random());
         <span class="kw">let </span>sst_file_name = file_handle.file_name();
-        <span class="kw">let </span>iter = memtable.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
+        <span class="kw">let </span>iter = memtable.iter(IterContext::default()).unwrap();
         <span class="kw">let </span>writer = ParquetWriter::new(<span class="kw-2">&amp;</span>sst_file_name, Source::Iter(iter), object_store.clone());
 
         <span class="kw">let </span>SstInfo {
@@ -1842,7 +1842,7 @@
         <span class="kw">let </span>object_store = create_object_store(path);
         <span class="kw">let </span>sst_file_handle = new_file_handle(FileId::random());
         <span class="kw">let </span>sst_file_name = sst_file_handle.file_name();
-        <span class="kw">let </span>iter = memtable.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
+        <span class="kw">let </span>iter = memtable.iter(IterContext::default()).unwrap();
         <span class="kw">let </span>writer = ParquetWriter::new(<span class="kw-2">&amp;</span>sst_file_name, Source::Iter(iter), object_store.clone());
 
         <span class="kw">let </span>SstInfo {
@@ -1937,7 +1937,7 @@
         builder.root(path);
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
         <span class="kw">let </span>sst_file_name = <span class="string">&quot;test-read.parquet&quot;</span>;
-        <span class="kw">let </span>iter = memtable.iter(<span class="kw-2">&amp;</span>IterContext::default()).unwrap();
+        <span class="kw">let </span>iter = memtable.iter(IterContext::default()).unwrap();
         <span class="kw">let </span>writer = ParquetWriter::new(sst_file_name, Source::Iter(iter), object_store.clone());
 
         <span class="kw">let </span>sst_info_opt = writer

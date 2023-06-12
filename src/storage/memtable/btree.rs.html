@@ -716,10 +716,10 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>IterContext) -&gt; <span class="prelude-ty">Result</span>&lt;BoxedBatchIterator&gt; {
+    <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: IterContext) -&gt; <span class="prelude-ty">Result</span>&lt;BoxedBatchIterator&gt; {
         <span class="macro">assert!</span>(ctx.batch_size &gt; <span class="number">0</span>);
 
-        <span class="kw">let </span>iter = BTreeIterator::new(ctx.clone(), <span class="self">self</span>.schema.clone(), <span class="self">self</span>.map.clone())<span class="question-mark">?</span>;
+        <span class="kw">let </span>iter = BTreeIterator::new(ctx, <span class="self">self</span>.schema.clone(), <span class="self">self</span>.map.clone())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Box::new(iter))
     }

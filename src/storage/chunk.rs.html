@@ -282,6 +282,8 @@
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -504,7 +506,9 @@
             .batch_size(<span class="self">self</span>.iter_ctx.batch_size);
 
         <span class="kw">for </span>mem <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.memtables {
-            <span class="kw">let </span>iter = mem.iter(<span class="kw-2">&amp;</span><span class="self">self</span>.iter_ctx)<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>iter_ctx = <span class="self">self</span>.iter_ctx.clone();
+            iter_ctx.time_range = <span class="prelude-val">Some</span>(<span class="kw-2">*</span>time_range);
+            <span class="kw">let </span>iter = mem.iter(iter_ctx)<span class="question-mark">?</span>;
             reader_builder = reader_builder.push_batch_iter(iter);
         }
 

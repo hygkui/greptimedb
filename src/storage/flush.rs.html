@@ -760,7 +760,7 @@
 
             <span class="kw">let </span>file_id = FileId::random();
             <span class="comment">// TODO(hl): Check if random file name already exists in meta.
-            </span><span class="kw">let </span>iter = m.iter(<span class="kw-2">&amp;</span>iter_ctx)<span class="question-mark">?</span>;
+            </span><span class="kw">let </span>iter = m.iter(iter_ctx.clone())<span class="question-mark">?</span>;
             <span class="kw">let </span>sst_layer = <span class="self">self</span>.sst_layer.clone();
             <span class="kw">let </span>write_options = WriteOptions {
                 sst_write_buffer_size: <span class="self">self</span>.engine_config.sst_write_buffer_size,
