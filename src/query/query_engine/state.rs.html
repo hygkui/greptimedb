@@ -216,6 +216,13 @@
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -245,6 +252,7 @@
 <span class="kw">use </span>datafusion::error::Result <span class="kw">as </span>DfResult;
 <span class="kw">use </span>datafusion::execution::context::{QueryPlanner, SessionConfig, SessionState};
 <span class="kw">use </span>datafusion::execution::runtime_env::RuntimeEnv;
+<span class="kw">use </span>datafusion::physical_optimizer::dist_enforcement::EnforceDistribution;
 <span class="kw">use </span>datafusion::physical_optimizer::repartition::Repartition;
 <span class="kw">use </span>datafusion::physical_optimizer::sort_enforcement::EnforceSorting;
 <span class="kw">use </span>datafusion::physical_optimizer::PhysicalOptimizerRule;
@@ -304,10 +312,16 @@
             <span class="kw">let </span>state = SessionState::with_config_rt(session_config.clone(), runtime_env.clone());
             state.physical_optimizers().to_vec()
         };
-        <span class="comment">// run the repartition and sort enforcement rules first
+        <span class="comment">// run the repartition and sort enforcement rules first.
+        // And `EnforceSorting` is required to run after `EnforceDistribution`.
         </span><span class="self">Self</span>::remove_physical_optimize_rule(<span class="kw-2">&amp;mut </span>physical_optimizers, EnforceSorting {}.name());
+        <span class="self">Self</span>::remove_physical_optimize_rule(
+            <span class="kw-2">&amp;mut </span>physical_optimizers,
+            EnforceDistribution {}.name(),
+        );
         <span class="self">Self</span>::remove_physical_optimize_rule(<span class="kw-2">&amp;mut </span>physical_optimizers, Repartition {}.name());
         physical_optimizers.insert(<span class="number">0</span>, Arc::new(EnforceSorting {}));
+        physical_optimizers.insert(<span class="number">0</span>, Arc::new(EnforceDistribution {}));
         physical_optimizers.insert(<span class="number">0</span>, Arc::new(Repartition {}));
 
         <span class="kw">let </span>session_state = SessionState::with_config_rt_and_catalog_list(
