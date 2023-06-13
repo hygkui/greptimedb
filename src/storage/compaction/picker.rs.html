@@ -150,6 +150,7 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -272,6 +273,7 @@
         }
 
         <span class="kw">let </span>ctx = <span class="kw-2">&amp;</span>PickerContext::with(req.compaction_time_window);
+
         <span class="kw">for </span>level_num <span class="kw">in </span><span class="number">0</span>..levels.level_num() {
             <span class="kw">let </span>level = levels.level(level_num <span class="kw">as </span>u8);
             <span class="kw">let </span>(compaction_time_window, outputs) = <span class="self">self</span>.strategy.pick(ctx, level);
@@ -282,8 +284,8 @@
             }
 
             <span class="macro">debug!</span>(
-                <span class="string">&quot;Found SST files to compact {:?} on level: {}&quot;</span>,
-                outputs, level_num
+                <span class="string">&quot;Found SST files to compact {:?} on level: {}, compaction window: {:?}&quot;</span>,
+                outputs, level_num, compaction_time_window,
             );
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(CompactionTaskImpl {
                 schema: req.schema(),

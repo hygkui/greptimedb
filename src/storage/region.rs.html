@@ -746,10 +746,6 @@
 <a href="#746" id="746">746</a>
 <a href="#747" id="747">747</a>
 <a href="#748" id="748">748</a>
-<a href="#749" id="749">749</a>
-<a href="#750" id="750">750</a>
-<a href="#751" id="751">751</a>
-<a href="#752" id="752">752</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -912,11 +908,10 @@
     <span class="kw">pub </span>engine_config: Arc&lt;EngineConfig&gt;,
     <span class="kw">pub </span>file_purger: FilePurgerRef,
     <span class="kw">pub </span>ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
-    <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
     <span class="kw">pub </span>write_buffer_size: usize,
 }
 
-<span class="kw">pub type </span>RecoverdMetadata = (SequenceNumber, (ManifestVersion, RawRegionMetadata));
+<span class="kw">pub type </span>RecoveredMetadata = (SequenceNumber, (ManifestVersion, RawRegionMetadata));
 <span class="kw">pub type </span>RecoveredMetadataMap = BTreeMap&lt;SequenceNumber, (ManifestVersion, RawRegionMetadata)&gt;;
 
 <span class="attr">#[derive(Debug)]
@@ -996,7 +991,6 @@
                 store_config.memtable_builder,
                 store_config.engine_config.clone(),
                 store_config.ttl,
-                store_config.compaction_time_window,
                 store_config.write_buffer_size,
             )),
             wal,
@@ -1016,7 +1010,7 @@
     </span><span class="kw">pub async fn </span>open(
         name: String,
         store_config: StoreConfig&lt;S&gt;,
-        opts: <span class="kw-2">&amp;</span>OpenOptions,
+        _opts: <span class="kw-2">&amp;</span>OpenOptions,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;RegionImpl&lt;S&gt;&gt;&gt; {
         <span class="comment">// Load version meta data from manifest.
         </span><span class="kw">let </span>(version, <span class="kw-2">mut </span>recovered_metadata) = <span class="kw">match </span><span class="self">Self</span>::recover_from_manifest(
@@ -1080,14 +1074,11 @@
             version_control,
             last_flush_millis: AtomicI64::new(<span class="number">0</span>),
         });
-        <span class="kw">let </span>compaction_time_window = store_config
-            .compaction_time_window
-            .or(opts.compaction_time_window);
+
         <span class="kw">let </span>writer = Arc::new(RegionWriter::new(
             store_config.memtable_builder,
             store_config.engine_config.clone(),
             store_config.ttl,
-            compaction_time_window,
             store_config.write_buffer_size,
         ));
         <span class="kw">let </span>writer_ctx = WriterContext {
@@ -1273,6 +1264,7 @@
                 flushed_sequence: e.flushed_sequence,
                 manifest_version,
                 max_memtable_id: <span class="prelude-val">None</span>,
+                compaction_time_window: e.compaction_time_window,
             };
             version.map(|<span class="kw-2">mut </span>v| {
                 v.apply_edit(edit);

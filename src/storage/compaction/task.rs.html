@@ -246,6 +246,9 @@
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -350,7 +353,6 @@
     }
 
     <span class="doccomment">/// Writes updated SST info into manifest.
-    </span><span class="comment">// TODO(etolbakov): we are not persisting inferred compaction_time_window (#1083)[https://github.com/GreptimeTeam/greptimedb/pull/1083]
     </span><span class="kw">async fn </span>write_manifest_and_apply(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         output: HashSet&lt;FileMeta&gt;,
@@ -364,6 +366,7 @@
             flushed_sequence: <span class="prelude-val">None</span>,
             files_to_add: Vec::from_iter(output.into_iter()),
             files_to_remove: Vec::from_iter(input.into_iter()),
+            compaction_time_window: <span class="self">self</span>.compaction_time_window,
         };
         <span class="macro">debug!</span>(
             <span class="string">&quot;Compacted region: {}, region edit: {:?}&quot;</span>,
@@ -399,7 +402,10 @@
 
         <span class="kw">let </span>input_ids = compacted.iter().map(|f| f.file_id).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>output_ids = output.iter().map(|f| f.file_id).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="macro">info!</span>(<span class="string">&quot;Compacting SST files, input: {input_ids:?}, output: {output_ids:?}&quot;</span>);
+        <span class="macro">info!</span>(
+            <span class="string">&quot;Compacting SST files, input: {:?}, output: {:?}, window: {:?}&quot;</span>,
+            input_ids, output_ids, <span class="self">self</span>.compaction_time_window
+        );
         <span class="self">self</span>.write_manifest_and_apply(output, compacted)
             .<span class="kw">await
             </span>.map_err(|e| {

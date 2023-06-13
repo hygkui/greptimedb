@@ -491,6 +491,7 @@
 <a href="#491" id="491">491</a>
 <a href="#492" id="492">492</a>
 <a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -805,6 +806,7 @@
             flushed_sequence: <span class="prelude-val">Some</span>(<span class="self">self</span>.flush_sequence),
             files_to_add: file_metas.to_vec(),
             files_to_remove: Vec::default(),
+            compaction_time_window: <span class="prelude-val">None</span>,
         };
 
         <span class="self">self</span>.writer

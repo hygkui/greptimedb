@@ -320,6 +320,11 @@
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -369,19 +374,24 @@
         <span class="kw">if </span>files.is_empty() {
             <span class="kw">return </span>(<span class="prelude-val">None</span>, <span class="macro">vec!</span>[]);
         }
-        <span class="kw">let </span>time_bucket = ctx
-            .compaction_time_window()
-            .unwrap_or_else(|| infer_time_bucket(<span class="kw-2">&amp;</span>files));
-        <span class="kw">let </span>buckets = calculate_time_buckets(time_bucket, <span class="kw-2">&amp;</span>files);
-        <span class="macro">debug!</span>(<span class="string">&quot;File bucket:{}, file groups: {:?}&quot;</span>, time_bucket, buckets);
+        <span class="kw">let </span>time_window = ctx.compaction_time_window().unwrap_or_else(|| {
+            <span class="kw">let </span>inferred = infer_time_bucket(<span class="kw-2">&amp;</span>files);
+            <span class="macro">debug!</span>(
+                <span class="string">&quot;Compaction window is not present, inferring from files: {:?}&quot;</span>,
+                inferred
+            );
+            inferred
+        });
+        <span class="kw">let </span>buckets = calculate_time_buckets(time_window, <span class="kw-2">&amp;</span>files);
+        <span class="macro">debug!</span>(<span class="string">&quot;File bucket:{}, file groups: {:?}&quot;</span>, time_window, buckets);
         (
-            <span class="prelude-val">Some</span>(time_bucket),
+            <span class="prelude-val">Some</span>(time_window),
             buckets
                 .into_iter()
                 .map(|(bound, files)| CompactionOutput {
                     output_level: <span class="number">1</span>,
                     bucket_bound: bound,
-                    bucket: time_bucket,
+                    bucket: time_window,
                     inputs: files,
                 })
                 .collect(),

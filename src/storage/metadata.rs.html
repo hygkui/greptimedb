@@ -1314,26 +1314,6 @@
 <a href="#1314" id="1314">1314</a>
 <a href="#1315" id="1315">1315</a>
 <a href="#1316" id="1316">1316</a>
-<a href="#1317" id="1317">1317</a>
-<a href="#1318" id="1318">1318</a>
-<a href="#1319" id="1319">1319</a>
-<a href="#1320" id="1320">1320</a>
-<a href="#1321" id="1321">1321</a>
-<a href="#1322" id="1322">1322</a>
-<a href="#1323" id="1323">1323</a>
-<a href="#1324" id="1324">1324</a>
-<a href="#1325" id="1325">1325</a>
-<a href="#1326" id="1326">1326</a>
-<a href="#1327" id="1327">1327</a>
-<a href="#1328" id="1328">1328</a>
-<a href="#1329" id="1329">1329</a>
-<a href="#1330" id="1330">1330</a>
-<a href="#1331" id="1331">1331</a>
-<a href="#1332" id="1332">1332</a>
-<a href="#1333" id="1333">1333</a>
-<a href="#1334" id="1334">1334</a>
-<a href="#1335" id="1335">1335</a>
-<a href="#1336" id="1336">1336</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1530,8 +1510,6 @@
     <span class="kw">pub </span>columns: ColumnsMetadataRef,
     column_families: ColumnFamiliesMetadata,
     version: VersionNumber,
-    <span class="doccomment">/// Time window for compaction
-    </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 }
 
 <span class="kw">impl </span>RegionMetadata {
@@ -1548,11 +1526,6 @@
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>RegionSchemaRef {
         <span class="kw-2">&amp;</span><span class="self">self</span>.schema
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>compaction_time_window(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;i64&gt; {
-        <span class="self">self</span>.compaction_time_window
     }
 
     <span class="attr">#[inline]
@@ -1656,8 +1629,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>builder = RegionDescriptorBuilder::default()
             .id(<span class="self">self</span>.id)
             .name(<span class="kw-2">&amp;</span><span class="self">self</span>.name)
-            .row_key(row_key)
-            .compaction_time_window(<span class="self">self</span>.compaction_time_window);
+            .row_key(row_key);
 
         <span class="kw">for </span>(cf_id, cf) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.column_families.id_to_cfs {
             <span class="kw">let </span><span class="kw-2">mut </span>cf_builder = ColumnFamilyDescriptorBuilder::default()
@@ -1690,7 +1662,6 @@
             columns: RawColumnsMetadata::from(<span class="kw-2">&amp;*</span>data.columns),
             column_families: RawColumnFamiliesMetadata::from(<span class="kw-2">&amp;</span>data.column_families),
             version: data.version,
-            compaction_time_window: data.compaction_time_window,
         }
     }
 }
@@ -1709,7 +1680,6 @@
             columns,
             column_families: raw.column_families.into(),
             version: raw.version,
-            compaction_time_window: raw.compaction_time_window,
         })
     }
 }
@@ -1967,8 +1937,7 @@
             .name(desc.name)
             .id(desc.id)
             .row_key(desc.row_key)<span class="question-mark">?
-            </span>.compaction_time_window(desc.compaction_time_window)
-            .add_column_family(desc.default_cf)<span class="question-mark">?</span>;
+            </span>.add_column_family(desc.default_cf)<span class="question-mark">?</span>;
         <span class="kw">for </span>cf <span class="kw">in </span>desc.extra_cfs {
             builder = builder.add_column_family(cf)<span class="question-mark">?</span>;
         }
@@ -2114,7 +2083,6 @@
     columns_meta_builder: ColumnsMetadataBuilder,
     cfs_meta_builder: ColumnFamiliesMetadataBuilder,
     version: VersionNumber,
-    compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>RegionMetadataBuilder {
@@ -2131,7 +2099,6 @@
             columns_meta_builder: ColumnsMetadataBuilder::default(),
             cfs_meta_builder: ColumnFamiliesMetadataBuilder::default(),
             version: Schema::INITIAL_VERSION,
-            compaction_time_window: <span class="prelude-val">None</span>,
         }
     }
 
@@ -2155,11 +2122,6 @@
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
-
-    <span class="kw">fn </span>compaction_time_window(<span class="kw-2">mut </span><span class="self">self</span>, compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.compaction_time_window = compaction_time_window;
-        <span class="self">self
-    </span>}
 
     <span class="kw">fn </span>add_column_family(<span class="kw-2">mut </span><span class="self">self</span>, cf: ColumnFamilyDescriptor) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>column_index_start = <span class="self">self</span>.columns_meta_builder.columns.len();
@@ -2191,7 +2153,6 @@
             columns,
             column_families: <span class="self">self</span>.cfs_meta_builder.build(),
             version: <span class="self">self</span>.version,
-            compaction_time_window: <span class="self">self</span>.compaction_time_window,
         })
     }
 }
@@ -2383,7 +2344,6 @@
             .unwrap();
         RegionMetadataBuilder::new()
             .name(TEST_REGION)
-            .compaction_time_window(<span class="prelude-val">None</span>)
             .row_key(row_key)
             .unwrap()
             .add_column_family(cf)

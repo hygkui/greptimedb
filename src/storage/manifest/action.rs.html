@@ -433,6 +433,7 @@
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -473,8 +474,6 @@
     <span class="kw">pub </span>columns: RawColumnsMetadata,
     <span class="kw">pub </span>column_families: RawColumnFamiliesMetadata,
     <span class="kw">pub </span>version: VersionNumber,
-    <span class="doccomment">/// Time window for compaction
-    </span><span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 }
 
 <span class="doccomment">/// Minimal data that could be used to persist and recover [ColumnsMetadata](crate::metadata::ColumnsMetadata).
@@ -513,6 +512,7 @@
     <span class="kw">pub </span>flushed_sequence: <span class="prelude-ty">Option</span>&lt;SequenceNumber&gt;,
     <span class="kw">pub </span>files_to_add: Vec&lt;FileMeta&gt;,
     <span class="kw">pub </span>files_to_remove: Vec&lt;FileMeta&gt;,
+    <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
 }
 
 <span class="doccomment">/// The region version checkpoint
@@ -817,6 +817,7 @@
                 flushed_sequence: <span class="prelude-val">Some</span>(<span class="number">99</span>),
                 files_to_add: files.clone(),
                 files_to_remove: <span class="macro">vec!</span>[],
+                compaction_time_window: <span class="prelude-val">None</span>,
             },
         );
         builder.apply_edit(
@@ -826,6 +827,7 @@
                 flushed_sequence: <span class="prelude-val">Some</span>(<span class="number">100</span>),
                 files_to_add: <span class="macro">vec!</span>[],
                 files_to_remove: <span class="macro">vec!</span>[files[<span class="number">0</span>].clone()],
+                compaction_time_window: <span class="prelude-val">None</span>,
             },
         );
 

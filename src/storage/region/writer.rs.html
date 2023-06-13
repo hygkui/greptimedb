@@ -905,6 +905,8 @@
 <a href="#905" id="905">905</a>
 <a href="#906" id="906">906</a>
 <a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -949,7 +951,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{FLUSH_REASON, FLUSH_REQUESTS_TOTAL, PREPROCESS_ELAPSED};
 <span class="kw">use </span><span class="kw">crate</span>::proto::wal::WalHeader;
 <span class="kw">use </span><span class="kw">crate</span>::region::{
-    CompactContext, RecoverdMetadata, RecoveredMetadataMap, RegionManifest, SharedDataRef,
+    CompactContext, RecoveredMetadata, RecoveredMetadataMap, RegionManifest, SharedDataRef,
 };
 <span class="kw">use </span><span class="kw">crate</span>::schema::compat::CompatWrite;
 <span class="kw">use </span><span class="kw">crate</span>::sst::AccessLayerRef;
@@ -979,7 +981,6 @@
         memtable_builder: MemtableBuilderRef,
         config: Arc&lt;EngineConfig&gt;,
         ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
-        compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
         write_buffer_size: usize,
     ) -&gt; RegionWriter {
         RegionWriter {
@@ -987,7 +988,6 @@
                 memtable_builder,
                 config,
                 ttl,
-                compaction_time_window,
                 write_buffer_size,
             )),
             version_mutex: Mutex::new(()),
@@ -1048,7 +1048,7 @@
         <span class="kw">let </span>files_to_add = edit.files_to_add.clone();
         <span class="kw">let </span>files_to_remove = edit.files_to_remove.clone();
         <span class="kw">let </span>flushed_sequence = edit.flushed_sequence;
-
+        <span class="kw">let </span>compaction_time_window = edit.compaction_time_window;
         <span class="comment">// Persist the meta action.
         </span><span class="kw">let </span><span class="kw-2">mut </span>action_list = RegionMetaActionList::with_action(RegionMetaAction::Edit(edit));
         action_list.set_prev_version(prev_version);
@@ -1065,6 +1065,7 @@
             flushed_sequence,
             manifest_version,
             max_memtable_id,
+            compaction_time_window,
         };
 
         <span class="comment">// We could tolerate failure during persisting manifest version to the WAL, since it won&#39;t
@@ -1363,7 +1364,6 @@
     </span>closed: bool,
     engine_config: Arc&lt;EngineConfig&gt;,
     ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
-    compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
     <span class="doccomment">/// Size in bytes to freeze the mutable memtable.
     </span>write_buffer_size: usize,
 }
@@ -1373,7 +1373,6 @@
         memtable_builder: MemtableBuilderRef,
         engine_config: Arc&lt;EngineConfig&gt;,
         ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
-        compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
         write_buffer_size: usize,
     ) -&gt; WriterInner {
         WriterInner {
@@ -1382,7 +1381,6 @@
             engine_config,
             closed: <span class="bool-val">false</span>,
             ttl,
-            compaction_time_window,
             write_buffer_size,
         }
     }
@@ -1548,7 +1546,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         writer_ctx: <span class="kw-2">&amp;</span>WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
         sequence: SequenceNumber,
-        <span class="kw-2">mut </span>metadata: <span class="prelude-ty">Option</span>&lt;RecoverdMetadata&gt;,
+        <span class="kw-2">mut </span>metadata: <span class="prelude-ty">Option</span>&lt;RecoveredMetadata&gt;,
         version_control: <span class="kw-2">&amp;</span>VersionControl,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// It&#39;s safe to unwrap here, it&#39;s checked outside.
@@ -1683,7 +1681,7 @@
             manifest: ctx.manifest.clone(),
             engine_config: <span class="self">self</span>.engine_config.clone(),
             ttl: <span class="self">self</span>.ttl,
-            compaction_time_window: <span class="self">self</span>.compaction_time_window,
+            compaction_time_window: current_version.ssts().compaction_time_window(),
         };
 
         <span class="kw">let </span>flush_handle = ctx
@@ -1705,6 +1703,12 @@
         sst_write_buffer_size: ReadableSize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>region_id = writer_ctx.shared.id();
+        <span class="kw">let </span>compaction_time_window = writer_ctx
+            .shared
+            .version_control
+            .current()
+            .ssts()
+            .compaction_time_window();
         <span class="kw">let </span><span class="kw-2">mut </span>compaction_request = CompactionRequestImpl {
             region_id,
             sst_layer: writer_ctx.sst_layer.clone(),
@@ -1713,7 +1717,7 @@
             manifest: writer_ctx.manifest.clone(),
             wal: writer_ctx.wal.clone(),
             ttl: <span class="self">self</span>.ttl,
-            compaction_time_window: <span class="self">self</span>.compaction_time_window,
+            compaction_time_window,
             sender: <span class="prelude-val">None</span>,
             sst_write_buffer_size,
         };
