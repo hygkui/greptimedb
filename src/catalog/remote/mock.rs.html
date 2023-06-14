@@ -267,6 +267,23 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -296,9 +313,11 @@
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, Schema};
 <span class="kw">use </span>datatypes::vectors::StringVector;
 <span class="kw">use </span>serde::Serializer;
-<span class="kw">use </span>table::engine::{EngineContext, TableEngine, TableReference};
+<span class="kw">use </span>table::engine::{CloseTableResult, EngineContext, TableEngine, TableReference};
 <span class="kw">use </span>table::metadata::TableId;
-<span class="kw">use </span>table::requests::{AlterTableRequest, CreateTableRequest, DropTableRequest, OpenTableRequest};
+<span class="kw">use </span>table::requests::{
+    AlterTableRequest, CloseTableRequest, CreateTableRequest, DropTableRequest, OpenTableRequest,
+};
 <span class="kw">use </span>table::test_util::MemTable;
 <span class="kw">use </span>table::TableRef;
 <span class="kw">use </span>tokio::sync::RwLock;
@@ -452,6 +471,8 @@
         <span class="kw">let </span>table_name = request.table_name.clone();
         <span class="kw">let </span>catalog_name = request.catalog_name.clone();
         <span class="kw">let </span>schema_name = request.schema_name.clone();
+        <span class="kw">let </span>table_full_name =
+            TableReference::full(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name, <span class="kw-2">&amp;</span>table_name).to_string();
 
         <span class="kw">let </span>default_table_id = <span class="string">&quot;0&quot;</span>.to_owned();
         <span class="kw">let </span>table_id = TableId::from_str(
@@ -480,7 +501,7 @@
         )) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;;
 
         <span class="kw">let </span><span class="kw-2">mut </span>tables = <span class="self">self</span>.tables.write().<span class="kw">await</span>;
-        tables.insert(table_name, table.clone() <span class="kw">as </span>TableRef);
+        tables.insert(table_full_name, table.clone() <span class="kw">as </span>TableRef);
         <span class="prelude-val">Ok</span>(table)
     }
 
@@ -530,6 +551,19 @@
         _request: DropTableRequest,
     ) -&gt; table::Result&lt;bool&gt; {
         <span class="macro">unimplemented!</span>()
+    }
+
+    <span class="kw">async fn </span>close_table(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        _ctx: <span class="kw-2">&amp;</span>EngineContext,
+        request: CloseTableRequest,
+    ) -&gt; table::Result&lt;CloseTableResult&gt; {
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.tables
+            .write()
+            .<span class="kw">await
+            </span>.remove(<span class="kw-2">&amp;</span>request.table_ref().to_string());
+        <span class="prelude-val">Ok</span>(CloseTableResult::Released(<span class="macro">vec!</span>[]))
     }
 
     <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; table::Result&lt;()&gt; {
