@@ -495,6 +495,63 @@
 <a href="#495" id="495">495</a>
 <a href="#496" id="496">496</a>
 <a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -514,6 +571,7 @@
 </span><span class="kw">mod </span>error;
 <span class="kw">mod </span>planner;
 
+<span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -540,6 +598,7 @@
 <span class="kw">use </span>table::requests::{DeleteRequest, InsertRequest};
 <span class="kw">use </span>table::TableRef;
 
+<span class="kw">use </span><span class="kw">crate</span>::dataframe::DataFrame;
 <span class="kw">pub use </span><span class="kw">crate</span>::datafusion::planner::DfContextProviderAdapter;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CatalogNotFoundSnafu, CatalogSnafu, CreateRecordBatchSnafu, DataFusionSnafu,
@@ -704,6 +763,10 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>QueryEngine <span class="kw">for </span>DatafusionQueryEngine {
+    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
+        <span class="self">self
+    </span>}
+
     <span class="kw">fn </span>planner(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Arc&lt;<span class="kw">dyn </span>LogicalPlanner&gt; {
         Arc::new(DfLogicalPlanner::new(<span class="self">self</span>.state.clone()))
     }
@@ -745,6 +808,18 @@
 
     <span class="kw">fn </span>register_function(<span class="kw-2">&amp;</span><span class="self">self</span>, func: FunctionRef) {
         <span class="self">self</span>.state.register_udf(create_udf(func));
+    }
+
+    <span class="kw">fn </span>read_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table: TableRef) -&gt; <span class="prelude-ty">Result</span>&lt;DataFrame&gt; {
+        <span class="prelude-val">Ok</span>(DataFrame::DataFusion(
+            <span class="self">self</span>.state
+                .read_table(table)
+                .context(error::DatafusionSnafu {
+                    msg: <span class="string">&quot;Fail to create dataframe for table&quot;</span>,
+                })
+                .map_err(BoxedError::new)
+                .context(QueryExecutionSnafu)<span class="question-mark">?</span>,
+        ))
     }
 }
 
@@ -871,6 +946,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::borrow::Cow::Borrowed;
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>catalog::local::{MemoryCatalogProvider, MemorySchemaProvider};
@@ -878,12 +954,14 @@
     <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
     <span class="kw">use </span>common_query::Output;
     <span class="kw">use </span>common_recordbatch::util;
+    <span class="kw">use </span>datafusion::prelude::{col, lit};
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
     <span class="kw">use </span>datatypes::schema::ColumnSchema;
-    <span class="kw">use </span>datatypes::vectors::{UInt64Vector, VectorRef};
+    <span class="kw">use </span>datatypes::vectors::{Helper, UInt32Vector, UInt64Vector, VectorRef};
     <span class="kw">use </span>session::context::QueryContext;
     <span class="kw">use </span>table::table::numbers::NumbersTable;
 
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::parser::QueryLanguageParser;
     <span class="kw">use </span><span class="kw">crate</span>::query_engine::{QueryEngineFactory, QueryEngineRef};
 
@@ -965,6 +1043,42 @@
             }
             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
         }
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_read_table() {
+        <span class="kw">let </span>engine = create_test_engine().<span class="kw">await</span>;
+
+        <span class="kw">let </span>engine = engine
+            .as_any()
+            .downcast_ref::&lt;DatafusionQueryEngine&gt;()
+            .unwrap();
+        <span class="kw">let </span>table = engine
+            .find_table(<span class="kw-2">&amp;</span>ResolvedTableReference {
+                catalog: Borrowed(<span class="string">&quot;greptime&quot;</span>),
+                schema: Borrowed(<span class="string">&quot;public&quot;</span>),
+                table: Borrowed(<span class="string">&quot;numbers&quot;</span>),
+            })
+            .<span class="kw">await
+            </span>.unwrap();
+
+        <span class="kw">let </span>DataFrame::DataFusion(df) = engine.read_table(table).unwrap();
+        <span class="kw">let </span>df = df
+            .select_columns(<span class="kw-2">&amp;</span>[<span class="string">&quot;number&quot;</span>])
+            .unwrap()
+            .filter(col(<span class="string">&quot;number&quot;</span>).lt(lit(<span class="number">10</span>)))
+            .unwrap();
+        <span class="kw">let </span>batches = df.collect().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, batches.len());
+        <span class="kw">let </span>batch = <span class="kw-2">&amp;</span>batches[<span class="number">0</span>];
+
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, batch.num_columns());
+        <span class="macro">assert_eq!</span>(batch.column(<span class="number">0</span>).len(), <span class="number">10</span>);
+
+        <span class="macro">assert_eq!</span>(
+            Helper::try_into_vector(batch.column(<span class="number">0</span>)).unwrap(),
+            Arc::new(UInt32Vector::from_slice([<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>])) <span class="kw">as </span>VectorRef
+        );
     }
 
     <span class="attr">#[tokio::test]

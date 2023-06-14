@@ -445,6 +445,13 @@
 <a href="#445" id="445">445</a>
 <a href="#446" id="446">446</a>
 <a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -726,6 +733,12 @@
         source: tikv_jemalloc_ctl::Error,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;DataFrame operation error, source: {source}, location: {location}&quot;</span>))]
+    </span>DataFrame {
+        source: datafusion::error::DataFusionError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -764,6 +777,7 @@
             | InvalidPromRemoteRequest { .. }
             | InvalidFlightTicket { .. }
             | InvalidPrepareStatement { .. }
+            | DataFrame { .. }
             | TimePrecision { .. } =&gt; StatusCode::InvalidArguments,
 
             InfluxdbLinesWrite { source, .. } | PromSeriesWrite { source, .. } =&gt; {

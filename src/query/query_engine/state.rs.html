@@ -223,6 +223,16 @@
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -249,6 +259,7 @@
 <span class="kw">use </span>common_query::physical_plan::SessionContext;
 <span class="kw">use </span>common_query::prelude::ScalarUdf;
 <span class="kw">use </span>datafusion::catalog::catalog::MemoryCatalogList;
+<span class="kw">use </span>datafusion::dataframe::DataFrame;
 <span class="kw">use </span>datafusion::error::Result <span class="kw">as </span>DfResult;
 <span class="kw">use </span>datafusion::execution::context::{QueryPlanner, SessionConfig, SessionState};
 <span class="kw">use </span>datafusion::execution::runtime_env::RuntimeEnv;
@@ -263,6 +274,8 @@
 <span class="kw">use </span>datafusion_optimizer::optimizer::Optimizer;
 <span class="kw">use </span>partition::manager::PartitionRuleManager;
 <span class="kw">use </span>promql::extension_plan::PromExtensionPlanner;
+<span class="kw">use </span>table::table::adapter::DfTableProviderAdapter;
+<span class="kw">use </span>table::TableRef;
 
 <span class="kw">use </span><span class="kw">crate</span>::dist_plan::{DistExtensionPlanner, DistPlannerAnalyzer};
 <span class="kw">use </span><span class="kw">crate</span>::extension_serializer::ExtensionSerializer;
@@ -284,8 +297,9 @@
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>QueryEngineState {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="comment">// TODO(dennis) better debug info
-        </span><span class="macro">write!</span>(f, <span class="string">&quot;QueryEngineState: &lt;datafusion context&gt;&quot;</span>)
+        f.debug_struct(<span class="string">&quot;QueryEngineState&quot;</span>)
+            .field(<span class="string">&quot;state&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.df_context.state())
+            .finish()
     }
 }
 
@@ -412,6 +426,12 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>session_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SessionState {
         <span class="self">self</span>.df_context.state()
+    }
+
+    <span class="doccomment">/// Create a DataFrame for a table
+    </span><span class="kw">pub fn </span>read_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table: TableRef) -&gt; DfResult&lt;DataFrame&gt; {
+        <span class="self">self</span>.df_context
+            .read_table(Arc::new(DfTableProviderAdapter::new(table)))
     }
 }
 
