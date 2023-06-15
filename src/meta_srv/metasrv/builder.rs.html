@@ -210,6 +210,13 @@
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -358,24 +365,29 @@
         <span class="kw">let </span>handler_group = <span class="kw">match </span>handler_group {
             <span class="prelude-val">Some</span>(handler_group) =&gt; handler_group,
             <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span>region_failover_manager = Arc::new(RegionFailoverManager::new(
-                    mailbox.clone(),
-                    procedure_manager.clone(),
-                    selector.clone(),
-                    SelectorContext {
-                        server_addr: options.server_addr.clone(),
-                        datanode_lease_secs: options.datanode_lease_secs,
-                        kv_store: kv_store.clone(),
-                        catalog: <span class="prelude-val">None</span>,
-                        schema: <span class="prelude-val">None</span>,
-                        table: <span class="prelude-val">None</span>,
-                    },
-                    lock.clone(),
-                ));
+                <span class="kw">let </span>region_failover_handler = <span class="kw">if </span>options.disable_region_failover {
+                    <span class="prelude-val">None
+                </span>} <span class="kw">else </span>{
+                    <span class="kw">let </span>region_failover_manager = Arc::new(RegionFailoverManager::new(
+                        mailbox.clone(),
+                        procedure_manager.clone(),
+                        selector.clone(),
+                        SelectorContext {
+                            server_addr: options.server_addr.clone(),
+                            datanode_lease_secs: options.datanode_lease_secs,
+                            kv_store: kv_store.clone(),
+                            catalog: <span class="prelude-val">None</span>,
+                            schema: <span class="prelude-val">None</span>,
+                            table: <span class="prelude-val">None</span>,
+                        },
+                        lock.clone(),
+                    ));
 
-                <span class="kw">let </span>region_failure_handler =
-                    RegionFailureHandler::try_new(election.clone(), region_failover_manager)
-                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                    <span class="prelude-val">Some</span>(
+                        RegionFailureHandler::try_new(election.clone(), region_failover_manager)
+                            .<span class="kw">await</span><span class="question-mark">?</span>,
+                    )
+                };
 
                 <span class="kw">let </span>group = HeartbeatHandlerGroup::new(pushers);
                 <span class="kw">let </span>keep_lease_handler = KeepLeaseHandler::new(kv_store.clone());
@@ -386,9 +398,11 @@
                 </span>group.add_handler(keep_lease_handler).<span class="kw">await</span>;
                 group.add_handler(CheckLeaderHandler::default()).<span class="kw">await</span>;
                 group.add_handler(OnLeaderStartHandler::default()).<span class="kw">await</span>;
-                group.add_handler(CollectStatsHandler).<span class="kw">await</span>;
-                group.add_handler(MailboxHandler).<span class="kw">await</span>;
-                group.add_handler(region_failure_handler).<span class="kw">await</span>;
+                group.add_handler(CollectStatsHandler::default()).<span class="kw">await</span>;
+                group.add_handler(MailboxHandler::default()).<span class="kw">await</span>;
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(region_failover_handler) = region_failover_handler {
+                    group.add_handler(region_failover_handler).<span class="kw">await</span>;
+                }
                 group.add_handler(PersistStatsHandler::default()).<span class="kw">await</span>;
                 group
             }
