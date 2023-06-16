@@ -807,7 +807,7 @@
 <span class="kw">fn </span>create_compaction_scheduler&lt;S: LogStore&gt;(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; CompactionSchedulerRef&lt;S&gt; {
     <span class="kw">let </span>picker = SimplePicker::default();
     <span class="kw">let </span>config = SchedulerConfig::from(opts);
-    <span class="kw">let </span>handler = CompactionHandler::new(picker);
+    <span class="kw">let </span>handler = CompactionHandler { picker };
     <span class="kw">let </span>scheduler = LocalScheduler::new(config, handler);
     Arc::new(scheduler)
 }
