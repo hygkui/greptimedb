@@ -75,6 +75,12 @@
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
 <a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -129,6 +135,9 @@
         err_msg: String,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid protobuf message, err: {}&quot;</span>, err_msg))]
+    </span>InvalidProtoMsg { err_msg: String, location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -138,7 +147,10 @@
         <span class="kw">use </span>Error::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="self">self </span>{
             IllegalServerState { .. } =&gt; StatusCode::Internal,
-            SerdeJson { .. } | RouteInfoCorrupted { .. } =&gt; StatusCode::Unexpected,
+
+            SerdeJson { .. } | RouteInfoCorrupted { .. } | InvalidProtoMsg { .. } =&gt; {
+                StatusCode::Unexpected
+            }
 
             SendMessage { .. } =&gt; StatusCode::Internal,
 

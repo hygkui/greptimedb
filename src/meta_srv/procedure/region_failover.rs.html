@@ -649,6 +649,7 @@
 <a href="#649" id="649">649</a>
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -994,7 +995,8 @@
     <span class="kw">use </span>api::v1::meta::{HeartbeatResponse, MailboxMessage, Peer, RequestHeader};
     <span class="kw">use </span>catalog::helper::TableGlobalKey;
     <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MITO_ENGINE};
-    <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply, TableIdent};
+    <span class="kw">use </span>common_meta::ident::TableIdent;
+    <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
     <span class="kw">use </span>common_meta::DatanodeId;
     <span class="kw">use </span>common_procedure::BoxedProcedure;
     <span class="kw">use </span>rand::prelude::SliceRandom;

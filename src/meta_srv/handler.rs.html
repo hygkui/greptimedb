@@ -448,6 +448,9 @@
 <a href="#448" id="448">448</a>
 <a href="#449" id="449">449</a>
 <a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -580,6 +583,7 @@
             .push(HeartbeatResponse {
                 header: <span class="prelude-val">Some</span>(pusher.header()),
                 mailbox_message: <span class="prelude-val">Some</span>(mailbox_message),
+                ..Default::default()
             })
             .<span class="kw">await
     </span>}
@@ -601,6 +605,7 @@
                 .push(HeartbeatResponse {
                     header: <span class="prelude-val">Some</span>(pusher.header()),
                     mailbox_message: <span class="prelude-val">Some</span>(mailbox_message),
+                    ..Default::default()
                 })
                 .<span class="kw">await</span><span class="question-mark">?</span>;
         }
@@ -682,6 +687,7 @@
         <span class="kw">let </span>res = HeartbeatResponse {
             header,
             mailbox_message: acc.into_mailbox_message(),
+            ..Default::default()
         };
         <span class="prelude-val">Ok</span>(res)
     }

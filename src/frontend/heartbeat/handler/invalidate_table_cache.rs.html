@@ -107,6 +107,7 @@
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -127,7 +128,8 @@
 <span class="kw">use </span>common_meta::heartbeat::handler::{
     HandleControl, HeartbeatResponseHandler, HeartbeatResponseHandlerContext,
 };
-<span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply, TableIdent};
+<span class="kw">use </span>common_meta::ident::TableIdent;
+<span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>partition::manager::TableRouteCacheInvalidatorRef;

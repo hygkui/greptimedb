@@ -12,7 +12,7 @@ var sourcesIndex = JSON.parse('{\
 "common_grpc":["",[],["channel_manager.rs","error.rs","flight.rs","lib.rs","select.rs","writer.rs"]],\
 "common_grpc_expr":["",[],["alter.rs","delete.rs","error.rs","insert.rs","lib.rs"]],\
 "common_mem_prof":["",[],["error.rs","lib.rs"]],\
-"common_meta":["",[["heartbeat",[["handler",[],["parse_mailbox_message.rs"]]],["handler.rs","mailbox.rs","utils.rs"]],["key",[],["table_route.rs"]],["rpc",[],["lock.rs","router.rs","store.rs","util.rs"]]],["error.rs","heartbeat.rs","instruction.rs","key.rs","lib.rs","peer.rs","rpc.rs","table_name.rs"]],\
+"common_meta":["",[["heartbeat",[["handler",[],["parse_mailbox_message.rs"]]],["handler.rs","mailbox.rs","utils.rs"]],["key",[],["table_route.rs"]],["rpc",[],["lock.rs","router.rs","store.rs","util.rs"]]],["error.rs","heartbeat.rs","ident.rs","instruction.rs","key.rs","lib.rs","peer.rs","rpc.rs","table_name.rs"]],\
 "common_pprof":["",[],["lib.rs"]],\
 "common_procedure":["",[["local",[],["lock.rs","runner.rs"]],["store",[],["state_store.rs"]]],["error.rs","lib.rs","local.rs","procedure.rs","store.rs","watcher.rs"]],\
 "common_procedure_test":["",[],["lib.rs"]],\

@@ -451,6 +451,15 @@
 <a href="#451" id="451">451</a>
 <a href="#452" id="452">452</a>
 <a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -471,7 +480,8 @@
 <span class="kw">use </span>std::{fs, path};
 
 <span class="kw">use </span>api::v1::meta::Role;
-<span class="kw">use </span>catalog::remote::CachedMetaKvBackend;
+<span class="kw">use </span>catalog::remote::region_alive_keeper::RegionAliveKeepers;
+<span class="kw">use </span>catalog::remote::{CachedMetaKvBackend, RemoteCatalogManager};
 <span class="kw">use </span>catalog::{CatalogManager, CatalogManagerRef, RegisterTableRequest};
 <span class="kw">use </span>common_base::paths::{CLUSTER_DIR, WAL_DIR};
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MIN_USER_TABLE_ID};
@@ -509,9 +519,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::datanode::{DatanodeOptions, ObjectStoreConfig, ProcedureConfig, WalConfig};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, CatalogSnafu, MetaClientInitSnafu, MissingMetasrvOptsSnafu, MissingNodeIdSnafu,
-    NewCatalogSnafu, OpenLogStoreSnafu, RecoverProcedureSnafu, <span class="prelude-ty">Result</span>, ShutdownInstanceSnafu,
-    StartProcedureManagerSnafu, StopProcedureManagerSnafu,
+    <span class="self">self</span>, CatalogSnafu, IncorrectInternalStateSnafu, MetaClientInitSnafu, MissingMetasrvOptsSnafu,
+    MissingNodeIdSnafu, NewCatalogSnafu, OpenLogStoreSnafu, RecoverProcedureSnafu, <span class="prelude-ty">Result</span>,
+    ShutdownInstanceSnafu, StartProcedureManagerSnafu, StopProcedureManagerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::close_region::CloseRegionHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::open_region::OpenRegionHandler;
@@ -603,7 +613,7 @@
         );
 
         <span class="comment">// create remote catalog manager
-        </span><span class="kw">let </span>(catalog_manager, table_id_provider) = <span class="kw">match </span>opts.mode {
+        </span><span class="kw">let </span>(catalog_manager, table_id_provider, heartbeat_task) = <span class="kw">match </span>opts.mode {
             Mode::Standalone =&gt; {
                 <span class="kw">if </span>opts.enable_memory_catalog {
                     <span class="kw">let </span>catalog = Arc::new(catalog::local::MemoryCatalogManager::default());
@@ -623,6 +633,7 @@
                     (
                         catalog.clone() <span class="kw">as </span>CatalogManagerRef,
                         <span class="prelude-val">Some</span>(catalog <span class="kw">as </span>TableIdProviderRef),
+                        <span class="prelude-val">None</span>,
                     )
                 } <span class="kw">else </span>{
                     <span class="kw">let </span>catalog = Arc::new(
@@ -634,50 +645,57 @@
                     (
                         catalog.clone() <span class="kw">as </span>CatalogManagerRef,
                         <span class="prelude-val">Some</span>(catalog <span class="kw">as </span>TableIdProviderRef),
+                        <span class="prelude-val">None</span>,
                     )
                 }
             }
 
             Mode::Distributed =&gt; {
-                <span class="kw">let </span>kv_backend = Arc::new(CachedMetaKvBackend::new(
-                    meta_client.as_ref().unwrap().clone(),
-                ));
+                <span class="kw">let </span>meta_client = meta_client.context(IncorrectInternalStateSnafu {
+                    state: <span class="string">&quot;meta client is not provided when creating distributed Datanode&quot;</span>,
+                })<span class="question-mark">?</span>;
 
-                <span class="kw">let </span>catalog = Arc::new(catalog::remote::RemoteCatalogManager::new(
+                <span class="kw">let </span>kv_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
+
+                <span class="kw">let </span>region_alive_keepers =
+                    Arc::new(RegionAliveKeepers::new(engine_manager.clone()));
+
+                <span class="kw">let </span>catalog_manager = Arc::new(RemoteCatalogManager::new(
                     engine_manager.clone(),
                     opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
                     kv_backend,
+                    region_alive_keepers.clone(),
                 ));
-                (catalog <span class="kw">as </span>CatalogManagerRef, <span class="prelude-val">None</span>)
+
+                <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
+                    Arc::new(ParseMailboxMessageHandler::default()),
+                    Arc::new(OpenRegionHandler::new(
+                        catalog_manager.clone(),
+                        engine_manager.clone(),
+                        region_alive_keepers.clone(),
+                    )),
+                    Arc::new(CloseRegionHandler::new(
+                        catalog_manager.clone(),
+                        engine_manager.clone(),
+                        region_alive_keepers,
+                    )),
+                ]);
+
+                <span class="kw">let </span>heartbeat_task = <span class="prelude-val">Some</span>(HeartbeatTask::new(
+                    opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
+                    opts.rpc_addr.clone(),
+                    opts.rpc_hostname.clone(),
+                    meta_client,
+                    catalog_manager.clone(),
+                    Arc::new(handlers_executor),
+                ));
+
+                (catalog_manager <span class="kw">as </span>CatalogManagerRef, <span class="prelude-val">None</span>, heartbeat_task)
             }
         };
 
         <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_manager.clone(), <span class="bool-val">false</span>);
         <span class="kw">let </span>query_engine = factory.query_engine();
-
-        <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
-            Arc::new(ParseMailboxMessageHandler::default()),
-            Arc::new(OpenRegionHandler::new(
-                catalog_manager.clone(),
-                engine_manager.clone(),
-            )),
-            Arc::new(CloseRegionHandler::new(
-                catalog_manager.clone(),
-                engine_manager.clone(),
-            )),
-        ]);
-
-        <span class="kw">let </span>heartbeat_task = <span class="kw">match </span>opts.mode {
-            Mode::Standalone =&gt; <span class="prelude-val">None</span>,
-            Mode::Distributed =&gt; <span class="prelude-val">Some</span>(HeartbeatTask::new(
-                opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
-                opts.rpc_addr.clone(),
-                opts.rpc_hostname.clone(),
-                meta_client.as_ref().unwrap().clone(),
-                catalog_manager.clone(),
-                Arc::new(handlers_executor),
-            )),
-        };
 
         <span class="kw">let </span>procedure_manager =
             create_procedure_manager(opts.node_id.unwrap_or(<span class="number">0</span>), <span class="kw-2">&amp;</span>opts.procedure, object_store)

@@ -1036,6 +1036,40 @@
 <a href="#1036" id="1036">1036</a>
 <a href="#1037" id="1037">1037</a>
 <a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1058,13 +1092,14 @@
 <span class="kw">use </span>async_stream::stream;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::{MAX_SYS_TABLE_ID, MITO_ENGINE};
+<span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_telemetry::{debug, error, info, warn};
 <span class="kw">use </span>dashmap::DashMap;
 <span class="kw">use </span>futures::Stream;
 <span class="kw">use </span>futures_util::{StreamExt, TryStreamExt};
 <span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>parking_lot::RwLock;
-<span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>table::engine::manager::TableEngineManagerRef;
 <span class="kw">use </span>table::engine::{EngineContext, TableReference};
 <span class="kw">use </span>table::requests::{CreateTableRequest, OpenTableRequest};
@@ -1081,6 +1116,7 @@
     build_table_regional_prefix, CatalogKey, CatalogValue, SchemaKey, SchemaValue, TableGlobalKey,
     TableGlobalValue, TableRegionalKey, TableRegionalValue, CATALOG_KEY_PREFIX,
 };
+<span class="kw">use </span><span class="kw">crate</span>::remote::region_alive_keeper::RegionAliveKeepers;
 <span class="kw">use </span><span class="kw">crate</span>::remote::{Kv, KvBackendRef};
 <span class="kw">use crate</span>::{
     handle_system_table_request, CatalogManager, CatalogProvider, CatalogProviderRef,
@@ -1095,16 +1131,23 @@
     catalogs: Arc&lt;RwLock&lt;DashMap&lt;String, CatalogProviderRef&gt;&gt;&gt;,
     engine_manager: TableEngineManagerRef,
     system_table_requests: Mutex&lt;Vec&lt;RegisterSystemTableRequest&gt;&gt;,
+    region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 }
 
 <span class="kw">impl </span>RemoteCatalogManager {
-    <span class="kw">pub fn </span>new(engine_manager: TableEngineManagerRef, node_id: u64, backend: KvBackendRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(
+        engine_manager: TableEngineManagerRef,
+        node_id: u64,
+        backend: KvBackendRef,
+        region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             engine_manager,
             node_id,
             backend,
             catalogs: Default::default(),
             system_table_requests: Default::default(),
+            region_alive_keepers,
         }
     }
 
@@ -1614,34 +1657,44 @@
     }
 
     <span class="kw">async fn </span>register_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>catalog_name = request.catalog;
-        <span class="kw">let </span>schema_name = request.schema;
+        <span class="kw">let </span>catalog = <span class="kw-2">&amp;</span>request.catalog;
+        <span class="kw">let </span>schema = <span class="kw-2">&amp;</span>request.schema;
+        <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>request.table_name;
+
         <span class="kw">let </span>schema_provider = <span class="self">self
-            </span>.catalog(<span class="kw-2">&amp;</span>catalog_name)
+            </span>.catalog(catalog)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.context(CatalogNotFoundSnafu {
-                catalog_name: <span class="kw-2">&amp;</span>catalog_name,
+                catalog_name: catalog,
             })<span class="question-mark">?
-            </span>.schema(<span class="kw-2">&amp;</span>schema_name)
+            </span>.schema(schema)
             .<span class="kw">await</span><span class="question-mark">?
-            </span>.with_context(|| SchemaNotFoundSnafu {
-                catalog: <span class="kw-2">&amp;</span>catalog_name,
-                schema: <span class="kw-2">&amp;</span>schema_name,
-            })<span class="question-mark">?</span>;
-        <span class="kw">if </span>schema_provider.table_exist(<span class="kw-2">&amp;</span>request.table_name).<span class="kw">await</span><span class="question-mark">? </span>{
-            <span class="kw">return </span>TableExistsSnafu {
-                table: <span class="macro">format!</span>(<span class="string">&quot;{}.{}.{}&quot;</span>, <span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name, <span class="kw-2">&amp;</span>request.table_name),
+            </span>.context(SchemaNotFoundSnafu { catalog, schema })<span class="question-mark">?</span>;
+        <span class="macro">ensure!</span>(
+            !schema_provider.table_exist(table_name).<span class="kw">await</span><span class="question-mark">?</span>,
+            TableExistsSnafu {
+                table: common_catalog::format_full_table_name(catalog, schema, table_name),
             }
-            .fail();
-        }
+        );
 
         <span class="macro">increment_gauge!</span>(
             <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
             <span class="number">1.0</span>,
-            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name)],
+            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(catalog, schema)],
         );
         schema_provider
-            .register_table(request.table_name, request.table)
+            .register_table(table_name.to_string(), request.table.clone())
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>table_ident = TableIdent {
+            catalog: request.catalog,
+            schema: request.schema,
+            table: request.table_name,
+            table_id: request.table_id,
+            engine: request.table.table_info().meta.engine.clone(),
+        };
+        <span class="self">self</span>.region_alive_keepers
+            .register_table(table_ident, request.table)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
@@ -1664,6 +1717,21 @@
             <span class="number">1.0</span>,
             <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(catalog_name, schema_name)],
         );
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = result.as_ref() {
+            <span class="kw">let </span>table_info = table.table_info();
+            <span class="kw">let </span>table_ident = TableIdent {
+                catalog: request.catalog,
+                schema: request.schema,
+                table: request.table_name,
+                table_id: table_info.ident.table_id,
+                engine: table_info.meta.engine.clone(),
+            };
+            <span class="self">self</span>.region_alive_keepers
+                .deregister_table(<span class="kw-2">&amp;</span>table_ident)
+                .<span class="kw">await</span>;
+        }
+
         <span class="prelude-val">Ok</span>(result.is_none())
     }
 
