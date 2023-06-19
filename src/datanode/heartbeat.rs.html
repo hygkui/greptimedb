@@ -281,6 +281,12 @@
 <a href="#281" id="281">281</a>
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -300,6 +306,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::v1::meta::{HeartbeatRequest, NodeStat, Peer};
+<span class="kw">use </span>catalog::remote::region_alive_keeper::RegionAliveKeepers;
 <span class="kw">use </span>catalog::{datanode_stat, CatalogManagerRef};
 <span class="kw">use </span>common_meta::heartbeat::handler::{
     HeartbeatResponseHandlerContext, HeartbeatResponseHandlerExecutorRef,
@@ -325,6 +332,7 @@
     catalog_manager: CatalogManagerRef,
     interval: u64,
     resp_handler_executor: HeartbeatResponseHandlerExecutorRef,
+    region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 }
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>HeartbeatTask {
@@ -342,6 +350,7 @@
         meta_client: Arc&lt;MetaClient&gt;,
         catalog_manager: CatalogManagerRef,
         resp_handler_executor: HeartbeatResponseHandlerExecutorRef,
+        region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             node_id,
@@ -352,6 +361,7 @@
             catalog_manager,
             interval: <span class="number">5_000</span>, <span class="comment">// default interval is set to 5 secs
             </span>resp_handler_executor,
+            region_alive_keepers,
         }
     }
 
@@ -377,7 +387,7 @@
                 }
 
                 <span class="kw">let </span>ctx = HeartbeatResponseHandlerContext::new(mailbox.clone(), res);
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">Self</span>::handle_response(ctx, handler_executor.clone()) {
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">Self</span>::handle_response(ctx, handler_executor.clone()).<span class="kw">await </span>{
                     <span class="macro">error!</span>(e; <span class="string">&quot;Error while handling heartbeat response&quot;</span>);
                 }
                 <span class="kw">if </span>!running.load(Ordering::Acquire) {
@@ -389,14 +399,15 @@
         <span class="prelude-val">Ok</span>(tx)
     }
 
-    <span class="kw">fn </span>handle_response(
+    <span class="kw">async fn </span>handle_response(
         ctx: HeartbeatResponseHandlerContext,
         handler_executor: HeartbeatResponseHandlerExecutorRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">trace!</span>(<span class="string">&quot;heartbeat response: {:?}&quot;</span>, ctx.response);
         handler_executor
             .handle(ctx)
-            .context(error::HandleHeartbeatResponseSnafu)
+            .<span class="kw">await
+            </span>.context(error::HandleHeartbeatResponseSnafu)
     }
 
     <span class="doccomment">/// Start heartbeat task, spawn background task.
@@ -414,10 +425,9 @@
         <span class="kw">let </span>addr = resolve_addr(<span class="kw-2">&amp;</span><span class="self">self</span>.server_addr, <span class="kw-2">&amp;</span><span class="self">self</span>.server_hostname);
         <span class="macro">info!</span>(<span class="string">&quot;Starting heartbeat to Metasrv with interval {interval}. My node id is {node_id}, address is {addr}.&quot;</span>);
 
-        <span class="comment">// TODO(LFC): Continued in next PR.
-        // self.region_alive_keepers.start(interval).await;
+        <span class="self">self</span>.region_alive_keepers.start(interval).<span class="kw">await</span>;
 
-        </span><span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.clone();
+        <span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.clone();
         <span class="kw">let </span>catalog_manager_clone = <span class="self">self</span>.catalog_manager.clone();
 
         <span class="kw">let </span>handler_executor = <span class="self">self</span>.resp_handler_executor.clone();
@@ -433,6 +443,7 @@
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
+        <span class="kw">let </span>epoch = <span class="self">self</span>.region_alive_keepers.epoch();
         common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>sleep = tokio::time::sleep(Duration::from_millis(<span class="number">0</span>));
             <span class="macro">tokio::pin!</span>(sleep);
@@ -478,6 +489,7 @@
                                 ..Default::default()
                             }),
                             region_stats,
+                            duration_since_epoch: (Instant::now() - epoch).as_millis() <span class="kw">as </span>u64,
                             ..Default::default()
                         };
                         sleep.as_mut().reset(Instant::now() + Duration::from_millis(interval));

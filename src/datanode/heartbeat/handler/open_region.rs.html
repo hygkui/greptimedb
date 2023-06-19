@@ -211,6 +211,8 @@
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -227,6 +229,7 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::error::Error <span class="kw">as </span>CatalogError;
 <span class="kw">use </span>catalog::remote::region_alive_keeper::RegionAliveKeepers;
 <span class="kw">use </span>catalog::{CatalogManagerRef, RegisterTableRequest};
@@ -252,7 +255,8 @@
     region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 }
 
-<span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>OpenRegionHandler {
+<span class="attr">#[async_trait]
+</span><span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>OpenRegionHandler {
     <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>HeartbeatResponseHandlerContext) -&gt; bool {
         <span class="macro">matches!</span>(
             ctx.incoming_message,
@@ -260,7 +264,7 @@
         )
     }
 
-    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; MetaResult&lt;HandleControl&gt; {
+    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; MetaResult&lt;HandleControl&gt; {
         <span class="kw">let </span><span class="prelude-val">Some</span>((meta, Instruction::OpenRegion(region_ident))) = ctx.incoming_message.take() <span class="kw">else </span>{
             <span class="macro">unreachable!</span>(<span class="string">&quot;OpenRegionHandler: should be guarded by &#39;is_acceptable&#39;&quot;</span>);
         };

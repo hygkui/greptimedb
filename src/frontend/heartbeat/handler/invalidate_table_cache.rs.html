@@ -108,6 +108,8 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -122,7 +124,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>catalog::helper::TableGlobalKey;
+</span><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>catalog::helper::TableGlobalKey;
 <span class="kw">use </span>catalog::remote::KvCacheInvalidatorRef;
 <span class="kw">use </span>common_meta::error::Result <span class="kw">as </span>MetaResult;
 <span class="kw">use </span>common_meta::heartbeat::handler::{
@@ -140,7 +143,8 @@
     table_route_cache_invalidator: TableRouteCacheInvalidatorRef,
 }
 
-<span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>InvalidateTableCacheHandler {
+<span class="attr">#[async_trait]
+</span><span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>InvalidateTableCacheHandler {
     <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>HeartbeatResponseHandlerContext) -&gt; bool {
         <span class="macro">matches!</span>(
             ctx.incoming_message.as_ref(),
@@ -148,7 +152,7 @@
         )
     }
 
-    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; MetaResult&lt;HandleControl&gt; {
+    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; MetaResult&lt;HandleControl&gt; {
         <span class="comment">// TODO(weny): considers introducing a macro
         </span><span class="kw">let </span><span class="prelude-val">Some</span>((meta, Instruction::InvalidateTableCache(table_ident))) = ctx.incoming_message.take() <span class="kw">else </span>{
             <span class="macro">unreachable!</span>(<span class="string">&quot;InvalidateTableCacheHandler: should be guarded by &#39;is_acceptable&#39;&quot;</span>);

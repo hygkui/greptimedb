@@ -266,6 +266,44 @@
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -280,13 +318,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::meta::{PutRequest, TableRouteValue};
+</span><span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span>api::v1::meta::{PutRequest, TableRouteValue};
 <span class="kw">use </span>catalog::helper::{TableGlobalKey, TableGlobalValue};
 <span class="kw">use </span>common_meta::key::TableRouteKey;
+<span class="kw">use </span>common_meta::rpc::store::{BatchGetRequest, BatchGetResponse};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    DecodeTableRouteSnafu, InvalidCatalogValueSnafu, <span class="prelude-ty">Result</span>, TableRouteNotFoundSnafu,
+    ConvertProtoDataSnafu, DecodeTableRouteSnafu, InvalidCatalogValueSnafu, <span class="prelude-ty">Result</span>,
+    TableRouteNotFoundSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::service::store::ext::KvStoreExt;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStoreRef;
@@ -295,10 +337,38 @@
     kv_store: <span class="kw-2">&amp;</span>KvStoreRef,
     key: <span class="kw-2">&amp;</span>TableGlobalKey,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableGlobalValue&gt;&gt; {
-    <span class="kw">let </span>key = key.to_string().into_bytes();
-    <span class="kw">let </span>kv = kv_store.get(key).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>kv = kv_store.get(key.to_raw_key()).<span class="kw">await</span><span class="question-mark">?</span>;
     kv.map(|kv| TableGlobalValue::from_bytes(kv.value).context(InvalidCatalogValueSnafu))
         .transpose()
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>batch_get_table_global_value(
+    kv_store: <span class="kw-2">&amp;</span>KvStoreRef,
+    keys: Vec&lt;<span class="kw-2">&amp;</span>TableGlobalKey&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;HashMap&lt;TableGlobalKey, <span class="prelude-ty">Option</span>&lt;TableGlobalValue&gt;&gt;&gt; {
+    <span class="kw">let </span>req = BatchGetRequest {
+        keys: keys.iter().map(|x| x.to_raw_key()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+    };
+    <span class="kw">let </span><span class="kw-2">mut </span>resp: BatchGetResponse = kv_store
+        .batch_get(req.into())
+        .<span class="kw">await</span><span class="question-mark">?
+        </span>.try_into()
+        .context(ConvertProtoDataSnafu)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>kvs = resp.take_kvs();
+    <span class="kw">let </span><span class="kw-2">mut </span>result = HashMap::with_capacity(kvs.len());
+    <span class="kw">for </span>kv <span class="kw">in </span>kvs {
+        <span class="kw">let </span>key = TableGlobalKey::try_from_raw_key(kv.key()).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>value = TableGlobalValue::from_bytes(kv.value()).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+        result.insert(key, <span class="prelude-val">Some</span>(value));
+    }
+
+    <span class="kw">for </span>key <span class="kw">in </span>keys {
+        <span class="kw">if </span>!result.contains_key(key) {
+            result.insert(key.clone(), <span class="prelude-val">None</span>);
+        }
+    }
+    <span class="prelude-val">Ok</span>(result)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>put_table_global_value(
@@ -308,7 +378,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>req = PutRequest {
         header: <span class="prelude-val">None</span>,
-        key: key.to_string().into_bytes(),
+        key: key.to_raw_key(),
         value: value.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
         prev_kv: <span class="bool-val">false</span>,
     };
@@ -496,12 +566,12 @@
     </span><span class="kw">async fn </span>test_put_and_get_table_global_value() {
         <span class="kw">let </span>kv_store = Arc::new(MemStore::new()) <span class="kw">as _</span>;
 
-        <span class="kw">let </span>key = TableGlobalKey {
+        <span class="kw">let </span>not_exist_key = TableGlobalKey {
             catalog_name: <span class="string">&quot;not_exist_catalog&quot;</span>.to_string(),
             schema_name: <span class="string">&quot;not_exist_schema&quot;</span>.to_string(),
             table_name: <span class="string">&quot;not_exist_table&quot;</span>.to_string(),
         };
-        <span class="macro">assert!</span>(get_table_global_value(<span class="kw-2">&amp;</span>kv_store, <span class="kw-2">&amp;</span>key)
+        <span class="macro">assert!</span>(get_table_global_value(<span class="kw-2">&amp;</span>kv_store, <span class="kw-2">&amp;</span>not_exist_key)
             .<span class="kw">await
             </span>.unwrap()
             .is_none());
@@ -512,6 +582,12 @@
             </span>.unwrap()
             .unwrap();
         <span class="macro">assert_eq!</span>(actual, value);
+
+        <span class="kw">let </span>keys = <span class="macro">vec!</span>[<span class="kw-2">&amp;</span>not_exist_key, <span class="kw-2">&amp;</span>key];
+        <span class="kw">let </span>result = batch_get_table_global_value(<span class="kw-2">&amp;</span>kv_store, keys).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(result.len(), <span class="number">2</span>);
+        <span class="macro">assert!</span>(result.get(<span class="kw-2">&amp;</span>not_exist_key).unwrap().is_none());
+        <span class="macro">assert_eq!</span>(result.get(<span class="kw-2">&amp;</span>key).unwrap().as_ref().unwrap(), <span class="kw-2">&amp;</span>value);
     }
 
     <span class="attr">#[tokio::test]

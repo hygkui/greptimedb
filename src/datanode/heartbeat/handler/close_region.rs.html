@@ -232,6 +232,8 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -248,6 +250,7 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::remote::region_alive_keeper::RegionAliveKeepers;
 <span class="kw">use </span>catalog::{CatalogManagerRef, DeregisterTableRequest};
 <span class="kw">use </span>common_catalog::format_full_table_name;
@@ -272,7 +275,8 @@
     region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 }
 
-<span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>CloseRegionHandler {
+<span class="attr">#[async_trait]
+</span><span class="kw">impl </span>HeartbeatResponseHandler <span class="kw">for </span>CloseRegionHandler {
     <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>HeartbeatResponseHandlerContext) -&gt; bool {
         <span class="macro">matches!</span>(
             ctx.incoming_message.as_ref(),
@@ -280,7 +284,7 @@
         )
     }
 
-    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; MetaResult&lt;HandleControl&gt; {
+    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; MetaResult&lt;HandleControl&gt; {
         <span class="kw">let </span><span class="prelude-val">Some</span>((meta, Instruction::CloseRegion(region_ident))) = ctx.incoming_message.take() <span class="kw">else </span>{
             <span class="macro">unreachable!</span>(<span class="string">&quot;CloseRegionHandler: should be guarded by &#39;is_acceptable&#39;&quot;</span>);
         };

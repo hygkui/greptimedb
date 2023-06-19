@@ -217,6 +217,15 @@
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -239,6 +248,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClient;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::mailbox_handler::MailboxHandler;
+<span class="kw">use </span><span class="kw">crate</span>::handler::region_lease_handler::RegionLeaseHandler;
 <span class="kw">use </span><span class="kw">crate</span>::handler::{
     CheckLeaderHandler, CollectStatsHandler, HeartbeatHandlerGroup, HeartbeatMailbox,
     KeepLeaseHandler, OnLeaderStartHandler, PersistStatsHandler, Pushers, RegionFailureHandler,
@@ -389,6 +399,13 @@
                     )
                 };
 
+                <span class="kw">let </span>region_lease_handler = RegionLeaseHandler::new(
+                    kv_store.clone(),
+                    region_failover_handler
+                        .as_ref()
+                        .map(|x| x.region_failover_manager().clone()),
+                );
+
                 <span class="kw">let </span>group = HeartbeatHandlerGroup::new(pushers);
                 <span class="kw">let </span>keep_lease_handler = KeepLeaseHandler::new(kv_store.clone());
                 group.add_handler(ResponseHeaderHandler::default()).<span class="kw">await</span>;
@@ -403,6 +420,7 @@
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(region_failover_handler) = region_failover_handler {
                     group.add_handler(region_failover_handler).<span class="kw">await</span>;
                 }
+                group.add_handler(region_lease_handler).<span class="kw">await</span>;
                 group.add_handler(PersistStatsHandler::default()).<span class="kw">await</span>;
                 group
             }

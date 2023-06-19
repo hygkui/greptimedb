@@ -378,6 +378,18 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -471,7 +483,7 @@
 }
 
 <span class="doccomment">/// Table global info has only one key across all datanodes so it does not have `node_id` field.
-</span><span class="attr">#[derive(Clone)]
+</span><span class="attr">#[derive(Clone, Hash, Eq, PartialEq)]
 </span><span class="kw">pub struct </span>TableGlobalKey {
     <span class="kw">pub </span>catalog_name: String,
     <span class="kw">pub </span>schema_name: String,
@@ -504,6 +516,14 @@
             table_name: captures[<span class="number">3</span>].to_string(),
         })
     }
+
+    <span class="kw">pub fn </span>to_raw_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
+        <span class="self">self</span>.to_string().into_bytes()
+    }
+
+    <span class="kw">pub fn </span>try_from_raw_key(key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="self">Self</span>::parse(String::from_utf8_lossy(key))
+    }
 }
 
 <span class="doccomment">/// Table global info contains necessary info for a datanode to create table regions, including
@@ -520,6 +540,10 @@
 <span class="kw">impl </span>TableGlobalValue {
     <span class="kw">pub fn </span>table_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableId {
         <span class="self">self</span>.table_info.ident.table_id
+    }
+
+    <span class="kw">pub fn </span>engine(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.table_info.meta.engine
     }
 }
 

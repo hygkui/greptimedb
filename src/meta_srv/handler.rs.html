@@ -451,6 +451,8 @@
 <a href="#451" id="451">451</a>
 <a href="#452" id="452">452</a>
 <a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -472,8 +474,8 @@
 
 <span class="kw">use </span>api::v1::meta::mailbox_message::Payload;
 <span class="kw">use </span>api::v1::meta::{
-    HeartbeatRequest, HeartbeatResponse, MailboxMessage, RequestHeader, ResponseHeader, Role,
-    PROTOCOL_VERSION,
+    HeartbeatRequest, HeartbeatResponse, MailboxMessage, RegionLease, RequestHeader,
+    ResponseHeader, Role, PROTOCOL_VERSION,
 };
 <span class="kw">pub use </span>check_leader_handler::CheckLeaderHandler;
 <span class="kw">pub use </span>collect_stats_handler::CollectStatsHandler;
@@ -507,6 +509,7 @@
 <span class="kw">pub mod </span>node_stat;
 <span class="kw">mod </span>on_leader_start;
 <span class="kw">mod </span>persist_stats_handler;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>region_lease_handler;
 <span class="kw">mod </span>response_header_handler;
 
 <span class="attr">#[async_trait::async_trait]
@@ -526,6 +529,7 @@
     <span class="kw">pub </span>header: <span class="prelude-ty">Option</span>&lt;ResponseHeader&gt;,
     <span class="kw">pub </span>instructions: Vec&lt;Instruction&gt;,
     <span class="kw">pub </span>stat: <span class="prelude-ty">Option</span>&lt;Stat&gt;,
+    <span class="kw">pub </span>region_leases: Vec&lt;RegionLease&gt;,
 }
 
 <span class="kw">impl </span>HeartbeatAccumulator {
@@ -686,7 +690,7 @@
         <span class="kw">let </span>header = std::mem::take(<span class="kw-2">&amp;mut </span>acc.header);
         <span class="kw">let </span>res = HeartbeatResponse {
             header,
-            mailbox_message: acc.into_mailbox_message(),
+            region_leases: acc.region_leases,
             ..Default::default()
         };
         <span class="prelude-val">Ok</span>(res)

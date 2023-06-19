@@ -96,6 +96,10 @@
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -113,6 +117,7 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::meta::HeartbeatResponse;
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_telemetry::error;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
@@ -155,14 +160,16 @@
 /// [`HeartbeatResponseHandler::is_acceptable`] returns true if handler can handle incoming [`HeartbeatResponseHandlerContext`].
 ///
 /// [`HeartbeatResponseHandler::handle`] handles all or part of incoming [`HeartbeatResponseHandlerContext`].
+</span><span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>HeartbeatResponseHandler: Send + Sync {
     <span class="kw">fn </span>is_acceptable(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>HeartbeatResponseHandlerContext) -&gt; bool;
 
-    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt;;
+    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt;;
 }
 
-<span class="kw">pub trait </span>HeartbeatResponseHandlerExecutor: Send + Sync {
-    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
+<span class="attr">#[async_trait]
+</span><span class="kw">pub trait </span>HeartbeatResponseHandlerExecutor: Send + Sync {
+    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
 }
 
 <span class="kw">pub struct </span>HandlerGroupExecutor {
@@ -175,14 +182,15 @@
     }
 }
 
-<span class="kw">impl </span>HeartbeatResponseHandlerExecutor <span class="kw">for </span>HandlerGroupExecutor {
-    <span class="kw">fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>ctx: HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<span class="attr">#[async_trait]
+</span><span class="kw">impl </span>HeartbeatResponseHandlerExecutor <span class="kw">for </span>HandlerGroupExecutor {
+    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>ctx: HeartbeatResponseHandlerContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">for </span>handler <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.handlers {
             <span class="kw">if </span>!handler.is_acceptable(<span class="kw-2">&amp;</span>ctx) {
                 <span class="kw">continue</span>;
             }
 
-            <span class="kw">match </span>handler.handle(<span class="kw-2">&amp;mut </span>ctx) {
+            <span class="kw">match </span>handler.handle(<span class="kw-2">&amp;mut </span>ctx).<span class="kw">await </span>{
                 <span class="prelude-val">Ok</span>(HandleControl::Done) =&gt; <span class="kw">break</span>,
                 <span class="prelude-val">Ok</span>(HandleControl::Continue) =&gt; {}
                 <span class="prelude-val">Err</span>(e) =&gt; {
