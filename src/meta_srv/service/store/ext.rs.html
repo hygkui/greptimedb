@@ -135,6 +135,47 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -149,7 +190,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::meta::{KeyValue, RangeRequest};
+</span><span class="kw">use </span>api::v1::meta::{DeleteRangeRequest, KeyValue, RangeRequest};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStore;
@@ -161,6 +202,10 @@
 
     <span class="doccomment">/// Check if a key exists, it does not return the value.
     </span><span class="kw">async fn </span>exists(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt;;
+
+    <span class="doccomment">/// Delete the value by the given key. If prev_kv is true,
+    /// the previous key-value pairs will be returned.
+    </span><span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;, prev_kv: bool) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt;;
 }
 
 <span class="attr">#[async_trait::async_trait]
@@ -189,6 +234,18 @@
         <span class="kw">let </span>kvs = <span class="self">self</span>.range(req).<span class="kw">await</span><span class="question-mark">?</span>.kvs;
 
         <span class="prelude-val">Ok</span>(!kvs.is_empty())
+    }
+
+    <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;, prev_kv: bool) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt; {
+        <span class="kw">let </span>req = DeleteRangeRequest {
+            key,
+            prev_kv,
+            ..Default::default()
+        };
+
+        <span class="kw">let </span><span class="kw-2">mut </span>prev_kvs = <span class="self">self</span>.delete_range(req).<span class="kw">await</span><span class="question-mark">?</span>.prev_kvs;
+
+        <span class="prelude-val">Ok</span>(prev_kvs.pop())
     }
 }
 
@@ -250,6 +307,31 @@
             .<span class="kw">await
             </span>.unwrap());
         <span class="macro">assert!</span>(!in_mem.exists(<span class="string">&quot;test_key&quot;</span>.as_bytes().to_vec()).<span class="kw">await</span>.unwrap());
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_delete() {
+        <span class="kw">let </span><span class="kw-2">mut </span>in_mem = Arc::new(MemStore::new()) <span class="kw">as </span>KvStoreRef;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>prev_kv = in_mem
+            .delete(<span class="string">&quot;test_key1&quot;</span>.as_bytes().to_vec(), <span class="bool-val">true</span>)
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert!</span>(prev_kv.is_none());
+
+        put_stats_to_store(<span class="kw-2">&amp;mut </span>in_mem).<span class="kw">await</span>;
+
+        <span class="macro">assert!</span>(in_mem
+            .exists(<span class="string">&quot;test_key1&quot;</span>.as_bytes().to_vec())
+            .<span class="kw">await
+            </span>.unwrap());
+
+        prev_kv = in_mem
+            .delete(<span class="string">&quot;test_key1&quot;</span>.as_bytes().to_vec(), <span class="bool-val">true</span>)
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert!</span>(prev_kv.is_some());
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;test_key1&quot;</span>.as_bytes(), prev_kv.unwrap().key);
     }
 
     <span class="kw">async fn </span>put_stats_to_store(store: <span class="kw-2">&amp;mut </span>KvStoreRef) {

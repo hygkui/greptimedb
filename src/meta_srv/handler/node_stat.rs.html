@@ -146,6 +146,10 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -190,6 +194,8 @@
     </span><span class="kw">pub </span>write_io_rate: f64,
     <span class="doccomment">/// Region stats on this node
     </span><span class="kw">pub </span>region_stats: Vec&lt;RegionStat&gt;,
+    <span class="comment">// The node epoch is used to check whether the node has restarted or redeployed.
+    </span><span class="kw">pub </span>node_epoch: u64,
 }
 
 <span class="attr">#[derive(Debug, Default, Serialize, Deserialize)]
@@ -227,6 +233,7 @@
             is_leader,
             node_stat,
             region_stats,
+            node_epoch,
             ..
         } = value;
 
@@ -252,6 +259,7 @@
                     read_io_rate: node_stat.read_io_rate,
                     write_io_rate: node_stat.write_io_rate,
                     region_stats: region_stats.into_iter().map(RegionStat::from).collect(),
+                    node_epoch,
                 })
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(()),
