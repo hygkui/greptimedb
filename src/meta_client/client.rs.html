@@ -941,6 +941,12 @@
 <a href="#941" id="941">941</a>
 <a href="#942" id="942">942</a>
 <a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1698,16 +1704,21 @@
     </span><span class="kw">async fn </span>test_batch_put() {
         <span class="kw">let </span>tc = new_client(<span class="string">&quot;test_batch_put&quot;</span>).<span class="kw">await</span>;
 
-        <span class="kw">let </span>req = BatchPutRequest::new()
-            .add_kv(tc.key(<span class="string">&quot;key&quot;</span>), <span class="string">b&quot;value&quot;</span>.to_vec())
-            .add_kv(tc.key(<span class="string">&quot;key2&quot;</span>), <span class="string">b&quot;value2&quot;</span>.to_vec());
+        <span class="kw">let </span><span class="kw-2">mut </span>req = BatchPutRequest::new();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">256 </span>{
+            req = req.add_kv(
+                tc.key(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;key-{}&quot;</span>, i)),
+                <span class="macro">format!</span>(<span class="string">&quot;value-{}&quot;</span>, i).into_bytes(),
+            );
+        }
+
         <span class="kw">let </span>res = tc.client.batch_put(req).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, res.unwrap().take_prev_kvs().len());
 
-        <span class="kw">let </span>req = RangeRequest::new().with_range(tc.key(<span class="string">&quot;key&quot;</span>), tc.key(<span class="string">&quot;key3&quot;</span>));
+        <span class="kw">let </span>req = RangeRequest::new().with_prefix(tc.key(<span class="string">&quot;key-&quot;</span>));
         <span class="kw">let </span>res = tc.client.range(req).<span class="kw">await</span>;
         <span class="kw">let </span>kvs = res.unwrap().take_kvs();
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, kvs.len());
+        <span class="macro">assert_eq!</span>(<span class="number">256</span>, kvs.len());
     }
 
     <span class="attr">#[tokio::test]
@@ -1715,16 +1726,17 @@
         <span class="kw">let </span>tc = new_client(<span class="string">&quot;test_batch_get&quot;</span>).<span class="kw">await</span>;
         tc.gen_data().<span class="kw">await</span>;
 
-        <span class="kw">let </span>req = BatchGetRequest::default()
-            .add_key(tc.key(<span class="string">&quot;key-1&quot;</span>))
-            .add_key(tc.key(<span class="string">&quot;key-2&quot;</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>req = BatchGetRequest::default();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">256 </span>{
+            req = req.add_key(tc.key(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;key-{}&quot;</span>, i)));
+        }
         <span class="kw">let </span><span class="kw-2">mut </span>res = tc.client.batch_get(req).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, res.take_kvs().len());
+        <span class="macro">assert_eq!</span>(<span class="number">10</span>, res.take_kvs().len());
 
         <span class="kw">let </span>req = BatchGetRequest::default()
             .add_key(tc.key(<span class="string">&quot;key-1&quot;</span>))
-            .add_key(tc.key(<span class="string">&quot;key-222&quot;</span>));
+            .add_key(tc.key(<span class="string">&quot;key-999&quot;</span>));
         <span class="kw">let </span><span class="kw-2">mut </span>res = tc.client.batch_get(req).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, res.take_kvs().len());
