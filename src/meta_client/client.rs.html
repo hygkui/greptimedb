@@ -1705,7 +1705,7 @@
         <span class="kw">let </span>tc = new_client(<span class="string">&quot;test_batch_put&quot;</span>).<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = BatchPutRequest::new();
-        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">256 </span>{
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">275 </span>{
             req = req.add_kv(
                 tc.key(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;key-{}&quot;</span>, i)),
                 <span class="macro">format!</span>(<span class="string">&quot;value-{}&quot;</span>, i).into_bytes(),
@@ -1718,7 +1718,7 @@
         <span class="kw">let </span>req = RangeRequest::new().with_prefix(tc.key(<span class="string">&quot;key-&quot;</span>));
         <span class="kw">let </span>res = tc.client.range(req).<span class="kw">await</span>;
         <span class="kw">let </span>kvs = res.unwrap().take_kvs();
-        <span class="macro">assert_eq!</span>(<span class="number">256</span>, kvs.len());
+        <span class="macro">assert_eq!</span>(<span class="number">275</span>, kvs.len());
     }
 
     <span class="attr">#[tokio::test]
