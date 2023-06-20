@@ -844,6 +844,20 @@
 <a href="#844" id="844">844</a>
 <a href="#845" id="845">845</a>
 <a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -899,7 +913,9 @@
 <span class="kw">use </span>partition::manager::PartitionRuleManager;
 <span class="kw">use </span>partition::route::TableRoutes;
 <span class="kw">use </span>query::parser::{PromQuery, QueryLanguageParser, QueryStatement};
+<span class="kw">use </span>query::plan::LogicalPlan;
 <span class="kw">use </span>query::query_engine::options::{validate_catalog_and_schema, QueryOptions};
+<span class="kw">use </span>query::query_engine::DescribeResult;
 <span class="kw">use </span>query::{QueryEngineFactory, QueryEngineRef};
 <span class="kw">use </span>servers::error <span class="kw">as </span>server_error;
 <span class="kw">use </span>servers::error::{ExecuteQuerySnafu, ParsePromQLSnafu};
@@ -919,8 +935,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, Error, ExecutePromqlSnafu, ExternalSnafu, InvalidInsertRequestSnafu,
-    MissingMetasrvOptsSnafu, ParseSqlSnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>, SqlExecInterceptedSnafu,
+    <span class="self">self</span>, Error, ExecLogicalPlanSnafu, ExecutePromqlSnafu, ExternalSnafu,
+    InvalidInsertRequestSnafu, MissingMetasrvOptsSnafu, ParseSqlSnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>,
+    SqlExecInterceptedSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::expr_factory::{CreateExprFactoryRef, DefaultCreateExprFactory};
 <span class="kw">use </span><span class="kw">crate</span>::frontend::FrontendOptions;
@@ -1352,6 +1369,14 @@
         }
     }
 
+    <span class="kw">async fn </span>do_exec_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: LogicalPlan, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_EXEC_PLAN_ELAPSED);
+        <span class="self">self</span>.query_engine
+            .execute(plan, query_ctx)
+            .<span class="kw">await
+            </span>.context(ExecLogicalPlanSnafu)
+    }
+
     <span class="kw">async fn </span>do_promql_query(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         query: <span class="kw-2">&amp;</span>PromQuery,
@@ -1369,8 +1394,11 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         stmt: Statement,
         query_ctx: QueryContextRef,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Schema&gt;&gt; {
-        <span class="kw">if let </span>Statement::Query(<span class="kw">_</span>) = stmt {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;DescribeResult&gt;&gt; {
+        <span class="kw">if </span><span class="macro">matches!</span>(
+            stmt,
+            Statement::Insert(<span class="kw">_</span>) | Statement::Query(<span class="kw">_</span>) | Statement::Delete(<span class="kw">_</span>)
+        ) {
             <span class="kw">let </span>plan = <span class="self">self
                 </span>.query_engine
                 .planner()

@@ -630,6 +630,12 @@
 <a href="#630" id="630">630</a>
 <a href="#631" id="631">631</a>
 <a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -812,6 +818,12 @@
             ConcreteDataType::Timestamp(t) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>t),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
+    }
+}
+
+<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>ConcreteDataType&gt; <span class="kw">for </span>ConcreteDataType {
+    <span class="kw">fn </span>from(t: <span class="kw-2">&amp;</span>ConcreteDataType) -&gt; <span class="self">Self </span>{
+        t.clone()
     }
 }
 

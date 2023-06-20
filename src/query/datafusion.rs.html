@@ -552,6 +552,10 @@
 <a href="#552" id="552">552</a>
 <a href="#553" id="553">553</a>
 <a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -591,7 +595,6 @@
 <span class="kw">use </span>datafusion_common::ResolvedTableReference;
 <span class="kw">use </span>datafusion_expr::{DmlStatement, LogicalPlan <span class="kw">as </span>DfLogicalPlan, WriteOp};
 <span class="kw">use </span>datatypes::prelude::VectorRef;
-<span class="kw">use </span>datatypes::schema::Schema;
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -611,7 +614,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::physical_planner::PhysicalPlanner;
 <span class="kw">use </span><span class="kw">crate</span>::plan::LogicalPlan;
 <span class="kw">use </span><span class="kw">crate</span>::planner::{DfLogicalPlanner, LogicalPlanner};
-<span class="kw">use </span><span class="kw">crate</span>::query_engine::{QueryEngineContext, QueryEngineState};
+<span class="kw">use </span><span class="kw">crate</span>::query_engine::{DescribeResult, QueryEngineContext, QueryEngineState};
 <span class="kw">use crate</span>::{metrics, QueryEngine};
 
 <span class="kw">pub struct </span>DatafusionQueryEngine {
@@ -775,11 +778,12 @@
         <span class="string">&quot;datafusion&quot;
     </span>}
 
-    <span class="kw">async fn </span>describe(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: LogicalPlan) -&gt; <span class="prelude-ty">Result</span>&lt;Schema&gt; {
-        <span class="comment">// TODO(sunng87): consider cache optmised logical plan between describe
-        // and execute
-        </span><span class="kw">let </span>optimised_plan = <span class="self">self</span>.optimize(<span class="kw-2">&amp;</span>plan)<span class="question-mark">?</span>;
-        optimised_plan.schema()
+    <span class="kw">async fn </span>describe(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: LogicalPlan) -&gt; <span class="prelude-ty">Result</span>&lt;DescribeResult&gt; {
+        <span class="kw">let </span>optimised_plan = <span class="self">self</span>.optimize(<span class="kw-2">&amp;</span>plan)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(DescribeResult {
+            schema: optimised_plan.schema()<span class="question-mark">?</span>,
+            logical_plan: optimised_plan,
+        })
     }
 
     <span class="kw">async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: LogicalPlan, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
@@ -1094,7 +1098,10 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>schema = engine.describe(plan).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>DescribeResult {
+            schema,
+            logical_plan,
+        } = engine.describe(plan).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(
             schema.column_schemas()[<span class="number">0</span>],
@@ -1104,6 +1111,7 @@
                 <span class="bool-val">true
             </span>)
         );
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;Limit: skip=0, fetch=20\n  Aggregate: groupBy=[[]], aggr=[[SUM(numbers.number)]]\n    TableScan: numbers projection=[number]&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, logical_plan.display_indent()));
     }
 }
 </code></pre></div></section></main></body></html>

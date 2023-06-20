@@ -1889,7 +1889,7 @@
             Value::Binary(v) =&gt; ScalarValue::LargeBinary(<span class="prelude-val">Some</span>(v.to_vec())),
             Value::Date(v) =&gt; ScalarValue::Date32(<span class="prelude-val">Some</span>(v.val())),
             Value::DateTime(v) =&gt; ScalarValue::Date64(<span class="prelude-val">Some</span>(v.val())),
-            Value::Null =&gt; to_null_value(output_type),
+            Value::Null =&gt; to_null_scalar_value(output_type),
             Value::List(list) =&gt; {
                 <span class="comment">// Safety: The logical type of the value and output_type are the same.
                 </span><span class="kw">let </span>list_type = output_type.as_list().unwrap();
@@ -1902,7 +1902,7 @@
     }
 }
 
-<span class="kw">fn </span>to_null_value(output_type: <span class="kw-2">&amp;</span>ConcreteDataType) -&gt; ScalarValue {
+<span class="kw">pub fn </span>to_null_scalar_value(output_type: <span class="kw-2">&amp;</span>ConcreteDataType) -&gt; ScalarValue {
     <span class="kw">match </span>output_type {
         ConcreteDataType::Null(<span class="kw">_</span>) =&gt; ScalarValue::Null,
         ConcreteDataType::Boolean(<span class="kw">_</span>) =&gt; ScalarValue::Boolean(<span class="prelude-val">None</span>),
@@ -1926,7 +1926,7 @@
         }
         ConcreteDataType::Dictionary(dict) =&gt; ScalarValue::Dictionary(
             Box::new(dict.key_type().as_arrow_type()),
-            Box::new(to_null_value(dict.value_type())),
+            Box::new(to_null_scalar_value(dict.value_type())),
         ),
     }
 }

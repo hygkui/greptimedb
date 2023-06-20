@@ -646,6 +646,7 @@
 <a href="#646" id="646">646</a>
 <a href="#647" id="647">647</a>
 <a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -681,6 +682,7 @@
 <span class="kw">use </span>pgwire::api::store::MemPortalStore;
 <span class="kw">use </span>pgwire::api::{ClientInfo, Type};
 <span class="kw">use </span>pgwire::error::{ErrorInfo, PgWireError, PgWireResult};
+<span class="kw">use </span>query::query_engine::DescribeResult;
 <span class="kw">use </span>sql::dialect::PostgreSqlDialect;
 <span class="kw">use </span>sql::parser::ParserContext;
 <span class="kw">use </span>sql::statements::statement::Statement;
@@ -1053,7 +1055,7 @@
         <span class="comment">// get Statement part of the tuple
         </span><span class="kw">let </span>(stmt, <span class="kw">_</span>) = stmt;
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(schema) = <span class="self">self
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(DescribeResult { schema, .. }) = <span class="self">self
             </span>.query_handler
             .do_describe(stmt.clone(), <span class="self">self</span>.session.context())
             .<span class="kw">await

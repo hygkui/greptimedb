@@ -284,7 +284,7 @@
 <span class="kw">use </span>common_recordbatch::{util, RecordBatch};
 <span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, Value};
-<span class="kw">use </span>datatypes::schema::{ColumnSchema, SchemaRef};
+<span class="kw">use </span>datatypes::schema::SchemaRef;
 <span class="kw">use </span>opensrv_mysql::{
     Column, ColumnFlags, ColumnType, ErrorKind, OkResponse, QueryResultWriter, RowWriter,
 };
@@ -442,8 +442,8 @@
                     Value::Float64(v) =&gt; row_writer.write_col(v.<span class="number">0</span>)<span class="question-mark">?</span>,
                     Value::String(v) =&gt; row_writer.write_col(v.as_utf8())<span class="question-mark">?</span>,
                     Value::Binary(v) =&gt; row_writer.write_col(v.deref())<span class="question-mark">?</span>,
-                    Value::Date(v) =&gt; row_writer.write_col(v.val())<span class="question-mark">?</span>,
-                    Value::DateTime(v) =&gt; row_writer.write_col(v.val())<span class="question-mark">?</span>,
+                    Value::Date(v) =&gt; row_writer.write_col(v.to_chrono_date())<span class="question-mark">?</span>,
+                    Value::DateTime(v) =&gt; row_writer.write_col(v.to_chrono_datetime())<span class="question-mark">?</span>,
                     Value::Timestamp(v) =&gt; row_writer
                         .write_col(v.to_timezone_aware_string(query_context.time_zone()))<span class="question-mark">?</span>,
                     Value::List(<span class="kw">_</span>) =&gt; {
@@ -474,8 +474,11 @@
     }
 }
 
-<span class="kw">fn </span>create_mysql_column(column_schema: <span class="kw-2">&amp;</span>ColumnSchema) -&gt; <span class="prelude-ty">Result</span>&lt;Column&gt; {
-    <span class="kw">let </span>column_type = <span class="kw">match </span>column_schema.data_type {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create_mysql_column(
+    data_type: <span class="kw-2">&amp;</span>ConcreteDataType,
+    column_name: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Column&gt; {
+    <span class="kw">let </span>column_type = <span class="kw">match </span>data_type {
         ConcreteDataType::Null(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_NULL),
         ConcreteDataType::Boolean(<span class="kw">_</span>) | ConcreteDataType::Int8(<span class="kw">_</span>) | ConcreteDataType::UInt8(<span class="kw">_</span>) =&gt; {
             <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_TINY)
@@ -496,15 +499,12 @@
         ConcreteDataType::Date(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_DATE),
         ConcreteDataType::DateTime(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_DATETIME),
         <span class="kw">_ </span>=&gt; error::InternalSnafu {
-            err_msg: <span class="macro">format!</span>(
-                <span class="string">&quot;not implemented for column datatype {:?}&quot;</span>,
-                column_schema.data_type
-            ),
+            err_msg: <span class="macro">format!</span>(<span class="string">&quot;not implemented for column datatype {:?}&quot;</span>, data_type),
         }
         .fail(),
     };
     <span class="kw">let </span><span class="kw-2">mut </span>colflags = ColumnFlags::empty();
-    <span class="kw">match </span>column_schema.data_type {
+    <span class="kw">match </span>data_type {
         ConcreteDataType::UInt16(<span class="kw">_</span>)
         | ConcreteDataType::UInt8(<span class="kw">_</span>)
         | ConcreteDataType::UInt32(<span class="kw">_</span>)
@@ -512,7 +512,7 @@
         <span class="kw">_ </span>=&gt; {}
     };
     column_type.map(|column_type| Column {
-        column: column_schema.name.clone(),
+        column: column_name.to_string(),
         coltype: column_type,
 
         <span class="comment">// TODO(LFC): Currently &quot;table&quot; and &quot;colflags&quot; are not relevant in MySQL server
@@ -527,7 +527,7 @@
     schema
         .column_schemas()
         .iter()
-        .map(create_mysql_column)
+        .map(|column_schema| create_mysql_column(<span class="kw-2">&amp;</span>column_schema.data_type, <span class="kw-2">&amp;</span>column_schema.name))
         .collect()
 }
 </code></pre></div></section></main></body></html>
