@@ -292,6 +292,7 @@
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -324,6 +325,7 @@
 <span class="kw">use </span>tokio::sync::mpsc;
 <span class="kw">use </span>tokio::time::Instant;
 
+<span class="kw">use </span><span class="kw">crate</span>::datanode::DatanodeOptions;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MetaClientInitSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>handler;
@@ -351,24 +353,24 @@
     <span class="doccomment">/// Create a new heartbeat task instance.
     </span><span class="kw">pub fn </span>new(
         node_id: u64,
-        server_addr: String,
-        server_hostname: <span class="prelude-ty">Option</span>&lt;String&gt;,
+        opts: <span class="kw-2">&amp;</span>DatanodeOptions,
         meta_client: Arc&lt;MetaClient&gt;,
         catalog_manager: CatalogManagerRef,
         resp_handler_executor: HeartbeatResponseHandlerExecutorRef,
+        heartbeat_interval_millis: u64,
         region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             node_id,
             <span class="comment">// We use datanode&#39;s start time millis as the node&#39;s epoch.
             </span>node_epoch: common_time::util::current_time_millis() <span class="kw">as </span>u64,
-            server_addr,
-            server_hostname,
+            server_addr: opts.rpc_addr.clone(),
+            server_hostname: opts.rpc_hostname.clone(),
             running: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
             meta_client,
             catalog_manager,
-            interval: <span class="number">5_000</span>, <span class="comment">// default interval is set to 5 secs
-            </span>resp_handler_executor,
+            interval: heartbeat_interval_millis,
+            resp_handler_executor,
             region_alive_keepers,
         }
     }
@@ -434,7 +436,7 @@
         <span class="kw">let </span>addr = resolve_addr(<span class="kw-2">&amp;</span><span class="self">self</span>.server_addr, <span class="kw-2">&amp;</span><span class="self">self</span>.server_hostname);
         <span class="macro">info!</span>(<span class="string">&quot;Starting heartbeat to Metasrv with interval {interval}. My node id is {node_id}, address is {addr}.&quot;</span>);
 
-        <span class="self">self</span>.region_alive_keepers.start(interval).<span class="kw">await</span>;
+        <span class="self">self</span>.region_alive_keepers.start().<span class="kw">await</span>;
 
         <span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.clone();
         <span class="kw">let </span>catalog_manager_clone = <span class="self">self</span>.catalog_manager.clone();

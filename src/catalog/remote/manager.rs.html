@@ -1070,6 +1070,28 @@
 <a href="#1070" id="1070">1070</a>
 <a href="#1071" id="1071">1071</a>
 <a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1157,6 +1179,7 @@
             catalog_name: catalog_name.to_string(),
             backend: <span class="self">self</span>.backend.clone(),
             engine_manager: <span class="self">self</span>.engine_manager.clone(),
+            region_alive_keepers: <span class="self">self</span>.region_alive_keepers.clone(),
         }) <span class="kw">as _
     </span>}
 
@@ -1204,10 +1227,17 @@
 
             <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
 
+            <span class="kw">let </span>region_alive_keepers = <span class="self">self</span>.region_alive_keepers.clone();
             joins.push(common_runtime::spawn_bg(<span class="kw">async move </span>{
-                <span class="kw">let </span>max_table_id =
-                    initiate_schemas(node_id, backend, engine_manager, <span class="kw-2">&amp;</span>catalog_name, catalog)
-                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">let </span>max_table_id = initiate_schemas(
+                    node_id,
+                    backend,
+                    engine_manager,
+                    <span class="kw-2">&amp;</span>catalog_name,
+                    catalog,
+                    region_alive_keepers,
+                )
+                .<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="macro">info!</span>(
                     <span class="string">&quot;Catalog name: {}, max table id allocated: {}&quot;</span>,
                     <span class="kw-2">&amp;</span>catalog_name, max_table_id
@@ -1236,6 +1266,7 @@
             <span class="self">self</span>.engine_manager.clone(),
             catalog_name,
             schema_name,
+            <span class="self">self</span>.region_alive_keepers.clone(),
         );
 
         <span class="kw">let </span>catalog_provider = <span class="self">self</span>.new_catalog_provider(catalog_name);
@@ -1281,6 +1312,7 @@
     engine_manager: TableEngineManagerRef,
     catalog_name: <span class="kw-2">&amp;</span>str,
     schema_name: <span class="kw-2">&amp;</span>str,
+    region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 ) -&gt; SchemaProviderRef {
     Arc::new(RemoteSchemaProvider {
         catalog_name: catalog_name.to_string(),
@@ -1288,6 +1320,7 @@
         node_id,
         backend,
         engine_manager,
+        region_alive_keepers,
     }) <span class="kw">as _
 </span>}
 
@@ -1321,6 +1354,7 @@
     engine_manager: TableEngineManagerRef,
     catalog_name: <span class="kw-2">&amp;</span>str,
     catalog: CatalogProviderRef,
+    region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>schemas = iter_remote_schemas(<span class="kw-2">&amp;</span>backend, catalog_name).<span class="kw">await</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>joins = Vec::new();
@@ -1340,6 +1374,7 @@
                     engine_manager.clone(),
                     <span class="kw-2">&amp;</span>catalog_name,
                     <span class="kw-2">&amp;</span>schema_name,
+                    region_alive_keepers.clone(),
                 );
                 catalog
                     .register_schema(schema_name.clone(), schema.clone())
@@ -1683,18 +1718,7 @@
             <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(catalog, schema)],
         );
         schema_provider
-            .register_table(table_name.to_string(), request.table.clone())
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">let </span>table_ident = TableIdent {
-            catalog: request.catalog,
-            schema: request.schema,
-            table: request.table_name,
-            table_id: request.table_id,
-            engine: request.table.table_info().meta.engine.clone(),
-        };
-        <span class="self">self</span>.region_alive_keepers
-            .register_table(table_ident, request.table)
+            .register_table(table_name.to_string(), request.table)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
@@ -1750,6 +1774,7 @@
             <span class="self">self</span>.engine_manager.clone(),
             <span class="kw-2">&amp;</span>catalog_name,
             <span class="kw-2">&amp;</span>schema_name,
+            <span class="self">self</span>.region_alive_keepers.clone(),
         );
         catalog_provider
             .register_schema(schema_name, schema_provider)
@@ -1885,6 +1910,7 @@
     catalog_name: String,
     backend: KvBackendRef,
     engine_manager: TableEngineManagerRef,
+    region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 }
 
 <span class="kw">impl </span>RemoteCatalogProvider {
@@ -1893,12 +1919,14 @@
         backend: KvBackendRef,
         engine_manager: TableEngineManagerRef,
         node_id: u64,
+        region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             node_id,
             catalog_name,
             backend,
             engine_manager,
+            region_alive_keepers,
         }
     }
 
@@ -1916,6 +1944,7 @@
             node_id: <span class="self">self</span>.node_id,
             backend: <span class="self">self</span>.backend.clone(),
             engine_manager: <span class="self">self</span>.engine_manager.clone(),
+            region_alive_keepers: <span class="self">self</span>.region_alive_keepers.clone(),
         };
         Arc::new(provider) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;
     }
@@ -1978,6 +2007,7 @@
     node_id: u64,
     backend: KvBackendRef,
     engine_manager: TableEngineManagerRef,
+    region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
 }
 
 <span class="kw">impl </span>RemoteSchemaProvider {
@@ -1987,6 +2017,7 @@
         node_id: u64,
         engine_manager: TableEngineManagerRef,
         backend: KvBackendRef,
+        region_alive_keepers: Arc&lt;RegionAliveKeepers&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             catalog_name,
@@ -1994,6 +2025,7 @@
             node_id,
             backend,
             engine_manager,
+            region_alive_keepers,
         }
     }
 
@@ -2076,6 +2108,18 @@
                 <span class="kw-2">&amp;</span>table_value.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>table_ident = TableIdent {
+            catalog: table_info.catalog_name.clone(),
+            schema: table_info.schema_name.clone(),
+            table: table_info.name.clone(),
+            table_id: table_info.ident.table_id,
+            engine: table_info.meta.engine.clone(),
+        };
+        <span class="self">self</span>.region_alive_keepers
+            .register_table(table_ident, table)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
         <span class="macro">debug!</span>(
             <span class="string">&quot;Successfully set catalog table entry, key: {}, table value: {:?}&quot;</span>,
             table_key, table_value

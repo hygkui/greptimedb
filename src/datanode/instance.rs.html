@@ -462,6 +462,10 @@
 <a href="#462" id="462">462</a>
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -659,8 +663,12 @@
 
                 <span class="kw">let </span>kv_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
 
-                <span class="kw">let </span>region_alive_keepers =
-                    Arc::new(RegionAliveKeepers::new(engine_manager.clone()));
+                <span class="kw">let </span>heartbeat_interval_millis = <span class="number">5000</span>;
+
+                <span class="kw">let </span>region_alive_keepers = Arc::new(RegionAliveKeepers::new(
+                    engine_manager.clone(),
+                    heartbeat_interval_millis,
+                ));
 
                 <span class="kw">let </span>catalog_manager = Arc::new(RemoteCatalogManager::new(
                     engine_manager.clone(),
@@ -686,11 +694,11 @@
 
                 <span class="kw">let </span>heartbeat_task = <span class="prelude-val">Some</span>(HeartbeatTask::new(
                     opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
-                    opts.rpc_addr.clone(),
-                    opts.rpc_hostname.clone(),
+                    opts,
                     meta_client,
                     catalog_manager.clone(),
                     Arc::new(handlers_executor),
+                    heartbeat_interval_millis,
                     region_alive_keepers,
                 ));
 

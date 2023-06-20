@@ -232,8 +232,6 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -259,6 +257,7 @@
     HandleControl, HeartbeatResponseHandler, HeartbeatResponseHandlerContext,
 };
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
+<span class="kw">use </span>common_meta::RegionIdent;
 <span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionNumber;
@@ -291,25 +290,8 @@
 
         <span class="kw">let </span>mailbox = ctx.mailbox.clone();
         <span class="kw">let </span>self_ref = Arc::new(<span class="self">self</span>.clone());
-        <span class="kw">let </span>region_alive_keepers = <span class="self">self</span>.region_alive_keepers.clone();
         common_runtime::spawn_bg(<span class="kw">async move </span>{
-            <span class="kw">let </span>table_ident = <span class="kw-2">&amp;</span>region_ident.table_ident;
-            <span class="kw">let </span>table_ref = TableReference::full(
-                <span class="kw-2">&amp;</span>table_ident.catalog,
-                <span class="kw-2">&amp;</span>table_ident.schema,
-                <span class="kw-2">&amp;</span>table_ident.table,
-            );
-            <span class="kw">let </span>result = self_ref
-                .close_region_inner(
-                    table_ident.engine.clone(),
-                    <span class="kw-2">&amp;</span>table_ref,
-                    <span class="macro">vec!</span>[region_ident.region_number],
-                )
-                .<span class="kw">await</span>;
-
-            <span class="kw">if </span><span class="macro">matches!</span>(result, <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)) {
-                region_alive_keepers.deregister_region(<span class="kw-2">&amp;</span>region_ident).<span class="kw">await</span>;
-            }
+            <span class="kw">let </span>result = self_ref.close_region_inner(region_ident).<span class="kw">await</span>;
 
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = mailbox
                 .send((meta, CloseRegionHandler::map_result(result)))
@@ -388,20 +370,21 @@
         </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
-    <span class="kw">async fn </span>close_region_inner(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        engine: String,
-        table_ref: <span class="kw-2">&amp;</span>TableReference&lt;<span class="lifetime">&#39;_</span>&gt;,
-        region_numbers: Vec&lt;RegionNumber&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>engine =
-            <span class="self">self</span>.table_engine_manager
-                .engine(<span class="kw-2">&amp;</span>engine)
-                .context(error::TableEngineNotFoundSnafu {
-                    engine_name: <span class="kw-2">&amp;</span>engine,
-                })<span class="question-mark">?</span>;
+    <span class="kw">async fn </span>close_region_inner(<span class="kw-2">&amp;</span><span class="self">self</span>, region_ident: RegionIdent) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="kw">let </span>table_ident = <span class="kw-2">&amp;</span>region_ident.table_ident;
+        <span class="kw">let </span>engine_name = <span class="kw-2">&amp;</span>table_ident.engine;
+        <span class="kw">let </span>engine = <span class="self">self
+            </span>.table_engine_manager
+            .engine(engine_name)
+            .context(error::TableEngineNotFoundSnafu { engine_name })<span class="question-mark">?</span>;
         <span class="kw">let </span>ctx = EngineContext::default();
 
+        <span class="kw">let </span>table_ref = <span class="kw-2">&amp;</span>TableReference::full(
+            <span class="kw-2">&amp;</span>table_ident.catalog,
+            <span class="kw-2">&amp;</span>table_ident.schema,
+            <span class="kw-2">&amp;</span>table_ident.table,
+        );
+        <span class="kw">let </span>region_numbers = <span class="macro">vec!</span>[region_ident.region_number];
         <span class="kw">if </span><span class="self">self
             </span>.regions_closed(
                 table_ref.catalog,
@@ -439,14 +422,27 @@
                 })<span class="question-mark">? </span>{
                 CloseTableResult::NotFound | CloseTableResult::Released(<span class="kw">_</span>) =&gt; {
                     <span class="comment">// Deregister table if The table released.
-                    </span><span class="self">self</span>.deregister_table(table_ref).<span class="kw">await
-                </span>}
+                    </span><span class="kw">let </span>deregistered = <span class="self">self</span>.deregister_table(table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
+
+                    <span class="kw">if </span>deregistered {
+                        <span class="self">self</span>.region_alive_keepers
+                            .deregister_table(table_ident)
+                            .<span class="kw">await</span>;
+                    }
+
+                    <span class="prelude-val">Ok</span>(deregistered)
+                }
                 CloseTableResult::PartialClosed(regions) =&gt; {
                     <span class="comment">// Requires caller to update the region_numbers
                     </span><span class="macro">info!</span>(
                         <span class="string">&quot;Close partial regions: {:?} in table: {}&quot;</span>,
                         regions, table_ref
                     );
+
+                    <span class="self">self</span>.region_alive_keepers
+                        .deregister_region(<span class="kw-2">&amp;</span>region_ident)
+                        .<span class="kw">await</span>;
+
                     <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
                 }
             };

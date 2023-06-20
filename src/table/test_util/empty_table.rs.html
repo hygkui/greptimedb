@@ -92,6 +92,8 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -131,8 +133,10 @@
             .next_column_id(<span class="number">0</span>)
             .options(req.table_options)
             .region_numbers(req.region_numbers)
+            .engine(req.engine)
             .build();
         <span class="kw">let </span>table_info = TableInfoBuilder::default()
+            .table_id(req.id)
             .catalog_name(req.catalog_name)
             .schema_name(req.schema_name)
             .name(req.table_name)

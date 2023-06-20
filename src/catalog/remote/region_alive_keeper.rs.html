@@ -754,6 +754,53 @@
 <a href="#754" id="754">754</a>
 <a href="#755" id="755">755</a>
 <a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -770,6 +817,7 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::future::Future;
+<span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -786,7 +834,7 @@
 <span class="kw">use </span>table::engine::{CloseTableResult, EngineContext, TableEngineRef};
 <span class="kw">use </span>table::requests::CloseTableRequest;
 <span class="kw">use </span>table::TableRef;
-<span class="kw">use </span>tokio::sync::{mpsc, Mutex};
+<span class="kw">use </span>tokio::sync::{mpsc, oneshot, Mutex};
 <span class="kw">use </span>tokio::task::JoinHandle;
 <span class="kw">use </span>tokio::time::{Duration, Instant};
 
@@ -796,6 +844,8 @@
 </span><span class="kw">pub struct </span>RegionAliveKeepers {
     table_engine_manager: TableEngineManagerRef,
     keepers: Arc&lt;Mutex&lt;HashMap&lt;TableIdent, Arc&lt;RegionAliveKeeper&gt;&gt;&gt;&gt;,
+    heartbeat_interval_millis: u64,
+    started: AtomicBool,
 
     <span class="doccomment">/// The epoch when [RegionAliveKeepers] is created. It&#39;s used to get a monotonically non-decreasing
     /// elapsed time when submitting heartbeats to Metasrv (because [Instant] is monotonically
@@ -805,23 +855,24 @@
 }
 
 <span class="kw">impl </span>RegionAliveKeepers {
-    <span class="kw">pub fn </span>new(table_engine_manager: TableEngineManagerRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(
+        table_engine_manager: TableEngineManagerRef,
+        heartbeat_interval_millis: u64,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             table_engine_manager,
             keepers: Arc::new(Mutex::new(HashMap::new())),
+            heartbeat_interval_millis,
+            started: AtomicBool::new(<span class="bool-val">false</span>),
             epoch: Instant::now(),
         }
     }
 
-    <span class="kw">async fn </span>find_keeper(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: <span class="kw-2">&amp;</span>TableIdent) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionAliveKeeper&gt;&gt; {
+    <span class="kw">pub async fn </span>find_keeper(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: <span class="kw-2">&amp;</span>TableIdent) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionAliveKeeper&gt;&gt; {
         <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.get(table_ident).cloned()
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>register_table(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        table_ident: TableIdent,
-        table: TableRef,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">pub async fn </span>register_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: TableIdent, table: TableRef) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>keeper = <span class="self">self</span>.find_keeper(<span class="kw-2">&amp;</span>table_ident).<span class="kw">await</span>;
         <span class="kw">if </span>keeper.is_some() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
@@ -834,17 +885,29 @@
                 engine_name: <span class="kw-2">&amp;</span>table_ident.engine,
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>keeper = Arc::new(RegionAliveKeeper::new(table_engine, table_ident.clone()));
+        <span class="kw">let </span>keeper = Arc::new(RegionAliveKeeper::new(
+            table_engine,
+            table_ident.clone(),
+            <span class="self">self</span>.heartbeat_interval_millis,
+        ));
         <span class="kw">for </span>r <span class="kw">in </span>table.table_info().meta.region_numbers.iter() {
             keeper.register_region(<span class="kw-2">*</span>r).<span class="kw">await</span>;
         }
 
-        <span class="macro">info!</span>(<span class="string">&quot;Register RegionAliveKeeper for table {table_ident}&quot;</span>);
-        <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.insert(table_ident, keeper);
+        <span class="kw">let </span><span class="kw-2">mut </span>keepers = <span class="self">self</span>.keepers.lock().<span class="kw">await</span>;
+        keepers.insert(table_ident.clone(), keeper.clone());
+
+        <span class="kw">if </span><span class="self">self</span>.started.load(Ordering::Relaxed) {
+            keeper.start().<span class="kw">await</span>;
+
+            <span class="macro">info!</span>(<span class="string">&quot;RegionAliveKeeper for table {table_ident} is started!&quot;</span>);
+        } <span class="kw">else </span>{
+            <span class="macro">info!</span>(<span class="string">&quot;RegionAliveKeeper for table {table_ident} is registered but not started yet!&quot;</span>);
+        }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: <span class="kw-2">&amp;</span>TableIdent) {
+    <span class="kw">pub async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: <span class="kw-2">&amp;</span>TableIdent) {
         <span class="kw">if </span><span class="self">self</span>.keepers.lock().<span class="kw">await</span>.remove(table_ident).is_some() {
             <span class="macro">info!</span>(<span class="string">&quot;Deregister RegionAliveKeeper for table {table_ident}&quot;</span>);
         }
@@ -870,10 +933,17 @@
         keeper.deregister_region(region_ident.region_number).<span class="kw">await
     </span>}
 
-    <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, heartbeat_interval_millis: u64) {
-        <span class="kw">for </span>keeper <span class="kw">in </span><span class="self">self</span>.keepers.lock().<span class="kw">await</span>.values() {
-            keeper.start(heartbeat_interval_millis).<span class="kw">await</span>;
+    <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span>keepers = <span class="self">self</span>.keepers.lock().<span class="kw">await</span>;
+        <span class="kw">for </span>keeper <span class="kw">in </span>keepers.values() {
+            keeper.start().<span class="kw">await</span>;
         }
+        <span class="self">self</span>.started.store(<span class="bool-val">true</span>, Ordering::Relaxed);
+
+        <span class="macro">info!</span>(
+            <span class="string">&quot;RegionAliveKeepers for tables {:?} are started!&quot;</span>,
+            keepers.keys().map(|x| x.to_string()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+        );
     }
 
     <span class="kw">pub fn </span>epoch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Instant {
@@ -927,18 +997,26 @@
 /// opened regions to Metasrv, in heartbeats. If Metasrv decides some region could be resided in this
 /// Datanode, it will &quot;extend&quot; the region&#39;s &quot;lease&quot;, with a deadline for [RegionAliveKeeper] to
 /// countdown.
-</span><span class="kw">struct </span>RegionAliveKeeper {
+</span><span class="kw">pub struct </span>RegionAliveKeeper {
     table_engine: TableEngineRef,
     table_ident: TableIdent,
     countdown_task_handles: Arc&lt;Mutex&lt;HashMap&lt;RegionNumber, Arc&lt;CountdownTaskHandle&gt;&gt;&gt;&gt;,
+    heartbeat_interval_millis: u64,
+    started: AtomicBool,
 }
 
 <span class="kw">impl </span>RegionAliveKeeper {
-    <span class="kw">fn </span>new(table_engine: TableEngineRef, table_ident: TableIdent) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>new(
+        table_engine: TableEngineRef,
+        table_ident: TableIdent,
+        heartbeat_interval_millis: u64,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             table_engine,
             table_ident,
             countdown_task_handles: Arc::new(Mutex::new(HashMap::new())),
+            heartbeat_interval_millis,
+            started: AtomicBool::new(<span class="bool-val">false</span>),
         }
     }
 
@@ -966,14 +1044,22 @@
             || on_task_finished,
         ));
 
-        <span class="self">self</span>.countdown_task_handles
-            .lock()
-            .<span class="kw">await
-            </span>.insert(region, handle);
-        <span class="macro">info!</span>(
-            <span class="string">&quot;Register alive countdown for new region {region} in table {}&quot;</span>,
-            <span class="self">self</span>.table_ident
-        )
+        <span class="kw">let </span><span class="kw-2">mut </span>handles = <span class="self">self</span>.countdown_task_handles.lock().<span class="kw">await</span>;
+        handles.insert(region, handle.clone());
+
+        <span class="kw">if </span><span class="self">self</span>.started.load(Ordering::Relaxed) {
+            handle.start(<span class="self">self</span>.heartbeat_interval_millis).<span class="kw">await</span>;
+
+            <span class="macro">info!</span>(
+                <span class="string">&quot;Region alive countdown for region {region} in table {} is started!&quot;</span>,
+                <span class="self">self</span>.table_ident
+            );
+        } <span class="kw">else </span>{
+            <span class="macro">info!</span>(
+                <span class="string">&quot;Region alive countdown for region {region} in table {} is registered but not started yet!&quot;</span>,
+                <span class="self">self</span>.table_ident
+            );
+        }
     }
 
     <span class="kw">async fn </span>deregister_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region: RegionNumber) {
@@ -991,14 +1077,18 @@
         }
     }
 
-    <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, heartbeat_interval_millis: u64) {
-        <span class="kw">for </span>handle <span class="kw">in </span><span class="self">self</span>.countdown_task_handles.lock().<span class="kw">await</span>.values() {
-            handle.start(heartbeat_interval_millis).<span class="kw">await</span>;
+    <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span>handles = <span class="self">self</span>.countdown_task_handles.lock().<span class="kw">await</span>;
+        <span class="kw">for </span>handle <span class="kw">in </span>handles.values() {
+            handle.start(<span class="self">self</span>.heartbeat_interval_millis).<span class="kw">await</span>;
         }
+
+        <span class="self">self</span>.started.store(<span class="bool-val">true</span>, Ordering::Relaxed);
         <span class="macro">info!</span>(
-            <span class="string">&quot;RegionAliveKeeper for table {} is started!&quot;</span>,
+            <span class="string">&quot;Region alive countdowns for regions {:?} in table {} are started!&quot;</span>,
+            handles.keys().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
             <span class="self">self</span>.table_ident
-        )
+        );
     }
 
     <span class="kw">async fn </span>keep_lived(<span class="kw-2">&amp;</span><span class="self">self</span>, designated_regions: Vec&lt;RegionNumber&gt;, deadline: Instant) {
@@ -1009,15 +1099,24 @@
             <span class="comment">// Else the region alive keeper might be triggered by lagging messages, we can safely ignore it.
         </span>}
     }
+
+    <span class="kw">pub async fn </span>deadline(<span class="kw-2">&amp;</span><span class="self">self</span>, region: RegionNumber) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>deadline = <span class="prelude-val">None</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(handle) = <span class="self">self</span>.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await </span>{
+            <span class="kw">let </span>(s, r) = oneshot::channel();
+            <span class="kw">if </span>handle.tx.send(CountdownCommand::Deadline(s)).<span class="kw">await</span>.is_ok() {
+                deadline = r.<span class="kw">await</span>.ok()
+            }
+        }
+        deadline
+    }
 }
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">enum </span>CountdownCommand {
     Start(u64),
     Reset(Instant),
-
-    <span class="attr">#[cfg(test)]
-    </span>Deadline(tokio::sync::oneshot::Sender&lt;Instant&gt;),
+    Deadline(oneshot::Sender&lt;Instant&gt;),
 }
 
 <span class="kw">struct </span>CountdownTaskHandle {
@@ -1118,7 +1217,10 @@
                         },
                         <span class="prelude-val">Some</span>(CountdownCommand::Reset(deadline)) =&gt; {
                             <span class="kw">if </span>countdown.deadline() &lt; deadline {
-                                <span class="macro">debug!</span>(<span class="string">&quot;Reset deadline to region {region} of table {table_ident} to {deadline:?}&quot;</span>);
+                                <span class="macro">debug!</span>(
+                                    <span class="string">&quot;Reset deadline of region {region} of table {table_ident} to approximately {} seconds later&quot;</span>,
+                                    (deadline - Instant::now()).as_secs_f32(),
+                                );
                                 countdown.set(tokio::time::sleep_until(deadline));
                             }
                             <span class="comment">// Else the countdown could be either:
@@ -1134,10 +1236,8 @@
                             </span>);
                             <span class="kw">break</span>;
                         },
-
-                        <span class="attr">#[cfg(test)]
-                        </span><span class="prelude-val">Some</span>(CountdownCommand::Deadline(tx)) =&gt; {
-                            tx.send(countdown.deadline()).unwrap()
+                        <span class="prelude-val">Some</span>(CountdownCommand::Deadline(tx)) =&gt; {
+                            <span class="kw">let _ </span>= tx.send(countdown.deadline());
                         }
                     }
                 }
@@ -1189,7 +1289,6 @@
     <span class="kw">use </span>table::engine::{TableEngine, TableReference};
     <span class="kw">use </span>table::requests::{CreateTableRequest, TableOptions};
     <span class="kw">use </span>table::test_util::EmptyTable;
-    <span class="kw">use </span>tokio::sync::oneshot;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::remote::mock::MockTableEngine;
@@ -1197,7 +1296,7 @@
     <span class="kw">async fn </span>prepare_keepers() -&gt; (TableIdent, RegionAliveKeepers) {
         <span class="kw">let </span>table_engine = Arc::new(MockTableEngine::default());
         <span class="kw">let </span>table_engine_manager = Arc::new(MemoryTableEngineManager::new(table_engine));
-        <span class="kw">let </span>keepers = RegionAliveKeepers::new(table_engine_manager);
+        <span class="kw">let </span>keepers = RegionAliveKeepers::new(table_engine_manager, <span class="number">5000</span>);
 
         <span class="kw">let </span>catalog = <span class="string">&quot;my_catalog&quot;</span>;
         <span class="kw">let </span>schema = <span class="string">&quot;my_schema&quot;</span>;
@@ -1239,7 +1338,7 @@
     </span><span class="kw">async fn </span>test_handle_heartbeat_response() {
         <span class="kw">let </span>(table_ident, keepers) = prepare_keepers().<span class="kw">await</span>;
 
-        keepers.start(<span class="number">5000</span>).<span class="kw">await</span>;
+        keepers.start().<span class="kw">await</span>;
         <span class="kw">let </span>startup_protection_until = Instant::now() + Duration::from_secs(<span class="number">21</span>);
 
         <span class="kw">let </span>duration_since_epoch = (Instant::now() - keepers.epoch).as_millis() <span class="kw">as _</span>;
@@ -1273,8 +1372,7 @@
             keep_alive_until: Instant,
             is_kept_live: bool,
         ) {
-            <span class="kw">let </span>handles = keeper.countdown_task_handles.lock().<span class="kw">await</span>;
-            <span class="kw">let </span>deadline = deadline(<span class="kw-2">&amp;</span>handles.get(<span class="kw-2">&amp;</span>region_number).unwrap().tx).<span class="kw">await</span>;
+            <span class="kw">let </span>deadline = keeper.deadline(region_number).<span class="kw">await</span>.unwrap();
             <span class="kw">if </span>is_kept_live {
                 <span class="macro">assert!</span>(deadline &gt; startup_protection_until &amp;&amp; deadline == keep_alive_until);
             } <span class="kw">else </span>{
@@ -1311,11 +1409,16 @@
             })
             .<span class="kw">await</span>;
 
-        keepers.start(<span class="number">5000</span>).<span class="kw">await</span>;
+        keepers.start().<span class="kw">await</span>;
         <span class="kw">for </span>keeper <span class="kw">in </span>keepers.keepers.lock().<span class="kw">await</span>.values() {
-            <span class="kw">for </span>handle <span class="kw">in </span>keeper.countdown_task_handles.lock().<span class="kw">await</span>.values() {
+            <span class="kw">let </span>regions = {
+                <span class="kw">let </span>handles = keeper.countdown_task_handles.lock().<span class="kw">await</span>;
+                handles.keys().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+            };
+            <span class="kw">for </span>region <span class="kw">in </span>regions {
                 <span class="comment">// assert countdown tasks are started
-                </span><span class="macro">assert!</span>(deadline(<span class="kw-2">&amp;</span>handle.tx).<span class="kw">await </span>&lt;= Instant::now() + Duration::from_secs(<span class="number">20</span>));
+                </span><span class="kw">let </span>deadline = keeper.deadline(region).<span class="kw">await</span>.unwrap();
+                <span class="macro">assert!</span>(deadline &lt;= Instant::now() + Duration::from_secs(<span class="number">20</span>));
             }
         }
 
@@ -1354,21 +1457,12 @@
             table_id: <span class="number">1024</span>,
             engine: <span class="string">&quot;mito&quot;</span>.to_string(),
         };
-        <span class="kw">let </span>keeper = RegionAliveKeeper::new(table_engine, table_ident);
+        <span class="kw">let </span>keeper = RegionAliveKeeper::new(table_engine, table_ident, <span class="number">1000</span>);
 
         <span class="kw">let </span>region = <span class="number">1</span>;
         <span class="macro">assert!</span>(keeper.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await</span>.is_none());
         keeper.register_region(region).<span class="kw">await</span>;
         <span class="macro">assert!</span>(keeper.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await</span>.is_some());
-
-        <span class="kw">let </span>sender = <span class="kw-2">&amp;</span>keeper
-            .countdown_task_handles
-            .lock()
-            .<span class="kw">await
-            </span>.get(<span class="kw-2">&amp;</span>region)
-            .unwrap()
-            .tx
-            .clone();
 
         <span class="kw">let </span>ten_seconds_later = || Instant::now() + Duration::from_secs(<span class="number">10</span>);
 
@@ -1378,12 +1472,12 @@
 
         <span class="kw">let </span>far_future = Instant::now() + Duration::from_secs(<span class="number">86400 </span>* <span class="number">365 </span>* <span class="number">29</span>);
         <span class="comment">// assert if keeper is not started, keep_lived is of no use
-        </span><span class="macro">assert!</span>(deadline(sender).<span class="kw">await </span>&gt; far_future);
+        </span><span class="macro">assert!</span>(keeper.deadline(region).<span class="kw">await</span>.unwrap() &gt; far_future);
 
-        keeper.start(<span class="number">1000</span>).<span class="kw">await</span>;
+        keeper.start().<span class="kw">await</span>;
         keeper.keep_lived(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>], ten_seconds_later()).<span class="kw">await</span>;
         <span class="comment">// assert keep_lived works if keeper is started
-        </span><span class="macro">assert!</span>(deadline(sender).<span class="kw">await </span>&lt;= ten_seconds_later());
+        </span><span class="macro">assert!</span>(keeper.deadline(region).<span class="kw">await</span>.unwrap() &lt;= ten_seconds_later());
 
         keeper.deregister_region(region).<span class="kw">await</span>;
         <span class="macro">assert!</span>(keeper.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await</span>.is_none());
@@ -1482,6 +1576,12 @@
             task.run().<span class="kw">await</span>;
         });
 
+        <span class="kw">async fn </span>deadline(tx: <span class="kw-2">&amp;</span>mpsc::Sender&lt;CountdownCommand&gt;) -&gt; Instant {
+            <span class="kw">let </span>(s, r) = oneshot::channel();
+            tx.send(CountdownCommand::Deadline(s)).<span class="kw">await</span>.unwrap();
+            r.<span class="kw">await</span>.unwrap()
+        }
+
         <span class="comment">// if countdown task is not started, its deadline is set to far future
         </span><span class="macro">assert!</span>(deadline(<span class="kw-2">&amp;</span>tx).<span class="kw">await </span>&gt; Instant::now() + Duration::from_secs(<span class="number">86400 </span>* <span class="number">365 </span>* <span class="number">29</span>));
 
@@ -1502,12 +1602,6 @@
         <span class="comment">// spare 500ms for the task to close the table
         </span>tokio::time::sleep(Duration::from_millis(<span class="number">2000</span>)).<span class="kw">await</span>;
         <span class="macro">assert!</span>(!table_engine.table_exists(ctx, <span class="kw-2">&amp;</span>table_ref));
-    }
-
-    <span class="kw">async fn </span>deadline(tx: <span class="kw-2">&amp;</span>mpsc::Sender&lt;CountdownCommand&gt;) -&gt; Instant {
-        <span class="kw">let </span>(s, r) = oneshot::channel();
-        tx.send(CountdownCommand::Deadline(s)).<span class="kw">await</span>.unwrap();
-        r.<span class="kw">await</span>.unwrap()
     }
 }
 </code></pre></div></section></main></body></html>
