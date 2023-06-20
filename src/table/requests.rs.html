@@ -339,6 +339,18 @@
 <a href="#339" id="339">339</a>
 <a href="#340" id="340">340</a>
 <a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -361,6 +373,7 @@
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_query::AddColumnLocation;
+<span class="kw">use </span>common_time::range::TimestampRange;
 <span class="kw">use </span>datatypes::prelude::VectorRef;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, RawSchema};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -609,6 +622,7 @@
     <span class="kw">pub </span>connection: HashMap&lt;String, String&gt;,
     <span class="kw">pub </span>pattern: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>direction: CopyDirection,
+    <span class="kw">pub </span>timestamp_range: <span class="prelude-ty">Option</span>&lt;TimestampRange&gt;,
 }
 
 <span class="attr">#[derive(Debug, Clone, Default)]
@@ -632,6 +646,16 @@
             <span class="macro-nonterminal">$req
         </span>);
     };
+}
+
+<span class="attr">#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+</span><span class="kw">pub struct </span>CopyDatabaseRequest {
+    <span class="kw">pub </span>catalog_name: String,
+    <span class="kw">pub </span>schema_name: String,
+    <span class="kw">pub </span>location: String,
+    <span class="kw">pub </span>with: HashMap&lt;String, String&gt;,
+    <span class="kw">pub </span>connection: HashMap&lt;String, String&gt;,
+    <span class="kw">pub </span>time_range: <span class="prelude-ty">Option</span>&lt;TimestampRange&gt;,
 }
 
 <span class="attr">#[cfg(test)]

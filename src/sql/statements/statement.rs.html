@@ -92,7 +92,6 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -112,7 +111,6 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{ConvertToDfStatementSnafu, Error};
 <span class="kw">use </span><span class="kw">crate</span>::statements::alter::AlterTable;
-<span class="kw">use </span><span class="kw">crate</span>::statements::copy::CopyTable;
 <span class="kw">use </span><span class="kw">crate</span>::statements::create::{CreateDatabase, CreateExternalTable, CreateTable};
 <span class="kw">use </span><span class="kw">crate</span>::statements::delete::Delete;
 <span class="kw">use </span><span class="kw">crate</span>::statements::describe::DescribeTable;
@@ -155,7 +153,7 @@
     </span>Explain(Explain),
     Use(String),
     <span class="comment">// COPY
-    </span>Copy(CopyTable),
+    </span>Copy(<span class="kw">crate</span>::statements::copy::Copy),
     Tql(Tql),
 }
 

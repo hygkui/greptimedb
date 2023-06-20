@@ -588,7 +588,6 @@
 <a href="#588" id="588">588</a>
 <a href="#589" id="589">589</a>
 <a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -615,7 +614,6 @@
 <span class="kw">use </span>common_datasource::lister::{Lister, Source};
 <span class="kw">use </span>common_datasource::object_store::{build_backend, parse_url};
 <span class="kw">use </span>common_datasource::util::find_dir_and_filename;
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::adapter::ParquetRecordBatchStreamAdapter;
 <span class="kw">use </span>common_recordbatch::DfSendableRecordBatchStream;
 <span class="kw">use </span>datafusion::datasource::listing::PartitionedFile;
@@ -796,7 +794,7 @@
         }
     }
 
-    <span class="kw">pub async fn </span>copy_table_from(<span class="kw-2">&amp;</span><span class="self">self</span>, req: CopyTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">pub async fn </span>copy_table_from(<span class="kw-2">&amp;</span><span class="self">self</span>, req: CopyTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
         <span class="kw">let </span>table_ref = TableReference {
             catalog: <span class="kw-2">&amp;</span>req.catalog_name,
             schema: <span class="kw-2">&amp;</span>req.schema_name,
@@ -904,7 +902,7 @@
             }
         }
 
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(rows_inserted))
+        <span class="prelude-val">Ok</span>(rows_inserted)
     }
 }
 
