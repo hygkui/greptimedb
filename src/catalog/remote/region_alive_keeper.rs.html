@@ -801,6 +801,24 @@
 <a href="#801" id="801">801</a>
 <a href="#802" id="802">802</a>
 <a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -907,10 +925,14 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: <span class="kw-2">&amp;</span>TableIdent) {
-        <span class="kw">if </span><span class="self">self</span>.keepers.lock().<span class="kw">await</span>.remove(table_ident).is_some() {
+    <span class="kw">pub async fn </span>deregister_table(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        table_ident: <span class="kw-2">&amp;</span>TableIdent,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionAliveKeeper&gt;&gt; {
+        <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.remove(table_ident).map(|x| {
             <span class="macro">info!</span>(<span class="string">&quot;Deregister RegionAliveKeeper for table {table_ident}&quot;</span>);
-        }
+            x
+        })
     }
 
     <span class="kw">pub async fn </span>register_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_ident: <span class="kw-2">&amp;</span>RegionIdent) {
@@ -930,8 +952,8 @@
             </span><span class="macro">warn!</span>(<span class="string">&quot;Alive keeper for region {region_ident} is not found!&quot;</span>);
             <span class="kw">return</span>;
         };
-        keeper.deregister_region(region_ident.region_number).<span class="kw">await
-    </span>}
+        <span class="kw">let _ </span>= keeper.deregister_region(region_ident.region_number).<span class="kw">await</span>;
+    }
 
     <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let </span>keepers = <span class="self">self</span>.keepers.lock().<span class="kw">await</span>;
@@ -1033,10 +1055,12 @@
             <span class="kw">return</span>;
         }
 
-        <span class="kw">let </span>countdown_task_handles = <span class="self">self</span>.countdown_task_handles.clone();
+        <span class="kw">let </span>countdown_task_handles = Arc::downgrade(<span class="kw-2">&amp;</span><span class="self">self</span>.countdown_task_handles);
         <span class="kw">let </span>on_task_finished = <span class="kw">async move </span>{
-            <span class="kw">let _ </span>= countdown_task_handles.lock().<span class="kw">await</span>.remove(<span class="kw-2">&amp;</span>region);
-        };
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = countdown_task_handles.upgrade() {
+                x.lock().<span class="kw">await</span>.remove(<span class="kw-2">&amp;</span>region);
+            } <span class="comment">// Else the countdown task handles map could be dropped because the keeper is dropped.
+        </span>};
         <span class="kw">let </span>handle = Arc::new(CountdownTaskHandle::new(
             <span class="self">self</span>.table_engine.clone(),
             <span class="self">self</span>.table_ident.clone(),
@@ -1062,19 +1086,18 @@
         }
     }
 
-    <span class="kw">async fn </span>deregister_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region: RegionNumber) {
-        <span class="kw">if </span><span class="self">self
-            </span>.countdown_task_handles
+    <span class="kw">async fn </span>deregister_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region: RegionNumber) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;CountdownTaskHandle&gt;&gt; {
+        <span class="self">self</span>.countdown_task_handles
             .lock()
             .<span class="kw">await
             </span>.remove(<span class="kw-2">&amp;</span>region)
-            .is_some()
-        {
-            <span class="macro">info!</span>(
-                <span class="string">&quot;Deregister alive countdown for region {region} in table {}&quot;</span>,
-                <span class="self">self</span>.table_ident
-            )
-        }
+            .map(|x| {
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;Deregister alive countdown for region {region} in table {}&quot;</span>,
+                    <span class="self">self</span>.table_ident
+                );
+                x
+            })
     }
 
     <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) {
@@ -1122,6 +1145,8 @@
 <span class="kw">struct </span>CountdownTaskHandle {
     tx: mpsc::Sender&lt;CountdownCommand&gt;,
     handler: JoinHandle&lt;()&gt;,
+    table_ident: TableIdent,
+    region: RegionNumber,
 }
 
 <span class="kw">impl </span>CountdownTaskHandle {
@@ -1144,7 +1169,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>countdown_task = CountdownTask {
             table_engine,
-            table_ident,
+            table_ident: table_ident.clone(),
             region,
             rx,
         };
@@ -1153,7 +1178,12 @@
             on_task_finished().<span class="kw">await</span>;
         });
 
-        <span class="self">Self </span>{ tx, handler }
+        <span class="self">Self </span>{
+            tx,
+            handler,
+            table_ident,
+            region,
+        }
     }
 
     <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, heartbeat_interval_millis: u64) {
@@ -1181,7 +1211,11 @@
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>CountdownTaskHandle {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.handler.abort()
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;Aborting region alive countdown task for region {} in table {}&quot;</span>,
+            <span class="self">self</span>.region, <span class="self">self</span>.table_ident,
+        );
+        <span class="self">self</span>.handler.abort();
     }
 }
 
@@ -1443,7 +1477,8 @@
         regions.sort();
         <span class="macro">assert_eq!</span>(regions, <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);
 
-        keepers.deregister_table(<span class="kw-2">&amp;</span>table_ident).<span class="kw">await</span>;
+        <span class="kw">let </span>keeper = keepers.deregister_table(<span class="kw-2">&amp;</span>table_ident).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(Arc::try_unwrap(keeper).is_ok(), <span class="string">&quot;keeper is not dropped&quot;</span>);
         <span class="macro">assert!</span>(keepers.keepers.lock().<span class="kw">await</span>.is_empty());
     }
 
@@ -1479,7 +1514,8 @@
         <span class="comment">// assert keep_lived works if keeper is started
         </span><span class="macro">assert!</span>(keeper.deadline(region).<span class="kw">await</span>.unwrap() &lt;= ten_seconds_later());
 
-        keeper.deregister_region(region).<span class="kw">await</span>;
+        <span class="kw">let </span>handle = keeper.deregister_region(region).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(Arc::try_unwrap(handle).is_ok(), <span class="string">&quot;handle is not dropped&quot;</span>);
         <span class="macro">assert!</span>(keeper.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await</span>.is_none());
     }
 
