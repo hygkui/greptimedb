@@ -92,6 +92,51 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -108,7 +153,7 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>datafusion_expr::{LogicalPlan, UserDefinedLogicalNode};
+<span class="kw">use </span>datafusion_expr::{Expr, LogicalPlan, UserDefinedLogicalNode};
 <span class="kw">use </span>promql::extension_plan::{
     EmptyMetric, InstantManipulate, RangeManipulate, SeriesDivide, SeriesNormalize,
 };
@@ -131,7 +176,8 @@
     <span class="kw">pub fn </span>check_plan(plan: <span class="kw-2">&amp;</span>LogicalPlan) -&gt; Commutativity {
         <span class="kw">match </span>plan {
             LogicalPlan::Projection(<span class="kw">_</span>) =&gt; Commutativity::Unimplemented,
-            LogicalPlan::Filter(<span class="kw">_</span>) =&gt; Commutativity::Commutative,
+            <span class="comment">// TODO(ruihang): Change this to Commutative once Like is supported in substrait
+            </span>LogicalPlan::Filter(filter) =&gt; <span class="self">Self</span>::check_expr(<span class="kw-2">&amp;</span>filter.predicate),
             LogicalPlan::Window(<span class="kw">_</span>) =&gt; Commutativity::Unimplemented,
             LogicalPlan::Aggregate(<span class="kw">_</span>) =&gt; {
                 <span class="comment">// check all children exprs and uses the strictest level
@@ -177,6 +223,50 @@
                 Commutativity::Commutative
             }
             <span class="kw">_ </span>=&gt; Commutativity::Unsupported,
+        }
+    }
+
+    <span class="kw">pub fn </span>check_expr(expr: <span class="kw-2">&amp;</span>Expr) -&gt; Commutativity {
+        <span class="kw">match </span>expr {
+            Expr::Alias(<span class="kw">_</span>, <span class="kw">_</span>)
+            | Expr::Column(<span class="kw">_</span>)
+            | Expr::ScalarVariable(<span class="kw">_</span>, <span class="kw">_</span>)
+            | Expr::Literal(<span class="kw">_</span>)
+            | Expr::BinaryExpr(<span class="kw">_</span>)
+            | Expr::Not(<span class="kw">_</span>)
+            | Expr::IsNotNull(<span class="kw">_</span>)
+            | Expr::IsNull(<span class="kw">_</span>)
+            | Expr::IsTrue(<span class="kw">_</span>)
+            | Expr::IsFalse(<span class="kw">_</span>)
+            | Expr::IsNotTrue(<span class="kw">_</span>)
+            | Expr::IsNotFalse(<span class="kw">_</span>)
+            | Expr::Negative(<span class="kw">_</span>)
+            | Expr::Between(<span class="kw">_</span>)
+            | Expr::Sort(<span class="kw">_</span>)
+            | Expr::Exists(<span class="kw">_</span>) =&gt; Commutativity::Commutative,
+
+            Expr::Like(<span class="kw">_</span>)
+            | Expr::ILike(<span class="kw">_</span>)
+            | Expr::SimilarTo(<span class="kw">_</span>)
+            | Expr::IsUnknown(<span class="kw">_</span>)
+            | Expr::IsNotUnknown(<span class="kw">_</span>)
+            | Expr::GetIndexedField(<span class="kw">_</span>)
+            | Expr::Case(<span class="kw">_</span>)
+            | Expr::Cast(<span class="kw">_</span>)
+            | Expr::TryCast(<span class="kw">_</span>)
+            | Expr::ScalarFunction(<span class="kw">_</span>)
+            | Expr::ScalarUDF(<span class="kw">_</span>)
+            | Expr::AggregateFunction(<span class="kw">_</span>)
+            | Expr::WindowFunction(<span class="kw">_</span>)
+            | Expr::AggregateUDF(<span class="kw">_</span>)
+            | Expr::InList(<span class="kw">_</span>)
+            | Expr::InSubquery(<span class="kw">_</span>)
+            | Expr::ScalarSubquery(<span class="kw">_</span>)
+            | Expr::Wildcard =&gt; Commutativity::Unimplemented,
+            Expr::QualifiedWildcard { .. }
+            | Expr::GroupingSet(<span class="kw">_</span>)
+            | Expr::Placeholder(<span class="kw">_</span>)
+            | Expr::OuterReferenceColumn(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Commutativity::Unimplemented,
         }
     }
 }
