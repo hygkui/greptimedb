@@ -142,6 +142,16 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -163,6 +173,7 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::{INFORMATION_SCHEMA_NAME, SYSTEM_CATALOG_TABLE_NAME};
+<span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>table::{Table, TableRef};
@@ -235,12 +246,21 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         request: <span class="kw-2">&amp;</span>DeregisterTableRequest,
         table_id: TableId,
-    ) -&gt; CatalogResult&lt;bool&gt; {
+    ) -&gt; CatalogResult&lt;()&gt; {
         <span class="self">self</span>.information_schema
             .system
             .delete(build_table_deletion_request(request, table_id))
             .<span class="kw">await
-            </span>.map(|x| x == <span class="number">1</span>)
+            </span>.map(|x| {
+                <span class="kw">if </span>x != <span class="number">1 </span>{
+                    <span class="kw">let </span>table = common_catalog::format_full_table_name(
+                        <span class="kw-2">&amp;</span>request.catalog,
+                        <span class="kw-2">&amp;</span>request.schema,
+                        <span class="kw-2">&amp;</span>request.table_name
+                    );
+                    <span class="macro">logging::warn!</span>(<span class="string">&quot;Failed to delete table record from information_schema, unexpected returned result: {x}, table: {table}&quot;</span>);
+                }
+            })
             .with_context(|<span class="kw">_</span>| error::DeregisterTableSnafu {
                 request: request.clone(),
             })
