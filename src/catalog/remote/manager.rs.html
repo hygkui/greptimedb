@@ -1092,6 +1092,17 @@
 <a href="#1092" id="1092">1092</a>
 <a href="#1093" id="1093">1093</a>
 <a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2048,15 +2059,26 @@
     <span class="kw">async fn </span>table_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;&gt; {
         <span class="kw">let </span>key_prefix = build_table_regional_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name, <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name);
         <span class="kw">let </span>iter = <span class="self">self</span>.backend.range(key_prefix.as_bytes());
-        <span class="kw">let </span>table_names = iter
+        <span class="kw">let </span>regional_keys = iter
             .map(|kv| {
                 <span class="kw">let </span>Kv(key, <span class="kw">_</span>) = kv<span class="question-mark">?</span>;
                 <span class="kw">let </span>regional_key = TableRegionalKey::parse(String::from_utf8_lossy(<span class="kw-2">&amp;</span>key))
                     .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(regional_key.table_name)
+                <span class="prelude-val">Ok</span>(regional_key)
             })
-            .try_collect()
+            .try_collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
             .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>table_names = regional_keys
+            .into_iter()
+            .filter_map(|x| {
+                <span class="kw">if </span>x.node_id == <span class="self">self</span>.node_id {
+                    <span class="prelude-val">Some</span>(x.table_name)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>}
+            })
+            .collect();
         <span class="prelude-val">Ok</span>(table_names)
     }
 
