@@ -582,6 +582,15 @@
 <a href="#582" id="582">582</a>
 <a href="#583" id="583">583</a>
 <a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -896,7 +905,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::sync::atomic::AtomicI32;
+    <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicI32};
     <span class="kw">use </span>std::time::Duration;
 
     <span class="kw">use </span>store_api::storage::RegionId;
@@ -1148,7 +1157,9 @@
         <span class="kw">let </span>task_scheduled = Arc::new(AtomicI32::new(<span class="number">0</span>));
         <span class="kw">let </span>task_scheduled_cloned = task_scheduled.clone();
 
-        common_runtime::spawn_write(<span class="kw">async move </span>{
+        <span class="kw">let </span>scheduling = Arc::new(AtomicBool::new(<span class="bool-val">true</span>));
+        <span class="kw">let </span>scheduling_clone = scheduling.clone();
+        <span class="kw">let </span>handle = common_runtime::spawn_write(<span class="kw">async move </span>{
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">10000 </span>{
                 <span class="kw">if let </span><span class="prelude-val">Ok</span>(res) = scheduler_cloned.schedule(MockRequest {
                     region_id: i <span class="kw">as </span>RegionId,
@@ -1157,12 +1168,19 @@
                         task_scheduled_cloned.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
                     }
                 }
+
+                <span class="kw">if </span>!scheduling_clone.load(Ordering::Relaxed) {
+                    <span class="kw">break</span>;
+                }
             }
         });
 
-        tokio::time::sleep(Duration::from_millis(<span class="number">1</span>)).<span class="kw">await</span>;
         scheduler.stop(<span class="bool-val">true</span>).<span class="kw">await</span>.unwrap();
+        scheduling.store(<span class="bool-val">false</span>, Ordering::Relaxed);
+
         <span class="kw">let </span>finished = finished.load(Ordering::Relaxed);
+        handle.<span class="kw">await</span>.unwrap();
+
         <span class="macro">assert_eq!</span>(finished, task_scheduled.load(Ordering::Relaxed));
     }
 }
