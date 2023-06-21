@@ -940,7 +940,6 @@
 <a href="#940" id="940">940</a>
 <a href="#941" id="941">941</a>
 <a href="#942" id="942">942</a>
-<a href="#943" id="943">943</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1105,15 +1104,14 @@
     }
 
     <span class="kw">pub fn </span>field_column_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>String&gt; {
-        <span class="kw">let </span>columns_schemas = <span class="kw-2">&amp;</span><span class="self">self</span>.schema.column_schemas();
-        <span class="self">self</span>.value_indices.iter().filter_map(|idx| {
-            <span class="kw">let </span>column = <span class="kw-2">&amp;</span>columns_schemas[<span class="kw-2">*</span>idx];
-            <span class="kw">if </span>column.is_time_index() {
-                <span class="prelude-val">None
-            </span>} <span class="kw">else </span>{
-                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>column.name)
-            }
-        })
+        <span class="comment">// `value_indices` is wrong under distributed mode. Use the logic copied from DESC TABLE
+        </span><span class="kw">let </span>columns_schemas = <span class="self">self</span>.schema.column_schemas();
+        <span class="kw">let </span>primary_key_indices = <span class="kw-2">&amp;</span><span class="self">self</span>.primary_key_indices;
+        columns_schemas
+            .iter()
+            .enumerate()
+            .filter(|(i, cs)| !primary_key_indices.contains(i) &amp;&amp; !cs.is_time_index())
+            .map(|(<span class="kw">_</span>, cs)| <span class="kw-2">&amp;</span>cs.name)
     }
 
     <span class="doccomment">/// Returns the new [TableMetaBuilder] after applying given `alter_kind`.

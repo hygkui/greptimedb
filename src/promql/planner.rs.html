@@ -2562,7 +2562,7 @@
                             result_set.insert(matcher.value.clone());
                         } <span class="kw">else </span>{
                             <span class="kw">return </span><span class="prelude-val">Err</span>(ColumnNotFoundSnafu {
-                                col: <span class="self">self</span>.ctx.table_name.clone().unwrap(),
+                                col: matcher.value.clone(),
                             }
                             .build());
                         }
@@ -2571,8 +2571,8 @@
                         <span class="kw">if </span>col_set.contains(<span class="kw-2">&amp;</span>matcher.value) {
                             reverse_set.insert(matcher.value.clone());
                         } <span class="kw">else </span>{
-                            <span class="kw">return </span><span class="prelude-val">Err</span>(ValueNotFoundSnafu {
-                                table: <span class="self">self</span>.ctx.table_name.clone().unwrap(),
+                            <span class="kw">return </span><span class="prelude-val">Err</span>(ColumnNotFoundSnafu {
+                                col: matcher.value.clone(),
                             }
                             .build());
                         }
