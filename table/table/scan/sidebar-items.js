@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["StreamScanAdapter"]};
+window.SIDEBAR_ITEMS = {"struct":["StreamScanAdapter","StreamWithMetricWrapper"]};
