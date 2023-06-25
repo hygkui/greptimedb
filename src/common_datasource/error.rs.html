@@ -207,6 +207,14 @@
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -261,6 +269,12 @@
     </span>BuildBackend {
         source: object_store::Error,
         location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build orc reader, source: {}&quot;</span>, source))]
+    </span>OrcReader {
+        location: Location,
+        source: orc_rust::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read object from path: {}, source: {}&quot;</span>, path, source))]
@@ -380,7 +394,8 @@
             | ReadRecordBatch { .. }
             | WriteRecordBatch { .. }
             | EncodeRecordBatch { .. }
-            | BufferedWriterClosed { .. } =&gt; StatusCode::Unexpected,
+            | BufferedWriterClosed { .. }
+            | OrcReader { .. } =&gt; StatusCode::Unexpected,
         }
     }
 
@@ -391,6 +406,7 @@
     <span class="kw">fn </span>location_opt(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;common_error::snafu::Location&gt; {
         <span class="kw">use </span>Error::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="self">self </span>{
+            OrcReader { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
             BuildBackend { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
             ReadObject { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),
             ListObjects { location, .. } =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>location),

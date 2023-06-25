@@ -222,6 +222,11 @@
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -238,6 +243,7 @@
 
 </span><span class="kw">use </span>std::any::Any;
 
+<span class="kw">use </span>common_datasource::file_format::Format;
 <span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>datafusion::arrow::error::ArrowError;
 <span class="kw">use </span>datafusion::error::DataFusionError;
@@ -399,6 +405,9 @@
         source: datatypes::error::Error,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported format: {:?}&quot;</span>, format))]
+    </span>UnsupportedFormat { format: Format, location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -415,7 +424,8 @@
             | BuildCsvConfig { .. }
             | ProjectSchema { .. }
             | MissingRequiredField { .. }
-            | ConvertSchema { .. } =&gt; StatusCode::InvalidArguments,
+            | ConvertSchema { .. }
+            | UnsupportedFormat { .. } =&gt; StatusCode::InvalidArguments,
 
             BuildBackend { source, .. } =&gt; source.status_code(),
             BuildStreamAdapter { source, .. } =&gt; source.status_code(),

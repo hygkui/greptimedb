@@ -213,6 +213,11 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -229,6 +234,7 @@
 
 </span><span class="kw">pub mod </span>csv;
 <span class="kw">pub mod </span>json;
+<span class="kw">pub mod </span>orc;
 <span class="kw">pub mod </span>parquet;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub mod </span>tests;
@@ -253,6 +259,7 @@
 
 <span class="kw">use </span><span class="self">self</span>::csv::CsvFormat;
 <span class="kw">use </span><span class="self">self</span>::json::JsonFormat;
+<span class="kw">use </span><span class="self">self</span>::orc::OrcFormat;
 <span class="kw">use </span><span class="self">self</span>::parquet::ParquetFormat;
 <span class="kw">use </span><span class="kw">crate</span>::buffered_writer::{DfRecordBatchEncoder, LazyBufferedWriter};
 <span class="kw">use </span><span class="kw">crate</span>::compression::CompressionType;
@@ -271,6 +278,7 @@
     Csv(CsvFormat),
     Json(JsonFormat),
     Parquet(ParquetFormat),
+    Orc(OrcFormat),
 }
 
 <span class="kw">impl </span>Format {
@@ -279,6 +287,7 @@
             Format::Csv(<span class="kw">_</span>) =&gt; <span class="string">&quot;.csv&quot;</span>,
             Format::Json(<span class="kw">_</span>) =&gt; <span class="string">&quot;.json&quot;</span>,
             Format::Parquet(<span class="kw">_</span>) =&gt; <span class="string">&quot;.parquet&quot;</span>,
+            <span class="kw-2">&amp;</span>Format::Orc(<span class="kw">_</span>) =&gt; <span class="string">&quot;.orc&quot;</span>,
         }
     }
 }
@@ -296,6 +305,7 @@
             <span class="string">&quot;CSV&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Csv(CsvFormat::try_from(options)<span class="question-mark">?</span>)),
             <span class="string">&quot;JSON&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Json(JsonFormat::try_from(options)<span class="question-mark">?</span>)),
             <span class="string">&quot;PARQUET&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Parquet(ParquetFormat::default())),
+            <span class="string">&quot;ORC&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Orc(OrcFormat)),
             <span class="kw">_ </span>=&gt; error::UnsupportedFormatSnafu { format: <span class="kw-2">&amp;</span>format }.fail(),
         }
     }
