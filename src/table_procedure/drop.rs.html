@@ -309,12 +309,6 @@
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -594,12 +588,13 @@
     </span><span class="kw">async fn </span>test_drop_table_procedure() {
         <span class="kw">let </span>env = TestEnv::new(<span class="string">&quot;drop&quot;</span>);
         <span class="kw">let </span>table_name = <span class="string">&quot;test_drop&quot;</span>;
-        env.create_table(table_name).<span class="kw">await</span>;
+        <span class="kw">let </span>table_id = env.create_table(table_name).<span class="kw">await</span>;
 
         <span class="kw">let </span>request = DropTableRequest {
             catalog_name: DEFAULT_CATALOG_NAME.to_string(),
             schema_name: DEFAULT_SCHEMA_NAME.to_string(),
             table_name: table_name.to_string(),
+            table_id,
         };
         <span class="kw">let </span>TestEnv {
             dir: _dir,
@@ -622,14 +617,7 @@
         <span class="kw">let </span>schema = catalog.schema(DEFAULT_SCHEMA_NAME).<span class="kw">await</span>.unwrap().unwrap();
         <span class="macro">assert!</span>(schema.table(table_name).<span class="kw">await</span>.unwrap().is_none());
         <span class="kw">let </span>ctx = EngineContext::default();
-        <span class="macro">assert!</span>(!table_engine.table_exists(
-            <span class="kw-2">&amp;</span>ctx,
-            <span class="kw-2">&amp;</span>TableReference {
-                catalog: DEFAULT_CATALOG_NAME,
-                schema: DEFAULT_SCHEMA_NAME,
-                table: table_name,
-            }
-        ));
+        <span class="macro">assert!</span>(!table_engine.table_exists(<span class="kw-2">&amp;</span>ctx, table_id,));
     }
 }
 </code></pre></div></section></main></body></html>

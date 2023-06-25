@@ -353,6 +353,7 @@
 <a href="#353" id="353">353</a>
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -670,13 +671,14 @@
     </span><span class="kw">async fn </span>test_alter_table_procedure_rename() {
         <span class="kw">let </span>env = TestEnv::new(<span class="string">&quot;rename&quot;</span>);
         <span class="kw">let </span>table_name = <span class="string">&quot;test_old&quot;</span>;
-        env.create_table(table_name).<span class="kw">await</span>;
+        <span class="kw">let </span>table_id = env.create_table(table_name).<span class="kw">await</span>;
 
         <span class="kw">let </span>new_table_name = <span class="string">&quot;test_new&quot;</span>;
         <span class="kw">let </span>request = AlterTableRequest {
             catalog_name: DEFAULT_CATALOG_NAME.to_string(),
             schema_name: DEFAULT_SCHEMA_NAME.to_string(),
             table_name: table_name.to_string(),
+            table_id,
             alter_kind: AlterKind::RenameTable {
                 new_table_name: new_table_name.to_string(),
             },

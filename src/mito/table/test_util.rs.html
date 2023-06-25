@@ -216,6 +216,9 @@
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -246,7 +249,7 @@
 <span class="kw">use </span>storage::config::EngineConfig <span class="kw">as </span>StorageEngineConfig;
 <span class="kw">use </span>storage::EngineImpl;
 <span class="kw">use </span>table::engine::{EngineContext, TableEngine};
-<span class="kw">use </span>table::metadata::{TableInfo, TableInfoBuilder, TableMetaBuilder, TableType};
+<span class="kw">use </span>table::metadata::{TableId, TableInfo, TableInfoBuilder, TableMetaBuilder, TableType};
 <span class="kw">use </span>table::requests::{
     AlterKind, AlterTableRequest, CreateTableRequest, DropTableRequest, InsertRequest, TableOptions,
 };
@@ -257,6 +260,7 @@
 <span class="kw">pub use </span><span class="kw">crate</span>::table::test_util::mock_engine::{MockEngine, MockRegion};
 
 <span class="kw">pub const </span>TABLE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;demo&quot;</span>;
+<span class="kw">pub const </span>TABLE_ID: TableId = <span class="number">1</span>;
 
 <span class="doccomment">/// Create a InsertRequest with default catalog and schema.
 </span><span class="kw">pub fn </span>new_insert_request(
@@ -325,7 +329,7 @@
 
 <span class="kw">pub fn </span>new_create_request(schema: SchemaRef) -&gt; CreateTableRequest {
     CreateTableRequest {
-        id: <span class="number">1</span>,
+        id: TABLE_ID,
         catalog_name: DEFAULT_CATALOG_NAME.to_string(),
         schema_name: DEFAULT_SCHEMA_NAME.to_string(),
         table_name: TABLE_NAME.to_string(),
@@ -344,6 +348,7 @@
         catalog_name: DEFAULT_CATALOG_NAME.to_string(),
         schema_name: DEFAULT_SCHEMA_NAME.to_string(),
         table_name: TABLE_NAME.to_string(),
+        table_id: TABLE_ID,
         alter_kind,
     }
 }
@@ -353,6 +358,7 @@
         catalog_name: DEFAULT_CATALOG_NAME.to_string(),
         schema_name: DEFAULT_SCHEMA_NAME.to_string(),
         table_name: TABLE_NAME.to_string(),
+        table_id: TABLE_ID,
     }
 }
 

@@ -819,6 +819,7 @@
 <a href="#819" id="819">819</a>
 <a href="#820" id="820">820</a>
 <a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1296,6 +1297,7 @@
                 catalog_name: table_ident.catalog.clone(),
                 schema_name: table_ident.schema.clone(),
                 table_name: table_ident.table.clone(),
+                table_id: table_ident.table_id,
                 region_numbers: <span class="macro">vec!</span>[region],
                 flush: <span class="bool-val">true</span>,
             };
@@ -1320,7 +1322,7 @@
     <span class="kw">use </span>common_meta::heartbeat::mailbox::HeartbeatMailbox;
     <span class="kw">use </span>datatypes::schema::RawSchema;
     <span class="kw">use </span>table::engine::manager::MemoryTableEngineManager;
-    <span class="kw">use </span>table::engine::{TableEngine, TableReference};
+    <span class="kw">use </span>table::engine::TableEngine;
     <span class="kw">use </span>table::requests::{CreateTableRequest, TableOptions};
     <span class="kw">use </span>table::test_util::EmptyTable;
 
@@ -1572,8 +1574,9 @@
         <span class="kw">let </span>catalog = <span class="string">&quot;my_catalog&quot;</span>;
         <span class="kw">let </span>schema = <span class="string">&quot;my_schema&quot;</span>;
         <span class="kw">let </span>table = <span class="string">&quot;my_table&quot;</span>;
+        <span class="kw">let </span>table_id = <span class="number">1</span>;
         <span class="kw">let </span>request = CreateTableRequest {
-            id: <span class="number">1</span>,
+            id: table_id,
             catalog_name: catalog.to_string(),
             schema_name: schema.to_string(),
             table_name: table.to_string(),
@@ -1589,7 +1592,6 @@
             table_options: TableOptions::default(),
             engine: <span class="string">&quot;mito&quot;</span>.to_string(),
         };
-        <span class="kw">let </span>table_ref = TableReference::full(catalog, schema, table);
 
         <span class="kw">let </span>table_engine = Arc::new(MockTableEngine::default());
         table_engine.create_table(ctx, request).<span class="kw">await</span>.unwrap();
@@ -1598,7 +1600,7 @@
             catalog: catalog.to_string(),
             schema: schema.to_string(),
             table: table.to_string(),
-            table_id: <span class="number">1024</span>,
+            table_id,
             engine: <span class="string">&quot;mito&quot;</span>.to_string(),
         };
         <span class="kw">let </span>(tx, rx) = mpsc::channel(<span class="number">10</span>);
@@ -1634,10 +1636,10 @@
         </span>.unwrap();
 
         <span class="comment">// assert the table is closed after deadline is reached
-        </span><span class="macro">assert!</span>(table_engine.table_exists(ctx, <span class="kw-2">&amp;</span>table_ref));
+        </span><span class="macro">assert!</span>(table_engine.table_exists(ctx, table_id));
         <span class="comment">// spare 500ms for the task to close the table
         </span>tokio::time::sleep(Duration::from_millis(<span class="number">2000</span>)).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(!table_engine.table_exists(ctx, <span class="kw-2">&amp;</span>table_ref));
+        <span class="macro">assert!</span>(!table_engine.table_exists(ctx, table_id));
     }
 }
 </code></pre></div></section></main></body></html>

@@ -506,56 +506,6 @@
 <a href="#506" id="506">506</a>
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
-<a href="#509" id="509">509</a>
-<a href="#510" id="510">510</a>
-<a href="#511" id="511">511</a>
-<a href="#512" id="512">512</a>
-<a href="#513" id="513">513</a>
-<a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
-<a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
-<a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
-<a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
-<a href="#555" id="555">555</a>
-<a href="#556" id="556">556</a>
-<a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -587,9 +537,7 @@
 <span class="kw">use </span>table::{Table, TableRef};
 
 <span class="kw">use </span><span class="kw">crate</span>::engine::MitoEngineInner;
-<span class="kw">use </span><span class="kw">crate</span>::error::{
-    TableExistsSnafu, TableNotFoundSnafu, UpdateTableManifestSnafu, VersionChangedSnafu,
-};
+<span class="kw">use </span><span class="kw">crate</span>::error::{TableNotFoundSnafu, UpdateTableManifestSnafu, VersionChangedSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{TableChange, TableMetaAction, TableMetaActionList};
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::table::MitoTable;
@@ -597,7 +545,6 @@
 <span class="doccomment">/// Procedure to alter a [MitoTable].
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AlterMitoTable&lt;S: StorageEngine&gt; {
     data: AlterTableData,
-    engine_inner: Arc&lt;MitoEngineInner&lt;S&gt;&gt;,
     table: Arc&lt;MitoTable&lt;S::Region&gt;&gt;,
     <span class="doccomment">/// The table info after alteration.
     </span>new_info: <span class="prelude-ty">Option</span>&lt;TableInfo&gt;,
@@ -665,18 +612,16 @@
             </span>table_version: <span class="number">0</span>,
         };
         <span class="kw">let </span>table_ref = data.table_ref();
-        <span class="kw">let </span>table =
-            engine_inner
-                .get_mito_table(<span class="kw-2">&amp;</span>table_ref)
-                .with_context(|| TableNotFoundSnafu {
-                    table_name: table_ref.to_string(),
-                })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table = engine_inner
+            .get_mito_table(data.request.table_id)
+            .with_context(|| TableNotFoundSnafu {
+                table_name: table_ref.to_string(),
+            })<span class="question-mark">?</span>;
         <span class="kw">let </span>info = table.table_info();
         data.table_version = info.ident.version;
 
         <span class="prelude-val">Ok</span>(AlterMitoTable {
             data,
-            engine_inner,
             table,
             new_info: <span class="prelude-val">None</span>,
             alter_op: <span class="prelude-val">None</span>,
@@ -706,16 +651,14 @@
     </span><span class="kw">fn </span>from_json(json: <span class="kw-2">&amp;</span>str, engine_inner: Arc&lt;MitoEngineInner&lt;S&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>data: AlterTableData = serde_json::from_str(json).context(FromJsonSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>table_ref = data.table_ref();
-        <span class="kw">let </span>table =
-            engine_inner
-                .get_mito_table(<span class="kw-2">&amp;</span>table_ref)
-                .with_context(|| TableNotFoundSnafu {
-                    table_name: table_ref.to_string(),
-                })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table = engine_inner
+            .get_mito_table(data.request.table_id)
+            .with_context(|| TableNotFoundSnafu {
+                table_name: table_ref.to_string(),
+            })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(AlterMitoTable {
             data,
-            engine_inner,
             table,
             new_info: <span class="prelude-val">None</span>,
             alter_op: <span class="prelude-val">None</span>,
@@ -734,18 +677,9 @@
             }
         );
 
-        <span class="kw">if let </span>AlterKind::RenameTable { new_table_name } = <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.alter_kind {
-            <span class="kw">let </span><span class="kw-2">mut </span>table_ref = <span class="self">self</span>.data.table_ref();
-            table_ref.table = new_table_name;
-            <span class="macro">ensure!</span>(
-                <span class="self">self</span>.engine_inner.get_mito_table(<span class="kw-2">&amp;</span>table_ref).is_none(),
-                TableExistsSnafu {
-                    table_name: table_ref.to_string(),
-                }
-            );
-        }
-
-        <span class="self">self</span>.data.state = AlterTableState::EngineAlterTable;
+        <span class="comment">// We don&#39;t check the table name in the table engine as it is the catalog
+        // manager&#39;s duty to ensure the table name is unused.
+        </span><span class="self">self</span>.data.state = AlterTableState::EngineAlterTable;
 
         <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
     }
@@ -809,22 +743,6 @@
 
         <span class="comment">// Update in memory metadata of the table.
         </span><span class="self">self</span>.table.set_table_info(new_info.clone());
-
-        <span class="comment">// Rename key in tables map.
-        </span><span class="kw">if let </span>AlterKind::RenameTable { new_table_name } = <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.alter_kind {
-            <span class="kw">let </span><span class="kw-2">mut </span>table_ref = <span class="self">self</span>.data.table_ref();
-            <span class="kw">let </span>removed = {
-                <span class="kw">let </span>_lock = <span class="self">self</span>.engine_inner.table_mutex.lock(table_ref.to_string());
-                <span class="self">self</span>.engine_inner.tables.remove(<span class="kw-2">&amp;</span>table_ref.to_string())
-            };
-            <span class="macro">ensure!</span>(removed.is_some(), TableNotFoundSnafu { table_name });
-
-            table_ref.table = new_table_name.as_str();
-            <span class="kw">let </span>_lock = <span class="self">self</span>.engine_inner.table_mutex.lock(table_ref.to_string());
-            <span class="self">self</span>.engine_inner
-                .tables
-                .insert(table_ref.to_string(), <span class="self">self</span>.table.clone());
-        }
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.table.clone())
     }
@@ -921,20 +839,16 @@
         procedure_test_util::execute_procedure_until_done(<span class="kw-2">&amp;mut </span>procedure).<span class="kw">await</span>;
 
         <span class="comment">// Get metadata of the created table.
-        </span><span class="kw">let </span>table_ref = TableReference {
-            catalog: <span class="kw-2">&amp;</span>request.catalog_name,
-            schema: <span class="kw-2">&amp;</span>request.schema_name,
-            table: <span class="kw-2">&amp;</span>request.table_name,
-        };
-        <span class="kw">let </span>table = table_engine
-            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
+        </span><span class="kw">let </span>table = table_engine
+            .get_table(<span class="kw-2">&amp;</span>engine_ctx, request.id)
             .unwrap()
             .unwrap();
         <span class="kw">let </span>old_info = table.table_info();
         <span class="kw">let </span>old_meta = <span class="kw-2">&amp;</span>old_info.meta;
 
         <span class="comment">// Alter the table.
-        </span><span class="kw">let </span>request = new_add_columns_req();
+        </span><span class="kw">let </span>table_id = request.id;
+        <span class="kw">let </span>request = new_add_columns_req();
         <span class="kw">let </span><span class="kw-2">mut </span>procedure = table_engine
             .alter_table_procedure(<span class="kw-2">&amp;</span>engine_ctx, request.clone())
             .unwrap();
@@ -942,7 +856,7 @@
 
         <span class="comment">// Validate.
         </span><span class="kw">let </span>table = table_engine
-            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
+            .get_table(<span class="kw-2">&amp;</span>engine_ctx, table_id)
             .unwrap()
             .unwrap();
         <span class="kw">let </span>new_info = table.table_info();
@@ -963,7 +877,7 @@
             ConcreteDataType::string_datatype(),
             <span class="bool-val">true</span>,
         );
-        <span class="kw">let </span>request = new_add_columns_req_with_location(<span class="kw-2">&amp;</span>new_tag, <span class="kw-2">&amp;</span>new_field);
+        <span class="kw">let </span>request = new_add_columns_req_with_location(table_id, <span class="kw-2">&amp;</span>new_tag, <span class="kw-2">&amp;</span>new_field);
         <span class="kw">let </span><span class="kw-2">mut </span>procedure = table_engine
             .alter_table_procedure(<span class="kw-2">&amp;</span>engine_ctx, request.clone())
             .unwrap();
@@ -971,7 +885,7 @@
 
         <span class="comment">// Validate.
         </span><span class="kw">let </span>table = table_engine
-            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
+            .get_table(<span class="kw-2">&amp;</span>engine_ctx, table_id)
             .unwrap()
             .unwrap();
         <span class="kw">let </span>new_info = table.table_info();
@@ -1014,20 +928,16 @@
         procedure_test_util::execute_procedure_until_done(<span class="kw-2">&amp;mut </span>procedure).<span class="kw">await</span>;
 
         <span class="comment">// Add columns.
-        </span><span class="kw">let </span>request = new_add_columns_req();
+        </span><span class="kw">let </span>table_id = request.id;
+        <span class="kw">let </span>request = new_add_columns_req();
         <span class="kw">let </span><span class="kw-2">mut </span>procedure = table_engine
             .alter_table_procedure(<span class="kw-2">&amp;</span>engine_ctx, request.clone())
             .unwrap();
         procedure_test_util::execute_procedure_until_done(<span class="kw-2">&amp;mut </span>procedure).<span class="kw">await</span>;
 
         <span class="comment">// Get metadata.
-        </span><span class="kw">let </span>table_ref = TableReference {
-            catalog: <span class="kw-2">&amp;</span>request.catalog_name,
-            schema: <span class="kw-2">&amp;</span>request.schema_name,
-            table: <span class="kw-2">&amp;</span>request.table_name,
-        };
-        <span class="kw">let </span>table = table_engine
-            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
+        </span><span class="kw">let </span>table = table_engine
+            .get_table(<span class="kw-2">&amp;</span>engine_ctx, table_id)
             .unwrap()
             .unwrap();
         <span class="kw">let </span>old_info = table.table_info();
@@ -1079,13 +989,8 @@
         procedure_test_util::execute_procedure_until_done(<span class="kw-2">&amp;mut </span>procedure).<span class="kw">await</span>;
 
         <span class="comment">// Get metadata of the created table.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>table_ref = TableReference {
-            catalog: <span class="kw-2">&amp;</span>create_request.catalog_name,
-            schema: <span class="kw-2">&amp;</span>create_request.schema_name,
-            table: <span class="kw-2">&amp;</span>create_request.table_name,
-        };
-        <span class="kw">let </span>table = table_engine
-            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
+        </span><span class="kw">let </span>table = table_engine
+            .get_table(<span class="kw-2">&amp;</span>engine_ctx, create_request.id)
             .unwrap()
             .unwrap();
 
@@ -1104,12 +1009,7 @@
         </span><span class="kw">let </span>info = table.table_info();
         <span class="macro">assert_eq!</span>(new_name, info.name);
         <span class="macro">assert!</span>(table_engine
-            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
-            .unwrap()
-            .is_none());
-        table_ref.table = <span class="kw-2">&amp;</span>new_name;
-        <span class="macro">assert!</span>(table_engine
-            .get_table(<span class="kw-2">&amp;</span>engine_ctx, <span class="kw-2">&amp;</span>table_ref)
+            .get_table(<span class="kw-2">&amp;</span>engine_ctx, create_request.id)
             .unwrap()
             .is_some());
     }

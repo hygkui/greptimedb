@@ -217,10 +217,6 @@
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -331,14 +327,10 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;TableRef&gt;;
 
     <span class="doccomment">/// Returns the table by it&#39;s name.
-    </span><span class="kw">fn </span>get_table(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ctx: <span class="kw-2">&amp;</span>EngineContext,
-        table_ref: <span class="kw-2">&amp;</span>TableReference,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt;;
+    </span><span class="kw">fn </span>get_table(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>EngineContext, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt;;
 
     <span class="doccomment">/// Returns true when the given table is exists.
-    </span><span class="kw">fn </span>table_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>EngineContext, table_ref: <span class="kw-2">&amp;</span>TableReference) -&gt; bool;
+    </span><span class="kw">fn </span>table_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>EngineContext, table_id: TableId) -&gt; bool;
 
     <span class="doccomment">/// Drops the given table. Return true if the table is dropped, or false if the table doesn&#39;t exist.
     </span><span class="kw">async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>EngineContext, request: DropTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt;;

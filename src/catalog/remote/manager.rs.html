@@ -1103,6 +1103,19 @@
 <a href="#1103" id="1103">1103</a>
 <a href="#1104" id="1104">1104</a>
 <a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2089,21 +2102,29 @@
             .get(key.as_bytes())
             .<span class="kw">await</span><span class="question-mark">?
             </span>.map(|Kv(<span class="kw">_</span>, v)| {
-                <span class="kw">let </span>TableRegionalValue { engine_name, .. } =
-                    TableRegionalValue::parse(String::from_utf8_lossy(<span class="kw-2">&amp;</span>v))
-                        .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-                <span class="kw">let </span>reference = TableReference {
-                    catalog: <span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name,
-                    schema: <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name,
-                    table: name,
+                <span class="kw">let </span>TableRegionalValue {
+                    table_id,
+                    engine_name,
+                    ..
+                } = TableRegionalValue::parse(String::from_utf8_lossy(<span class="kw-2">&amp;</span>v))
+                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span><span class="prelude-val">Some</span>(table_id) = table_id <span class="kw">else </span>{
+                    <span class="macro">warn!</span>(<span class="string">&quot;Cannot find table id for {key}, the value has an old format&quot;</span>);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
                 };
                 <span class="kw">let </span>engine_name = engine_name.as_deref().unwrap_or(MITO_ENGINE);
                 <span class="kw">let </span>engine = <span class="self">self
                     </span>.engine_manager
                     .engine(engine_name)
                     .context(TableEngineNotFoundSnafu { engine_name })<span class="question-mark">?</span>;
+                <span class="kw">let </span>reference = TableReference {
+                    catalog: <span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name,
+                    schema: <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name,
+                    table: name,
+                };
                 <span class="kw">let </span>table = engine
-                    .get_table(<span class="kw-2">&amp;</span>EngineContext {}, <span class="kw-2">&amp;</span>reference)
+                    .get_table(<span class="kw-2">&amp;</span>EngineContext {}, table_id)
                     .with_context(|<span class="kw">_</span>| OpenTableSnafu {
                         table_info: reference.to_string(),
                     })<span class="question-mark">?</span>;
@@ -2116,9 +2137,12 @@
     }
 
     <span class="kw">async fn </span>register_table(<span class="kw-2">&amp;</span><span class="self">self</span>, name: String, table: TableRef) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
-        <span class="kw">let </span>table_info = table.table_info();
+        <span class="comment">// Currently, initiate_tables() always call this method to register the table to the schema thus we
+        // always update the region value.
+        </span><span class="kw">let </span>table_info = table.table_info();
         <span class="kw">let </span>table_version = table_info.ident.version;
         <span class="kw">let </span>table_value = TableRegionalValue {
+            table_id: <span class="prelude-val">Some</span>(table_info.ident.table_id),
             version: table_version,
             regions_ids: table.table_info().meta.region_numbers.clone(),
             engine_name: <span class="prelude-val">Some</span>(table_info.meta.engine.clone()),
@@ -2166,18 +2190,16 @@
             .get(table_key.as_bytes())
             .<span class="kw">await</span><span class="question-mark">?
             </span>.map(|Kv(<span class="kw">_</span>, v)| {
-                <span class="kw">let </span>TableRegionalValue { engine_name, .. } =
-                    TableRegionalValue::parse(String::from_utf8_lossy(<span class="kw-2">&amp;</span>v))
-                        .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(engine_name)
+                <span class="kw">let </span>TableRegionalValue {
+                    table_id,
+                    engine_name,
+                    ..
+                } = TableRegionalValue::parse(String::from_utf8_lossy(<span class="kw-2">&amp;</span>v))
+                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(engine_name.and_then(|name| table_id.map(|id| (name, id))))
             })
             .transpose()<span class="question-mark">?
             </span>.flatten();
-
-        <span class="kw">let </span>engine_name = engine_opt.as_deref().unwrap_or_else(|| {
-            <span class="macro">warn!</span>(<span class="string">&quot;Cannot find table engine name for {table_key}&quot;</span>);
-            MITO_ENGINE
-        });
 
         <span class="self">self</span>.backend.delete(table_key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="macro">debug!</span>(
@@ -2185,6 +2207,10 @@
             table_key
         );
 
+        <span class="kw">let </span><span class="prelude-val">Some</span>((engine_name, table_id)) = engine_opt <span class="kw">else </span>{
+            <span class="macro">warn!</span>(<span class="string">&quot;Cannot find table id and engine name for {table_key}&quot;</span>);
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        };
         <span class="kw">let </span>reference = TableReference {
             catalog: <span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name,
             schema: <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name,
@@ -2193,9 +2219,9 @@
         <span class="comment">// deregistering table does not necessarily mean dropping the table
         </span><span class="kw">let </span>table = <span class="self">self
             </span>.engine_manager
-            .engine(engine_name)
+            .engine(<span class="kw-2">&amp;</span>engine_name)
             .context(TableEngineNotFoundSnafu { engine_name })<span class="question-mark">?
-            </span>.get_table(<span class="kw-2">&amp;</span>EngineContext {}, <span class="kw-2">&amp;</span>reference)
+            </span>.get_table(<span class="kw-2">&amp;</span>EngineContext {}, table_id)
             .with_context(|<span class="kw">_</span>| OpenTableSnafu {
                 table_info: reference.to_string(),
             })<span class="question-mark">?</span>;

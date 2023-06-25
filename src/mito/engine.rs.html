@@ -720,50 +720,6 @@
 <a href="#720" id="720">720</a>
 <a href="#721" id="721">721</a>
 <a href="#722" id="722">722</a>
-<a href="#723" id="723">723</a>
-<a href="#724" id="724">724</a>
-<a href="#725" id="725">725</a>
-<a href="#726" id="726">726</a>
-<a href="#727" id="727">727</a>
-<a href="#728" id="728">728</a>
-<a href="#729" id="729">729</a>
-<a href="#730" id="730">730</a>
-<a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
-<a href="#743" id="743">743</a>
-<a href="#744" id="744">744</a>
-<a href="#745" id="745">745</a>
-<a href="#746" id="746">746</a>
-<a href="#747" id="747">747</a>
-<a href="#748" id="748">748</a>
-<a href="#749" id="749">749</a>
-<a href="#750" id="750">750</a>
-<a href="#751" id="751">751</a>
-<a href="#752" id="752">752</a>
-<a href="#753" id="753">753</a>
-<a href="#754" id="754">754</a>
-<a href="#755" id="755">755</a>
-<a href="#756" id="756">756</a>
-<a href="#757" id="757">757</a>
-<a href="#758" id="758">758</a>
-<a href="#759" id="759">759</a>
-<a href="#760" id="760">760</a>
-<a href="#761" id="761">761</a>
-<a href="#762" id="762">762</a>
-<a href="#763" id="763">763</a>
-<a href="#764" id="764">764</a>
-<a href="#765" id="765">765</a>
-<a href="#766" id="766">766</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -808,8 +764,7 @@
 };
 <span class="kw">use </span>table::metadata::{TableId, TableInfo, TableVersion};
 <span class="kw">use </span>table::requests::{
-    AlterKind, AlterTableRequest, CloseTableRequest, CreateTableRequest, DropTableRequest,
-    OpenTableRequest,
+    AlterTableRequest, CloseTableRequest, CreateTableRequest, DropTableRequest, OpenTableRequest,
 };
 <span class="kw">use </span>table::{error <span class="kw">as </span>table_error, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
 
@@ -868,9 +823,8 @@
             .map_err(BoxedError::new)
             .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>table_ref = request.table_ref();
-        <span class="kw">let </span>_lock = <span class="self">self</span>.inner.table_mutex.lock(table_ref.to_string()).<span class="kw">await</span>;
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.inner.get_mito_table(<span class="kw-2">&amp;</span>table_ref) {
+        <span class="kw">let </span>_lock = <span class="self">self</span>.inner.table_mutex.lock(request.id).<span class="kw">await</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.inner.get_mito_table(request.id) {
             <span class="kw">if </span>request.create_if_not_exists {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(table);
             } <span class="kw">else </span>{
@@ -914,43 +868,23 @@
     ) -&gt; TableResult&lt;TableRef&gt; {
         <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(metrics::MITO_ALTER_TABLE_ELAPSED);
 
-        <span class="kw">if let </span>AlterKind::RenameTable { new_table_name } = <span class="kw-2">&amp;</span>req.alter_kind {
-            <span class="kw">let </span><span class="kw-2">mut </span>table_ref = req.table_ref();
-            table_ref.table = new_table_name;
-            <span class="kw">if </span><span class="self">self</span>.inner.get_mito_table(<span class="kw-2">&amp;</span>table_ref).is_some() {
-                <span class="kw">return </span>TableExistsSnafu {
-                    table_name: table_ref.to_string(),
-                }
-                .fail()
-                .map_err(BoxedError::new)
-                .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
-            }
-        }
-
         <span class="kw">let </span><span class="kw-2">mut </span>procedure = AlterMitoTable::new(req, <span class="self">self</span>.inner.clone())
             .map_err(BoxedError::new)
             .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
 
-        <span class="comment">// TODO(yingwen): Rename has concurrent issue without the procedure runtime. But
-        // users can&#39;t use this method to alter a table so it is still safe. We should
-        // refactor the table engine to avoid using table name as key.
-        </span>procedure
+        procedure
             .engine_alter_table()
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(table_error::TableOperationSnafu)
     }
 
-    <span class="kw">fn </span>get_table(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _ctx: <span class="kw-2">&amp;</span>EngineContext,
-        table_ref: <span class="kw-2">&amp;</span>TableReference,
-    ) -&gt; TableResult&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.inner.get_table(table_ref))
+    <span class="kw">fn </span>get_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>EngineContext, table_id: TableId) -&gt; TableResult&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.inner.get_table(table_id))
     }
 
-    <span class="kw">fn </span>table_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>EngineContext, table_ref: <span class="kw-2">&amp;</span>TableReference) -&gt; bool {
-        <span class="self">self</span>.inner.get_table(table_ref).is_some()
+    <span class="kw">fn </span>table_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>EngineContext, table_id: TableId) -&gt; bool {
+        <span class="self">self</span>.inner.get_table(table_id).is_some()
     }
 
     <span class="kw">async fn </span>drop_table(
@@ -1020,16 +954,16 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>MitoEngineInner&lt;S: StorageEngine&gt; {
-    <span class="doccomment">/// All tables opened by the engine. Map key is formatted [TableReference].
+    <span class="doccomment">/// All tables opened by the engine.
     ///
     /// Writing to `tables` should also hold the `table_mutex`.
-    </span>tables: DashMap&lt;String, Arc&lt;MitoTable&lt;S::Region&gt;&gt;&gt;,
+    </span>tables: DashMap&lt;TableId, Arc&lt;MitoTable&lt;S::Region&gt;&gt;&gt;,
     object_store: ObjectStore,
     compress_type: CompressionType,
     storage_engine: S,
     <span class="doccomment">/// Table mutex is used to protect the operations such as creating/opening/closing
     /// a table, to avoid things like opening the same table simultaneously.
-    </span>table_mutex: Arc&lt;KeyLock&lt;String&gt;&gt;,
+    </span>table_mutex: Arc&lt;KeyLock&lt;TableId&gt;&gt;,
 }
 
 <span class="kw">fn </span>build_row_key_desc(
@@ -1195,11 +1129,6 @@
         <span class="kw">let </span>catalog_name = <span class="kw-2">&amp;</span>request.catalog_name;
         <span class="kw">let </span>schema_name = <span class="kw-2">&amp;</span>request.schema_name;
         <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>request.table_name;
-        <span class="kw">let </span>table_ref = TableReference {
-            catalog: catalog_name,
-            schema: schema_name,
-            table: table_name,
-        };
 
         <span class="kw">let </span>table_id = request.table_id;
         <span class="kw">let </span>engine_ctx = StorageEngineContext::default();
@@ -1229,6 +1158,11 @@
 
         </span><span class="kw">let </span><span class="kw-2">mut </span>regions = HashMap::with_capacity(table_info.meta.region_numbers.len());
 
+        <span class="kw">let </span>table_ref = TableReference {
+            catalog: catalog_name,
+            schema: schema_name,
+            table: table_name,
+        };
         <span class="kw">for </span>region_number <span class="kw">in </span><span class="kw-2">&amp;</span>request.region_numbers {
             <span class="kw">let </span>region = <span class="self">self
                 </span>.open_region(<span class="kw-2">&amp;</span>engine_ctx, table_id, <span class="kw-2">*</span>region_number, <span class="kw-2">&amp;</span>table_ref, <span class="kw-2">&amp;</span>opts)
@@ -1322,16 +1256,7 @@
         ctx: <span class="kw-2">&amp;</span>EngineContext,
         request: OpenTableRequest,
     ) -&gt; TableResult&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
-        <span class="kw">let </span>catalog_name = <span class="kw-2">&amp;</span>request.catalog_name;
-        <span class="kw">let </span>schema_name = <span class="kw-2">&amp;</span>request.schema_name;
-        <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>request.table_name;
-        <span class="kw">let </span>table_ref = TableReference {
-            catalog: catalog_name,
-            schema: schema_name,
-            table: table_name,
-        };
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_table(<span class="kw-2">&amp;</span>table_ref) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_table(request.table_id) {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.check_regions(table, <span class="kw-2">&amp;</span>request.region_numbers)<span class="question-mark">? </span>{
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(table));
             }
@@ -1339,11 +1264,10 @@
 
         <span class="comment">// Acquires the mutex before opening a new table.
         </span><span class="kw">let </span>table = {
-            <span class="kw">let </span>table_name_key = table_ref.to_string();
-            <span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock(table_name_key.clone()).<span class="kw">await</span>;
+            <span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock(request.table_id).<span class="kw">await</span>;
 
             <span class="comment">// Checks again, read lock should be enough since we are guarded by the mutex.
-            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_mito_table(<span class="kw-2">&amp;</span>table_ref) {
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_mito_table(request.table_id) {
                 <span class="comment">// Contains all regions or target region
                 </span><span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.check_regions(table.clone(), <span class="kw-2">&amp;</span>request.region_numbers)<span class="question-mark">? </span>{
                     <span class="prelude-val">Some</span>(table)
@@ -1359,7 +1283,7 @@
                 </span><span class="kw">let </span>table = <span class="self">self</span>.recover_table(ctx, request.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = table {
                     <span class="comment">// already locked
-                    </span><span class="self">self</span>.tables.insert(table_ref.to_string(), table.clone());
+                    </span><span class="self">self</span>.tables.insert(request.table_id, table.clone());
 
                     <span class="prelude-val">Some</span>(table <span class="kw">as _</span>)
                 } <span class="kw">else </span>{
@@ -1370,8 +1294,8 @@
 
         <span class="macro">logging::info!</span>(
             <span class="string">&quot;Mito engine opened table: {} in schema: {}&quot;</span>,
-            table_name,
-            schema_name
+            request.table_name,
+            request.schema_name
         );
 
         <span class="prelude-val">Ok</span>(table)
@@ -1379,10 +1303,8 @@
 
     <span class="kw">async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DropTableRequest) -&gt; TableResult&lt;bool&gt; {
         <span class="comment">// Remove the table from the engine to avoid further access from users.
-        </span><span class="kw">let </span>table_ref = request.table_ref();
-
-        <span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock(table_ref.to_string()).<span class="kw">await</span>;
-        <span class="kw">let </span>removed_table = <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>table_ref.to_string());
+        </span><span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock(request.table_id).<span class="kw">await</span>;
+        <span class="kw">let </span>removed_table = <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>request.table_id);
         <span class="comment">// Close the table to close all regions. Closing a region is idempotent.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, table)) = <span class="kw-2">&amp;</span>removed_table {
             <span class="kw">let </span>regions = table.region_ids();
@@ -1429,17 +1351,13 @@
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((manifest, table_info)))
     }
 
-    <span class="kw">fn </span>get_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ref: <span class="kw-2">&amp;</span>TableReference) -&gt; <span class="prelude-ty">Option</span>&lt;TableRef&gt; {
-        <span class="self">self</span>.tables
-            .get(<span class="kw-2">&amp;</span>table_ref.to_string())
-            .map(|en| en.value().clone() <span class="kw">as _</span>)
+    <span class="kw">fn </span>get_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Option</span>&lt;TableRef&gt; {
+        <span class="self">self</span>.tables.get(<span class="kw-2">&amp;</span>table_id).map(|en| en.value().clone() <span class="kw">as _</span>)
     }
 
     <span class="doccomment">/// Returns the [MitoTable].
-    </span><span class="kw">fn </span>get_mito_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ref: <span class="kw-2">&amp;</span>TableReference) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;MitoTable&lt;S::Region&gt;&gt;&gt; {
-        <span class="self">self</span>.tables
-            .get(<span class="kw-2">&amp;</span>table_ref.to_string())
-            .map(|en| en.value().clone())
+    </span><span class="kw">fn </span>get_mito_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;MitoTable&lt;S::Region&gt;&gt;&gt; {
+        <span class="self">self</span>.tables.get(<span class="kw-2">&amp;</span>table_id).map(|en| en.value().clone())
     }
 
     <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableResult&lt;()&gt; {
@@ -1462,8 +1380,7 @@
     }
 
     <span class="kw">async fn </span>close_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: CloseTableRequest) -&gt; TableResult&lt;CloseTableResult&gt; {
-        <span class="kw">let </span>table_ref = request.table_ref();
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_mito_table(<span class="kw-2">&amp;</span>table_ref) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.get_mito_table(request.table_id) {
             <span class="kw">return </span><span class="self">self
                 </span>.close_table_inner(table, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>request.region_numbers), request.flush)
                 .<span class="kw">await</span>;
@@ -1479,13 +1396,8 @@
         flush: bool,
     ) -&gt; TableResult&lt;CloseTableResult&gt; {
         <span class="kw">let </span>info = table.table_info();
-        <span class="kw">let </span>table_ref = TableReference {
-            catalog: <span class="kw-2">&amp;</span>info.catalog_name,
-            schema: <span class="kw-2">&amp;</span>info.schema_name,
-            table: <span class="kw-2">&amp;</span>info.name,
-        };
         <span class="kw">let </span>table_id = info.ident.table_id;
-        <span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock(table_ref.to_string()).<span class="kw">await</span>;
+        <span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock(table_id).<span class="kw">await</span>;
 
         <span class="kw">let </span>all_regions = table.region_ids();
         <span class="kw">let </span>regions = regions.unwrap_or(<span class="kw-2">&amp;</span>all_regions);
@@ -1504,12 +1416,12 @@
         }
 
         <span class="kw">if </span>table.is_releasable() {
-            <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>table_ref.to_string());
+            <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>table_id);
 
             <span class="macro">logging::info!</span>(
                 <span class="string">&quot;Mito engine closed table: {} in schema: {}&quot;</span>,
-                table_ref.table,
-                table_ref.schema,
+                info.name,
+                info.schema_name,
             );
             <span class="kw">return </span><span class="prelude-val">Ok</span>(CloseTableResult::Released(removed_regions));
         }

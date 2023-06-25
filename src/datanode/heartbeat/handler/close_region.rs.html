@@ -232,6 +232,7 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -398,7 +399,7 @@
         }
 
         <span class="kw">if </span>engine
-            .get_table(<span class="kw-2">&amp;</span>ctx, table_ref)
+            .get_table(<span class="kw-2">&amp;</span>ctx, region_ident.table_ident.table_id)
             .with_context(|<span class="kw">_</span>| error::GetTableSnafu {
                 table_name: table_ref.to_string(),
             })<span class="question-mark">?
@@ -412,6 +413,7 @@
                         schema_name: table_ref.schema.to_string(),
                         table_name: table_ref.table.to_string(),
                         region_numbers: region_numbers.clone(),
+                        table_id: region_ident.table_ident.table_id,
                         flush: <span class="bool-val">true</span>,
                     },
                 )
