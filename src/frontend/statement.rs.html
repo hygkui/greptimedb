@@ -251,6 +251,13 @@
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -337,11 +344,19 @@
                 <span class="self">self</span>.plan_exec(QueryStatement::Sql(stmt), query_ctx).<span class="kw">await
             </span>}
 
-            <span class="comment">// For performance consideration, only &quot;insert with select&quot; is executed by query engine.
-            // Plain insert (&quot;insert with values&quot;) is still executed directly in statement.
-            </span>Statement::Insert(<span class="kw-2">ref </span>insert) <span class="kw">if </span>insert.is_insert_select() =&gt; {
-                <span class="self">self</span>.plan_exec(QueryStatement::Sql(stmt), query_ctx).<span class="kw">await
-            </span>}
+            <span class="comment">// For performance consideration, only requests that can&#39;t extract values is executed by query engine.
+            // Plain insert (&quot;insert with literal values&quot;) is still executed directly in statement.
+            </span>Statement::Insert(insert) =&gt; {
+                <span class="kw">if </span>insert.can_extract_values() {
+                    <span class="self">self</span>.sql_stmt_executor
+                        .execute_sql(Statement::Insert(insert), query_ctx)
+                        .<span class="kw">await
+                        </span>.context(ExecuteStatementSnafu)
+                } <span class="kw">else </span>{
+                    <span class="self">self</span>.plan_exec(QueryStatement::Sql(Statement::Insert(insert)), query_ctx)
+                        .<span class="kw">await
+                </span>}
+            }
 
             Statement::Tql(tql) =&gt; <span class="self">self</span>.execute_tql(tql, query_ctx).<span class="kw">await</span>,
 
@@ -373,7 +388,6 @@
             Statement::CreateDatabase(<span class="kw">_</span>)
             | Statement::CreateTable(<span class="kw">_</span>)
             | Statement::CreateExternalTable(<span class="kw">_</span>)
-            | Statement::Insert(<span class="kw">_</span>)
             | Statement::Alter(<span class="kw">_</span>)
             | Statement::DropTable(<span class="kw">_</span>)
             | Statement::ShowCreateTable(<span class="kw">_</span>) =&gt; <span class="self">self
@@ -466,7 +480,7 @@
 }
 
 <span class="doccomment">/// Converts [CopyDatabaseArgument] to [CopyDatabaseRequest].
-/// This function extracts the necessary info including catalog/database name, time range, etc.  
+/// This function extracts the necessary info including catalog/database name, time range, etc.
 </span><span class="kw">fn </span>to_copy_database_request(
     arg: CopyDatabaseArgument,
     query_ctx: <span class="kw-2">&amp;</span>QueryContextRef,

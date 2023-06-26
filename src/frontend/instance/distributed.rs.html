@@ -1329,7 +1329,7 @@
                     </span>.context(TableNotFoundSnafu { table_name: table })<span class="question-mark">?</span>;
 
                 <span class="kw">let </span>insert_request =
-                    SqlHandler::insert_to_request(<span class="self">self</span>.catalog_manager.clone(), <span class="kw-2">*</span>insert, query_ctx)
+                    SqlHandler::insert_to_request(<span class="self">self</span>.catalog_manager.clone(), <span class="kw-2">&amp;</span>insert, query_ctx)
                         .<span class="kw">await
                         </span>.context(InvokeDatanodeSnafu)<span class="question-mark">?</span>;
 
