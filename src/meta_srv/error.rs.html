@@ -479,6 +479,10 @@
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -841,6 +845,9 @@
         source: common_meta::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Etcd txn got an error: {err_msg}&quot;</span>))]
+    </span>EtcdTxnOpResponse { err_msg: String, location: Location },
+
     <span class="comment">// this error is used for custom error mapping
     // please do not delete it
     </span><span class="attr">#[snafu(display(<span class="string">&quot;Other error, source: {}&quot;</span>, source))]
@@ -918,6 +925,7 @@
             | Error::InvalidTxnResult { .. }
             | Error::InvalidUtf8Value { .. }
             | Error::UnexpectedInstructionReply { .. }
+            | Error::EtcdTxnOpResponse { .. }
             | Error::Unexpected { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::InvalidCatalogValue { source, .. } =&gt; source.status_code(),

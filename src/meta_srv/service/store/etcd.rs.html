@@ -892,8 +892,10 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_META_KV_REQUEST;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{METRIC_META_KV_REQUEST, METRIC_META_TXN_REQUEST};
+<span class="kw">use </span><span class="kw">crate</span>::service::store::etcd_util::KvPair;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvStore, KvStoreRef};
+<span class="kw">use </span><span class="kw">crate</span>::service::store::txn::TxnService;
 
 <span class="comment">// Maximum number of operations permitted in a transaction.
 // The etcd default configuration&#39;s `--max-txn-ops` is 128.
@@ -1326,6 +1328,28 @@
     }
 }
 
+<span class="attr">#[async_trait::async_trait]
+</span><span class="kw">impl </span>TxnService <span class="kw">for </span>EtcdStore {
+    <span class="kw">async fn </span>txn(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        txn: <span class="kw">crate</span>::service::store::txn::Txn,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">crate</span>::service::store::txn::TxnResponse&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
+            METRIC_META_TXN_REQUEST,
+            <span class="kw-2">&amp;</span>[(<span class="string">&quot;target&quot;</span>, <span class="string">&quot;etcd&quot;</span>.to_string()), (<span class="string">&quot;op&quot;</span>, <span class="string">&quot;txn&quot;</span>.to_string()),]
+        );
+
+        <span class="kw">let </span>etcd_txn: Txn = txn.into();
+        <span class="kw">let </span>txn_res = <span class="self">self
+            </span>.client
+            .kv_client()
+            .txn(etcd_txn)
+            .<span class="kw">await
+            </span>.context(error::EtcdFailedSnafu)<span class="question-mark">?</span>;
+        txn_res.try_into()
+    }
+}
+
 <span class="kw">struct </span>Get {
     cluster_id: u64,
     key: Vec&lt;u8&gt;,
@@ -1564,30 +1588,6 @@
             to_key,
             delete_options: <span class="prelude-val">Some</span>(DeleteOptions::default().with_prev_key()),
         })
-    }
-}
-
-<span class="kw">struct </span>KvPair&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>etcd_client::KeyValue);
-
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; KvPair&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// Creates a `KvPair` from etcd KeyValue
-    </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>new(kv: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>etcd_client::KeyValue) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(kv)
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>from_etcd_kv(kv: <span class="kw-2">&amp;</span>etcd_client::KeyValue) -&gt; KeyValue {
-        KeyValue::from(KvPair::new(kv))
-    }
-}
-
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;KvPair&lt;<span class="lifetime">&#39;a</span>&gt;&gt; <span class="kw">for </span>KeyValue {
-    <span class="kw">fn </span>from(kv: KvPair&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            key: kv.<span class="number">0</span>.key().to_vec(),
-            value: kv.<span class="number">0</span>.value().to_vec(),
-        }
     }
 }
 

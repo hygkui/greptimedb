@@ -636,6 +636,76 @@
 <a href="#636" id="636">636</a>
 <a href="#637" id="637">637</a>
 <a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -665,8 +735,9 @@
 
 <span class="kw">use </span><span class="kw">super</span>::ext::KvStoreExt;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_META_KV_REQUEST;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{METRIC_META_KV_REQUEST, METRIC_META_TXN_REQUEST};
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvStore, ResettableKvStore};
+<span class="kw">use </span><span class="kw">crate</span>::service::store::txn::{Txn, TxnOp, TxnOpResponse, TxnRequest, TxnResponse, TxnService};
 
 <span class="kw">pub struct </span>MemStore {
     inner: RwLock&lt;BTreeMap&lt;Vec&lt;u8&gt;, Vec&lt;u8&gt;&gt;&gt;,
@@ -757,6 +828,7 @@
         } = req;
 
         <span class="kw">let </span><span class="kw-2">mut </span>memory = <span class="self">self</span>.inner.write();
+
         <span class="kw">let </span>prev_value = memory.insert(key.clone(), value);
         <span class="kw">let </span>prev_kv = <span class="kw">if </span>prev_kv {
             prev_value.map(|value| KeyValue { key, value })
@@ -802,6 +874,7 @@
         } = req;
 
         <span class="kw">let </span><span class="kw-2">mut </span>memory = <span class="self">self</span>.inner.write();
+
         <span class="kw">let </span>prev_kvs = <span class="kw">if </span>prev_kv {
             kvs.into_iter()
                 .map(|kv| (kv.key.clone(), memory.insert(kv.key, kv.value)))
@@ -836,6 +909,7 @@
         } = req;
 
         <span class="kw">let </span><span class="kw-2">mut </span>memory = <span class="self">self</span>.inner.write();
+
         <span class="kw">let </span>prev_kvs = <span class="kw">if </span>prev_kv {
             keys.into_iter()
                 .filter_map(|key| memory.remove(<span class="kw-2">&amp;</span>key).map(|value| KeyValue { key, value }))
@@ -965,6 +1039,72 @@
         <span class="kw">let </span>cluster_id = header.map_or(<span class="number">0</span>, |h| h.cluster_id);
         <span class="kw">let </span>header = <span class="prelude-val">Some</span>(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(MoveValueResponse { header, kv })
+    }
+}
+
+<span class="attr">#[async_trait::async_trait]
+</span><span class="kw">impl </span>TxnService <span class="kw">for </span>MemStore {
+    <span class="kw">async fn </span>txn(<span class="kw-2">&amp;</span><span class="self">self</span>, txn: Txn) -&gt; <span class="prelude-ty">Result</span>&lt;TxnResponse&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
+            METRIC_META_TXN_REQUEST,
+            <span class="kw-2">&amp;</span>[(<span class="string">&quot;target&quot;</span>, <span class="string">&quot;memory&quot;</span>.to_string()), (<span class="string">&quot;op&quot;</span>, <span class="string">&quot;txn&quot;</span>.to_string()),]
+        );
+
+        <span class="kw">let </span>TxnRequest {
+            compare,
+            success,
+            failure,
+        } = txn.into();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>memory = <span class="self">self</span>.inner.write();
+
+        <span class="kw">let </span>succeeded = compare
+            .iter()
+            .all(|x| x.compare_with_value(memory.get(<span class="kw-2">&amp;</span>x.key)));
+
+        <span class="kw">let </span>do_txn = |txn_op| <span class="kw">match </span>txn_op {
+            TxnOp::Put(key, value) =&gt; {
+                <span class="kw">let </span>prev_value = memory.insert(key.clone(), value);
+                <span class="kw">let </span>prev_kv = prev_value.map(|value| KeyValue { key, value });
+                <span class="kw">let </span>put_res = PutResponse {
+                    prev_kv,
+                    ..Default::default()
+                };
+                TxnOpResponse::ResponsePut(put_res)
+            }
+            TxnOp::Get(key) =&gt; {
+                <span class="kw">let </span>value = memory.get(<span class="kw-2">&amp;</span>key);
+                <span class="kw">let </span>kv = value.map(|value| KeyValue {
+                    key,
+                    value: value.clone(),
+                });
+                <span class="kw">let </span>get_res = RangeResponse {
+                    kvs: kv.map(|kv| <span class="macro">vec!</span>[kv]).unwrap_or(<span class="macro">vec!</span>[]),
+                    ..Default::default()
+                };
+                TxnOpResponse::ResponseGet(get_res)
+            }
+            TxnOp::Delete(key) =&gt; {
+                <span class="kw">let </span>prev_value = memory.remove(<span class="kw-2">&amp;</span>key);
+                <span class="kw">let </span>prev_kv = prev_value.map(|value| KeyValue { key, value });
+                <span class="kw">let </span>delete_res = DeleteRangeResponse {
+                    prev_kvs: prev_kv.map(|kv| <span class="macro">vec!</span>[kv]).unwrap_or(<span class="macro">vec!</span>[]),
+                    ..Default::default()
+                };
+                TxnOpResponse::ResponseDelete(delete_res)
+            }
+        };
+
+        <span class="kw">let </span>responses: Vec&lt;<span class="kw">_</span>&gt; = <span class="kw">if </span>succeeded {
+            success.into_iter().map(do_txn).collect()
+        } <span class="kw">else </span>{
+            failure.into_iter().map(do_txn).collect()
+        };
+
+        <span class="prelude-val">Ok</span>(TxnResponse {
+            succeeded,
+            responses,
+        })
     }
 }
 
