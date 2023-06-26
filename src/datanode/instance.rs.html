@@ -462,10 +462,6 @@
 <a href="#462" id="462">462</a>
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -706,6 +702,7 @@
             }
         };
 
+        catalog_manager.start().<span class="kw">await</span>.context(CatalogSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_manager.clone(), <span class="bool-val">false</span>);
         <span class="kw">let </span>query_engine = factory.query_engine();
 
@@ -783,15 +780,10 @@
     }
 
     <span class="kw">pub async fn </span>flush_tables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">info!</span>(<span class="string">&quot;going to flush all schemas&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">&quot;going to flush all schemas under {DEFAULT_CATALOG_NAME}&quot;</span>);
         <span class="kw">let </span>schema_list = <span class="self">self
             </span>.catalog_manager
-            .catalog(DEFAULT_CATALOG_NAME)
-            .<span class="kw">await
-            </span>.map_err(BoxedError::new)
-            .context(ShutdownInstanceSnafu)<span class="question-mark">?
-            </span>.expect(<span class="string">&quot;Default schema not found&quot;</span>)
-            .schema_names()
+            .schema_names(DEFAULT_CATALOG_NAME)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(ShutdownInstanceSnafu)<span class="question-mark">?</span>;

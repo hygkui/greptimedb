@@ -363,6 +363,15 @@
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -557,11 +566,18 @@
         source: BoxedError,
     },
 
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to upgrade weak catalog manager reference. location: {}&quot;</span>,
+        location
+    ))]
+    </span>UpgradeWeakCatalogManagerRef { location: Location },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute system catalog table scan, source: {}&quot;</span>, source))]
     </span>SystemCatalogTableScanExec {
         location: Location,
         source: common_query::error::Error,
     },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Cannot parse catalog value, source: {}&quot;</span>, source))]
     </span>InvalidCatalogValue {
         location: Location,
@@ -621,7 +637,9 @@
             | Error::EmptyValue { .. }
             | Error::ValueDeserialize { .. } =&gt; StatusCode::StorageUnavailable,
 
-            Error::Generic { .. } | Error::SystemCatalogTypeMismatch { .. } =&gt; StatusCode::Internal,
+            Error::Generic { .. }
+            | Error::SystemCatalogTypeMismatch { .. }
+            | Error::UpgradeWeakCatalogManagerRef { .. } =&gt; StatusCode::Internal,
 
             Error::ReadSystemCatalog { source, .. } | Error::CreateRecordBatch { source, .. } =&gt; {
                 source.status_code()

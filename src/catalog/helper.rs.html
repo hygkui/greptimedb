@@ -393,6 +393,8 @@
 <a href="#393" id="393">393</a>
 <a href="#394" id="394">394</a>
 <a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -462,7 +464,8 @@
     <span class="macro">format!</span>(<span class="string">&quot;{SCHEMA_KEY_PREFIX}-{}-&quot;</span>, catalog_name.as_ref())
 }
 
-<span class="kw">pub fn </span>build_table_global_prefix(
+<span class="doccomment">/// Global table info has only one key across all datanodes so it does not have `node_id` field.
+</span><span class="kw">pub fn </span>build_table_global_prefix(
     catalog_name: <span class="kw">impl </span>AsRef&lt;str&gt;,
     schema_name: <span class="kw">impl </span>AsRef&lt;str&gt;,
 ) -&gt; String {
@@ -473,7 +476,8 @@
     )
 }
 
-<span class="kw">pub fn </span>build_table_regional_prefix(
+<span class="doccomment">/// Regional table info varies between datanode, so it contains a `node_id` field.
+</span><span class="kw">pub fn </span>build_table_regional_prefix(
     catalog_name: <span class="kw">impl </span>AsRef&lt;str&gt;,
     schema_name: <span class="kw">impl </span>AsRef&lt;str&gt;,
 ) -&gt; String {

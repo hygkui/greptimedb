@@ -286,7 +286,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_query_engine_factory() {
-        <span class="kw">let </span>catalog_list = catalog::local::new_memory_catalog_list().unwrap();
+        <span class="kw">let </span>catalog_list = catalog::local::new_memory_catalog_manager().unwrap();
         <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list, <span class="bool-val">false</span>);
 
         <span class="kw">let </span>engine = factory.query_engine();

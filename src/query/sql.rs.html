@@ -433,9 +433,6 @@
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -457,7 +454,7 @@
 
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>common_catalog::consts::{
-    DEFAULT_CATALOG_NAME, SEMANTIC_TYPE_FIELD, SEMANTIC_TYPE_PRIMARY_KEY, SEMANTIC_TYPE_TIME_INDEX,
+    SEMANTIC_TYPE_FIELD, SEMANTIC_TYPE_PRIMARY_KEY, SEMANTIC_TYPE_TIME_INDEX,
 };
 <span class="kw">use </span>common_datasource::file_format::{infer_schemas, FileFormat, Format};
 <span class="kw">use </span>common_datasource::lister::{Lister, Source};
@@ -533,6 +530,7 @@
 <span class="kw">pub async fn </span>show_databases(
     stmt: ShowDatabases,
     catalog_manager: CatalogManagerRef,
+    query_ctx: QueryContextRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
     <span class="macro">ensure!</span>(
         <span class="macro">matches!</span>(stmt.kind, ShowKind::All | ShowKind::Like(<span class="kw">_</span>)),
@@ -541,14 +539,11 @@
         }
     );
 
-    <span class="kw">let </span>catalog = catalog_manager
-        .catalog(DEFAULT_CATALOG_NAME)
+    <span class="kw">let </span><span class="kw-2">mut </span>databases = catalog_manager
+        .schema_names(<span class="kw-2">&amp;</span>query_ctx.current_catalog())
         .<span class="kw">await
-        </span>.context(error::CatalogSnafu)<span class="question-mark">?
-        </span>.context(error::CatalogNotFoundSnafu {
-            catalog: DEFAULT_CATALOG_NAME,
-        })<span class="question-mark">?</span>;
-    <span class="kw">let </span><span class="kw-2">mut </span>databases = catalog.schema_names().<span class="kw">await</span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
+        </span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
+
     <span class="comment">// TODO(dennis): Specify the order of the results in catalog manager API
     </span>databases.sort();
 
@@ -586,12 +581,11 @@
         query_ctx.current_schema()
     };
     <span class="comment">// TODO(sunng87): move this function into query_ctx
-    </span><span class="kw">let </span>schema = catalog_manager
-        .schema(<span class="kw-2">&amp;</span>query_ctx.current_catalog(), <span class="kw-2">&amp;</span>schema)
+    </span><span class="kw">let </span><span class="kw-2">mut </span>tables = catalog_manager
+        .table_names(<span class="kw-2">&amp;</span>query_ctx.current_catalog(), <span class="kw-2">&amp;</span>schema)
         .<span class="kw">await
-        </span>.context(error::CatalogSnafu)<span class="question-mark">?
-        </span>.context(error::SchemaNotFoundSnafu { schema })<span class="question-mark">?</span>;
-    <span class="kw">let </span><span class="kw-2">mut </span>tables = schema.table_names().<span class="kw">await</span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
+        </span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
+
     <span class="comment">// TODO(dennis): Specify the order of the results in schema provider API
     </span>tables.sort();
 

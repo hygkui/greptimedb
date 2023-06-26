@@ -299,16 +299,6 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -339,8 +329,7 @@
 <span class="kw">use </span>table::requests::DropTableRequest;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    AccessCatalogSnafu, DeregisterTableSnafu, DeserializeProcedureSnafu, SerializeProcedureSnafu,
-    TableNotFoundSnafu,
+    AccessCatalogSnafu, DeserializeProcedureSnafu, SerializeProcedureSnafu, TableNotFoundSnafu,
 };
 
 <span class="doccomment">/// Procedure to drop a table.
@@ -470,17 +459,10 @@
                 schema: <span class="self">self</span>.data.request.schema_name.clone(),
                 table_name: <span class="self">self</span>.data.request.table_name.clone(),
             };
-            <span class="kw">if </span>!<span class="self">self
-                </span>.catalog_manager
+            <span class="self">self</span>.catalog_manager
                 .deregister_table(deregister_table_req)
                 .<span class="kw">await
-                </span>.context(AccessCatalogSnafu)<span class="question-mark">?
-            </span>{
-                <span class="kw">return </span>DeregisterTableSnafu {
-                    name: request.table_ref().to_string(),
-                }
-                .fail()<span class="question-mark">?</span>;
-            }
+                </span>.context(AccessCatalogSnafu)<span class="question-mark">?</span>;
         }
 
         <span class="self">self</span>.data.state = DropTableState::EngineDropTable;
@@ -609,13 +591,11 @@
         <span class="kw">let </span><span class="kw-2">mut </span>watcher = procedure_manager.submit(procedure_with_id).<span class="kw">await</span>.unwrap();
         watcher.changed().<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>catalog = catalog_manager
-            .catalog(DEFAULT_CATALOG_NAME)
+        <span class="macro">assert!</span>(!catalog_manager
+            .table_exist(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, table_name)
             .<span class="kw">await
-            </span>.unwrap()
-            .unwrap();
-        <span class="kw">let </span>schema = catalog.schema(DEFAULT_SCHEMA_NAME).<span class="kw">await</span>.unwrap().unwrap();
-        <span class="macro">assert!</span>(schema.table(table_name).<span class="kw">await</span>.unwrap().is_none());
+            </span>.unwrap());
+
         <span class="kw">let </span>ctx = EngineContext::default();
         <span class="macro">assert!</span>(!table_engine.table_exists(<span class="kw-2">&amp;</span>ctx, table_id,));
     }

@@ -231,8 +231,6 @@
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -424,15 +422,13 @@
                 })<span class="question-mark">? </span>{
                 CloseTableResult::NotFound | CloseTableResult::Released(<span class="kw">_</span>) =&gt; {
                     <span class="comment">// Deregister table if The table released.
-                    </span><span class="kw">let </span>deregistered = <span class="self">self</span>.deregister_table(table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
+                    </span><span class="self">self</span>.deregister_table(table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
 
-                    <span class="kw">if </span>deregistered {
-                        <span class="self">self</span>.region_alive_keepers
-                            .deregister_table(table_ident)
-                            .<span class="kw">await</span>;
-                    }
+                    <span class="self">self</span>.region_alive_keepers
+                        .deregister_table(table_ident)
+                        .<span class="kw">await</span>;
 
-                    <span class="prelude-val">Ok</span>(deregistered)
+                    <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
                 }
                 CloseTableResult::PartialClosed(regions) =&gt; {
                     <span class="comment">// Requires caller to update the region_numbers
@@ -455,7 +451,7 @@
         </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
-    <span class="kw">async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ref: <span class="kw-2">&amp;</span>TableReference&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    <span class="kw">async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ref: <span class="kw-2">&amp;</span>TableReference&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.catalog_manager
             .deregister_table(DeregisterTableRequest {
                 catalog: table_ref.catalog.to_string(),

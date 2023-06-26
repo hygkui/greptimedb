@@ -383,66 +383,6 @@
 <a href="#383" id="383">383</a>
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
-<a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
-<a href="#391" id="391">391</a>
-<a href="#392" id="392">392</a>
-<a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -462,7 +402,6 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::CreateTableExpr;
-<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::error::{
     <span class="self">self </span><span class="kw">as </span>catalog_err, InternalSnafu, InvalidCatalogValueSnafu, InvalidSystemTableDefSnafu,
     <span class="prelude-ty">Result </span><span class="kw">as </span>CatalogResult, UnimplementedSnafu,
@@ -471,14 +410,14 @@
     build_catalog_prefix, build_schema_prefix, build_table_global_prefix, CatalogKey, SchemaKey,
     TableGlobalKey, TableGlobalValue,
 };
+<span class="kw">use </span>catalog::information_schema::InformationSchemaProvider;
 <span class="kw">use </span>catalog::remote::{Kv, KvBackendRef, KvCacheInvalidatorRef};
 <span class="kw">use </span>catalog::{
-    CatalogManager, CatalogProvider, CatalogProviderRef, DeregisterTableRequest,
-    RegisterSchemaRequest, RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
-    SchemaProvider, SchemaProviderRef,
+    CatalogManager, DeregisterTableRequest, RegisterSchemaRequest, RegisterSystemTableRequest,
+    RegisterTableRequest, RenameTableRequest,
 };
 <span class="kw">use </span>client::client_manager::DatanodeClients;
-<span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+<span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_telemetry::warn;
@@ -574,12 +513,8 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>register_catalog(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _name: String,
-        _catalog: CatalogProviderRef,
-    ) -&gt; CatalogResult&lt;<span class="prelude-ty">Option</span>&lt;CatalogProviderRef&gt;&gt; {
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;Frontend catalog list does not support register catalog&quot;</span>)
+    <span class="kw">async fn </span>register_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>, _name: String) -&gt; CatalogResult&lt;bool&gt; {
+        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support register catalog&quot;</span>)
     }
 
     <span class="comment">// TODO(LFC): Handle the table caching in (de)register_table.
@@ -587,20 +522,20 @@
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
-    <span class="kw">async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeregisterTableRequest) -&gt; CatalogResult&lt;bool&gt; {
+    <span class="kw">async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeregisterTableRequest) -&gt; CatalogResult&lt;()&gt; {
         <span class="kw">let </span>table_name = TableName::new(request.catalog, request.schema, request.table_name);
         <span class="self">self</span>.partition_manager
             .table_routes()
             .invalidate_table_route(<span class="kw-2">&amp;</span>table_name)
             .<span class="kw">await</span>;
-        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>register_schema(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         _request: RegisterSchemaRequest,
     ) -&gt; catalog::error::Result&lt;bool&gt; {
-        <span class="macro">unimplemented!</span>()
+        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support register schema&quot;</span>)
     }
 
     <span class="kw">async fn </span>rename_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: RenameTableRequest) -&gt; catalog_err::Result&lt;bool&gt; {
@@ -715,67 +650,9 @@
         <span class="prelude-val">Ok</span>(res.into_iter().collect())
     }
 
-    <span class="kw">async fn </span>catalog(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;<span class="prelude-ty">Option</span>&lt;CatalogProviderRef&gt;&gt; {
-        <span class="kw">let </span>key = CatalogKey {
-            catalog_name: catalog.to_string(),
-        }
-        .to_string();
-
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.backend.get(key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>.map(|<span class="kw">_</span>| {
-            Arc::new(FrontendCatalogProvider {
-                catalog_name: catalog.to_string(),
-                catalog_manager: Arc::new(<span class="self">self</span>.clone()),
-            }) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;
-        }))
-    }
-
-    <span class="kw">async fn </span>schema(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        catalog: <span class="kw-2">&amp;</span>str,
-        schema: <span class="kw-2">&amp;</span>str,
-    ) -&gt; catalog::error::Result&lt;<span class="prelude-ty">Option</span>&lt;SchemaProviderRef&gt;&gt; {
-        <span class="self">self</span>.catalog(catalog)
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.context(catalog::error::CatalogNotFoundSnafu {
-                catalog_name: catalog,
-            })<span class="question-mark">?
-            </span>.schema(schema)
-            .<span class="kw">await
-    </span>}
-
-    <span class="kw">async fn </span>table(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        catalog: <span class="kw-2">&amp;</span>str,
-        schema: <span class="kw-2">&amp;</span>str,
-        table_name: <span class="kw-2">&amp;</span>str,
-    ) -&gt; catalog::error::Result&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
-        <span class="self">self</span>.schema(catalog, schema)
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.context(catalog::error::SchemaNotFoundSnafu { catalog, schema })<span class="question-mark">?
-            </span>.table(table_name)
-            .<span class="kw">await
-    </span>}
-
-    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
-        <span class="self">self
-    </span>}
-}
-
-<span class="kw">pub struct </span>FrontendCatalogProvider {
-    catalog_name: String,
-    catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
-}
-
-<span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl </span>CatalogProvider <span class="kw">for </span>FrontendCatalogProvider {
-    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
-        <span class="self">self
-    </span>}
-
-    <span class="kw">async fn </span>schema_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; catalog::error::Result&lt;Vec&lt;String&gt;&gt; {
-        <span class="kw">let </span>key = build_schema_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name);
-        <span class="kw">let </span>backend = <span class="self">self</span>.catalog_manager.backend();
-        <span class="kw">let </span><span class="kw-2">mut </span>iter = backend.range(key.as_bytes());
+    <span class="kw">async fn </span>schema_names(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;Vec&lt;String&gt;&gt; {
+        <span class="kw">let </span>key = build_schema_prefix(catalog);
+        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.backend.range(key.as_bytes());
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashSet::new();
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = iter.next().<span class="kw">await </span>{
             <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
@@ -786,61 +663,13 @@
         <span class="prelude-val">Ok</span>(res.into_iter().collect())
     }
 
-    <span class="kw">async fn </span>register_schema(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _name: String,
-        _schema: SchemaProviderRef,
-    ) -&gt; catalog::error::Result&lt;<span class="prelude-ty">Option</span>&lt;SchemaProviderRef&gt;&gt; {
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;Frontend catalog provider does not support register schema&quot;</span>)
-    }
-
-    <span class="kw">async fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; catalog::error::Result&lt;<span class="prelude-ty">Option</span>&lt;SchemaProviderRef&gt;&gt; {
-        <span class="kw">let </span>catalog = <span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name;
-
-        <span class="kw">let </span>schema_key = SchemaKey {
-            catalog_name: catalog.clone(),
-            schema_name: name.to_string(),
-        }
-        .to_string();
-
-        <span class="kw">let </span>val = <span class="self">self
-            </span>.catalog_manager
-            .backend()
-            .get(schema_key.as_bytes())
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">let </span>provider = val.map(|<span class="kw">_</span>| {
-            Arc::new(FrontendSchemaProvider {
-                catalog_name: catalog.clone(),
-                schema_name: name.to_string(),
-                catalog_manager: <span class="self">self</span>.catalog_manager.clone(),
-            }) <span class="kw">as </span>Arc&lt;<span class="kw">dyn </span>SchemaProvider&gt;
-        });
-
-        <span class="prelude-val">Ok</span>(provider)
-    }
-}
-
-<span class="kw">pub struct </span>FrontendSchemaProvider {
-    catalog_name: String,
-    schema_name: String,
-    catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
-}
-
-<span class="attr">#[async_trait]
-</span><span class="kw">impl </span>SchemaProvider <span class="kw">for </span>FrontendSchemaProvider {
-    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
-        <span class="self">self
-    </span>}
-
-    <span class="kw">async fn </span>table_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; catalog::error::Result&lt;Vec&lt;String&gt;&gt; {
+    <span class="kw">async fn </span>table_names(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;Vec&lt;String&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>tables = <span class="macro">vec!</span>[];
-        <span class="kw">if </span><span class="self">self</span>.catalog_name == DEFAULT_CATALOG_NAME &amp;&amp; <span class="self">self</span>.schema_name == DEFAULT_SCHEMA_NAME {
+        <span class="kw">if </span>catalog == DEFAULT_CATALOG_NAME &amp;&amp; schema == DEFAULT_SCHEMA_NAME {
             tables.push(<span class="string">&quot;numbers&quot;</span>.to_string());
         }
-        <span class="kw">let </span>key = build_table_global_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name, <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name);
-        <span class="kw">let </span>backend = <span class="self">self</span>.catalog_manager.backend();
-        <span class="kw">let </span>iter = backend.range(key.as_bytes());
+        <span class="kw">let </span>key = build_table_global_prefix(catalog, schema);
+        <span class="kw">let </span>iter = <span class="self">self</span>.backend.range(key.as_bytes());
         <span class="kw">let </span>result = iter
             .map(|r| {
                 <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
@@ -854,20 +683,71 @@
         <span class="prelude-val">Ok</span>(tables)
     }
 
-    <span class="kw">async fn </span>table(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; catalog::error::Result&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
-        <span class="kw">if </span><span class="self">self</span>.catalog_name == DEFAULT_CATALOG_NAME
-            &amp;&amp; <span class="self">self</span>.schema_name == DEFAULT_SCHEMA_NAME
-            &amp;&amp; name == <span class="string">&quot;numbers&quot;
+    <span class="kw">async fn </span>catalog_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
+        <span class="kw">let </span>key = CatalogKey {
+            catalog_name: catalog.to_string(),
+        }
+        .to_string();
+
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.backend.get(key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>.is_some())
+    }
+
+    <span class="kw">async fn </span>schema_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
+        <span class="kw">let </span>schema_key = SchemaKey {
+            catalog_name: catalog.to_string(),
+            schema_name: schema.to_string(),
+        }
+        .to_string();
+
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.backend().get(schema_key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>.is_some())
+    }
+
+    <span class="kw">async fn </span>table_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str, table: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
+        <span class="kw">let </span>table_global_key = TableGlobalKey {
+            catalog_name: catalog.to_string(),
+            schema_name: schema.to_string(),
+            table_name: table.to_string(),
+        };
+        <span class="prelude-val">Ok</span>(<span class="self">self
+            </span>.backend()
+            .get(table_global_key.to_string().as_bytes())
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.is_some())
+    }
+
+    <span class="kw">async fn </span>table(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        catalog: <span class="kw-2">&amp;</span>str,
+        schema: <span class="kw-2">&amp;</span>str,
+        table_name: <span class="kw-2">&amp;</span>str,
+    ) -&gt; CatalogResult&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
+        <span class="kw">if </span>catalog == DEFAULT_CATALOG_NAME
+            &amp;&amp; schema == DEFAULT_SCHEMA_NAME
+            &amp;&amp; table_name == <span class="string">&quot;numbers&quot;
         </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(NumbersTable::default())));
         }
 
+        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME {
+            <span class="comment">// hack: use existing cyclin reference to get Arc&lt;Self&gt;.
+            // This can be remove by refactoring the struct into something like Arc&lt;Inner&gt;
+            </span><span class="kw">let </span>manager = <span class="kw">if let </span><span class="prelude-val">Some</span>(instance) = <span class="self">self</span>.dist_instance.as_ref() {
+                instance.catalog_manager() <span class="kw">as _
+            </span>} <span class="kw">else </span>{
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+            };
+
+            <span class="kw">let </span>provider =
+                InformationSchemaProvider::new(catalog.to_string(), Arc::downgrade(<span class="kw-2">&amp;</span>manager));
+            <span class="kw">return </span>provider.table(table_name);
+        }
+
         <span class="kw">let </span>table_global_key = TableGlobalKey {
-            catalog_name: <span class="self">self</span>.catalog_name.clone(),
-            schema_name: <span class="self">self</span>.schema_name.clone(),
-            table_name: name.to_string(),
+            catalog_name: catalog.to_string(),
+            schema_name: schema.to_string(),
+            table_name: table_name.to_string(),
         };
-        <span class="kw">let </span><span class="prelude-val">Some</span>(kv) = <span class="self">self</span>.catalog_manager.backend().get(table_global_key.to_string().as_bytes()).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
+        <span class="kw">let </span><span class="prelude-val">Some</span>(kv) = <span class="self">self</span>.backend().get(table_global_key.to_string().as_bytes()).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         };
         <span class="kw">let </span>v = TableGlobalValue::from_bytes(kv.<span class="number">1</span>).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
@@ -877,15 +757,15 @@
                 .context(catalog_err::InvalidTableInfoInCatalogSnafu)<span class="question-mark">?</span>,
         );
         <span class="kw">let </span>table = Arc::new(DistTable::new(
-            TableName::new(<span class="kw-2">&amp;</span><span class="self">self</span>.catalog_name, <span class="kw-2">&amp;</span><span class="self">self</span>.schema_name, name),
+            TableName::new(catalog, schema, table_name),
             table_info,
-            <span class="self">self</span>.catalog_manager.clone(),
+            Arc::new(<span class="self">self</span>.clone()),
         ));
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(table))
     }
 
-    <span class="kw">async fn </span>table_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; catalog::error::Result&lt;bool&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.table_names().<span class="kw">await</span><span class="question-mark">?</span>.contains(<span class="kw-2">&amp;</span>name.to_string()))
-    }
+    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
+        <span class="self">self
+    </span>}
 }
 </code></pre></div></section></main></body></html>

@@ -211,6 +211,24 @@
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -225,7 +243,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">use </span>std::sync::{Arc, Weak};
 
 <span class="kw">use </span>arrow_schema::SchemaRef <span class="kw">as </span>ArrowSchemaRef;
 <span class="kw">use </span>common_catalog::consts::{
@@ -242,16 +260,18 @@
 <span class="kw">use </span>datatypes::scalars::ScalarVectorBuilder;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, Schema, SchemaRef};
 <span class="kw">use </span>datatypes::vectors::{StringVectorBuilder, VectorRef};
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">super</span>::InformationStreamBuilder;
-<span class="kw">use </span><span class="kw">crate</span>::error::{CreateRecordBatchSnafu, InternalSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::CatalogProviderRef;
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    CreateRecordBatchSnafu, InternalSnafu, <span class="prelude-ty">Result</span>, UpgradeWeakCatalogManagerRefSnafu,
+};
+<span class="kw">use </span><span class="kw">crate</span>::CatalogManager;
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>InformationSchemaColumns {
     schema: SchemaRef,
     catalog_name: String,
-    catalog_provider: CatalogProviderRef,
+    catalog_manager: Weak&lt;<span class="kw">dyn </span>CatalogManager&gt;,
 }
 
 <span class="kw">const </span>TABLE_CATALOG: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table_catalog&quot;</span>;
@@ -262,7 +282,7 @@
 <span class="kw">const </span>SEMANTIC_TYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;semantic_type&quot;</span>;
 
 <span class="kw">impl </span>InformationSchemaColumns {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(catalog_name: String, catalog_provider: CatalogProviderRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(catalog_name: String, catalog_manager: Weak&lt;<span class="kw">dyn </span>CatalogManager&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>schema = Arc::new(Schema::new(<span class="macro">vec!</span>[
             ColumnSchema::new(TABLE_CATALOG, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
             ColumnSchema::new(TABLE_SCHEMA, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
@@ -274,7 +294,7 @@
         <span class="self">Self </span>{
             schema,
             catalog_name,
-            catalog_provider,
+            catalog_manager,
         }
     }
 
@@ -282,7 +302,7 @@
         InformationSchemaColumnsBuilder::new(
             <span class="self">self</span>.schema.clone(),
             <span class="self">self</span>.catalog_name.clone(),
-            <span class="self">self</span>.catalog_provider.clone(),
+            <span class="self">self</span>.catalog_manager.clone(),
         )
     }
 }
@@ -316,7 +336,7 @@
 <span class="kw">struct </span>InformationSchemaColumnsBuilder {
     schema: SchemaRef,
     catalog_name: String,
-    catalog_provider: CatalogProviderRef,
+    catalog_manager: Weak&lt;<span class="kw">dyn </span>CatalogManager&gt;,
 
     catalog_names: StringVectorBuilder,
     schema_names: StringVectorBuilder,
@@ -327,11 +347,15 @@
 }
 
 <span class="kw">impl </span>InformationSchemaColumnsBuilder {
-    <span class="kw">fn </span>new(schema: SchemaRef, catalog_name: String, catalog_provider: CatalogProviderRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>new(
+        schema: SchemaRef,
+        catalog_name: String,
+        catalog_manager: Weak&lt;<span class="kw">dyn </span>CatalogManager&gt;,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             schema,
             catalog_name,
-            catalog_provider,
+            catalog_manager,
             catalog_names: StringVectorBuilder::with_capacity(<span class="number">42</span>),
             schema_names: StringVectorBuilder::with_capacity(<span class="number">42</span>),
             table_names: StringVectorBuilder::with_capacity(<span class="number">42</span>),
@@ -344,11 +368,23 @@
     <span class="doccomment">/// Construct the `information_schema.tables` virtual table
     </span><span class="kw">async fn </span>make_tables(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;RecordBatch&gt; {
         <span class="kw">let </span>catalog_name = <span class="self">self</span>.catalog_name.clone();
+        <span class="kw">let </span>catalog_manager = <span class="self">self
+            </span>.catalog_manager
+            .upgrade()
+            .context(UpgradeWeakCatalogManagerRefSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">for </span>schema_name <span class="kw">in </span><span class="self">self</span>.catalog_provider.schema_names().<span class="kw">await</span><span class="question-mark">? </span>{
-            <span class="kw">let </span><span class="prelude-val">Some</span>(schema) = <span class="self">self</span>.catalog_provider.schema(<span class="kw-2">&amp;</span>schema_name).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">continue </span>};
-            <span class="kw">for </span>table_name <span class="kw">in </span>schema.table_names().<span class="kw">await</span><span class="question-mark">? </span>{
-                <span class="kw">let </span><span class="prelude-val">Some</span>(table) = schema.table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">continue </span>};
+        <span class="kw">for </span>schema_name <span class="kw">in </span>catalog_manager.schema_names(<span class="kw-2">&amp;</span>catalog_name).<span class="kw">await</span><span class="question-mark">? </span>{
+            <span class="kw">if </span>!catalog_manager
+                .schema_exist(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name)
+                .<span class="kw">await</span><span class="question-mark">?
+            </span>{
+                <span class="kw">continue</span>;
+            }
+            <span class="kw">for </span>table_name <span class="kw">in </span>catalog_manager
+                .table_names(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name)
+                .<span class="kw">await</span><span class="question-mark">?
+            </span>{
+                <span class="kw">let </span><span class="prelude-val">Some</span>(table) = catalog_manager.table(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name, <span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">continue </span>};
                 <span class="kw">let </span>keys = <span class="kw-2">&amp;</span>table.table_info().meta.primary_key_indices;
                 <span class="kw">let </span>schema = table.schema();
                 <span class="kw">for </span>(idx, column) <span class="kw">in </span>schema.column_schemas().iter().enumerate() {

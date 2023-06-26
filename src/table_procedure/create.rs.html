@@ -424,29 +424,6 @@
 <a href="#424" id="424">424</a>
 <a href="#425" id="425">425</a>
 <a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -472,13 +449,12 @@
 };
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::engine::{EngineContext, TableEngineProcedureRef, TableEngineRef, TableReference};
 <span class="kw">use </span>table::requests::{CreateTableRequest, OpenTableRequest};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    AccessCatalogSnafu, CatalogNotFoundSnafu, DeserializeProcedureSnafu, SchemaNotFoundSnafu,
-    SerializeProcedureSnafu,
+    AccessCatalogSnafu, DeserializeProcedureSnafu, SchemaNotFoundSnafu, SerializeProcedureSnafu,
 };
 
 <span class="doccomment">/// Procedure to create a table.
@@ -582,34 +558,24 @@
     }
 
     <span class="kw">async fn </span>on_prepare(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
-        <span class="comment">// Check whether catalog and schema exist.
-        </span><span class="kw">let </span>catalog = <span class="self">self
+        <span class="kw">if </span>!<span class="self">self
             </span>.catalog_manager
-            .catalog(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name)
+            .schema_exist(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
+            )
             .<span class="kw">await
             </span>.context(AccessCatalogSnafu)<span class="question-mark">?
-            </span>.with_context(|| {
-                <span class="macro">logging::error!</span>(
-                    <span class="string">&quot;Failed to create table {}, catalog not found&quot;</span>,
-                    <span class="self">self</span>.data.table_ref()
-                );
-                CatalogNotFoundSnafu {
-                    name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name,
-                }
-            })<span class="question-mark">?</span>;
-        catalog
-            .schema(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name)
-            .<span class="kw">await
-            </span>.context(AccessCatalogSnafu)<span class="question-mark">?
-            </span>.with_context(|| {
-                <span class="macro">logging::error!</span>(
-                    <span class="string">&quot;Failed to create table {}, schema not found&quot;</span>,
-                    <span class="self">self</span>.data.table_ref(),
-                );
-                SchemaNotFoundSnafu {
-                    name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
-                }
-            })<span class="question-mark">?</span>;
+        </span>{
+            <span class="macro">logging::error!</span>(
+                <span class="string">&quot;Failed to create table {}, schema not found&quot;</span>,
+                <span class="self">self</span>.data.table_ref(),
+            );
+            <span class="kw">return </span>SchemaNotFoundSnafu {
+                name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
+            }
+            .fail()<span class="question-mark">?</span>;
+        }
 
         <span class="self">self</span>.data.state = CreateTableState::EngineCreateTable;
         <span class="comment">// Assign procedure id to the subprocedure.
@@ -673,29 +639,17 @@
     }
 
     <span class="kw">async fn </span>on_register_catalog(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
-        <span class="kw">let </span>catalog = <span class="self">self
+        <span class="kw">if </span><span class="self">self
             </span>.catalog_manager
-            .catalog(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name)
-            .<span class="kw">await
-            </span>.context(AccessCatalogSnafu)<span class="question-mark">?
-            </span>.context(CatalogNotFoundSnafu {
-                name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name,
-            })<span class="question-mark">?</span>;
-        <span class="kw">let </span>schema = catalog
-            .schema(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name)
-            .<span class="kw">await
-            </span>.context(AccessCatalogSnafu)<span class="question-mark">?
-            </span>.context(SchemaNotFoundSnafu {
-                name: <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
-            })<span class="question-mark">?</span>;
-        <span class="kw">let </span>table_exists = schema
-            .table(<span class="kw-2">&amp;</span><span class="self">self</span>.data.request.table_name)
+            .table_exist(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.table_name,
+            )
             .<span class="kw">await
             </span>.map_err(Error::from_error_ext)<span class="question-mark">?
-            </span>.is_some();
-        <span class="kw">if </span>table_exists {
-            <span class="comment">// Table already exists.
-            </span><span class="kw">return </span><span class="prelude-val">Ok</span>(Status::Done);
+        </span>{
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(Status::Done);
         }
 
         <span class="comment">// If we recover the procedure from json, then the table engine hasn&#39;t open this table yet,

@@ -183,6 +183,9 @@
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -201,6 +204,7 @@
 <span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, NUMBERS_TABLE_ID};
 <span class="kw">use </span>common_query::physical_plan::PhysicalPlanRef;
 <span class="kw">use </span>common_recordbatch::error::Result <span class="kw">as </span>RecordBatchResult;
 <span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatchStream, SendableRecordBatchStream};
@@ -223,6 +227,8 @@
 
 <span class="kw">const </span>NUMBER_COLUMN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;number&quot;</span>;
 
+<span class="kw">pub const </span>NUMBERS_TABLE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;numbers&quot;</span>;
+
 <span class="doccomment">/// numbers table for test
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>NumbersTable {
@@ -234,7 +240,7 @@
 
 <span class="kw">impl </span>NumbersTable {
     <span class="kw">pub fn </span>new(table_id: TableId) -&gt; <span class="self">Self </span>{
-        NumbersTable::with_name(table_id, <span class="string">&quot;numbers&quot;</span>.to_string())
+        NumbersTable::with_name(table_id, NUMBERS_TABLE_NAME.to_string())
     }
 
     <span class="kw">pub fn </span>with_name(table_id: TableId, name: String) -&gt; <span class="self">Self </span>{
@@ -259,7 +265,7 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>NumbersTable {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        NumbersTable::new(<span class="number">1</span>)
+        NumbersTable::new(NUMBERS_TABLE_ID)
     }
 }
 
@@ -278,8 +284,8 @@
             TableInfoBuilder::default()
                 .table_id(<span class="self">self</span>.table_id)
                 .name(<span class="kw-2">&amp;</span><span class="self">self</span>.name)
-                .catalog_name(<span class="string">&quot;greptime&quot;</span>)
-                .schema_name(<span class="string">&quot;public&quot;</span>)
+                .catalog_name(DEFAULT_CATALOG_NAME)
+                .schema_name(DEFAULT_SCHEMA_NAME)
                 .table_version(<span class="number">0</span>)
                 .table_type(TableType::Base)
                 .meta(
