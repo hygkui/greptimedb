@@ -865,6 +865,7 @@
 <a href="#865" id="865">865</a>
 <a href="#866" id="866">866</a>
 <a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -926,7 +927,7 @@
 <span class="kw">use </span>tower_http::trace::TraceLayer;
 
 <span class="kw">use </span><span class="self">self</span>::authorize::HttpAuth;
-<span class="kw">use </span><span class="self">self</span>::influxdb::{influxdb_health, influxdb_ping, influxdb_write};
+<span class="kw">use </span><span class="self">self</span>::influxdb::{influxdb_health, influxdb_ping, influxdb_write_v1, influxdb_write_v2};
 <span class="kw">use </span><span class="kw">crate</span>::auth::UserProviderRef;
 <span class="kw">use </span><span class="kw">crate</span>::configurator::ConfiguratorRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{AlreadyStartedSnafu, <span class="prelude-ty">Result</span>, StartHttpSnafu};
@@ -1465,7 +1466,8 @@
 
     <span class="kw">fn </span>route_influxdb&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, influxdb_handler: InfluxdbLineProtocolHandlerRef) -&gt; Router&lt;S&gt; {
         Router::new()
-            .route(<span class="string">&quot;/write&quot;</span>, routing::post(influxdb_write))
+            .route(<span class="string">&quot;/write&quot;</span>, routing::post(influxdb_write_v1))
+            .route(<span class="string">&quot;/api/v2/write&quot;</span>, routing::post(influxdb_write_v2))
             .route(<span class="string">&quot;/ping&quot;</span>, routing::get(influxdb_ping))
             .route(<span class="string">&quot;/health&quot;</span>, routing::get(influxdb_health))
             .with_state(influxdb_handler)
