@@ -549,6 +549,7 @@
 <a href="#549" id="549">549</a>
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -970,9 +971,10 @@ def test(**params) -&gt; vector[i64]:
             .compile(script, CompileContext::default())
             .<span class="kw">await
             </span>.unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>params = HashMap::new();
-        params.insert(<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;30&quot;</span>.to_string());
-        params.insert(<span class="string">&quot;b&quot;</span>.to_string(), <span class="string">&quot;12&quot;</span>.to_string());
+        <span class="kw">let </span>params = HashMap::from([
+            (<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;30&quot;</span>.to_string()),
+            (<span class="string">&quot;b&quot;</span>.to_string(), <span class="string">&quot;12&quot;</span>.to_string()),
+        ]);
         <span class="kw">let </span>_output = script
             .execute(params, EvalContext::default())
             .<span class="kw">await

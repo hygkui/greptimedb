@@ -199,7 +199,7 @@
 
     <span class="kw">let </span>(client, server) = tokio::io::duplex(<span class="number">1024</span>);
     <span class="kw">let </span>service = meta_srv.clone();
-    tokio::spawn(<span class="kw">async move </span>{
+    <span class="kw">let </span>_handle = tokio::spawn(<span class="kw">async move </span>{
         tonic::transport::Server::builder()
             .add_service(HeartbeatServer::new(service.clone()))
             .add_service(RouterServer::new(service.clone()))

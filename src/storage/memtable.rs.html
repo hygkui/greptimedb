@@ -531,7 +531,7 @@
 
     <span class="doccomment">/// Tracks `bytes` memory is allocated.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_allocate(<span class="kw-2">&amp;</span><span class="self">self</span>, bytes: usize) {
-        <span class="self">self</span>.bytes_allocated.fetch_add(bytes, Ordering::Relaxed);
+        <span class="kw">let _ </span>= <span class="self">self</span>.bytes_allocated.fetch_add(bytes, Ordering::Relaxed);
         <span class="macro">increment_gauge!</span>(WRITE_BUFFER_BYTES, bytes <span class="kw">as </span>f64);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(flush_strategy) = <span class="kw-2">&amp;</span><span class="self">self</span>.flush_strategy {
             flush_strategy.reserve_mem(bytes);

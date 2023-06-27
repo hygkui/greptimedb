@@ -416,10 +416,10 @@
 <span class="comment">// COPY tbl TO &#39;output.parquet&#39;;
 </span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ParserContext&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_copy(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
-        <span class="self">self</span>.parser.next_token();
+        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
         <span class="kw">let </span>next = <span class="self">self</span>.parser.peek_token();
         <span class="kw">let </span>copy = <span class="kw">if let </span>Word(word) = next.token &amp;&amp; word.keyword == Keyword::DATABASE {
-            <span class="self">self</span>.parser.next_token();
+            <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
             <span class="kw">let </span>copy_database = <span class="self">self</span>.parser_copy_database()<span class="question-mark">?</span>;
             <span class="kw">crate</span>::statements::copy::Copy::CopyDatabase(copy_database)
         } <span class="kw">else </span>{

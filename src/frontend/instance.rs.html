@@ -860,6 +860,8 @@
 <a href="#860" id="860">860</a>
 <a href="#861" id="861">861</a>
 <a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1186,7 +1188,8 @@
                     <span class="string">&quot;Table {}.{}.{} does not exist, try create table&quot;</span>,
                     catalog_name, schema_name, table_name,
                 );
-                <span class="self">self</span>.create_table_by_columns(ctx, table_name, columns, MITO_ENGINE)
+                <span class="kw">let _ </span>= <span class="self">self
+                    </span>.create_table_by_columns(ctx, table_name, columns, MITO_ENGINE)
                     .<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="macro">info!</span>(
                     <span class="string">&quot;Successfully created table on insertion: {}.{}.{}&quot;</span>,
@@ -1205,7 +1208,8 @@
                         <span class="string">&quot;Find new columns {:?} on insertion, try to alter table: {}.{}.{}&quot;</span>,
                         add_columns, catalog_name, schema_name, table_name
                     );
-                    <span class="self">self</span>.add_new_columns_to_table(ctx, table_name, add_columns)
+                    <span class="kw">let _ </span>= <span class="self">self
+                        </span>.add_new_columns_to_table(ctx, table_name, add_columns)
                         .<span class="kw">await</span><span class="question-mark">?</span>;
                     <span class="macro">info!</span>(
                         <span class="string">&quot;Successfully altered table on insertion: {}.{}.{}&quot;</span>,
@@ -1672,10 +1676,10 @@
         }
 
         <span class="kw">fn </span>do_fmt(template: <span class="kw-2">&amp;</span>str, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; String {
-            <span class="kw">let </span><span class="kw-2">mut </span>vars = HashMap::new();
-            vars.insert(<span class="string">&quot;catalog&quot;</span>.to_string(), catalog);
-            vars.insert(<span class="string">&quot;schema&quot;</span>.to_string(), schema);
-
+            <span class="kw">let </span>vars = HashMap::from([
+                (<span class="string">&quot;catalog&quot;</span>.to_string(), catalog),
+                (<span class="string">&quot;schema&quot;</span>.to_string(), schema),
+            ]);
             template.format(<span class="kw-2">&amp;</span>vars).unwrap()
         }
 

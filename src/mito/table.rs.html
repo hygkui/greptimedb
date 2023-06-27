@@ -791,6 +791,9 @@
 <a href="#791" id="791">791</a>
 <a href="#792" id="792">792</a>
 <a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1121,7 +1124,8 @@
             table_name,
             new_info
         );
-        <span class="self">self</span>.manifest
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.manifest
             .update(TableMetaActionList::with_action(TableMetaAction::Change(
                 Box::new(TableChange {
                     table_info: RawTableInfo::from(new_info.clone()),
@@ -1164,7 +1168,7 @@
                 .delete(key_column_values)
                 .map_err(BoxedError::new)
                 .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
-            region
+            <span class="kw">let _ </span>= region
                 .write(<span class="kw-2">&amp;</span>WriteContext::default(), write_request)
                 .<span class="kw">await
                 </span>.map_err(BoxedError::new)
@@ -1197,10 +1201,12 @@
                     .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
             }
         } <span class="kw">else </span>{
-            futures::future::try_join_all(regions.values().map(|region| region.flush(<span class="kw-2">&amp;</span>flush_ctx)))
-                .<span class="kw">await
-                </span>.map_err(BoxedError::new)
-                .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+            <span class="kw">let _ </span>= futures::future::try_join_all(
+                regions.values().map(|region| region.flush(<span class="kw-2">&amp;</span>flush_ctx)),
+            )
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(TableOperationSnafu)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -1393,12 +1399,12 @@
         region_numbers: <span class="kw-2">&amp;</span>[RegionNumber],
     ) -&gt; TableResult&lt;HashMap&lt;RegionNumber, R&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>removed = HashMap::with_capacity(region_numbers.len());
-        <span class="self">self</span>.regions.rcu(|regions| {
+        <span class="kw">let _ </span>= <span class="self">self</span>.regions.rcu(|regions| {
             removed.clear();
             <span class="kw">let </span><span class="kw-2">mut </span>regions = HashMap::clone(regions);
             <span class="kw">for </span>region_number <span class="kw">in </span>region_numbers {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(region) = regions.remove(region_number) {
-                    removed.insert(<span class="kw-2">*</span>region_number, region);
+                    <span class="kw">let _ </span>= removed.insert(<span class="kw-2">*</span>region_number, region);
                 }
             }
 
@@ -1411,7 +1417,7 @@
     <span class="kw">pub async fn </span>drop_regions(<span class="kw-2">&amp;</span><span class="self">self</span>, region_number: <span class="kw-2">&amp;</span>[RegionNumber]) -&gt; TableResult&lt;()&gt; {
         <span class="kw">let </span>regions = <span class="self">self</span>.remove_regions(region_number).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        futures::future::try_join_all(regions.values().map(|region| region.drop_region()))
+        <span class="kw">let _ </span>= futures::future::try_join_all(regions.values().map(|region| region.drop_region()))
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
@@ -1431,7 +1437,7 @@
     }
 
     <span class="kw">pub fn </span>set_table_info(<span class="kw-2">&amp;</span><span class="self">self</span>, table_info: TableInfo) {
-        <span class="self">self</span>.table_info.swap(Arc::new(table_info));
+        <span class="kw">let _ </span>= <span class="self">self</span>.table_info.swap(Arc::new(table_info));
     }
 
     <span class="attr">#[inline]
@@ -1485,9 +1491,9 @@
     </span><span class="kw">pub async fn </span>load_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_number: RegionNumber, region: R) -&gt; TableResult&lt;()&gt; {
         <span class="kw">let </span>info = <span class="self">self</span>.table_info.load();
 
-        <span class="self">self</span>.regions.rcu(|regions| {
+        <span class="kw">let _ </span>= <span class="self">self</span>.regions.rcu(|regions| {
             <span class="kw">let </span><span class="kw-2">mut </span>regions = HashMap::clone(regions);
-            regions
+            <span class="kw">let _ </span>= regions
                 .entry(region_number)
                 .or_insert_with(|| region.clone());
 

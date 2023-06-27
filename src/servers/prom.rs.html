@@ -1482,7 +1482,7 @@
     <span class="kw">let </span>query_ctx = Arc::new(QueryContext::with(catalog, schema));
 
     <span class="kw">let </span><span class="kw-2">mut </span>labels = HashSet::new();
-    labels.insert(METRIC_NAME.to_string());
+    <span class="kw">let _ </span>= labels.insert(METRIC_NAME.to_string());
 
     <span class="kw">for </span>query <span class="kw">in </span>queries {
         <span class="kw">let </span>prom_query = PromQuery {
@@ -1506,8 +1506,8 @@
         }
     }
 
-    labels.remove(TIMESTAMP_COLUMN_NAME);
-    labels.remove(FIELD_COLUMN_NAME);
+    <span class="kw">let _ </span>= labels.remove(TIMESTAMP_COLUMN_NAME);
+    <span class="kw">let _ </span>= labels.remove(FIELD_COLUMN_NAME);
 
     <span class="kw">let </span><span class="kw-2">mut </span>sorted_labels: Vec&lt;String&gt; = labels.into_iter().collect();
     sorted_labels.sort();
@@ -1577,7 +1577,7 @@
                     (column_name.to_string(), column.to_string())
                 })
                 .collect();
-            element.insert(<span class="string">&quot;__name__&quot;</span>.to_string(), table_name.to_string());
+            <span class="kw">let _ </span>= element.insert(<span class="string">&quot;__name__&quot;</span>.to_string(), table_name.to_string());
             series.push(element);
         }
     }
@@ -1632,7 +1632,7 @@
 
             <span class="comment">// if a field is not null, record the tag name and return
             </span>names.iter().for_each(|name| {
-                labels.insert(name.to_string());
+                <span class="kw">let _ </span>= labels.insert(name.to_string());
             });
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
@@ -1779,7 +1779,7 @@
             .unwrap();
         <span class="kw">for </span>row_index <span class="kw">in </span><span class="number">0</span>..batch.num_rows() {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(label_value) = label_column.get_data(row_index) {
-                labels_values.insert(label_value.to_string());
+                <span class="kw">let _ </span>= labels_values.insert(label_value.to_string());
             }
         }
     }

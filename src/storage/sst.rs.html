@@ -938,7 +938,7 @@
         <span class="comment">// we only update region&#39;s compaction time window iff region&#39;s window is not set and VersionEdit&#39;s
         // compaction time window is present.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(window) = compaction_time_window {
-            merged.compaction_time_window.get_or_insert(window);
+            <span class="kw">let _ </span>= merged.compaction_time_window.get_or_insert(window);
         }
         merged
     }
@@ -986,7 +986,7 @@
     }
 
     <span class="kw">fn </span>add_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, file: FileHandle) {
-        <span class="self">self</span>.files.insert(file.file_id(), file);
+        <span class="kw">let _ </span>= <span class="self">self</span>.files.insert(file.file_id(), file);
     }
 
     <span class="kw">fn </span>remove_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, file_to_remove: FileId) -&gt; <span class="prelude-ty">Option</span>&lt;FileHandle&gt; {

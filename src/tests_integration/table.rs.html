@@ -352,6 +352,7 @@
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
 <a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -378,7 +379,7 @@
     <span class="kw">use </span>common_meta::table_name::TableName;
     <span class="kw">use </span>common_query::logical_plan::Expr;
     <span class="kw">use </span>common_query::physical_plan::DfPhysicalPlanAdapter;
-    <span class="kw">use </span>common_query::DfPhysicalPlan;
+    <span class="kw">use </span>common_query::{DfPhysicalPlan, Output};
     <span class="kw">use </span>common_recordbatch::adapter::RecordBatchStreamAdapter;
     <span class="kw">use </span>common_recordbatch::RecordBatches;
     <span class="kw">use </span>datafusion::physical_plan::coalesce_partitions::CoalescePartitionsExec;
@@ -608,7 +609,7 @@
         <span class="kw">for </span>region_route <span class="kw">in </span>table_route.region_routes.iter() {
             <span class="kw">let </span>region_id = region_route.region.id <span class="kw">as </span>u32;
             <span class="kw">let </span>datanode_id = region_route.leader_peer.as_ref().unwrap().id;
-            region_to_datanode_mapping.insert(region_id, datanode_id);
+            <span class="kw">let _ </span>= region_to_datanode_mapping.insert(region_id, datanode_id);
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>global_start_ts = <span class="number">1</span>;
@@ -700,10 +701,11 @@
         <span class="kw">let </span>requests = InsertRequests {
             inserts: <span class="macro">vec!</span>[request],
         };
-        dn_instance
+        <span class="kw">let </span>Output::AffectedRows(x) = dn_instance
             .handle_inserts(requests, <span class="kw-2">&amp;</span>QueryContext::arc())
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.unwrap() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
+        <span class="macro">assert_eq!</span>(x <span class="kw">as </span>u32, row_count);
     }
 }
 </code></pre></div></section></main></body></html>

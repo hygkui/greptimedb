@@ -447,6 +447,7 @@
 <a href="#447" id="447">447</a>
 <a href="#448" id="448">448</a>
 <a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -651,7 +652,7 @@
     ///
     /// Old metadata with same key would be overwritten.
     </span><span class="kw">pub fn </span>add_metadata(<span class="kw-2">mut </span><span class="self">self</span>, key: <span class="kw">impl </span>Into&lt;String&gt;, value: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.metadata.insert(key.into(), value.into());
+        <span class="kw">let _ </span>= <span class="self">self</span>.metadata.insert(key.into(), value.into());
         <span class="self">self
     </span>}
 
@@ -660,7 +661,8 @@
             validate_timestamp_index(<span class="kw-2">&amp;</span><span class="self">self</span>.column_schemas, timestamp_index)<span class="question-mark">?</span>;
         }
 
-        <span class="self">self</span>.metadata
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.metadata
             .insert(VERSION_KEY.to_string(), <span class="self">self</span>.version.to_string());
 
         <span class="kw">let </span>arrow_schema = ArrowSchema::new(<span class="self">self</span>.fields).with_metadata(<span class="self">self</span>.metadata);
@@ -691,7 +693,7 @@
         }
         <span class="kw">let </span>field = Field::try_from(column_schema)<span class="question-mark">?</span>;
         fields.push(field);
-        name_to_index.insert(column_schema.name.clone(), index);
+        <span class="kw">let _ </span>= name_to_index.insert(column_schema.name.clone(), index);
     }
 
     <span class="prelude-val">Ok</span>(FieldsAndIndices {
@@ -736,7 +738,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>name_to_index = HashMap::with_capacity(arrow_schema.fields.len());
         <span class="kw">for </span>field <span class="kw">in </span><span class="kw-2">&amp;</span>arrow_schema.fields {
             <span class="kw">let </span>column_schema = ColumnSchema::try_from(field.as_ref())<span class="question-mark">?</span>;
-            name_to_index.insert(field.name().to_string(), column_schemas.len());
+            <span class="kw">let _ </span>= name_to_index.insert(field.name().to_string(), column_schemas.len());
             column_schemas.push(column_schema);
         }
 

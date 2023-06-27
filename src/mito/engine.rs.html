@@ -1167,7 +1167,7 @@
             <span class="kw">let </span>region = <span class="self">self
                 </span>.open_region(<span class="kw-2">&amp;</span>engine_ctx, table_id, <span class="kw-2">*</span>region_number, <span class="kw-2">&amp;</span>table_ref, <span class="kw-2">&amp;</span>opts)
                 .<span class="kw">await</span><span class="question-mark">?</span>;
-            regions.insert(<span class="kw-2">*</span>region_number, region);
+            <span class="kw">let _ </span>= regions.insert(<span class="kw-2">*</span>region_number, region);
         }
 
         <span class="kw">let </span>table = Arc::new(MitoTable::new(table_info, regions, manifest));
@@ -1283,7 +1283,7 @@
                 </span><span class="kw">let </span>table = <span class="self">self</span>.recover_table(ctx, request.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = table {
                     <span class="comment">// already locked
-                    </span><span class="self">self</span>.tables.insert(request.table_id, table.clone());
+                    </span><span class="kw">let _ </span>= <span class="self">self</span>.tables.insert(request.table_id, table.clone());
 
                     <span class="prelude-val">Some</span>(table <span class="kw">as _</span>)
                 } <span class="kw">else </span>{
@@ -1361,7 +1361,7 @@
     }
 
     <span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableResult&lt;()&gt; {
-        futures::future::try_join_all(
+        <span class="kw">let _ </span>= futures::future::try_join_all(
             <span class="self">self</span>.tables
                 .iter()
                 .map(|item| <span class="self">self</span>.close_table_inner(item.value().clone(), <span class="prelude-val">None</span>, <span class="bool-val">false</span>)),
@@ -1416,7 +1416,7 @@
         }
 
         <span class="kw">if </span>table.is_releasable() {
-            <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>table_id);
+            <span class="kw">let _ </span>= <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>table_id);
 
             <span class="macro">logging::info!</span>(
                 <span class="string">&quot;Mito engine closed table: {} in schema: {}&quot;</span>,

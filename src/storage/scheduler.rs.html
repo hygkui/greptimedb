@@ -590,7 +590,6 @@
 <a href="#590" id="590">590</a>
 <a href="#591" id="591">591</a>
 <a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -882,7 +881,7 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">async fn </span>put_back_req(<span class="kw-2">&amp;</span><span class="self">self</span>, key: R::Key, req: R) {
         <span class="kw">let </span><span class="kw-2">mut </span>queue = <span class="self">self</span>.req_queue.write().unwrap();
-        queue.push_front(key, req);
+        <span class="kw">let _ </span>= queue.push_front(key, req);
     }
 
     <span class="comment">// Handles request, submit task to bg runtime.
@@ -968,11 +967,11 @@
         });
 
         <span class="kw">let </span>handler_cloned = handler.clone();
-        common_runtime::spawn_bg(<span class="kw">async move </span>{ handler_cloned.run().<span class="kw">await </span>});
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{ handler_cloned.run().<span class="kw">await </span>});
 
-        queue.write().unwrap().push_back(<span class="number">1</span>, MockRequest::default());
+        <span class="kw">let _ </span>= queue.write().unwrap().push_back(<span class="number">1</span>, MockRequest::default());
         handler.task_notifier.notify_one();
-        queue.write().unwrap().push_back(<span class="number">2</span>, MockRequest::default());
+        <span class="kw">let _ </span>= queue.write().unwrap().push_back(<span class="number">2</span>, MockRequest::default());
         handler.task_notifier.notify_one();
 
         tokio::time::timeout(Duration::from_secs(<span class="number">1</span>), latch.wait())
@@ -1036,9 +1035,8 @@
             handler,
         );
 
-        scheduler.schedule(MockRequest { region_id: <span class="number">1 </span>}).unwrap();
-
-        scheduler.schedule(MockRequest { region_id: <span class="number">2 </span>}).unwrap();
+        <span class="macro">assert!</span>(scheduler.schedule(MockRequest { region_id: <span class="number">1 </span>}).is_ok());
+        <span class="macro">assert!</span>(scheduler.schedule(MockRequest { region_id: <span class="number">2 </span>}).is_ok());
 
         tokio::time::timeout(Duration::from_secs(<span class="number">1</span>), latch.wait())
             .<span class="kw">await
@@ -1065,11 +1063,11 @@
         <span class="kw">let </span>scheduler = LocalScheduler::new(config, handler);
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..task_size {
-            scheduler
+            <span class="macro">assert!</span>(scheduler
                 .schedule(MockRequest {
                     region_id: i <span class="kw">as </span>RegionId,
                 })
-                .unwrap();
+                .is_ok());
         }
 
         tokio::time::timeout(Duration::from_secs(<span class="number">3</span>), latch.wait())
@@ -1096,20 +1094,20 @@
         <span class="kw">let </span>scheduler = LocalScheduler::new(config, handler);
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..task_size / <span class="number">2 </span>{
-            scheduler
+            <span class="macro">assert!</span>(scheduler
                 .schedule(MockRequest {
                     region_id: i <span class="kw">as </span>RegionId,
                 })
-                .unwrap();
+                .is_ok());
         }
 
         tokio::time::sleep(Duration::from_millis(<span class="number">100</span>)).<span class="kw">await</span>;
         <span class="kw">for </span>i <span class="kw">in </span>task_size / <span class="number">2</span>..task_size {
-            scheduler
+            <span class="macro">assert!</span>(scheduler
                 .schedule(MockRequest {
                     region_id: i <span class="kw">as </span>RegionId,
                 })
-                .unwrap();
+                .is_ok());
         }
 
         tokio::time::timeout(Duration::from_secs(<span class="number">6</span>), latch.wait())
@@ -1145,7 +1143,7 @@
         <span class="kw">let </span>finished_clone = finished.clone();
         <span class="kw">let </span>handler = MockHandler {
             cb: <span class="kw">move </span>|| {
-                finished_clone.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+                <span class="kw">let _ </span>= finished_clone.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
             },
         };
 
@@ -1165,7 +1163,7 @@
                     region_id: i <span class="kw">as </span>RegionId,
                 }) {
                     <span class="kw">if </span>res {
-                        task_scheduled_cloned.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+                        <span class="kw">let _ </span>= task_scheduled_cloned.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
                     }
                 }
 

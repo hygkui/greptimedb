@@ -190,7 +190,7 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = <span class="self">self</span>.key.take() {
             <span class="kw">let </span>lock = <span class="self">self</span>.lock.clone();
             <span class="kw">let </span>name = <span class="self">self</span>.name.clone();
-            common_runtime::spawn_bg(<span class="kw">async move </span>{
+            <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = lock.unlock(key).<span class="kw">await </span>{
                     <span class="macro">error!</span>(e; <span class="string">&quot;Failed to unlock &#39;{}&#39;&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>name));
                 }

@@ -1284,7 +1284,7 @@
         <span class="comment">// Add the id of the subprocedure to the metadata.
         </span><span class="self">self</span>.meta.push_child(procedure_id);
 
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="comment">// Run the root procedure.
             </span>runner.run().<span class="kw">await
         </span>});

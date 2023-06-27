@@ -481,7 +481,7 @@
     <span class="kw">pub fn </span>route(<span class="kw-2">mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>str, handler: <span class="kw">impl </span>HttpHandler + <span class="lifetime">&#39;static</span>) -&gt; <span class="self">Self </span>{
         check_path(path);
 
-        <span class="self">self</span>.handlers.insert(path.to_owned(), Box::new(handler));
+        <span class="kw">let _ </span>= <span class="self">self</span>.handlers.insert(path.to_owned(), Box::new(handler));
 
         <span class="self">self
     </span>}

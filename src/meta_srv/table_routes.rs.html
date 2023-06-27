@@ -360,12 +360,12 @@
     <span class="kw">for </span>kv <span class="kw">in </span>kvs {
         <span class="kw">let </span>key = TableGlobalKey::try_from_raw_key(kv.key()).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>value = TableGlobalValue::from_bytes(kv.value()).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-        result.insert(key, <span class="prelude-val">Some</span>(value));
+        <span class="kw">let _ </span>= result.insert(key, <span class="prelude-val">Some</span>(value));
     }
 
     <span class="kw">for </span>key <span class="kw">in </span>keys {
         <span class="kw">if </span>!result.contains_key(key) {
-            result.insert(key.clone(), <span class="prelude-val">None</span>);
+            <span class="kw">let _ </span>= result.insert(key.clone(), <span class="prelude-val">None</span>);
         }
     }
     <span class="prelude-val">Ok</span>(result)

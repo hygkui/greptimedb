@@ -119,7 +119,7 @@
     }
 
     <span class="kw">pub fn </span>insert&lt;T: <span class="lifetime">&#39;static </span>+ Send + Sync&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: T) {
-        <span class="self">self</span>.lock().insert(value);
+        <span class="kw">let _ </span>= <span class="self">self</span>.lock().insert(value);
     }
 
     <span class="kw">pub fn </span>get&lt;T: <span class="lifetime">&#39;static </span>+ Send + Sync + Clone&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {

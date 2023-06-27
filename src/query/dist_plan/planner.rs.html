@@ -295,7 +295,7 @@
     <span class="doccomment">/// Extract table name from logical plan
     </span><span class="kw">fn </span>get_table_name(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: <span class="kw-2">&amp;</span>LogicalPlan) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableName&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>extractor = TableNameExtractor::default();
-        plan.visit(<span class="kw-2">&amp;mut </span>extractor)<span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= plan.visit(<span class="kw-2">&amp;mut </span>extractor)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(extractor.table_name)
     }
 

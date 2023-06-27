@@ -150,14 +150,14 @@
 
         <span class="kw">let </span>guard = mutex.lock_owned().<span class="kw">await</span>;
 
-        <span class="self">self</span>.guards.insert(key.clone(), guard);
+        <span class="kw">let _ </span>= <span class="self">self</span>.guards.insert(key.clone(), guard);
         <span class="prelude-val">Ok</span>(key)
     }
 
     <span class="kw">async fn </span>unlock(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// drop the guard, so that the mutex can be unlocked,
         // effectively make the `mutex.lock_owned` in `lock` method to proceed
-        </span><span class="self">self</span>.guards.remove(<span class="kw-2">&amp;</span>key);
+        </span><span class="kw">let _ </span>= <span class="self">self</span>.guards.remove(<span class="kw-2">&amp;</span>key);
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -197,10 +197,10 @@
                     <span class="comment">// every key counter will be added by 1 for 10 times
                     </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">100 </span>{
                         <span class="kw">let </span>key = <span class="kw-2">&amp;</span>keys[i % keys.len()];
-                        lock_clone
+                        <span class="macro">assert!</span>(lock_clone
                             .lock(key.clone(), Opts { expire_secs: <span class="prelude-val">None </span>})
                             .<span class="kw">await
-                            </span>.unwrap();
+                            </span>.is_ok());
 
                         <span class="comment">// Intentionally create a critical section:
                         // if our MemLock is flawed, the resulting counter is wrong.
@@ -217,7 +217,7 @@
                 })
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        futures::future::join_all(tasks).<span class="kw">await</span>;
+        <span class="kw">let _ </span>= futures::future::join_all(tasks).<span class="kw">await</span>;
 
         <span class="macro">assert!</span>(counters.values().all(|x| x.load(Ordering::Relaxed) == <span class="number">1000</span>));
     }

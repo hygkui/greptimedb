@@ -815,7 +815,7 @@
     <span class="kw">async fn </span>new_fs_manifest(compress: bool, gc_duration: <span class="prelude-ty">Option</span>&lt;Duration&gt;) -&gt; RegionManifest {
         <span class="kw">let </span>tmp_dir = create_temp_dir(<span class="string">&quot;test_region_manifest&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>builder = Fs::default();
-        builder.root(<span class="kw-2">&amp;</span>tmp_dir.path().to_string_lossy());
+        <span class="kw">let _ </span>= builder.root(<span class="kw-2">&amp;</span>tmp_dir.path().to_string_lossy());
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
 
         <span class="kw">let </span>manifest = RegionManifest::with_checkpointer(
@@ -835,14 +835,14 @@
     ) -&gt; (RegionManifest, TempFolder) {
         <span class="kw">let </span>s3_config = s3_test_config().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>builder = S3::default();
-        builder
+        <span class="kw">let _ </span>= builder
             .root(<span class="kw-2">&amp;</span>s3_config.root)
             .access_key_id(<span class="kw-2">&amp;</span>s3_config.access_key_id)
             .secret_access_key(<span class="kw-2">&amp;</span>s3_config.secret_access_key)
             .bucket(<span class="kw-2">&amp;</span>s3_config.bucket);
 
         <span class="kw">if </span>s3_config.region.is_some() {
-            builder.region(s3_config.region.as_ref().unwrap());
+            <span class="kw">let _ </span>= builder.region(s3_config.region.as_ref().unwrap());
         }
         <span class="kw">let </span>store = ObjectStore::new(builder).unwrap().finish();
         <span class="kw">let </span>temp_folder = TempFolder::new(<span class="kw-2">&amp;</span>store, <span class="string">&quot;/&quot;</span>);
@@ -874,7 +874,7 @@
                 </span>.unwrap()
         );
 
-        manifest
+        <span class="macro">assert!</span>(manifest
             .update(RegionMetaActionList::with_action(RegionMetaAction::Change(
                 RegionChange {
                     metadata: region_meta.as_ref().into(),
@@ -882,7 +882,7 @@
                 },
             )))
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
         <span class="kw">let </span><span class="kw-2">mut </span>iter = manifest.scan(<span class="number">0</span>, MAX_VERSION).<span class="kw">await</span>.unwrap();
 
@@ -909,7 +909,7 @@
         }
 
         <span class="comment">// Save some actions
-        </span>manifest
+        </span><span class="macro">assert!</span>(manifest
             .update(RegionMetaActionList::new(<span class="macro">vec!</span>[
                 RegionMetaAction::Edit(build_region_edit(<span class="number">1</span>, <span class="kw-2">&amp;</span>[FileId::random()], <span class="kw-2">&amp;</span>[])),
                 RegionMetaAction::Edit(build_region_edit(
@@ -919,7 +919,7 @@
                 )),
             ]))
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
         <span class="kw">let </span><span class="kw-2">mut </span>iter = manifest.scan(<span class="number">0</span>, MAX_VERSION).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>(v, action_list) = iter.next_action().<span class="kw">await</span>.unwrap().unwrap();
@@ -1031,7 +1031,7 @@
         ];
 
         <span class="kw">for </span>action <span class="kw">in </span>actions {
-            manifest.update(action).<span class="kw">await</span>.unwrap();
+            <span class="macro">assert!</span>(manifest.update(action).<span class="kw">await</span>.is_ok());
         }
         <span class="macro">assert!</span>(manifest.last_checkpoint().<span class="kw">await</span>.unwrap().is_none());
         assert_scan(manifest, <span class="number">0</span>, <span class="number">3</span>).<span class="kw">await</span>;
@@ -1090,7 +1090,7 @@
             ))]),
         ];
         <span class="kw">for </span>action <span class="kw">in </span>actions {
-            manifest.update(action).<span class="kw">await</span>.unwrap();
+            <span class="macro">assert!</span>(manifest.update(action).<span class="kw">await</span>.is_ok());
         }
 
         assert_scan(manifest, <span class="number">3</span>, <span class="number">2</span>).<span class="kw">await</span>;

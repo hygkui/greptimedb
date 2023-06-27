@@ -321,7 +321,7 @@
                     <span class="prelude-val">Some</span>(AddColumnLocation::First)
                 } <span class="kw">else if let </span>Token::Word(word) = parser.peek_token().token {
                     <span class="kw">if </span>word.value.to_ascii_uppercase() == <span class="string">&quot;AFTER&quot; </span>{
-                        parser.next_token();
+                        <span class="kw">let _ </span>= parser.next_token();
                         <span class="kw">let </span>name = parser.parse_identifier()<span class="question-mark">?</span>;
                         <span class="prelude-val">Some</span>(AddColumnLocation::After {
                             column_name: name.value,

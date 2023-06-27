@@ -231,6 +231,7 @@
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -289,7 +290,7 @@
 
         <span class="kw">let </span>mailbox = ctx.mailbox.clone();
         <span class="kw">let </span>self_ref = Arc::new(<span class="self">self</span>.clone());
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>result = self_ref.close_region_inner(region_ident).<span class="kw">await</span>;
 
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = mailbox
@@ -424,7 +425,8 @@
                     <span class="comment">// Deregister table if The table released.
                     </span><span class="self">self</span>.deregister_table(table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
 
-                    <span class="self">self</span>.region_alive_keepers
+                    <span class="kw">let _ </span>= <span class="self">self
+                        </span>.region_alive_keepers
                         .deregister_table(table_ident)
                         .<span class="kw">await</span>;
 

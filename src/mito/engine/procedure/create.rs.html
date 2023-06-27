@@ -441,6 +441,8 @@
 <a href="#441" id="441">441</a>
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -608,7 +610,7 @@
         );
 
         <span class="kw">let </span>_lock = <span class="self">self</span>.creator.engine_inner.table_mutex.lock(table_id).<span class="kw">await</span>;
-        <span class="self">self</span>.creator.create_table().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.creator.create_table().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Status::Done)
     }
@@ -718,7 +720,7 @@
                 </span>.map_err(Error::from_error_ext)<span class="question-mark">?
             </span>{
                 <span class="comment">// Region already exists.
-                </span><span class="self">self</span>.regions.insert(<span class="kw-2">*</span>number, region);
+                </span><span class="kw">let _ </span>= <span class="self">self</span>.regions.insert(<span class="kw-2">*</span>number, region);
                 <span class="kw">continue</span>;
             }
 
@@ -751,7 +753,7 @@
                 region_id
             );
 
-            <span class="self">self</span>.regions.insert(<span class="kw-2">*</span>number, region);
+            <span class="kw">let _ </span>= <span class="self">self</span>.regions.insert(<span class="kw-2">*</span>number, region);
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -767,7 +769,8 @@
         </span>{
             <span class="kw">let </span>table = Arc::new(MitoTable::new(table_info, <span class="self">self</span>.regions.clone(), manifest));
 
-            <span class="self">self</span>.engine_inner
+            <span class="kw">let _ </span>= <span class="self">self
+                </span>.engine_inner
                 .tables
                 .insert(<span class="self">self</span>.data.request.id, table.clone());
             <span class="kw">return </span><span class="prelude-val">Ok</span>(table);
@@ -777,7 +780,8 @@
         </span><span class="kw">let </span>table = <span class="self">self</span>.write_manifest_and_create_table(table_dir).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>table = Arc::new(table);
 
-        <span class="self">self</span>.engine_inner
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.engine_inner
             .tables
             .insert(<span class="self">self</span>.data.request.id, table.clone());
 

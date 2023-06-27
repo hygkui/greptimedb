@@ -345,6 +345,7 @@
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -592,7 +593,8 @@
                 table_id,
             };
 
-            <span class="self">self</span>.catalog_manager
+            <span class="kw">let _ </span>= <span class="self">self
+                </span>.catalog_manager
                 .rename_table(rename_req)
                 .<span class="kw">await
                 </span>.map_err(Error::from_error_ext)<span class="question-mark">?</span>;

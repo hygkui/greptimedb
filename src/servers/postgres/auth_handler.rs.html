@@ -251,9 +251,6 @@
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -411,12 +408,9 @@
                 <span class="comment">// check if db is valid
                 </span><span class="kw">match </span>resolve_db_info(client, <span class="self">self</span>.query_handler.clone()).<span class="kw">await</span><span class="question-mark">? </span>{
                     DbResolution::Resolved(catalog, schema) =&gt; {
-                        client
-                            .metadata_mut()
-                            .insert(<span class="kw">super</span>::METADATA_CATALOG.to_owned(), catalog);
-                        client
-                            .metadata_mut()
-                            .insert(<span class="kw">super</span>::METADATA_SCHEMA.to_owned(), schema);
+                        <span class="kw">let </span>metadata = client.metadata_mut();
+                        <span class="kw">let _ </span>= metadata.insert(<span class="kw">super</span>::METADATA_CATALOG.to_owned(), catalog);
+                        <span class="kw">let _ </span>= metadata.insert(<span class="kw">super</span>::METADATA_SCHEMA.to_owned(), schema);
                     }
                     DbResolution::NotFound(msg) =&gt; {
                         send_error(client, <span class="string">&quot;FATAL&quot;</span>, <span class="string">&quot;3D000&quot;</span>, msg).<span class="kw">await</span><span class="question-mark">?</span>;

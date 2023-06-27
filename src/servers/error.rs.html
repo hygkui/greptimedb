@@ -943,11 +943,11 @@
         // (which is a very rare case), just ignore. Client will use Tonic status code and message.
         </span><span class="kw">let </span>status_code = err.status_code();
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(code) = HeaderValue::from_bytes(status_code.to_string().as_bytes()) {
-            headers.insert(INNER_ERROR_CODE, code);
+            <span class="kw">let _ </span>= headers.insert(INNER_ERROR_CODE, code);
         }
         <span class="kw">let </span>root_error = err.iter_chain().last().unwrap();
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(err_msg) = HeaderValue::from_bytes(root_error.to_string().as_bytes()) {
-            headers.insert(INNER_ERROR_MSG, err_msg);
+            <span class="kw">let _ </span>= headers.insert(INNER_ERROR_MSG, err_msg);
         }
 
         <span class="kw">let </span>metadata = MetadataMap::from_headers(headers);

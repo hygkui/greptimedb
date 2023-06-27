@@ -253,7 +253,6 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -301,7 +300,6 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>MockKvBackend {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>map = BTreeMap::default();
         <span class="kw">let </span>catalog_value = CatalogValue {}.as_bytes().unwrap();
         <span class="kw">let </span>schema_value = SchemaValue {}.as_bytes().unwrap();
 
@@ -316,11 +314,11 @@
         }
         .to_string();
 
-        <span class="comment">// create default catalog and schema
-        </span>map.insert(default_catalog_key.into(), catalog_value);
-        map.insert(default_schema_key.into(), schema_value);
-
-        <span class="kw">let </span>map = RwLock::new(map);
+        <span class="kw">let </span>map = RwLock::new(BTreeMap::from([
+            <span class="comment">// create default catalog and schema
+            </span>(default_catalog_key.into(), catalog_value),
+            (default_schema_key.into(), schema_value),
+        ]));
         <span class="self">Self </span>{ map }
     }
 }
@@ -365,7 +363,7 @@
 
     <span class="kw">async fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], val: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>map = <span class="self">self</span>.map.write().<span class="kw">await</span>;
-        map.insert(key.to_vec(), val.to_vec());
+        <span class="kw">let _ </span>= map.insert(key.to_vec(), val.to_vec());
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -380,7 +378,7 @@
         <span class="kw">match </span>existing {
             Entry::Vacant(e) =&gt; {
                 <span class="kw">if </span>expect.is_empty() {
-                    e.insert(val.to_vec());
+                    <span class="kw">let _ </span>= e.insert(val.to_vec());
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(()))
                 } <span class="kw">else </span>{
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="prelude-val">None</span>))
@@ -388,7 +386,7 @@
             }
             Entry::Occupied(<span class="kw-2">mut </span>existing) =&gt; {
                 <span class="kw">if </span>existing.get() == expect {
-                    existing.insert(val.to_vec());
+                    <span class="kw">let _ </span>= existing.insert(val.to_vec());
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(()))
                 } <span class="kw">else </span>{
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="prelude-val">Some</span>(existing.get().clone())))
@@ -457,7 +455,7 @@
         )) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;;
 
         <span class="kw">let </span><span class="kw-2">mut </span>tables = <span class="self">self</span>.tables.write().unwrap();
-        tables.insert(table_id, table.clone() <span class="kw">as </span>TableRef);
+        <span class="kw">let _ </span>= tables.insert(table_id, table.clone() <span class="kw">as </span>TableRef);
         <span class="prelude-val">Ok</span>(table)
     }
 

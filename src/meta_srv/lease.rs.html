@@ -132,7 +132,7 @@
         <span class="kw">if </span>!predicate(<span class="kw-2">&amp;</span>lease_key, <span class="kw-2">&amp;</span>lease_value) {
             <span class="kw">continue</span>;
         }
-        lease_kvs.insert(lease_key, lease_value);
+        <span class="kw">let _ </span>= lease_kvs.insert(lease_key, lease_value);
     }
 
     <span class="prelude-val">Ok</span>(lease_kvs)

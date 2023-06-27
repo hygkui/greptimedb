@@ -707,7 +707,7 @@
                 <span class="kw-2">&amp;</span>ts_seg,    <span class="comment">// keys
                 </span><span class="kw-2">&amp;</span>value_seg, <span class="comment">// values
             </span>);
-            seq.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+            <span class="kw">let _ </span>= seq.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
         }
 
         <span class="kw">let </span>iter = memtable.iter(IterContext::default()).unwrap();
@@ -734,7 +734,7 @@
             Arc::new(<span class="kw">crate</span>::test_util::access_layer_util::MockAccessLayer {}),
             new_noop_file_purger(),
         );
-        seq.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+        <span class="kw">let _ </span>= seq.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
         handle
     }
 
@@ -772,7 +772,7 @@
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;write_parquet&quot;</span>);
         <span class="kw">let </span>path = dir.path().to_str().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>builder = Fs::default();
-        builder.root(path);
+        <span class="kw">let _ </span>= builder.root(path);
 
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
 
@@ -851,7 +851,7 @@
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;write_parquet&quot;</span>);
         <span class="kw">let </span>path = dir.path().to_str().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>builder = Fs::default();
-        builder.root(path);
+        <span class="kw">let _ </span>= builder.root(path);
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
 
         <span class="kw">let </span>schema = schema_for_test();

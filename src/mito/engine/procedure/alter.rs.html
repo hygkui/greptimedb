@@ -506,6 +506,7 @@
 <a href="#506" id="506">506</a>
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -563,7 +564,7 @@
         <span class="kw">match </span><span class="self">self</span>.data.state {
             AlterTableState::Prepare =&gt; <span class="self">self</span>.on_prepare(),
             AlterTableState::EngineAlterTable =&gt; {
-                <span class="self">self</span>.engine_alter_table().<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">let _ </span>= <span class="self">self</span>.engine_alter_table().<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Status::Done)
             }
         }
@@ -731,7 +732,8 @@
 
         <span class="comment">// It is possible that we write the manifest multiple times and bump the manifest
         // version, but it is still correct as we always write the new table info.
-        </span><span class="self">self</span>.table
+        </span><span class="kw">let _ </span>= <span class="self">self
+            </span>.table
             .manifest()
             .update(TableMetaActionList::with_action(TableMetaAction::Change(
                 Box::new(TableChange {

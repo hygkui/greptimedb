@@ -484,14 +484,14 @@
     <span class="kw">fn </span>from(opts: <span class="kw-2">&amp;</span>TableOptions) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashMap::with_capacity(<span class="number">2 </span>+ opts.extra_options.len());
         <span class="kw">if let </span><span class="prelude-val">Some</span>(write_buffer_size) = opts.write_buffer_size {
-            res.insert(
+            <span class="kw">let _ </span>= res.insert(
                 WRITE_BUFFER_SIZE_KEY.to_string(),
                 write_buffer_size.to_string(),
             );
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(ttl) = opts.ttl {
             <span class="kw">let </span>ttl_str = humantime::format_duration(ttl).to_string();
-            res.insert(TTL_KEY.to_string(), ttl_str);
+            <span class="kw">let _ </span>= res.insert(TTL_KEY.to_string(), ttl_str);
         }
         res.extend(
             opts.extra_options

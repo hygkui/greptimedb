@@ -1059,7 +1059,7 @@
         <span class="comment">// transform columns
         </span><span class="kw">let </span><span class="kw-2">mut </span>new_columns = input.columns().to_vec();
         <span class="kw">for </span>index <span class="kw">in </span><span class="self">self</span>.field_columns.iter() {
-            other_columns.remove(index);
+            <span class="kw">let _ </span>= other_columns.remove(index);
             <span class="kw">let </span>column = input.column(<span class="kw-2">*</span>index);
             <span class="kw">let </span>new_column = Arc::new(
                 RangeArray::from_ranges(column.clone(), ranges.clone())

@@ -1892,14 +1892,14 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_split_overflow() {
-        Timestamp::new(i64::MAX, TimeUnit::Second).split();
-        Timestamp::new(i64::MIN, TimeUnit::Second).split();
-        Timestamp::new(i64::MAX, TimeUnit::Millisecond).split();
-        Timestamp::new(i64::MIN, TimeUnit::Millisecond).split();
-        Timestamp::new(i64::MAX, TimeUnit::Microsecond).split();
-        Timestamp::new(i64::MIN, TimeUnit::Microsecond).split();
-        Timestamp::new(i64::MAX, TimeUnit::Nanosecond).split();
-        Timestamp::new(i64::MIN, TimeUnit::Nanosecond).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MAX, TimeUnit::Second).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MIN, TimeUnit::Second).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MAX, TimeUnit::Millisecond).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MIN, TimeUnit::Millisecond).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MAX, TimeUnit::Microsecond).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MIN, TimeUnit::Microsecond).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MAX, TimeUnit::Nanosecond).split();
+        <span class="kw">let _ </span>= Timestamp::new(i64::MIN, TimeUnit::Nanosecond).split();
         <span class="kw">let </span>(sec, nsec) = Timestamp::new(i64::MIN, TimeUnit::Nanosecond).split();
         <span class="kw">let </span>time = NaiveDateTime::from_timestamp_opt(sec, nsec).unwrap();
         <span class="macro">assert_eq!</span>(sec, time.timestamp());

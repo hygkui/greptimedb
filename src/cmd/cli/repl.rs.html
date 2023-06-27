@@ -388,7 +388,7 @@
             <span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>line) =&gt; {
                 <span class="kw">let </span>request = line.trim();
 
-                <span class="self">self</span>.rl.add_history_entry(request.to_string());
+                <span class="kw">let _ </span>= <span class="self">self</span>.rl.add_history_entry(request.to_string());
 
                 request.try_into()
             }
@@ -417,7 +417,7 @@
                     }
                 }
                 ReplCommand::Sql { sql } =&gt; {
-                    <span class="self">self</span>.execute_sql(sql).<span class="kw">await</span>;
+                    <span class="kw">let _ </span>= <span class="self">self</span>.execute_sql(sql).<span class="kw">await</span>;
                 }
                 ReplCommand::Exit =&gt; {
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(());

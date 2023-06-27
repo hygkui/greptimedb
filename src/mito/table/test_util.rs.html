@@ -219,6 +219,7 @@
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
 <a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -323,7 +324,7 @@
     <span class="kw">let </span>dir = create_temp_dir(prefix);
     <span class="kw">let </span>store_dir = dir.path().to_string_lossy();
     <span class="kw">let </span><span class="kw-2">mut </span>builder = Builder::default();
-    builder.root(<span class="kw-2">&amp;</span>store_dir);
+    <span class="kw">let _ </span>= builder.root(<span class="kw-2">&amp;</span>store_dir);
     (dir, ObjectStore::new(builder).unwrap().finish())
 }
 
@@ -426,16 +427,17 @@
 }
 
 <span class="kw">pub async fn </span>setup_table(table: Arc&lt;<span class="kw">dyn </span>Table&gt;) {
-    <span class="kw">let </span><span class="kw-2">mut </span>columns_values: HashMap&lt;String, VectorRef&gt; = HashMap::with_capacity(<span class="number">4</span>);
     <span class="kw">let </span>hosts: VectorRef = Arc::new(StringVector::from(<span class="macro">vec!</span>[<span class="string">&quot;host1&quot;</span>, <span class="string">&quot;host2&quot;</span>, <span class="string">&quot;host3&quot;</span>, <span class="string">&quot;host4&quot;</span>]));
     <span class="kw">let </span>cpus: VectorRef = Arc::new(Float64Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>, <span class="number">4.0</span>]));
     <span class="kw">let </span>memories: VectorRef = Arc::new(Float64Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>, <span class="number">4.0</span>]));
     <span class="kw">let </span>tss: VectorRef = Arc::new(TimestampMillisecondVector::from_vec(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>]));
 
-    columns_values.insert(<span class="string">&quot;host&quot;</span>.to_string(), hosts.clone());
-    columns_values.insert(<span class="string">&quot;cpu&quot;</span>.to_string(), cpus.clone());
-    columns_values.insert(<span class="string">&quot;memory&quot;</span>.to_string(), memories.clone());
-    columns_values.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tss.clone());
+    <span class="kw">let </span>columns_values = HashMap::from([
+        (<span class="string">&quot;host&quot;</span>.to_string(), hosts),
+        (<span class="string">&quot;cpu&quot;</span>.to_string(), cpus),
+        (<span class="string">&quot;memory&quot;</span>.to_string(), memories),
+        (<span class="string">&quot;ts&quot;</span>.to_string(), tss),
+    ]);
 
     <span class="kw">let </span>insert_req = new_insert_request(<span class="string">&quot;demo&quot;</span>.to_string(), columns_values);
     <span class="macro">assert_eq!</span>(<span class="number">4</span>, table.insert(insert_req).<span class="kw">await</span>.unwrap());

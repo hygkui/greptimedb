@@ -302,7 +302,7 @@
 
         <span class="kw">let </span>provider = DfTableProviderAdapter::new(table);
         <span class="kw">let </span>source = provider_as_source(Arc::new(provider));
-        <span class="self">self</span>.resolved_tables.insert(resolved_name, source.clone());
+        <span class="kw">let _ </span>= <span class="self">self</span>.resolved_tables.insert(resolved_name, source.clone());
         <span class="prelude-val">Ok</span>(source)
     }
 }

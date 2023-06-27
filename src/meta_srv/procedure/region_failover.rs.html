@@ -766,7 +766,7 @@
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>FailoverProcedureGuard {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.running_procedures.write().unwrap().remove(<span class="kw-2">&amp;</span><span class="self">self</span>.key);
+        <span class="kw">let _ </span>= <span class="self">self</span>.running_procedures.write().unwrap().remove(<span class="kw-2">&amp;</span><span class="self">self</span>.key);
     }
 }
 
@@ -859,7 +859,7 @@
 
         <span class="kw">let </span>procedure_manager = <span class="self">self</span>.procedure_manager.clone();
         <span class="kw">let </span>failed_region = failed_region.clone();
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let _ </span>= guard;
 
             <span class="kw">let </span>watcher = <span class="kw-2">&amp;mut </span><span class="kw">match </span>procedure_manager.submit(procedure_with_id).<span class="kw">await </span>{
@@ -1156,7 +1156,7 @@
             <span class="kw">let </span>(<span class="kw">_</span>, table_global_value) =
                 table_routes::tests::prepare_table_global_value(<span class="kw-2">&amp;</span>kv_store, table).<span class="kw">await</span>;
 
-            table_routes::tests::prepare_table_route_value(<span class="kw-2">&amp;</span>kv_store, table).<span class="kw">await</span>;
+            <span class="kw">let _ </span>= table_routes::tests::prepare_table_route_value(<span class="kw-2">&amp;</span>kv_store, table).<span class="kw">await</span>;
 
             <span class="kw">let </span>pushers = Pushers::default();
             <span class="kw">let </span><span class="kw-2">mut </span>heartbeat_receivers = HashMap::with_capacity(<span class="number">3</span>);
@@ -1167,7 +1167,7 @@
                 <span class="kw">let </span>pusher = Pusher::new(tx, <span class="kw-2">&amp;</span>RequestHeader::default());
                 <span class="kw">let _ </span>= pushers.insert(pusher_id, pusher).<span class="kw">await</span>;
 
-                heartbeat_receivers.insert(datanode_id, rx);
+                <span class="kw">let _ </span>= heartbeat_receivers.insert(datanode_id, rx);
             }
 
             <span class="kw">let </span>mailbox_sequence =
@@ -1223,7 +1223,7 @@
             .unwrap();
         <span class="kw">let </span>mailbox_clone = env.context.mailbox.clone();
         <span class="kw">let </span>failed_region_clone = failed_region.clone();
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>resp = failed_datanode.recv().<span class="kw">await</span>.unwrap().unwrap();
             <span class="kw">let </span>received = <span class="kw-2">&amp;</span>resp.mailbox_message.unwrap();
             <span class="macro">assert_eq!</span>(
@@ -1262,7 +1262,7 @@
             <span class="kw">let </span>mailbox_clone = env.context.mailbox.clone();
             <span class="kw">let </span>failed_region_clone = failed_region.clone();
             <span class="kw">let </span>candidate_tx = candidate_tx.clone();
-            common_runtime::spawn_bg(<span class="kw">async move </span>{
+            <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">let </span>resp = recv.recv().<span class="kw">await</span>.unwrap().unwrap();
                 <span class="kw">let </span>received = <span class="kw-2">&amp;</span>resp.mailbox_message.unwrap();
                 <span class="macro">assert_eq!</span>(

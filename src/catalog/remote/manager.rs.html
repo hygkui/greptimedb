@@ -912,6 +912,8 @@
 <a href="#912" id="912">912</a>
 <a href="#913" id="913">913</a>
 <a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1026,7 +1028,7 @@
             joins.push(<span class="self">self</span>.initiate_schemas(node_id, backend, engine_manager, catalog_name));
         }
 
-        futures::future::try_join_all(joins).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= futures::future::try_join_all(joins).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1537,13 +1539,14 @@
         <span class="self">self</span>.check_catalog_schema_exist(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="self">self</span>.register_table(
-            catalog_name.clone(),
-            schema_name.clone(),
-            request.table_name,
-            request.table.clone(),
-        )
-        .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.register_table(
+                catalog_name.clone(),
+                schema_name.clone(),
+                request.table_name,
+                request.table.clone(),
+            )
+            .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>table_info = request.table.table_info();
         <span class="kw">let </span>table_ident = TableIdent {
@@ -1594,7 +1597,8 @@
                 table_id: table_info.ident.table_id,
                 engine: table_info.meta.engine.clone(),
             };
-            <span class="self">self</span>.region_alive_keepers
+            <span class="kw">let _ </span>= <span class="self">self
+                </span>.region_alive_keepers
                 .deregister_table(<span class="kw-2">&amp;</span>table_ident)
                 .<span class="kw">await</span>;
         }
@@ -1760,7 +1764,7 @@
                 <span class="kw">let </span>catalog_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>catalog.<span class="number">0</span>);
 
                 <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = CatalogKey::parse(<span class="kw-2">&amp;</span>catalog_key) {
-                    catalogs.insert(key.catalog_name);
+                    <span class="kw">let _ </span>= catalogs.insert(key.catalog_name);
                 }
             }
         }
@@ -1779,7 +1783,7 @@
                 <span class="kw">let </span>schema_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>schema.<span class="number">0</span>);
 
                 <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = SchemaKey::parse(<span class="kw-2">&amp;</span>schema_key) {
-                    schemas.insert(key.schema_name);
+                    <span class="kw">let _ </span>= schemas.insert(key.schema_name);
                 }
             }
         }
@@ -1800,7 +1804,7 @@
                 <span class="kw">let </span>table_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>table.<span class="number">0</span>);
 
                 <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = TableRegionalKey::parse(<span class="kw-2">&amp;</span>table_key) {
-                    tables.insert(key.table_name);
+                    <span class="kw">let _ </span>= tables.insert(key.table_name);
                 }
             }
         }

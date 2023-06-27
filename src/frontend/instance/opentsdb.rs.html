@@ -38,6 +38,7 @@
 <a href="#38" id="38">38</a>
 <a href="#39" id="39">39</a>
 <a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -69,7 +70,8 @@
         <span class="kw">let </span>requests = InsertRequests {
             inserts: <span class="macro">vec!</span>[data_point.as_grpc_insert()],
         };
-        <span class="self">self</span>.handle_inserts(requests, ctx)
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.handle_inserts(requests, ctx)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .with_context(|<span class="kw">_</span>| server_error::ExecuteQuerySnafu {

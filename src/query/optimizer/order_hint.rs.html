@@ -211,7 +211,7 @@
 <span class="kw">impl </span>OrderHintRule {
     <span class="kw">fn </span>optimize(plan: <span class="kw-2">&amp;</span>LogicalPlan) -&gt; DataFusionResult&lt;LogicalPlan&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>visitor = OrderHintVisitor::default();
-        plan.visit(<span class="kw-2">&amp;mut </span>visitor)<span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= plan.visit(<span class="kw-2">&amp;mut </span>visitor)<span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(order_expr) = visitor.order_expr.take() {
             plan.clone()
@@ -317,7 +317,7 @@
             .unwrap();
 
         <span class="kw">let </span>context = OptimizerContext::default();
-        OrderHintRule.try_optimize(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>context).unwrap();
+        <span class="macro">assert!</span>(OrderHintRule.try_optimize(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>context).is_ok());
 
         <span class="comment">// should read the first (with `.sort(true, false)`) sort option
         </span><span class="kw">let </span>scan_req = adapter.get_scan_req();

@@ -1160,7 +1160,7 @@
         version_control.set_committed_sequence(next_sequence);
 
         <span class="kw">let </span>header = WalHeader::with_last_manifest_version(manifest_version);
-        wal.write_to_wal(next_sequence, header, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= wal.write_to_wal(next_sequence, header, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1226,7 +1226,7 @@
             action_list
         );
 
-        drop_ctx.manifest.update(action_list).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= drop_ctx.manifest.update(action_list).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// Mark all data obsolete and delete the namespace in the WAL
         </span>drop_ctx.wal.obsolete(committed_sequence).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1414,7 +1414,7 @@
 
         <span class="kw">let </span>version = version_control.current();
         <span class="kw">let </span>wal_header = WalHeader::with_last_manifest_version(version.manifest_version());
-        writer_ctx
+        <span class="kw">let _ </span>= writer_ctx
             .wal
             .write_to_wal(next_sequence, wal_header, <span class="prelude-val">Some</span>(request.payload()))
             .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1746,7 +1746,7 @@
                     </span>.context(error::CompactTaskCancelSnafu { region_id })<span class="question-mark">??</span>;
             }
         } <span class="kw">else </span>{
-            schedule_compaction(
+            <span class="kw">let _ </span>= schedule_compaction(
                 shared_data,
                 compaction_scheduler,
                 compaction_request,

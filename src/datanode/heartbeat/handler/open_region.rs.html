@@ -273,7 +273,7 @@
         <span class="kw">let </span>self_ref = Arc::new(<span class="self">self</span>.clone());
 
         <span class="kw">let </span>region_alive_keepers = <span class="self">self</span>.region_alive_keepers.clone();
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>table_ident = <span class="kw-2">&amp;</span>region_ident.table_ident;
             <span class="kw">let </span>request = OpenTableRequest {
                 catalog_name: table_ident.catalog.clone(),

@@ -453,18 +453,18 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_from() {
-        <span class="kw">let </span><span class="kw-2">mut </span>map = HashMap::new();
+        <span class="kw">let </span>map = HashMap::new();
         <span class="kw">let </span>format = JsonFormat::try_from(<span class="kw-2">&amp;</span>map).unwrap();
 
         <span class="macro">assert_eq!</span>(format, JsonFormat::default());
 
-        map.insert(
-            FORMAT_SCHEMA_INFER_MAX_RECORD.to_string(),
-            <span class="string">&quot;2000&quot;</span>.to_string(),
-        );
-
-        map.insert(FORMAT_COMPRESSION_TYPE.to_string(), <span class="string">&quot;zstd&quot;</span>.to_string());
-
+        <span class="kw">let </span>map = HashMap::from([
+            (
+                FORMAT_SCHEMA_INFER_MAX_RECORD.to_string(),
+                <span class="string">&quot;2000&quot;</span>.to_string(),
+            ),
+            (FORMAT_COMPRESSION_TYPE.to_string(), <span class="string">&quot;zstd&quot;</span>.to_string()),
+        ]);
         <span class="kw">let </span>format = JsonFormat::try_from(<span class="kw-2">&amp;</span>map).unwrap();
 
         <span class="macro">assert_eq!</span>(

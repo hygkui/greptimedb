@@ -609,15 +609,15 @@ WITH(
         <span class="kw">let </span>schema_name = <span class="string">&quot;public&quot;</span>.to_string();
         <span class="kw">let </span>catalog_name = <span class="string">&quot;greptime&quot;</span>.to_string();
         <span class="kw">let </span><span class="kw-2">mut </span>options: TableOptions = Default::default();
-        options.extra_options.insert(
+        <span class="kw">let _ </span>= options.extra_options.insert(
             IMMUTABLE_TABLE_LOCATION_KEY.to_string(),
             <span class="string">&quot;foo.csv&quot;</span>.to_string(),
         );
-        options.extra_options.insert(
+        <span class="kw">let _ </span>= options.extra_options.insert(
             IMMUTABLE_TABLE_META_KEY.to_string(),
             <span class="string">&quot;{{\&quot;files\&quot;:[\&quot;foo.csv\&quot;]}}&quot;</span>.to_string(),
         );
-        options
+        <span class="kw">let _ </span>= options
             .extra_options
             .insert(IMMUTABLE_TABLE_FORMAT_KEY.to_string(), <span class="string">&quot;csv&quot;</span>.to_string());
         <span class="kw">let </span>meta = TableMetaBuilder::default()

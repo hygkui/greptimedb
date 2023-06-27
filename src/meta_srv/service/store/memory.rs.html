@@ -886,7 +886,7 @@
                 .collect()
         } <span class="kw">else </span>{
             <span class="kw">for </span>kv <span class="kw">in </span>kvs.into_iter() {
-                memory.insert(kv.key, kv.value);
+                <span class="kw">let _ </span>= memory.insert(kv.key, kv.value);
             }
             <span class="macro">vec!</span>[]
         };
@@ -916,7 +916,7 @@
                 .collect()
         } <span class="kw">else </span>{
             <span class="kw">for </span>key <span class="kw">in </span>keys.into_iter() {
-                memory.remove(<span class="kw-2">&amp;</span>key);
+                <span class="kw">let _ </span>= memory.remove(<span class="kw-2">&amp;</span>key);
             }
             <span class="macro">vec!</span>[]
         };
@@ -944,7 +944,7 @@
             Entry::Vacant(e) =&gt; {
                 <span class="kw">let </span>success = expect.is_empty();
                 <span class="kw">if </span>success {
-                    e.insert(value);
+                    <span class="kw">let _ </span>= e.insert(value);
                 }
                 (success, <span class="prelude-val">None</span>)
             }
@@ -953,7 +953,7 @@
                 <span class="kw">let </span>prev_val = e.get().clone();
                 <span class="kw">let </span>success = prev_val == expect;
                 <span class="kw">if </span>success {
-                    e.insert(value);
+                    <span class="kw">let _ </span>= e.insert(value);
                 }
                 (success, <span class="prelude-val">Some</span>((key, prev_val)))
             }
@@ -1028,7 +1028,7 @@
 
         <span class="kw">let </span>kv = <span class="kw">match </span>memory.remove(<span class="kw-2">&amp;</span>from_key) {
             <span class="prelude-val">Some</span>(v) =&gt; {
-                memory.insert(to_key, v.clone());
+                <span class="kw">let _ </span>= memory.insert(to_key, v.clone());
                 <span class="prelude-val">Some</span>((from_key, v))
             }
             <span class="prelude-val">None </span>=&gt; memory.get(<span class="kw-2">&amp;</span>to_key).map(|v| (to_key, v.clone())),
@@ -1127,22 +1127,22 @@
         <span class="kw">let </span>kv_store = MemStore::new();
         <span class="kw">let </span>kvs = mock_kvs();
 
-        kv_store
+        <span class="macro">assert!</span>(kv_store
             .batch_put(BatchPutRequest {
                 kvs,
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
-        kv_store
+        <span class="macro">assert!</span>(kv_store
             .put(PutRequest {
                 key: <span class="string">b&quot;key11&quot;</span>.to_vec(),
                 value: <span class="string">b&quot;val11&quot;</span>.to_vec(),
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
         kv_store
     }
@@ -1322,7 +1322,7 @@
                 };
                 <span class="kw">let </span>resp = kv_store_clone.compare_and_put(req).<span class="kw">await</span>.unwrap();
                 <span class="kw">if </span>resp.success {
-                    success_clone.fetch_add(<span class="number">1</span>, Ordering::SeqCst);
+                    <span class="kw">let _ </span>= success_clone.fetch_add(<span class="number">1</span>, Ordering::SeqCst);
                 }
             });
             joins.push(join);

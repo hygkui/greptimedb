@@ -339,7 +339,7 @@
 
     router
         .serve_with_incoming_shutdown(listener, <span class="kw">async </span>{
-            signal.recv().<span class="kw">await</span>;
+            <span class="kw">let _ </span>= signal.recv().<span class="kw">await</span>;
         })
         .<span class="kw">await
         </span>.context(error::StartGrpcSnafu)<span class="question-mark">?</span>;

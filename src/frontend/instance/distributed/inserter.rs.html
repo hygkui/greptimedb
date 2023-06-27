@@ -378,6 +378,7 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -620,11 +621,12 @@
             ColumnSchema::new(<span class="string">&quot;a&quot;</span>, ConcreteDataType::int32_datatype(), <span class="bool-val">true</span>),
         ]));
 
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = TableMetaBuilder::default();
-        builder.schema(schema);
-        builder.primary_key_indices(<span class="macro">vec!</span>[]);
-        builder.next_column_id(<span class="number">1</span>);
-        <span class="kw">let </span>table_meta = builder.build().unwrap();
+        <span class="kw">let </span>table_meta = TableMetaBuilder::default()
+            .schema(schema)
+            .primary_key_indices(<span class="macro">vec!</span>[])
+            .next_column_id(<span class="number">1</span>)
+            .build()
+            .unwrap();
 
         <span class="kw">let </span>table_info = TableInfoBuilder::new(table_name, table_meta)
             .build()

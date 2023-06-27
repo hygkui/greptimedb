@@ -226,7 +226,7 @@
             // because the table name may be a temporary name of CTE or view, they can&#39;t be found until plan
             // execution.
             </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(table) = table_provider.resolve_table(table_name).<span class="kw">await </span>{
-                v.insert(table);
+                <span class="kw">let _ </span>= v.insert(table);
             }
         }
     }

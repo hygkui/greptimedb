@@ -762,24 +762,24 @@
             Token::Word(w) =&gt; {
                 <span class="kw">match </span>w.keyword {
                     Keyword::CREATE =&gt; {
-                        <span class="self">self</span>.parser.next_token();
+                        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
                         <span class="self">self</span>.parse_create()
                     }
 
                     Keyword::EXPLAIN =&gt; {
-                        <span class="self">self</span>.parser.next_token();
+                        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
                         <span class="self">self</span>.parse_explain()
                     }
 
                     Keyword::SHOW =&gt; {
-                        <span class="self">self</span>.parser.next_token();
+                        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
                         <span class="self">self</span>.parse_show()
                     }
 
                     Keyword::DELETE =&gt; <span class="self">self</span>.parse_delete(),
 
                     Keyword::DESCRIBE | Keyword::DESC =&gt; {
-                        <span class="self">self</span>.parser.next_token();
+                        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
                         <span class="self">self</span>.parse_describe()
                     }
 
@@ -792,7 +792,7 @@
                     Keyword::DROP =&gt; <span class="self">self</span>.parse_drop(),
 
                     Keyword::USE =&gt; {
-                        <span class="self">self</span>.parser.next_token();
+                        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
 
                         <span class="kw">let </span>database_name =
                             <span class="self">self</span>.parser
@@ -837,7 +837,7 @@
         <span class="kw">if </span><span class="self">self</span>.consume_token(<span class="string">&quot;DATABASES&quot;</span>) || <span class="self">self</span>.consume_token(<span class="string">&quot;SCHEMAS&quot;</span>) {
             <span class="self">self</span>.parse_show_databases()
         } <span class="kw">else if </span><span class="self">self</span>.matches_keyword(Keyword::TABLES) {
-            <span class="self">self</span>.parser.next_token();
+            <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
             <span class="self">self</span>.parse_show_tables()
         } <span class="kw">else if </span><span class="self">self</span>.consume_token(<span class="string">&quot;CREATE&quot;</span>) {
             <span class="kw">if </span><span class="self">self</span>.consume_token(<span class="string">&quot;TABLE&quot;</span>) {
@@ -881,7 +881,7 @@
             <span class="comment">// SHOW TABLES [in | FROM] [DATABASE]
             </span>Token::Word(w) =&gt; <span class="kw">match </span>w.keyword {
                 Keyword::IN | Keyword::FROM =&gt; {
-                    <span class="self">self</span>.parser.next_token();
+                    <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
                     <span class="kw">let </span>db_name = <span class="self">self</span>.parser.parse_object_name().with_context(|<span class="kw">_</span>| {
                         error::UnexpectedSnafu {
                             sql: <span class="self">self</span>.sql,
@@ -910,7 +910,7 @@
             <span class="comment">// SHOW TABLES [WHERE | LIKE] [EXPR]
             </span>Token::Word(w) =&gt; <span class="kw">match </span>w.keyword {
                 Keyword::LIKE =&gt; {
-                    <span class="self">self</span>.parser.next_token();
+                    <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
                     ShowKind::Like(<span class="self">self</span>.parser.parse_identifier().with_context(|<span class="kw">_</span>| {
                         error::UnexpectedSnafu {
                             sql: <span class="self">self</span>.sql,
@@ -920,7 +920,7 @@
                     })<span class="question-mark">?</span>)
                 }
                 Keyword::WHERE =&gt; {
-                    <span class="self">self</span>.parser.next_token();
+                    <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
                     ShowKind::Where(<span class="self">self</span>.parser.parse_expr().with_context(|<span class="kw">_</span>| {
                         error::UnexpectedSnafu {
                             sql: <span class="self">self</span>.sql,
@@ -940,7 +940,7 @@
     <span class="doccomment">/// Parses DESCRIBE statements
     </span><span class="kw">fn </span>parse_describe(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
         <span class="kw">if </span><span class="self">self</span>.matches_keyword(Keyword::TABLE) {
-            <span class="self">self</span>.parser.next_token();
+            <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
             <span class="self">self</span>.parse_describe_table()
         } <span class="kw">else </span>{
             <span class="self">self</span>.unsupported(<span class="self">self</span>.peek_token_as_string())
@@ -979,11 +979,11 @@
     }
 
     <span class="kw">fn </span>parse_drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
-        <span class="self">self</span>.parser.next_token();
+        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
         <span class="kw">if </span>!<span class="self">self</span>.matches_keyword(Keyword::TABLE) {
             <span class="kw">return </span><span class="self">self</span>.unsupported(<span class="self">self</span>.peek_token_as_string());
         }
-        <span class="self">self</span>.parser.next_token();
+        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
 
         <span class="kw">let </span>table_ident =
             <span class="self">self</span>.parser
@@ -1020,7 +1020,7 @@
 
     <span class="kw">pub fn </span>consume_token(<span class="kw-2">&amp;mut </span><span class="self">self</span>, expected: <span class="kw-2">&amp;</span>str) -&gt; bool {
         <span class="kw">if </span><span class="self">self</span>.peek_token_as_string().to_uppercase() == <span class="kw-2">*</span>expected.to_uppercase() {
-            <span class="self">self</span>.parser.next_token();
+            <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
             <span class="bool-val">true
         </span>} <span class="kw">else </span>{
             <span class="bool-val">false

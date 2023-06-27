@@ -259,6 +259,8 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -400,11 +402,12 @@
             ColumnSchema::new(<span class="string">&quot;v&quot;</span>, ConcreteDataType::string_datatype(), <span class="bool-val">true</span>),
         ]));
 
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = TableMetaBuilder::default();
-        builder.schema(schema);
-        builder.primary_key_indices(<span class="macro">vec!</span>[<span class="number">1</span>]);
-        builder.next_column_id(<span class="number">3</span>);
-        <span class="kw">let </span>table_meta = builder.build().unwrap();
+        <span class="kw">let </span>table_meta = TableMetaBuilder::default()
+            .schema(schema)
+            .primary_key_indices(<span class="macro">vec!</span>[<span class="number">1</span>])
+            .next_column_id(<span class="number">3</span>)
+            .build()
+            .unwrap();
 
         <span class="kw">let </span>column = vector_to_grpc_column(
             <span class="kw-2">&amp;</span>table_meta,
@@ -459,12 +462,13 @@
             ColumnSchema::new(<span class="string">&quot;host&quot;</span>, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
         ]);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = TableMetaBuilder::default();
-        builder.schema(Arc::new(schema));
-        builder.primary_key_indices(<span class="macro">vec!</span>[]);
-        builder.next_column_id(<span class="number">3</span>);
+        <span class="kw">let </span>table_meta = TableMetaBuilder::default()
+            .schema(Arc::new(schema))
+            .primary_key_indices(<span class="macro">vec!</span>[])
+            .next_column_id(<span class="number">3</span>)
+            .build()
+            .unwrap();
 
-        <span class="kw">let </span>table_meta = builder.build().unwrap();
         <span class="kw">let </span>insert_request = mock_insert_request();
         <span class="kw">let </span>request = to_grpc_insert_request(<span class="kw-2">&amp;</span>table_meta, <span class="number">12</span>, insert_request).unwrap();
 
@@ -472,19 +476,19 @@
     }
 
     <span class="kw">fn </span>mock_insert_request() -&gt; InsertRequest {
-        <span class="kw">let </span><span class="kw-2">mut </span>columns_values = HashMap::with_capacity(<span class="number">4</span>);
-
         <span class="kw">let </span><span class="kw-2">mut </span>builder = StringVectorBuilder::with_capacity(<span class="number">3</span>);
         builder.push(<span class="prelude-val">Some</span>(<span class="string">&quot;host1&quot;</span>));
         builder.push(<span class="prelude-val">None</span>);
         builder.push(<span class="prelude-val">Some</span>(<span class="string">&quot;host3&quot;</span>));
-        columns_values.insert(<span class="string">&quot;host&quot;</span>.to_string(), builder.to_vector());
+        <span class="kw">let </span>host = builder.to_vector();
 
         <span class="kw">let </span><span class="kw-2">mut </span>builder = Int16VectorBuilder::with_capacity(<span class="number">3</span>);
         builder.push(<span class="prelude-val">Some</span>(<span class="number">1_i16</span>));
         builder.push(<span class="prelude-val">Some</span>(<span class="number">2_i16</span>));
         builder.push(<span class="prelude-val">Some</span>(<span class="number">3_i16</span>));
-        columns_values.insert(<span class="string">&quot;id&quot;</span>.to_string(), builder.to_vector());
+        <span class="kw">let </span>id = builder.to_vector();
+
+        <span class="kw">let </span>columns_values = HashMap::from([(<span class="string">&quot;host&quot;</span>.to_string(), host), (<span class="string">&quot;id&quot;</span>.to_string(), id)]);
 
         InsertRequest {
             catalog_name: DEFAULT_CATALOG_NAME.to_string(),

@@ -577,6 +577,10 @@
 <a href="#577" id="577">577</a>
 <a href="#578" id="578">578</a>
 <a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -736,7 +740,8 @@
             );
         }
 
-        <span class="self">self</span>.engine
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.engine
             .write(<span class="kw-2">&amp;mut </span>batch, <span class="self">self</span>.config.sync_write)
             .context(RaftEngineSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(AppendResponse { entry_id })
@@ -782,7 +787,8 @@
             );
         }
 
-        <span class="self">self</span>.engine
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.engine
             .write(<span class="kw-2">&amp;mut </span>batch, <span class="self">self</span>.config.sync_write)
             .context(RaftEngineSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(entry_ids)
@@ -810,7 +816,7 @@
         <span class="kw">let </span>max_batch_size = <span class="self">self</span>.config.read_batch_size;
         <span class="kw">let </span>(tx, <span class="kw-2">mut </span>rx) = tokio::sync::mpsc::channel(max_batch_size);
         <span class="kw">let </span>ns = ns.clone();
-        common_runtime::spawn_read(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_read(<span class="kw">async move </span>{
             <span class="kw">while </span>start_index &lt;= last_index {
                 <span class="kw">let </span><span class="kw-2">mut </span>vec = Vec::with_capacity(max_batch_size);
                 <span class="kw">match </span>engine
@@ -863,7 +869,8 @@
         batch
             .put_message::&lt;Namespace&gt;(SYSTEM_NAMESPACE, key, ns)
             .context(RaftEngineSnafu)<span class="question-mark">?</span>;
-        <span class="self">self</span>.engine
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.engine
             .write(<span class="kw-2">&amp;mut </span>batch, <span class="bool-val">true</span>)
             .context(RaftEngineSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
@@ -878,7 +885,8 @@
         <span class="kw">let </span>key = <span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, NAMESPACE_PREFIX, ns.id).as_bytes().to_vec();
         <span class="kw">let </span><span class="kw-2">mut </span>batch = LogBatch::with_capacity(<span class="number">1</span>);
         batch.delete(SYSTEM_NAMESPACE, key);
-        <span class="self">self</span>.engine
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.engine
             .write(<span class="kw-2">&amp;mut </span>batch, <span class="bool-val">true</span>)
             .context(RaftEngineSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
@@ -1050,10 +1058,10 @@
             })
             .<span class="kw">await
             </span>.unwrap();
-            logstore
+            <span class="macro">assert!</span>(logstore
                 .append(Entry::create(<span class="number">1</span>, <span class="number">1</span>, <span class="string">&quot;1&quot;</span>.as_bytes().to_vec()))
                 .<span class="kw">await
-                </span>.unwrap();
+                </span>.is_ok());
             <span class="kw">let </span>entries = logstore
                 .read(<span class="kw-2">&amp;</span>Namespace::with_id(<span class="number">1</span>), <span class="number">1</span>)
                 .<span class="kw">await
@@ -1112,7 +1120,7 @@
         <span class="kw">let </span>namespace = Namespace::with_id(<span class="number">42</span>);
         <span class="kw">for </span>id <span class="kw">in </span><span class="number">0</span>..<span class="number">4096 </span>{
             <span class="kw">let </span>entry = Entry::create(id, namespace.id(), [<span class="string">b&#39;x&#39;</span>; <span class="number">4096</span>].to_vec());
-            logstore.append(entry).<span class="kw">await</span>.unwrap();
+            <span class="macro">assert!</span>(logstore.append(entry).<span class="kw">await</span>.is_ok());
         }
 
         <span class="kw">let </span>before_purge = wal_dir_usage(dir.path().to_str().unwrap()).<span class="kw">await</span>;
@@ -1144,7 +1152,7 @@
         <span class="kw">let </span>namespace = Namespace::with_id(<span class="number">42</span>);
         <span class="kw">for </span>id <span class="kw">in </span><span class="number">0</span>..<span class="number">1024 </span>{
             <span class="kw">let </span>entry = Entry::create(id, namespace.id(), [<span class="string">b&#39;x&#39;</span>; <span class="number">4096</span>].to_vec());
-            logstore.append(entry).<span class="kw">await</span>.unwrap();
+            <span class="macro">assert!</span>(logstore.append(entry).<span class="kw">await</span>.is_ok());
         }
 
         logstore.obsolete(namespace.clone(), <span class="number">100</span>).<span class="kw">await</span>.unwrap();

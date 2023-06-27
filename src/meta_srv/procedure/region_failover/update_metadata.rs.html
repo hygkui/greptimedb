@@ -616,7 +616,7 @@
             region_numbers.retain(|x| <span class="kw-2">*</span>x != failed_region.region_number);
 
             <span class="kw">if </span>!region_numbers.is_empty() {
-                value
+                <span class="kw">let _ </span>= value
                     .regions_id_map
                     .insert(failed_region.datanode_id, region_numbers);
             }
@@ -1000,7 +1000,7 @@
             <span class="kw">let </span>table_name = failed_region_1.table_ident.table.clone();
             <span class="kw">let </span>table_id = failed_region_1.table_ident.table_id <span class="kw">as </span>u64;
 
-            futures::future::join_all(<span class="macro">vec!</span>[
+            <span class="kw">let _ </span>= futures::future::join_all(<span class="macro">vec!</span>[
                 tokio::spawn(<span class="kw">async move </span>{
                     <span class="kw">let </span>state = UpdateRegionMetadata::new(Peer::new(<span class="number">2</span>, <span class="string">&quot;&quot;</span>));
                     state

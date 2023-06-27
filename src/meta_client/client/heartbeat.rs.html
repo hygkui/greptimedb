@@ -598,7 +598,7 @@
     </span><span class="kw">async fn </span>test_heartbeat_stream() {
         <span class="kw">let </span>(sender, <span class="kw-2">mut </span>receiver) = mpsc::channel::&lt;HeartbeatRequest&gt;(<span class="number">100</span>);
         <span class="kw">let </span>sender = HeartbeatSender::new((<span class="number">8</span>, <span class="number">8</span>), Role::Datanode, sender);
-        tokio::spawn(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = tokio::spawn(<span class="kw">async move </span>{
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">10 </span>{
                 sender.send(HeartbeatRequest::default()).<span class="kw">await</span>.unwrap();
             }

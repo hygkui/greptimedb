@@ -116,6 +116,7 @@
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -218,7 +219,8 @@
             .write(<span class="kw-2">&amp;</span>arrow_batch)
             .<span class="kw">await
             </span>.context(error::WriteBufferSnafu)<span class="question-mark">?</span>;
-        <span class="self">self</span>.inner
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.inner
             .try_flush(<span class="bool-val">false</span>)
             .<span class="kw">await
             </span>.context(error::WriteBufferSnafu)<span class="question-mark">?</span>;

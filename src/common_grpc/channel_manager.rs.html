@@ -681,7 +681,7 @@
         }
 
         <span class="kw">let </span>pool = <span class="self">self</span>.pool.clone();
-        common_runtime::spawn_bg(<span class="kw">async </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async </span>{
             recycle_channel_in_loop(pool, RECYCLE_CHANNEL_INTERVAL_SECS).<span class="kw">await</span>;
         });
         <span class="macro">info!</span>(<span class="string">&quot;Channel recycle is started, running in the background!&quot;</span>);
@@ -1013,7 +1013,7 @@
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>increase_access(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.access.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+        <span class="kw">let _ </span>= <span class="self">self</span>.access.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
     }
 }
 
@@ -1042,7 +1042,7 @@
     }
 
     <span class="kw">fn </span>put(<span class="kw-2">&amp;</span><span class="self">self</span>, addr: <span class="kw-2">&amp;</span>str, channel: Channel) {
-        <span class="self">self</span>.channels.insert(addr.to_string(), channel);
+        <span class="kw">let _ </span>= <span class="self">self</span>.channels.insert(addr.to_string(), channel);
     }
 
     <span class="kw">fn </span>retain_channel&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F)
@@ -1057,7 +1057,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>interval = tokio::time::interval(Duration::from_secs(interval_secs));
 
     <span class="kw">loop </span>{
-        interval.tick().<span class="kw">await</span>;
+        <span class="kw">let _ </span>= interval.tick().<span class="kw">await</span>;
         pool.retain_channel(|<span class="kw">_</span>, c| c.access.swap(<span class="number">0</span>, Ordering::Relaxed) != <span class="number">0</span>)
     }
 }

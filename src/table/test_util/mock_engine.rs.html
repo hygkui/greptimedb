@@ -129,6 +129,7 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -184,7 +185,8 @@
 
         <span class="kw">let </span>table_ref = Arc::new(EmptyTable::new(request));
 
-        <span class="self">self</span>.tables
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.tables
             .lock()
             .<span class="kw">await
             </span>.insert((catalog_name, schema_name, table_name), table_ref.clone());

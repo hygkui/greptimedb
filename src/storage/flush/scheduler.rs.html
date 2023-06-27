@@ -608,7 +608,7 @@
 
     <span class="doccomment">/// Schedules a engine flush request.
     </span><span class="kw">pub fn </span>schedule_engine_flush(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.scheduler.schedule(FlushRequest::Engine)<span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.scheduler.schedule(FlushRequest::Engine)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -621,7 +621,7 @@
         <span class="self">self</span>.scheduler.stop(<span class="bool-val">true</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="attr">#[cfg(test)]
-        </span>futures::future::join_all(<span class="self">self</span>.pending_tasks.write().<span class="kw">await</span>.drain(..)).<span class="kw">await</span>;
+        </span><span class="kw">let _ </span>= futures::future::join_all(<span class="self">self</span>.pending_tasks.write().<span class="kw">await</span>.drain(..)).<span class="kw">await</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -695,7 +695,7 @@
         <span class="kw">let </span>shared_data = req.shared.clone();
 
         <span class="comment">// If flush is success, schedule a compaction request for this region.
-        </span>region::schedule_compaction(
+        </span><span class="kw">let _ </span>= region::schedule_compaction(
             shared_data,
             compaction_scheduler,
             compaction_request,
@@ -719,7 +719,7 @@
     <span class="kw">async fn </span>call(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// Get all regions.
         </span><span class="kw">let </span>regions = <span class="self">self</span>.regions.list_regions();
-        <span class="self">self</span>.picker.pick_by_interval(<span class="kw-2">&amp;</span>regions).<span class="kw">await</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.picker.pick_by_interval(<span class="kw-2">&amp;</span>regions).<span class="kw">await</span>;
 
         <span class="prelude-val">Ok</span>(())
     }

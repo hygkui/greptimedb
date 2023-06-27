@@ -77,7 +77,7 @@
     );
 
     <span class="kw">let </span><span class="kw-2">mut </span>builder = AzureBuilder::default();
-    builder
+    <span class="kw">let _ </span>= builder
         .root(<span class="kw-2">&amp;</span>root)
         .container(<span class="kw-2">&amp;</span>azblob_config.container)
         .endpoint(<span class="kw-2">&amp;</span>azblob_config.endpoint)
@@ -85,7 +85,7 @@
         .account_key(azblob_config.account_key.expose_secret());
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(token) = <span class="kw-2">&amp;</span>azblob_config.sas_token {
-        builder.sas_token(token);
+        <span class="kw">let _ </span>= builder.sas_token(token);
     }
 
     <span class="prelude-val">Ok</span>(ObjectStore::new(builder)

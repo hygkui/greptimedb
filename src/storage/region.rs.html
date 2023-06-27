@@ -1225,7 +1225,7 @@
                         }
                     }
                     (RegionMetaAction::Change(c), <span class="prelude-val">Some</span>(v)) =&gt; {
-                        recovered_metadata
+                        <span class="kw">let _ </span>= recovered_metadata
                             .insert(c.committed_sequence, (manifest_version, c.metadata));
                         version = <span class="prelude-val">Some</span>(v);
                     }

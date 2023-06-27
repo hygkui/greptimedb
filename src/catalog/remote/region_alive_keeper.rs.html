@@ -914,7 +914,7 @@
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>keepers = <span class="self">self</span>.keepers.lock().<span class="kw">await</span>;
-        keepers.insert(table_ident.clone(), keeper.clone());
+        <span class="kw">let _ </span>= keepers.insert(table_ident.clone(), keeper.clone());
 
         <span class="kw">if </span><span class="self">self</span>.started.load(Ordering::Relaxed) {
             keeper.start().<span class="kw">await</span>;
@@ -1059,7 +1059,7 @@
         <span class="kw">let </span>countdown_task_handles = Arc::downgrade(<span class="kw-2">&amp;</span><span class="self">self</span>.countdown_task_handles);
         <span class="kw">let </span>on_task_finished = <span class="kw">async move </span>{
             <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = countdown_task_handles.upgrade() {
-                x.lock().<span class="kw">await</span>.remove(<span class="kw-2">&amp;</span>region);
+                <span class="kw">let _ </span>= x.lock().<span class="kw">await</span>.remove(<span class="kw-2">&amp;</span>region);
             } <span class="comment">// Else the countdown task handles map could be dropped because the keeper is dropped.
         </span>};
         <span class="kw">let </span>handle = Arc::new(CountdownTaskHandle::new(
@@ -1070,7 +1070,7 @@
         ));
 
         <span class="kw">let </span><span class="kw-2">mut </span>handles = <span class="self">self</span>.countdown_task_handles.lock().<span class="kw">await</span>;
-        handles.insert(region, handle.clone());
+        <span class="kw">let _ </span>= handles.insert(region, handle.clone());
 
         <span class="kw">if </span><span class="self">self</span>.started.load(Ordering::Relaxed) {
             handle.start(<span class="self">self</span>.heartbeat_interval_millis).<span class="kw">await</span>;
@@ -1594,7 +1594,7 @@
         };
 
         <span class="kw">let </span>table_engine = Arc::new(MockTableEngine::default());
-        table_engine.create_table(ctx, request).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(table_engine.create_table(ctx, request).<span class="kw">await</span>.is_ok());
 
         <span class="kw">let </span>table_ident = TableIdent {
             catalog: catalog.to_string(),
@@ -1610,7 +1610,7 @@
             region: <span class="number">1</span>,
             rx,
         };
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             task.run().<span class="kw">await</span>;
         });
 

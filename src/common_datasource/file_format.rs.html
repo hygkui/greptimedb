@@ -433,7 +433,7 @@
     }
 
     <span class="comment">// Flushes all pending writes
-    </span>writer.try_flush(<span class="bool-val">true</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+    </span><span class="kw">let _ </span>= writer.try_flush(<span class="bool-val">true</span>).<span class="kw">await</span><span class="question-mark">?</span>;
     writer.close_inner_writer().<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(rows)

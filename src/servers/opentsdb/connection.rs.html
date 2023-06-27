@@ -202,6 +202,7 @@
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
 <a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -304,7 +305,8 @@
             .write_all(line.as_bytes())
             .<span class="kw">await
             </span>.context(error::InternalIoSnafu)<span class="question-mark">?</span>;
-        <span class="self">self</span>.stream
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.stream
             .write(<span class="string">b&quot;\r\n&quot;</span>)
             .<span class="kw">await
             </span>.context(error::InternalIoSnafu)<span class="question-mark">?</span>;

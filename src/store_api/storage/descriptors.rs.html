@@ -526,11 +526,11 @@
             .unwrap();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;A test column&quot;</span>, desc.comment);
 
-        new_column_desc_builder()
+        <span class="macro">assert!</span>(new_column_desc_builder()
             .is_nullable(<span class="bool-val">false</span>)
             .default_constraint(<span class="prelude-val">Some</span>(ColumnDefaultConstraint::Value(Value::Null)))
             .build()
-            .unwrap_err();
+            .is_err());
     }
 
     <span class="attr">#[test]

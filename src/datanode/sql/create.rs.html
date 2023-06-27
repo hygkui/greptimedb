@@ -499,6 +499,7 @@
 <a href="#499" id="499">499</a>
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -564,7 +565,8 @@
             catalog,
             schema: schema.clone(),
         };
-        <span class="self">self</span>.catalog_manager
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.catalog_manager
             .register_schema(reg_req)
             .<span class="kw">await
             </span>.context(RegisterSchemaSnafu)<span class="question-mark">?</span>;

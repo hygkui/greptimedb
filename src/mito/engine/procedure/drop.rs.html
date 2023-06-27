@@ -194,6 +194,7 @@
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -240,7 +241,8 @@
         <span class="kw">match </span><span class="self">self</span>.data.state {
             DropTableState::Prepare =&gt; <span class="self">self</span>.on_prepare(),
             DropTableState::EngineDropTable =&gt; {
-                <span class="self">self</span>.engine_inner
+                <span class="kw">let _ </span>= <span class="self">self
+                    </span>.engine_inner
                     .drop_table(<span class="self">self</span>.data.request.clone())
                     .<span class="kw">await
                     </span>.map_err(Error::from_error_ext)<span class="question-mark">?</span>;

@@ -361,10 +361,11 @@
                 Arc::new(BooleanVector::from(<span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>), <span class="prelude-val">None</span>])) <span class="kw">as </span>VectorRef;
             <span class="kw">let </span>tsv = Arc::new(TimestampMillisecondVector::from_vec(<span class="macro">vec!</span>[i, i, i])) <span class="kw">as </span>VectorRef;
 
-            <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::new();
-            put_data.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-            put_data.insert(<span class="string">&quot;v1&quot;</span>.to_string(), boolv);
-            put_data.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
+            <span class="kw">let </span>put_data = HashMap::from([
+                (<span class="string">&quot;k1&quot;</span>.to_string(), intv),
+                (<span class="string">&quot;v1&quot;</span>.to_string(), boolv),
+                (<span class="string">&quot;ts&quot;</span>.to_string(), tsv),
+            ]);
 
             batch.put(put_data).unwrap();
         }
@@ -397,9 +398,8 @@
             <span class="kw">let </span>intv = Arc::new(UInt64Vector::from_slice([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])) <span class="kw">as </span>VectorRef;
             <span class="kw">let </span>tsv = Arc::new(TimestampMillisecondVector::from_vec(<span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>])) <span class="kw">as </span>VectorRef;
 
-            <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::with_capacity(<span class="number">3</span>);
-            put_data.insert(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone());
-            put_data.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
+            <span class="kw">let </span>put_data =
+                HashMap::from([(<span class="string">&quot;k1&quot;</span>.to_string(), intv.clone()), (<span class="string">&quot;ts&quot;</span>.to_string(), tsv)]);
 
             batch.put(put_data).unwrap();
         }

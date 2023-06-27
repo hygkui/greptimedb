@@ -709,7 +709,7 @@
             table_id
         );
 
-        <span class="self">self</span>.tables.write().unwrap().insert(table_id, table.clone());
+        <span class="kw">let _ </span>= <span class="self">self</span>.tables.write().unwrap().insert(table_id, table.clone());
 
         <span class="prelude-val">Ok</span>(table)
     }
@@ -773,7 +773,7 @@
                     .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>,
             );
 
-            <span class="self">self</span>.tables.write().unwrap().insert(table_id, table.clone());
+            <span class="kw">let _ </span>= <span class="self">self</span>.tables.write().unwrap().insert(table_id, table.clone());
             <span class="prelude-val">Some</span>(table <span class="kw">as _</span>)
         };
 
@@ -809,7 +809,7 @@
             .context(DropTableSnafu {
                 table_name: <span class="kw-2">&amp;</span>table_full_name,
             })<span class="question-mark">?</span>;
-            <span class="self">self</span>.tables.write().unwrap().remove(<span class="kw-2">&amp;</span>req.table_id);
+            <span class="kw">let _ </span>= <span class="self">self</span>.tables.write().unwrap().remove(<span class="kw-2">&amp;</span>req.table_id);
 
             <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
         } <span class="kw">else </span>{
@@ -822,7 +822,7 @@
 
         <span class="kw">let </span>tables = <span class="self">self</span>.tables.read().unwrap().clone();
 
-        futures::future::try_join_all(tables.values().map(|t| t.close(<span class="kw-2">&amp;</span>[])))
+        <span class="kw">let _ </span>= futures::future::try_join_all(tables.values().map(|t| t.close(<span class="kw-2">&amp;</span>[])))
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
@@ -861,7 +861,7 @@
                 .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
         }
 
-        <span class="self">self</span>.tables.write().unwrap().remove(<span class="kw-2">&amp;</span>table_id);
+        <span class="kw">let _ </span>= <span class="self">self</span>.tables.write().unwrap().remove(<span class="kw-2">&amp;</span>table_id);
 
         <span class="prelude-val">Ok</span>(())
     }

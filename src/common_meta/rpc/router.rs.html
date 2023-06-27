@@ -905,13 +905,13 @@
             .iter()
             .filter_map(|x| x.leader_peer.as_ref())
             .for_each(|p| {
-                peers.insert(p.clone());
+                <span class="kw">let _ </span>= peers.insert(p.clone());
             });
         <span class="self">self</span>.region_routes
             .iter()
             .flat_map(|x| x.follower_peers.iter())
             .for_each(|p| {
-                peers.insert(p.clone());
+                <span class="kw">let _ </span>= peers.insert(p.clone());
             });
         <span class="kw">let </span><span class="kw-2">mut </span>peers = peers.into_iter().map(Into::into).collect::&lt;Vec&lt;PbPeer&gt;&gt;();
         peers.sort_by_key(|x| x.id);

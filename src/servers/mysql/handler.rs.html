@@ -612,7 +612,7 @@
     </span><span class="kw">fn </span>save_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: SqlPlan) -&gt; u32 {
         <span class="kw">let </span>stmt_id = <span class="self">self</span>.prepared_stmts_counter.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
         <span class="kw">let </span><span class="kw-2">mut </span>prepared_stmts = <span class="self">self</span>.prepared_stmts.write();
-        prepared_stmts.insert(stmt_id, plan);
+        <span class="kw">let _ </span>= prepared_stmts.insert(stmt_id, plan);
         stmt_id
     }
 
@@ -791,7 +791,7 @@
         </span>W: <span class="lifetime">&#39;async_trait</span>,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.prepared_stmts.write();
-        guard.remove(<span class="kw-2">&amp;</span>stmt_id);
+        <span class="kw">let _ </span>= guard.remove(<span class="kw-2">&amp;</span>stmt_id);
     }
 
     <span class="kw">async fn </span>on_query&lt;<span class="lifetime">&#39;a</span>&gt;(

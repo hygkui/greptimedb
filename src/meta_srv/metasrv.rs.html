@@ -422,7 +422,7 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(election) = <span class="self">self</span>.election() {
             <span class="kw">let </span>procedure_manager = <span class="self">self</span>.procedure_manager.clone();
             <span class="kw">let </span><span class="kw-2">mut </span>rx = election.subscribe_leader_change();
-            common_runtime::spawn_bg(<span class="kw">async move </span>{
+            <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">loop </span>{
                     <span class="kw">match </span>rx.recv().<span class="kw">await </span>{
                         <span class="prelude-val">Ok</span>(msg) =&gt; <span class="kw">match </span>msg {
@@ -448,7 +448,7 @@
 
             <span class="kw">let </span>election = election.clone();
             <span class="kw">let </span>started = <span class="self">self</span>.started.clone();
-            common_runtime::spawn_bg(<span class="kw">async move </span>{
+            <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">while </span>started.load(Ordering::Relaxed) {
                     <span class="kw">let </span>res = election.campaign().<span class="kw">await</span>;
                     <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = res {

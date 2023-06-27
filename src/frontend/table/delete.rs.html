@@ -125,6 +125,7 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -212,12 +213,13 @@
             ColumnSchema::new(<span class="string">&quot;id&quot;</span>, ConcreteDataType::int32_datatype(), <span class="bool-val">false</span>),
         ]);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = TableMetaBuilder::default();
-        builder.schema(Arc::new(schema));
-        builder.primary_key_indices(<span class="macro">vec!</span>[]);
-        builder.next_column_id(<span class="number">2</span>);
+        <span class="kw">let </span>table_meta = TableMetaBuilder::default()
+            .schema(Arc::new(schema))
+            .primary_key_indices(<span class="macro">vec!</span>[])
+            .next_column_id(<span class="number">2</span>)
+            .build()
+            .unwrap();
 
-        <span class="kw">let </span>table_meta = builder.build().unwrap();
         <span class="kw">let </span>table_name = TableName {
             catalog_name: <span class="string">&quot;greptime&quot;</span>.to_string(),
             schema_name: <span class="string">&quot;public&quot;</span>.to_string(),

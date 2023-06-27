@@ -1135,7 +1135,7 @@
             );
 
             <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE_IN_DATANODE);
-            client
+            <span class="kw">let _ </span>= client
                 .create(create_expr_for_region)
                 .<span class="kw">await
                 </span>.context(RequestDatanodeSnafu)<span class="question-mark">?</span>;
@@ -1199,7 +1199,7 @@
 
                 <span class="kw">let </span>client = <span class="self">self</span>.datanode_clients.get_client(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
                 <span class="kw">let </span>client = Database::new(<span class="kw-2">&amp;</span>expr.catalog_name, <span class="kw-2">&amp;</span>expr.schema_name, client);
-                client
+                <span class="kw">let _ </span>= client
                     .drop_table(expr.clone())
                     .<span class="kw">await
                     </span>.context(RequestDatanodeSnafu)<span class="question-mark">?</span>;
@@ -1271,7 +1271,7 @@
 
                 <span class="kw">let </span>client = <span class="self">self</span>.datanode_clients.get_client(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
                 <span class="kw">let </span>client = Database::new(<span class="kw-2">&amp;</span>expr.catalog_name, <span class="kw-2">&amp;</span>expr.schema_name, client);
-                client
+                <span class="kw">let _ </span>= client
                     .flush_table(expr.clone())
                     .<span class="kw">await
                     </span>.context(RequestDatanodeSnafu)<span class="question-mark">?</span>;
@@ -1300,7 +1300,7 @@
             }
             Statement::CreateExternalTable(stmt) =&gt; {
                 <span class="kw">let </span>create_expr = <span class="kw-2">&amp;mut </span>expr_factory::create_external_expr(stmt, query_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="self">self</span>.create_table(create_expr, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">let _ </span>= <span class="self">self</span>.create_table(create_expr, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
             }
             Statement::Alter(alter_table) =&gt; {
@@ -1467,7 +1467,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>context = AlterContext::with_capacity(<span class="number">1</span>);
 
-        context.insert(expr);
+        <span class="kw">let _ </span>= context.insert(expr);
 
         table.alter(context, <span class="kw-2">&amp;</span>request).<span class="kw">await</span>.context(TableSnafu)<span class="question-mark">?</span>;
 
@@ -1652,7 +1652,7 @@
         <span class="kw">let </span>schema = schema.with_time_index(column.name == create_table.time_index);
 
         column_schemas.push(schema);
-        column_name_to_index_map.insert(column.name.clone(), idx);
+        <span class="kw">let _ </span>= column_name_to_index_map.insert(column.name.clone(), idx);
     }
 
     <span class="kw">let </span>timestamp_index = column_name_to_index_map

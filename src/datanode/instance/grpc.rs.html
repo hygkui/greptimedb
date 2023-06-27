@@ -608,6 +608,15 @@
 <a href="#608" id="608">608</a>
 <a href="#609" id="609">609</a>
 <a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -891,11 +900,11 @@
     )
     .<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let </span>catalog_provider = MemoryCatalogProvider::new();
-    catalog_provider
+    <span class="macro">assert!</span>(catalog_provider
         .register_schema(schema_name, Arc::new(schema_provider) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;)
-        .unwrap();
+        .is_ok());
     <span class="kw">let </span>catalog_list = MemoryCatalogList::new();
-    catalog_list.register_catalog(
+    <span class="kw">let _ </span>= catalog_list.register_catalog(
         catalog_name.to_string(),
         Arc::new(catalog_provider) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;,
     );
@@ -1048,9 +1057,12 @@
     </span><span class="kw">async fn </span>test_handle_insert() {
         <span class="kw">let </span>instance = MockInstance::new(<span class="string">&quot;test_handle_insert&quot;</span>).<span class="kw">await</span>;
         <span class="kw">let </span>instance = instance.inner();
-        test_util::create_test_table(instance, ConcreteDataType::timestamp_millisecond_datatype())
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="macro">assert!</span>(test_util::create_test_table(
+            instance,
+            ConcreteDataType::timestamp_millisecond_datatype()
+        )
+        .<span class="kw">await
+        </span>.is_ok());
 
         <span class="kw">let </span>insert = InsertRequest {
             table_name: <span class="string">&quot;demo&quot;</span>.to_string(),
@@ -1118,9 +1130,12 @@
     </span><span class="kw">async fn </span>test_handle_delete() {
         <span class="kw">let </span>instance = MockInstance::new(<span class="string">&quot;test_handle_delete&quot;</span>).<span class="kw">await</span>;
         <span class="kw">let </span>instance = instance.inner();
-        test_util::create_test_table(instance, ConcreteDataType::timestamp_millisecond_datatype())
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="macro">assert!</span>(test_util::create_test_table(
+            instance,
+            ConcreteDataType::timestamp_millisecond_datatype()
+        )
+        .<span class="kw">await
+        </span>.is_ok());
 
         <span class="kw">let </span>query = GrpcRequest::Query(QueryRequest {
             query: <span class="prelude-val">Some</span>(Query::Sql(
@@ -1184,9 +1199,12 @@
     </span><span class="kw">async fn </span>test_handle_query() {
         <span class="kw">let </span>instance = MockInstance::new(<span class="string">&quot;test_handle_query&quot;</span>).<span class="kw">await</span>;
         <span class="kw">let </span>instance = instance.inner();
-        test_util::create_test_table(instance, ConcreteDataType::timestamp_millisecond_datatype())
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="macro">assert!</span>(test_util::create_test_table(
+            instance,
+            ConcreteDataType::timestamp_millisecond_datatype()
+        )
+        .<span class="kw">await
+        </span>.is_ok());
 
         <span class="kw">let </span>query = GrpcRequest::Query(QueryRequest {
             query: <span class="prelude-val">Some</span>(Query::Sql(

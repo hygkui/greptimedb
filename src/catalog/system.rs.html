@@ -590,7 +590,6 @@
 <a href="#590" id="590">590</a>
 <a href="#591" id="591">591</a>
 <a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -821,21 +820,21 @@
 }
 
 <span class="kw">fn </span>build_primary_key_columns(entry_type: EntryType, key: <span class="kw-2">&amp;</span>[u8]) -&gt; HashMap&lt;String, VectorRef&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>m = HashMap::with_capacity(<span class="number">3</span>);
-    m.insert(
-        <span class="string">&quot;entry_type&quot;</span>.to_string(),
-        Arc::new(UInt8Vector::from_slice([entry_type <span class="kw">as </span>u8])) <span class="kw">as _</span>,
-    );
-    m.insert(
-        <span class="string">&quot;key&quot;</span>.to_string(),
-        Arc::new(BinaryVector::from_slice(<span class="kw-2">&amp;</span>[key])) <span class="kw">as _</span>,
-    );
-    <span class="comment">// Timestamp in key part is intentionally left to 0
-    </span>m.insert(
-        <span class="string">&quot;timestamp&quot;</span>.to_string(),
-        Arc::new(TimestampMillisecondVector::from_slice([<span class="number">0</span>])) <span class="kw">as _</span>,
-    );
-    m
+    HashMap::from([
+        (
+            <span class="string">&quot;entry_type&quot;</span>.to_string(),
+            Arc::new(UInt8Vector::from_slice([entry_type <span class="kw">as </span>u8])) <span class="kw">as </span>VectorRef,
+        ),
+        (
+            <span class="string">&quot;key&quot;</span>.to_string(),
+            Arc::new(BinaryVector::from_slice(<span class="kw-2">&amp;</span>[key])) <span class="kw">as </span>VectorRef,
+        ),
+        (
+            <span class="string">&quot;timestamp&quot;</span>.to_string(),
+            <span class="comment">// Timestamp in key part is intentionally left to 0
+            </span>Arc::new(TimestampMillisecondVector::from_slice([<span class="number">0</span>])) <span class="kw">as </span>VectorRef,
+        ),
+    ])
 }
 
 <span class="kw">pub fn </span>build_schema_insert_request(catalog_name: String, schema_name: String) -&gt; InsertRequest {
@@ -855,18 +854,18 @@
     <span class="kw">let </span><span class="kw-2">mut </span>columns_values = HashMap::with_capacity(<span class="number">6</span>);
     columns_values.extend(primary_key_columns.into_iter());
 
-    columns_values.insert(
+    <span class="kw">let _ </span>= columns_values.insert(
         <span class="string">&quot;value&quot;</span>.to_string(),
         Arc::new(BinaryVector::from_slice(<span class="kw-2">&amp;</span>[value])) <span class="kw">as _</span>,
     );
 
     <span class="kw">let </span>now = util::current_time_millis();
-    columns_values.insert(
+    <span class="kw">let _ </span>= columns_values.insert(
         <span class="string">&quot;gmt_created&quot;</span>.to_string(),
         Arc::new(TimestampMillisecondVector::from_slice([now])) <span class="kw">as _</span>,
     );
 
-    columns_values.insert(
+    <span class="kw">let _ </span>= columns_values.insert(
         <span class="string">&quot;gmt_modified&quot;</span>.to_string(),
         Arc::new(TimestampMillisecondVector::from_slice([now])) <span class="kw">as _</span>,
     );
@@ -1075,14 +1074,13 @@
     }
 
     <span class="attr">#[test]
-    #[should_panic]
     </span><span class="kw">pub fn </span>test_decode_mismatch() {
-        decode_system_catalog(
+        <span class="macro">assert!</span>(decode_system_catalog(
             <span class="prelude-val">Some</span>(EntryType::Table <span class="kw">as </span>u8),
             <span class="prelude-val">Some</span>(<span class="string">&quot;some_catalog.some_schema.42&quot;</span>.as_bytes()),
             <span class="prelude-val">None</span>,
         )
-        .unwrap();
+        .is_err());
     }
 
     <span class="attr">#[test]
@@ -1097,7 +1095,7 @@
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;system-table-test&quot;</span>);
         <span class="kw">let </span>store_dir = dir.path().to_string_lossy();
         <span class="kw">let </span><span class="kw-2">mut </span>builder = object_store::services::Fs::default();
-        builder.root(<span class="kw-2">&amp;</span>store_dir);
+        <span class="kw">let _ </span>= builder.root(<span class="kw-2">&amp;</span>store_dir);
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
         <span class="kw">let </span>noop_compaction_scheduler = Arc::new(NoopCompactionScheduler::default());
         <span class="kw">let </span>table_engine = Arc::new(MitoEngine::new(

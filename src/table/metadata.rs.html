@@ -1128,7 +1128,7 @@
             <span class="comment">// No need to rebuild table meta when renaming tables.
             </span>AlterKind::RenameTable { .. } =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>meta_builder = TableMetaBuilder::default();
-                meta_builder
+                <span class="kw">let _ </span>= meta_builder
                     .schema(<span class="self">self</span>.schema.clone())
                     .primary_key_indices(<span class="self">self</span>.primary_key_indices.clone())
                     .engine(<span class="self">self</span>.engine.clone())
@@ -1167,7 +1167,7 @@
 
     <span class="kw">fn </span>new_meta_builder(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableMetaBuilder {
         <span class="kw">let </span><span class="kw-2">mut </span>builder = TableMetaBuilder::default();
-        builder
+        <span class="kw">let _ </span>= builder
             .engine(<span class="kw-2">&amp;</span><span class="self">self</span>.engine)
             .engine_options(<span class="self">self</span>.engine_options.clone())
             .options(<span class="self">self</span>.options.clone())
@@ -1243,7 +1243,7 @@
         })<span class="question-mark">?</span>;
 
         <span class="comment">// value_indices would be generated automatically.
-        </span>meta_builder
+        </span><span class="kw">let _ </span>= meta_builder
             .schema(Arc::new(new_schema))
             .primary_key_indices(primary_key_indices);
 
@@ -1322,7 +1322,7 @@
             </span>.map(|name| new_schema.column_index_by_name(name).unwrap())
             .collect();
 
-        meta_builder
+        <span class="kw">let _ </span>= meta_builder
             .schema(Arc::new(new_schema))
             .primary_key_indices(primary_key_indices);
 

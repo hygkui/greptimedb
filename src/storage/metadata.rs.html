@@ -1741,11 +1741,11 @@
     <span class="kw">fn </span>to_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Metadata {
         <span class="kw">let </span><span class="kw-2">mut </span>metadata = Metadata::new();
         <span class="kw">if </span><span class="self">self</span>.cf_id != consts::DEFAULT_CF_ID {
-            metadata.insert(METADATA_CF_ID_KEY.to_string(), <span class="self">self</span>.cf_id.to_string());
+            <span class="kw">let _ </span>= metadata.insert(METADATA_CF_ID_KEY.to_string(), <span class="self">self</span>.cf_id.to_string());
         }
-        metadata.insert(METADATA_COLUMN_ID_KEY.to_string(), <span class="self">self</span>.desc.id.to_string());
+        <span class="kw">let _ </span>= metadata.insert(METADATA_COLUMN_ID_KEY.to_string(), <span class="self">self</span>.desc.id.to_string());
         <span class="kw">if </span>!<span class="self">self</span>.desc.comment.is_empty() {
-            metadata.insert(COMMENT_KEY.to_string(), <span class="self">self</span>.desc.comment.clone());
+            <span class="kw">let _ </span>= metadata.insert(COMMENT_KEY.to_string(), <span class="self">self</span>.desc.comment.clone());
         }
 
         metadata
@@ -1973,12 +1973,12 @@
 <span class="kw">impl </span>ColumnsMetadataBuilder {
     <span class="kw">fn </span>row_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: RowKeyDescriptor) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt; {
         <span class="kw">for </span>col <span class="kw">in </span>key.columns {
-            <span class="self">self</span>.push_row_key_column(col)<span class="question-mark">?</span>;
+            <span class="kw">let _ </span>= <span class="self">self</span>.push_row_key_column(col)<span class="question-mark">?</span>;
         }
 
         <span class="comment">// TODO(yingwen): Validate this is a timestamp column.
         </span><span class="self">self</span>.timestamp_key_index = <span class="prelude-val">Some</span>(<span class="self">self</span>.columns.len());
-        <span class="self">self</span>.push_row_key_column(key.timestamp)<span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.push_row_key_column(key.timestamp)<span class="question-mark">?</span>;
         <span class="self">self</span>.row_key_end = <span class="self">self</span>.columns.len();
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
@@ -2021,8 +2021,8 @@
 
         <span class="kw">let </span>column_index = <span class="self">self</span>.columns.len();
         <span class="self">self</span>.columns.push(meta);
-        <span class="self">self</span>.name_to_col_index.insert(column_name, column_index);
-        <span class="self">self</span>.column_ids.insert(column_id);
+        <span class="kw">let _ </span>= <span class="self">self</span>.name_to_col_index.insert(column_name, column_index);
+        <span class="kw">let _ </span>= <span class="self">self</span>.column_ids.insert(column_id);
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
@@ -2033,7 +2033,7 @@
         <span class="kw">let </span>user_column_end = <span class="self">self</span>.columns.len();
         <span class="comment">// Setup internal columns.
         </span><span class="kw">for </span>internal_desc <span class="kw">in </span>internal_column_descs() {
-            <span class="self">self</span>.push_new_column(consts::DEFAULT_CF_ID, internal_desc)<span class="question-mark">?</span>;
+            <span class="kw">let _ </span>= <span class="self">self</span>.push_new_column(consts::DEFAULT_CF_ID, internal_desc)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(ColumnsMetadata {
@@ -2064,8 +2064,8 @@
             CfNameExistsSnafu { name: <span class="kw-2">&amp;</span>cf.name }
         );
 
-        <span class="self">self</span>.cf_names.insert(cf.name.clone());
-        <span class="self">self</span>.id_to_cfs.insert(cf.cf_id, cf);
+        <span class="kw">let _ </span>= <span class="self">self</span>.cf_names.insert(cf.name.clone());
+        <span class="kw">let _ </span>= <span class="self">self</span>.id_to_cfs.insert(cf.cf_id, cf);
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
@@ -2118,7 +2118,7 @@
     </span>}
 
     <span class="kw">fn </span>row_key(<span class="kw-2">mut </span><span class="self">self</span>, key: RowKeyDescriptor) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="self">self</span>.columns_meta_builder.row_key(key)<span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.columns_meta_builder.row_key(key)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
@@ -2133,10 +2133,10 @@
             column_index_end,
         };
 
-        <span class="self">self</span>.cfs_meta_builder.add_column_family(cf_meta)<span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.cfs_meta_builder.add_column_family(cf_meta)<span class="question-mark">?</span>;
 
         <span class="kw">for </span>col <span class="kw">in </span>cf.columns {
-            <span class="self">self</span>.columns_meta_builder.push_field_column(cf.cf_id, col)<span class="question-mark">?</span>;
+            <span class="kw">let _ </span>= <span class="self">self</span>.columns_meta_builder.push_field_column(cf.cf_id, col)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)

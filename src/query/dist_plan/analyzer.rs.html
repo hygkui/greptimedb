@@ -359,7 +359,7 @@
 
         <span class="comment">// (2) transform up merge scan
         </span><span class="kw">let </span><span class="kw-2">mut </span>visitor = CommutativeVisitor::new();
-        plan.visit(<span class="kw-2">&amp;mut </span>visitor)<span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= plan.visit(<span class="kw-2">&amp;mut </span>visitor)<span class="question-mark">?</span>;
         <span class="kw">let </span>state = ExpandState::new();
         <span class="kw">let </span>plan = plan.transform_down(<span class="kw-2">&amp;</span>|plan| <span class="self">Self</span>::expand(plan, <span class="kw-2">&amp;</span>visitor, <span class="kw-2">&amp;</span>state))<span class="question-mark">?</span>;
 

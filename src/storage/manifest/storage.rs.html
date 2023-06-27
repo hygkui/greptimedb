@@ -1232,7 +1232,7 @@
         common_telemetry::init_default_ut_logging();
         <span class="kw">let </span>tmp_dir = create_temp_dir(<span class="string">&quot;test_manifest_log_store&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>builder = Fs::default();
-        builder.root(<span class="kw-2">&amp;</span>tmp_dir.path().to_string_lossy());
+        <span class="kw">let _ </span>= builder.root(<span class="kw-2">&amp;</span>tmp_dir.path().to_string_lossy());
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
         ManifestObjectStore::new(<span class="string">&quot;/&quot;</span>, object_store, CompressionType::Uncompressed)
     }
@@ -1308,7 +1308,7 @@
         <span class="macro">assert_eq!</span>(<span class="number">3</span>, v);
 
         <span class="comment">//delete (,4) logs and keep checkpoint 3.
-        </span>log_store.delete_until(<span class="number">4</span>, <span class="bool-val">true</span>).<span class="kw">await</span>.unwrap();
+        </span><span class="macro">assert!</span>(log_store.delete_until(<span class="number">4</span>, <span class="bool-val">true</span>).<span class="kw">await</span>.is_ok());
         <span class="macro">assert!</span>(log_store.load_checkpoint(<span class="number">3</span>).<span class="kw">await</span>.unwrap().is_some());
         <span class="macro">assert!</span>(log_store.load_last_checkpoint().<span class="kw">await</span>.unwrap().is_some());
         <span class="kw">let </span><span class="kw-2">mut </span>it = log_store.scan(<span class="number">0</span>, <span class="number">11</span>).<span class="kw">await</span>.unwrap();
@@ -1318,7 +1318,7 @@
         <span class="macro">assert!</span>(it.next_log().<span class="kw">await</span>.unwrap().is_none());
 
         <span class="comment">// delete all logs and checkpoints
-        </span>log_store.delete_until(<span class="number">11</span>, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
+        </span><span class="macro">assert!</span>(log_store.delete_until(<span class="number">11</span>, <span class="bool-val">false</span>).<span class="kw">await</span>.is_ok());
         <span class="macro">assert!</span>(log_store.load_checkpoint(<span class="number">3</span>).<span class="kw">await</span>.unwrap().is_none());
         <span class="macro">assert!</span>(log_store.load_last_checkpoint().<span class="kw">await</span>.unwrap().is_none());
         <span class="kw">let </span><span class="kw-2">mut </span>it = log_store.scan(<span class="number">0</span>, <span class="number">11</span>).<span class="kw">await</span>.unwrap();

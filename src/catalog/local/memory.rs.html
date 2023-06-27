@@ -515,6 +515,9 @@
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -566,9 +569,8 @@
             catalogs: Default::default(),
         };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>catalog = HashMap::with_capacity(<span class="number">1</span>);
-        catalog.insert(DEFAULT_SCHEMA_NAME.to_string(), HashMap::new());
-        manager
+        <span class="kw">let </span>catalog = HashMap::from([(DEFAULT_SCHEMA_NAME.to_string(), HashMap::new())]);
+        <span class="kw">let _ </span>= manager
             .catalogs
             .write()
             .unwrap()
@@ -632,7 +634,7 @@
         }
 
         <span class="kw">let </span>table = schema.remove(<span class="kw-2">&amp;</span>request.table_name).unwrap();
-        schema.insert(request.new_table_name, table);
+        <span class="kw">let _ </span>= schema.insert(request.new_table_name, table);
 
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
@@ -661,9 +663,11 @@
     }
 
     <span class="kw">async fn </span>register_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="self">self</span>.register_schema_sync(request)<span class="question-mark">?</span>;
-        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
-        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+        <span class="kw">let </span>registered = <span class="self">self</span>.register_schema_sync(request)<span class="question-mark">?</span>;
+        <span class="kw">if </span>registered {
+            <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
+        }
+        <span class="prelude-val">Ok</span>(registered)
     }
 
     <span class="kw">async fn </span>register_system_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: RegisterSystemTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -751,9 +755,11 @@
     }
 
     <span class="kw">async fn </span>register_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>, name: String) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="self">self</span>.register_catalog_sync(name)<span class="question-mark">?</span>;
-        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
-        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+        <span class="kw">let </span>registered = <span class="self">self</span>.register_catalog_sync(name)<span class="question-mark">?</span>;
+        <span class="kw">if </span>registered {
+            <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
+        }
+        <span class="prelude-val">Ok</span>(registered)
     }
 
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
@@ -769,7 +775,7 @@
         <span class="kw">match </span>entry {
             Entry::Occupied(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
             Entry::Vacant(v) =&gt; {
-                v.insert(HashMap::new());
+                <span class="kw">let _ </span>= v.insert(HashMap::new());
                 <span class="bool-val">false
             </span>}
         }
@@ -790,7 +796,7 @@
         <span class="kw">if </span>catalog.contains_key(<span class="kw-2">&amp;</span>request.schema) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
         }
-        catalog.insert(request.schema, HashMap::new());
+        <span class="kw">let _ </span>= catalog.insert(request.schema, HashMap::new());
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
@@ -827,7 +833,7 @@
             table_id: table.table_info().ident.table_id,
             table,
         };
-        manager.register_table_sync(request).unwrap();
+        <span class="kw">let _ </span>= manager.register_table_sync(request).unwrap();
         manager
     }
 }
@@ -858,7 +864,7 @@
             table: Arc::new(NumbersTable::default()),
         };
 
-        catalog_list.register_table(register_request).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(catalog_list.register_table(register_request).<span class="kw">await</span>.is_ok());
         <span class="kw">let </span>table = catalog_list
             .table(
                 DEFAULT_CATALOG_NAME,
@@ -907,7 +913,7 @@
             new_table_name: new_table_name.to_string(),
             table_id,
         };
-        catalog.rename_table(rename_request).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(catalog.rename_table(rename_request).<span class="kw">await</span>.is_ok());
 
         <span class="comment">// test old table name not exist
         </span><span class="macro">assert!</span>(!catalog
@@ -1009,7 +1015,7 @@
             table_id: <span class="number">2333</span>,
             table: Arc::new(NumbersTable::default()),
         };
-        catalog.register_table(register_table_req).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(catalog.register_table(register_table_req).<span class="kw">await</span>.is_ok());
         <span class="macro">assert!</span>(catalog
             .table(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, table_name)
             .<span class="kw">await

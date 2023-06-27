@@ -1279,7 +1279,7 @@
     }
 
     <span class="kw">pub async fn </span>unlock(<span class="kw-2">&amp;</span><span class="self">self</span>, req: UnlockRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.lock_client()<span class="question-mark">?</span>.unlock(req.into()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.lock_client()<span class="question-mark">?</span>.unlock(req.into()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -1526,7 +1526,7 @@
         <span class="kw">let </span>tc = new_client(<span class="string">&quot;test_heartbeat&quot;</span>).<span class="kw">await</span>;
         <span class="kw">let </span>(sender, <span class="kw-2">mut </span>receiver) = tc.client.heartbeat().<span class="kw">await</span>.unwrap();
         <span class="comment">// send heartbeats
-        </span>tokio::spawn(<span class="kw">async move </span>{
+        </span><span class="kw">let </span>_handle = tokio::spawn(<span class="kw">async move </span>{
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">5 </span>{
                 <span class="kw">let </span>req = HeartbeatRequest {
                     peer: <span class="prelude-val">Some</span>(Peer {
@@ -1539,7 +1539,7 @@
             }
         });
 
-        tokio::spawn(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = tokio::spawn(<span class="kw">async move </span>{
             <span class="kw">while let </span><span class="prelude-val">Some</span>(res) = receiver.message().<span class="kw">await</span>.unwrap() {
                 <span class="macro">assert_eq!</span>(<span class="number">1000</span>, res.header.unwrap().cluster_id);
             }

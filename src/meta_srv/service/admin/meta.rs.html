@@ -430,27 +430,27 @@
         <span class="kw">let </span>catalog = CatalogKey {
             catalog_name: catalog_name.to_string(),
         };
-        in_mem
+        <span class="macro">assert!</span>(in_mem
             .put(PutRequest {
                 key: catalog.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
         <span class="kw">let </span>schema = SchemaKey {
             catalog_name: catalog_name.to_string(),
             schema_name: schema_name.to_string(),
         };
-        in_mem
+        <span class="macro">assert!</span>(in_mem
             .put(PutRequest {
                 key: schema.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
         <span class="kw">let </span>table1 = TableGlobalKey {
             catalog_name: catalog_name.to_string(),
@@ -462,22 +462,22 @@
             schema_name: schema_name.to_string(),
             table_name: <span class="string">&quot;test_table1&quot;</span>.to_string(),
         };
-        in_mem
+        <span class="macro">assert!</span>(in_mem
             .put(PutRequest {
                 key: table1.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
-        in_mem
+            </span>.is_ok());
+        <span class="macro">assert!</span>(in_mem
             .put(PutRequest {
                 key: table2.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
         <span class="kw">let </span>catalog_key = get_keys_by_prefix(build_catalog_prefix(), <span class="kw-2">&amp;</span>in_mem)
             .<span class="kw">await

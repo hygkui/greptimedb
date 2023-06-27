@@ -392,7 +392,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>serve_state = <span class="self">self</span>.serve_state.lock().<span class="kw">await</span>;
         <span class="kw-2">*</span>serve_state = <span class="prelude-val">Some</span>(serve_state_rx);
 
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>result = builder
                 .serve_with_incoming_shutdown(TcpListenerStream::new(listener), rx.map(drop))
                 .<span class="kw">await

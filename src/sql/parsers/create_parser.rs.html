@@ -1555,7 +1555,7 @@
     }
 
     <span class="kw">fn </span>parse_create_external_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
-        <span class="self">self</span>.parser.next_token();
+        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
         <span class="self">self</span>.parser
             .expect_keyword(Keyword::TABLE)
             .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
@@ -1597,7 +1597,7 @@
     }
 
     <span class="kw">fn </span>parse_create_database(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
-        <span class="self">self</span>.parser.next_token();
+        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
 
         <span class="kw">let </span>if_not_exists =
             <span class="self">self</span>.parser
@@ -1619,7 +1619,7 @@
     }
 
     <span class="kw">fn </span>parse_create_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
-        <span class="self">self</span>.parser.next_token();
+        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
         <span class="kw">let </span>if_not_exists =
             <span class="self">self</span>.parser
                 .parse_keywords(<span class="kw-2">&amp;</span>[Keyword::IF, Keyword::NOT, Keyword::EXISTS]);
@@ -1871,7 +1871,7 @@
                 column.options.push(not_null_opt);
             }
 
-            column.options.remove(index);
+            <span class="kw">let _ </span>= column.options.remove(index);
         }
 
         columns.push(column);

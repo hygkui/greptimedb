@@ -2508,7 +2508,7 @@
                     .get_or_insert_default()
                     .push(matcher.clone());
             } <span class="kw">else </span>{
-                matchers.insert(matcher.clone());
+                <span class="kw">let _ </span>= matchers.insert(matcher.clone());
             }
         }
         <span class="prelude-val">Ok</span>(Matchers { matchers })
@@ -2559,7 +2559,7 @@
                 <span class="kw">match </span><span class="kw-2">&amp;</span>matcher.op {
                     MatchOp::Equal =&gt; {
                         <span class="kw">if </span>col_set.contains(<span class="kw-2">&amp;</span>matcher.value) {
-                            result_set.insert(matcher.value.clone());
+                            <span class="kw">let _ </span>= result_set.insert(matcher.value.clone());
                         } <span class="kw">else </span>{
                             <span class="kw">return </span><span class="prelude-val">Err</span>(ColumnNotFoundSnafu {
                                 col: matcher.value.clone(),
@@ -2569,7 +2569,7 @@
                     }
                     MatchOp::NotEqual =&gt; {
                         <span class="kw">if </span>col_set.contains(<span class="kw-2">&amp;</span>matcher.value) {
-                            reverse_set.insert(matcher.value.clone());
+                            <span class="kw">let _ </span>= reverse_set.insert(matcher.value.clone());
                         } <span class="kw">else </span>{
                             <span class="kw">return </span><span class="prelude-val">Err</span>(ColumnNotFoundSnafu {
                                 col: matcher.value.clone(),
@@ -2580,14 +2580,14 @@
                     MatchOp::Re(regex) =&gt; {
                         <span class="kw">for </span>col <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.ctx.field_columns {
                             <span class="kw">if </span>regex.is_match(col) {
-                                result_set.insert(col.clone());
+                                <span class="kw">let _ </span>= result_set.insert(col.clone());
                             }
                         }
                     }
                     MatchOp::NotRe(regex) =&gt; {
                         <span class="kw">for </span>col <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.ctx.field_columns {
                             <span class="kw">if </span>regex.is_match(col) {
-                                reverse_set.insert(col.clone());
+                                <span class="kw">let _ </span>= reverse_set.insert(col.clone());
                             }
                         }
                     }
@@ -2598,7 +2598,7 @@
                 result_set = col_set.into_iter().cloned().collect();
             }
             <span class="kw">for </span>col <span class="kw">in </span>reverse_set {
-                result_set.remove(<span class="kw-2">&amp;</span>col);
+                <span class="kw">let _ </span>= result_set.remove(<span class="kw-2">&amp;</span>col);
             }
 
             <span class="self">self</span>.ctx.field_columns = result_set.iter().cloned().collect();
@@ -2691,15 +2691,15 @@
                 <span class="comment">// remove &quot;without&quot;-ed fields
                 // nonexistence label will be ignored
                 </span><span class="kw">for </span>label <span class="kw">in </span>labels {
-                    all_fields.remove(label);
+                    <span class="kw">let _ </span>= all_fields.remove(label);
                 }
 
                 <span class="comment">// remove time index and value fields
                 </span><span class="kw">if let </span><span class="prelude-val">Some</span>(time_index) = <span class="kw-2">&amp;</span><span class="self">self</span>.ctx.time_index_column {
-                    all_fields.remove(time_index);
+                    <span class="kw">let _ </span>= all_fields.remove(time_index);
                 }
                 <span class="kw">for </span>value <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.ctx.field_columns {
-                    all_fields.remove(value);
+                    <span class="kw">let _ </span>= all_fields.remove(value);
                 }
 
                 <span class="comment">// change the tag columns in context
@@ -2948,7 +2948,7 @@
                         args: other_input_exprs.clone(),
                     });
                     exprs.push(fn_expr);
-                    other_input_exprs.remove(field_column_pos);
+                    <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos);
                 }
                 ScalarFunc::Udf(fun) =&gt; {
                     <span class="kw">let </span>ts_range_expr = DfExpr::Column(Column::from_name(
@@ -2963,8 +2963,8 @@
                         args: other_input_exprs.clone(),
                     });
                     exprs.push(fn_expr);
-                    other_input_exprs.remove(field_column_pos + <span class="number">1</span>);
-                    other_input_exprs.remove(field_column_pos);
+                    <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos + <span class="number">1</span>);
+                    <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos);
                 }
                 ScalarFunc::ExtrapolateUdf(fun) =&gt; {
                     <span class="kw">let </span>ts_range_expr = DfExpr::Column(Column::from_name(
@@ -2981,9 +2981,9 @@
                         args: other_input_exprs.clone(),
                     });
                     exprs.push(fn_expr);
-                    other_input_exprs.remove(field_column_pos + <span class="number">2</span>);
-                    other_input_exprs.remove(field_column_pos + <span class="number">1</span>);
-                    other_input_exprs.remove(field_column_pos);
+                    <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos + <span class="number">2</span>);
+                    <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos + <span class="number">1</span>);
+                    <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos);
                 }
             }
         }
@@ -3359,7 +3359,7 @@
             .unwrap();
         <span class="kw">let </span>table = Arc::new(EmptyTable::from_table_info(<span class="kw-2">&amp;</span>table_info));
         <span class="kw">let </span>catalog_list = Arc::new(MemoryCatalogManager::default());
-        catalog_list
+        <span class="macro">assert!</span>(catalog_list
             .register_table(RegisterTableRequest {
                 catalog: DEFAULT_CATALOG_NAME.to_string(),
                 schema: DEFAULT_SCHEMA_NAME.to_string(),
@@ -3368,7 +3368,7 @@
                 table,
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
         DfTableSourceProvider::new(catalog_list, <span class="bool-val">false</span>, <span class="kw-2">&amp;</span>QueryContext::new())
     }
 

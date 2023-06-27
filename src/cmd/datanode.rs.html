@@ -798,12 +798,12 @@
         .is_err());
 
         <span class="comment">// Providing node_id but leave metasrv_addr absent is ok since metasrv_addr has default value
-        </span>(StartCommand {
+        </span><span class="macro">assert!</span>((StartCommand {
             node_id: <span class="prelude-val">Some</span>(<span class="number">42</span>),
             ..Default::default()
         })
         .load_options(TopLevelOptions::default())
-        .unwrap();
+        .is_ok());
     }
 
     <span class="attr">#[test]

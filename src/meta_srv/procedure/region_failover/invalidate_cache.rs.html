@@ -247,7 +247,7 @@
             <span class="kw">let </span>pusher = Pusher::new(tx, <span class="kw-2">&amp;</span>RequestHeader::default());
             <span class="kw">let _ </span>= pushers.insert(pusher_id, pusher).<span class="kw">await</span>;
 
-            heartbeat_receivers.insert(frontend_id, rx);
+            <span class="kw">let _ </span>= heartbeat_receivers.insert(frontend_id, rx);
         }
 
         <span class="kw">let </span>state = InvalidateCache;

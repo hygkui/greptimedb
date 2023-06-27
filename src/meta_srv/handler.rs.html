@@ -786,7 +786,7 @@
         <span class="kw">let </span>mailbox = Arc::new(<span class="self">Self</span>::new(pushers, sequence));
 
         <span class="kw">let </span>timeout_checker = mailbox.clone();
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             timeout_checker.check_timeout_bg(<span class="number">10</span>).<span class="kw">await</span>;
         });
 
@@ -807,7 +807,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>interval = tokio::time::interval(Duration::from_millis(interval_millis));
 
         <span class="kw">loop </span>{
-            interval.tick().<span class="kw">await</span>;
+            <span class="kw">let _ </span>= interval.tick().<span class="kw">await</span>;
 
             <span class="kw">if </span><span class="self">self</span>.timeouts.is_empty() {
                 <span class="self">self</span>.timeout_notify.notified().<span class="kw">await</span>;
@@ -863,10 +863,10 @@
         <span class="macro">debug!</span>(<span class="string">&quot;Sending mailbox message {msg:?} to {pusher_id}&quot;</span>);
 
         <span class="kw">let </span>(tx, rx) = oneshot::channel();
-        <span class="self">self</span>.senders.insert(message_id, tx);
+        <span class="kw">let _ </span>= <span class="self">self</span>.senders.insert(message_id, tx);
         <span class="kw">let </span>deadline =
             Duration::from_millis(common_time::util::current_time_millis() <span class="kw">as </span>u64) + timeout;
-        <span class="self">self</span>.timeouts.insert(message_id, deadline);
+        <span class="kw">let _ </span>= <span class="self">self</span>.timeouts.insert(message_id, deadline);
         <span class="self">self</span>.timeout_notify.notify_one();
 
         <span class="self">self</span>.pushers.push(<span class="kw-2">&amp;</span>pusher_id, msg).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -881,7 +881,7 @@
     <span class="kw">async fn </span>on_recv(<span class="kw-2">&amp;</span><span class="self">self</span>, id: MessageId, maybe_msg: <span class="prelude-ty">Result</span>&lt;MailboxMessage&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Received mailbox message {maybe_msg:?}&quot;</span>);
 
-        <span class="self">self</span>.timeouts.remove(<span class="kw-2">&amp;</span>id);
+        <span class="kw">let _ </span>= <span class="self">self</span>.timeouts.remove(<span class="kw-2">&amp;</span>id);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, tx)) = <span class="self">self</span>.senders.remove(<span class="kw-2">&amp;</span>id) {
             tx.send(maybe_msg)

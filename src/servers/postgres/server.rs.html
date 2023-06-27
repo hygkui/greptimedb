@@ -223,7 +223,7 @@
                             <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Failed to get PostgreSQL client addr, err: {}&quot;</span>, e),
                         }
 
-                        io_runtime.spawn(<span class="kw">async move </span>{
+                        <span class="kw">let </span>_handle = io_runtime.spawn(<span class="kw">async move </span>{
                             <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_POSTGRES_CONNECTIONS, <span class="number">1.0</span>);
                             <span class="kw">let </span>handler = Arc::new(handler);
                             <span class="kw">let </span>r = process_socket(

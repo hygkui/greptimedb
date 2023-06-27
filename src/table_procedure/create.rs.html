@@ -677,7 +677,8 @@
             table_id: <span class="self">self</span>.data.request.id,
             table,
         };
-        <span class="self">self</span>.catalog_manager
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.catalog_manager
             .register_table(register_req)
             .<span class="kw">await
             </span>.map_err(Error::from_error_ext)<span class="question-mark">?</span>;
@@ -809,10 +810,9 @@
         <span class="comment">// Execute the subprocedure.
         </span><span class="kw">let </span><span class="kw-2">mut </span>subprocedure = subprocedures.pop().unwrap();
         execute_procedure_until_done(<span class="kw-2">&amp;mut </span>subprocedure.procedure).<span class="kw">await</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>states = HashMap::new();
-        states.insert(subprocedure.id, ProcedureState::Done);
+        <span class="kw">let </span>states = HashMap::from([(subprocedure.id, ProcedureState::Done)]);
         <span class="comment">// Execute the parent procedure once.
-        </span>execute_procedure_once(
+        </span><span class="kw">let _ </span>= execute_procedure_once(
             procedure_id,
             MockContextProvider::new(states),
             <span class="kw-2">&amp;mut </span>procedure,

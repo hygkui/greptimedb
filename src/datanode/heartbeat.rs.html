@@ -384,7 +384,7 @@
         <span class="kw">let </span>client_id = meta_client.id();
 
         <span class="kw">let </span>(tx, <span class="kw-2">mut </span>rx) = meta_client.heartbeat().<span class="kw">await</span>.context(MetaClientInitSnafu)<span class="question-mark">?</span>;
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">while let </span><span class="prelude-val">Some</span>(res) = <span class="kw">match </span>rx.message().<span class="kw">await </span>{
                 <span class="prelude-val">Ok</span>(m) =&gt; m,
                 <span class="prelude-val">Err</span>(e) =&gt; {
@@ -455,7 +455,7 @@
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>epoch = <span class="self">self</span>.region_alive_keepers.epoch();
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>sleep = tokio::time::sleep(Duration::from_millis(<span class="number">0</span>));
             <span class="macro">tokio::pin!</span>(sleep);
 

@@ -627,6 +627,13 @@
 <a href="#627" id="627">627</a>
 <a href="#628" id="628">628</a>
 <a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -747,9 +754,10 @@
 
     <span class="kw">async fn </span>init_system_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// register SystemCatalogTable
-        </span><span class="self">self</span>.catalogs
+        </span><span class="kw">let _ </span>= <span class="self">self
+            </span>.catalogs
             .register_catalog_sync(SYSTEM_CATALOG_NAME.to_string())<span class="question-mark">?</span>;
-        <span class="self">self</span>.catalogs.register_schema_sync(RegisterSchemaRequest {
+        <span class="kw">let _ </span>= <span class="self">self</span>.catalogs.register_schema_sync(RegisterSchemaRequest {
             catalog: SYSTEM_CATALOG_NAME.to_string(),
             schema: INFORMATION_SCHEMA_NAME.to_string(),
         })<span class="question-mark">?</span>;
@@ -760,12 +768,13 @@
             table_id: SYSTEM_CATALOG_TABLE_ID,
             table: <span class="self">self</span>.system.information_schema.system.clone(),
         };
-        <span class="self">self</span>.catalogs.register_table(register_table_req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.catalogs.register_table(register_table_req).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// register default catalog and default schema
-        </span><span class="self">self</span>.catalogs
+        </span><span class="kw">let _ </span>= <span class="self">self
+            </span>.catalogs
             .register_catalog_sync(DEFAULT_CATALOG_NAME.to_string())<span class="question-mark">?</span>;
-        <span class="self">self</span>.catalogs.register_schema_sync(RegisterSchemaRequest {
+        <span class="kw">let _ </span>= <span class="self">self</span>.catalogs.register_schema_sync(RegisterSchemaRequest {
             catalog: DEFAULT_CATALOG_NAME.to_string(),
             schema: DEFAULT_SCHEMA_NAME.to_string(),
         })<span class="question-mark">?</span>;
@@ -780,7 +789,8 @@
             table: numbers_table,
         };
 
-        <span class="self">self</span>.catalogs
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.catalogs
             .register_table(register_number_table_req)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -855,7 +865,8 @@
         <span class="kw">for </span>entry <span class="kw">in </span>entries {
             <span class="kw">match </span>entry {
                 Entry::Catalog(c) =&gt; {
-                    <span class="self">self</span>.catalogs
+                    <span class="kw">let _ </span>= <span class="self">self
+                        </span>.catalogs
                         .register_catalog_if_absent(c.catalog_name.clone());
                     <span class="macro">info!</span>(<span class="string">&quot;Register catalog: {}&quot;</span>, c.catalog_name);
                 }
@@ -864,7 +875,7 @@
                         catalog: s.catalog_name.clone(),
                         schema: s.schema_name.clone(),
                     };
-                    <span class="self">self</span>.catalogs.register_schema_sync(req)<span class="question-mark">?</span>;
+                    <span class="kw">let _ </span>= <span class="self">self</span>.catalogs.register_schema_sync(req)<span class="question-mark">?</span>;
                     <span class="macro">info!</span>(<span class="string">&quot;Registered schema: {:?}&quot;</span>, s);
                 }
                 Entry::Table(t) =&gt; {
@@ -926,7 +937,7 @@
             table_id: t.table_id,
             table: table_ref,
         };
-        <span class="self">self</span>.catalogs.register_table(register_request).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.catalogs.register_table(register_request).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1018,8 +1029,9 @@
                 </span><span class="kw">let </span>engine = request.table.table_info().meta.engine.to_string();
                 <span class="kw">let </span>table_name = request.table_name.clone();
                 <span class="kw">let </span>table_id = request.table_id;
-                <span class="self">self</span>.catalogs.register_table(request).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="self">self</span>.system
+                <span class="kw">let _ </span>= <span class="self">self</span>.catalogs.register_table(request).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">let _ </span>= <span class="self">self
+                    </span>.system
                     .register_table(
                         catalog_name.clone(),
                         schema_name.clone(),
@@ -1067,7 +1079,8 @@
 
         <span class="kw">let </span>engine = old_table.table_info().meta.engine.to_string();
         <span class="comment">// rename table in system catalog
-        </span><span class="self">self</span>.system
+        </span><span class="kw">let _ </span>= <span class="self">self
+            </span>.system
             .register_table(
                 catalog_name.clone(),
                 schema_name.clone(),
@@ -1128,7 +1141,8 @@
                     schema: schema_name,
                 }
             );
-            <span class="self">self</span>.system
+            <span class="kw">let _ </span>= <span class="self">self
+                </span>.system
                 .register_schema(request.catalog.clone(), schema_name.clone())
                 .<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="self">self</span>.catalogs.register_schema_sync(request)

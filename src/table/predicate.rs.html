@@ -755,7 +755,7 @@
             <span class="kw">let </span>rb = RecordBatch::try_new(schema.clone(), <span class="macro">vec!</span>[name_array, count_array]).unwrap();
             writer.write(<span class="kw-2">&amp;</span>rb).unwrap();
         }
-        writer.close().unwrap();
+        <span class="macro">assert!</span>(writer.close().is_ok());
         (path, schema)
     }
 

@@ -632,6 +632,12 @@
 <a href="#632" id="632">632</a>
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -764,7 +770,7 @@
             };
 
             <span class="kw">let </span><span class="kw-2">mut </span>builder = Azblob::default();
-            builder
+            <span class="kw">let _ </span>= builder
                 .root(<span class="kw-2">&amp;</span>azblob_config.root)
                 .endpoint(<span class="kw-2">&amp;</span>azblob_config.endpoint)
                 .account_name(azblob_config.account_name.expose_secret())
@@ -772,7 +778,7 @@
                 .container(<span class="kw-2">&amp;</span>azblob_config.container);
 
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(sas_token) = env::var(<span class="string">&quot;GT_AZBLOB_SAS_TOKEN&quot;</span>) {
-                builder.sas_token(<span class="kw-2">&amp;</span>sas_token);
+                <span class="kw">let _ </span>= builder.sas_token(<span class="kw-2">&amp;</span>sas_token);
             }
 
             <span class="kw">let </span>config = ObjectStoreConfig::Azblob(azblob_config);
@@ -792,7 +798,7 @@
             };
 
             <span class="kw">let </span><span class="kw-2">mut </span>builder = Oss::default();
-            builder
+            <span class="kw">let _ </span>= builder
                 .root(<span class="kw-2">&amp;</span>oss_config.root)
                 .endpoint(<span class="kw-2">&amp;</span>oss_config.endpoint)
                 .access_key_id(oss_config.access_key_id.expose_secret())
@@ -813,17 +819,17 @@
             }
 
             <span class="kw">let </span><span class="kw-2">mut </span>builder = S3::default();
-            builder
+            <span class="kw">let _ </span>= builder
                 .root(<span class="kw-2">&amp;</span>s3_config.root)
                 .access_key_id(s3_config.access_key_id.expose_secret())
                 .secret_access_key(s3_config.secret_access_key.expose_secret())
                 .bucket(<span class="kw-2">&amp;</span>s3_config.bucket);
 
             <span class="kw">if </span>s3_config.endpoint.is_some() {
-                builder.endpoint(s3_config.endpoint.as_ref().unwrap());
+                <span class="kw">let _ </span>= builder.endpoint(s3_config.endpoint.as_ref().unwrap());
             }
             <span class="kw">if </span>s3_config.region.is_some() {
-                builder.region(s3_config.region.as_ref().unwrap());
+                <span class="kw">let _ </span>= builder.region(s3_config.region.as_ref().unwrap());
             }
 
             <span class="kw">let </span>config = ObjectStoreConfig::S3(s3_config);
@@ -949,7 +955,7 @@
         table_id: table.table_info().ident.table_id,
         table,
     };
-    catalog_manager.register_table(req).<span class="kw">await</span>.unwrap();
+    <span class="macro">assert!</span>(catalog_manager.register_table(req).<span class="kw">await</span>.is_ok());
     <span class="prelude-val">Ok</span>(())
 }
 
@@ -1024,22 +1030,28 @@
 }
 
 <span class="kw">fn </span>mock_insert_request(host: <span class="kw-2">&amp;</span>str, cpu: f64, memory: f64, ts: i64) -&gt; InsertRequest {
-    <span class="kw">let </span><span class="kw-2">mut </span>columns_values = HashMap::with_capacity(<span class="number">4</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>builder = StringVectorBuilder::with_capacity(<span class="number">1</span>);
     builder.push(<span class="prelude-val">Some</span>(host));
-    columns_values.insert(<span class="string">&quot;host&quot;</span>.to_string(), builder.to_vector());
+    <span class="kw">let </span>host = builder.to_vector();
 
     <span class="kw">let </span><span class="kw-2">mut </span>builder = Float64VectorBuilder::with_capacity(<span class="number">1</span>);
     builder.push(<span class="prelude-val">Some</span>(cpu));
-    columns_values.insert(<span class="string">&quot;cpu&quot;</span>.to_string(), builder.to_vector());
+    <span class="kw">let </span>cpu = builder.to_vector();
 
     <span class="kw">let </span><span class="kw-2">mut </span>builder = Float64VectorBuilder::with_capacity(<span class="number">1</span>);
     builder.push(<span class="prelude-val">Some</span>(memory));
-    columns_values.insert(<span class="string">&quot;memory&quot;</span>.to_string(), builder.to_vector());
+    <span class="kw">let </span>memory = builder.to_vector();
 
     <span class="kw">let </span><span class="kw-2">mut </span>builder = TimestampMillisecondVectorBuilder::with_capacity(<span class="number">1</span>);
     builder.push(<span class="prelude-val">Some</span>(ts.into()));
-    columns_values.insert(<span class="string">&quot;ts&quot;</span>.to_string(), builder.to_vector());
+    <span class="kw">let </span>ts = builder.to_vector();
+
+    <span class="kw">let </span>columns_values = HashMap::from([
+        (<span class="string">&quot;host&quot;</span>.to_string(), host),
+        (<span class="string">&quot;cpu&quot;</span>.to_string(), cpu),
+        (<span class="string">&quot;memory&quot;</span>.to_string(), memory),
+        (<span class="string">&quot;ts&quot;</span>.to_string(), ts),
+    ]);
 
     InsertRequest {
         catalog_name: common_catalog::consts::DEFAULT_CATALOG_NAME.to_string(),
@@ -1207,7 +1219,7 @@
 
     <span class="kw">let </span>fe_mysql_addr_clone = fe_mysql_addr.clone();
     <span class="kw">let </span>fe_mysql_server_clone = fe_mysql_server.clone();
-    tokio::spawn(<span class="kw">async move </span>{
+    <span class="kw">let </span>_handle = tokio::spawn(<span class="kw">async move </span>{
         <span class="kw">let </span>addr = fe_mysql_addr_clone.parse::&lt;SocketAddr&gt;().unwrap();
         fe_mysql_server_clone.start(addr).<span class="kw">await</span>.unwrap()
     });
@@ -1257,7 +1269,7 @@
 
     <span class="kw">let </span>fe_pg_addr_clone = fe_pg_addr.clone();
     <span class="kw">let </span>fe_pg_server_clone = fe_pg_server.clone();
-    tokio::spawn(<span class="kw">async move </span>{
+    <span class="kw">let </span>_handle = tokio::spawn(<span class="kw">async move </span>{
         <span class="kw">let </span>addr = fe_pg_addr_clone.parse::&lt;SocketAddr&gt;().unwrap();
         fe_pg_server_clone.start(addr).<span class="kw">await</span>.unwrap()
     });

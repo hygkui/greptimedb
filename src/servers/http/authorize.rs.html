@@ -514,7 +514,7 @@
             <span class="kw">let </span>user_provider = <span class="kw">if let </span><span class="prelude-val">Some</span>(user_provider) = user_provider.filter(|<span class="kw">_</span>| need_auth) {
                 user_provider
             } <span class="kw">else </span>{
-                request.extensions_mut().insert(UserInfo::default());
+                <span class="kw">let _ </span>= request.extensions_mut().insert(UserInfo::default());
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(request);
             };
 
@@ -558,7 +558,7 @@
                 .<span class="kw">await
             </span>{
                 <span class="prelude-val">Ok</span>(userinfo) =&gt; {
-                    request.extensions_mut().insert(userinfo);
+                    <span class="kw">let _ </span>= request.extensions_mut().insert(userinfo);
                     <span class="prelude-val">Ok</span>(request)
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {

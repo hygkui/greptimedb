@@ -949,7 +949,7 @@
         }
 
         <span class="comment">// No slot in map, we can insert the slot now.
-        </span>regions.insert(name.to_string(), slot);
+        </span><span class="kw">let _ </span>= regions.insert(name.to_string(), slot);
 
         <span class="prelude-val">None
     </span>}
@@ -971,7 +971,7 @@
     <span class="doccomment">/// Remove region by name.
     </span><span class="kw">fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) {
         <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.<span class="number">0</span>.write().unwrap();
-        regions.remove(name);
+        <span class="kw">let _ </span>= regions.remove(name);
     }
 
     <span class="doccomment">/// Collects regions.
@@ -1247,7 +1247,7 @@
         <span class="kw">let </span>store_dir = tmp_dir.path().to_string_lossy();
 
         <span class="kw">let </span><span class="kw-2">mut </span>builder = Fs::default();
-        builder.root(<span class="kw-2">&amp;</span>store_dir);
+        <span class="kw">let _ </span>= builder.root(<span class="kw-2">&amp;</span>store_dir);
         <span class="kw">let </span>object_store = ObjectStore::new(builder).unwrap().finish();
 
         <span class="kw">let </span>compaction_scheduler = Arc::new(NoopCompactionScheduler::default());
@@ -1342,13 +1342,13 @@
         <span class="kw">let </span>v1 = Arc::new(Float32Vector::from_slice([<span class="number">0.1</span>, <span class="number">0.2</span>, <span class="number">0.3</span>])) <span class="kw">as </span>VectorRef;
         <span class="kw">let </span>tsv = Arc::new(TimestampMillisecondVector::from_slice([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>])) <span class="kw">as </span>VectorRef;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>put_data = HashMap::with_capacity(<span class="number">4</span>);
-        put_data.insert(<span class="string">&quot;k1&quot;</span>.to_string(), k1);
-        put_data.insert(<span class="string">&quot;v1&quot;</span>.to_string(), v1);
-        put_data.insert(<span class="string">&quot;ts&quot;</span>.to_string(), tsv);
-
+        <span class="kw">let </span>put_data = HashMap::from([
+            (<span class="string">&quot;k1&quot;</span>.to_string(), k1),
+            (<span class="string">&quot;v1&quot;</span>.to_string(), v1),
+            (<span class="string">&quot;ts&quot;</span>.to_string(), tsv),
+        ]);
         wb.put(put_data).unwrap();
-        region.write(<span class="kw-2">&amp;</span>WriteContext::default(), wb).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(region.write(<span class="kw-2">&amp;</span>WriteContext::default(), wb).<span class="kw">await</span>.is_ok());
 
         <span class="comment">// Flush memtable to sst.
         </span>region.flush(<span class="kw-2">&amp;</span>FlushContext::default()).<span class="kw">await</span>.unwrap();

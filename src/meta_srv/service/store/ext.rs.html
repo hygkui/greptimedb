@@ -335,23 +335,23 @@
     }
 
     <span class="kw">async fn </span>put_stats_to_store(store: <span class="kw-2">&amp;mut </span>KvStoreRef) {
-        store
+        <span class="macro">assert!</span>(store
             .put(PutRequest {
                 key: <span class="string">&quot;test_key1&quot;</span>.as_bytes().to_vec(),
                 value: <span class="string">&quot;test_val1&quot;</span>.as_bytes().to_vec(),
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
 
-        store
+        <span class="macro">assert!</span>(store
             .put(PutRequest {
                 key: <span class="string">&quot;test_key2&quot;</span>.as_bytes().to_vec(),
                 value: <span class="string">&quot;test_val2&quot;</span>.as_bytes().to_vec(),
                 ..Default::default()
             })
             .<span class="kw">await
-            </span>.unwrap();
+            </span>.is_ok());
     }
 }
 </code></pre></div></section></main></body></html>
