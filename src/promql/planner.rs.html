@@ -2019,6 +2019,7 @@
 <a href="#2019" id="2019">2019</a>
 <a href="#2020" id="2020">2020</a>
 <a href="#2021" id="2021">2021</a>
+<a href="#2022" id="2022">2022</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2033,7 +2034,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::collections::{BTreeSet, HashSet};
+</span><span class="kw">use </span>std::collections::{BTreeSet, HashSet, VecDeque};
 <span class="kw">use </span>std::str::FromStr;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::UNIX_EPOCH;
@@ -2854,11 +2855,12 @@
     </span><span class="kw">fn </span>create_function_expr(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         func: <span class="kw-2">&amp;</span>Function,
-        <span class="kw-2">mut </span>other_input_exprs: Vec&lt;DfExpr&gt;,
+        other_input_exprs: Vec&lt;DfExpr&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;DfExpr&gt;&gt; {
         <span class="comment">// TODO(ruihang): check function args list
+        </span><span class="kw">let </span><span class="kw-2">mut </span>other_input_exprs: VecDeque&lt;DfExpr&gt; = other_input_exprs.into();
 
-        // TODO(ruihang): set this according to in-param list
+        <span class="comment">// TODO(ruihang): set this according to in-param list
         </span><span class="kw">let </span>field_column_pos = <span class="number">0</span>;
         <span class="kw">let </span>scalar_func = <span class="kw">match </span>func.name {
             <span class="string">&quot;increase&quot; </span>=&gt; ScalarFunc::ExtrapolateUdf(Increase::scalar_udf(
@@ -2886,8 +2888,8 @@
             <span class="string">&quot;stddev_over_time&quot; </span>=&gt; ScalarFunc::Udf(StddevOverTime::scalar_udf()),
             <span class="string">&quot;stdvar_over_time&quot; </span>=&gt; ScalarFunc::Udf(StdvarOverTime::scalar_udf()),
             <span class="string">&quot;quantile_over_time&quot; </span>=&gt; {
-                <span class="kw">let </span>quantile_expr = <span class="kw">match </span>other_input_exprs.get(<span class="number">0</span>) {
-                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Float64(<span class="prelude-val">Some</span>(quantile)))) =&gt; <span class="kw-2">*</span>quantile,
+                <span class="kw">let </span>quantile_expr = <span class="kw">match </span>other_input_exprs.pop_front() {
+                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Float64(<span class="prelude-val">Some</span>(quantile)))) =&gt; quantile,
                     other =&gt; UnexpectedPlanExprSnafu {
                         desc: <span class="macro">format!</span>(<span class="string">&quot;expect f64 literal as quantile, but found {:?}&quot;</span>, other),
                     }
@@ -2896,8 +2898,8 @@
                 ScalarFunc::Udf(QuantileOverTime::scalar_udf(quantile_expr))
             }
             <span class="string">&quot;predict_linear&quot; </span>=&gt; {
-                <span class="kw">let </span>t_expr = <span class="kw">match </span>other_input_exprs.get(<span class="number">0</span>) {
-                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Time64Microsecond(<span class="prelude-val">Some</span>(t)))) =&gt; <span class="kw-2">*</span>t,
+                <span class="kw">let </span>t_expr = <span class="kw">match </span>other_input_exprs.pop_front() {
+                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Time64Microsecond(<span class="prelude-val">Some</span>(t)))) =&gt; t,
                     other =&gt; UnexpectedPlanExprSnafu {
                         desc: <span class="macro">format!</span>(<span class="string">&quot;expect i64 literal as t, but found {:?}&quot;</span>, other),
                     }
@@ -2906,8 +2908,8 @@
                 ScalarFunc::Udf(PredictLinear::scalar_udf(t_expr))
             }
             <span class="string">&quot;holt_winters&quot; </span>=&gt; {
-                <span class="kw">let </span>sf_exp = <span class="kw">match </span>other_input_exprs.get(<span class="number">0</span>) {
-                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Float64(<span class="prelude-val">Some</span>(sf)))) =&gt; <span class="kw-2">*</span>sf,
+                <span class="kw">let </span>sf_exp = <span class="kw">match </span>other_input_exprs.pop_front() {
+                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Float64(<span class="prelude-val">Some</span>(sf)))) =&gt; sf,
                     other =&gt; UnexpectedPlanExprSnafu {
                         desc: <span class="macro">format!</span>(
                             <span class="string">&quot;expect f64 literal as smoothing factor, but found {:?}&quot;</span>,
@@ -2916,8 +2918,8 @@
                     }
                     .fail()<span class="question-mark">?</span>,
                 };
-                <span class="kw">let </span>tf_exp = <span class="kw">match </span>other_input_exprs.get(<span class="number">1</span>) {
-                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Float64(<span class="prelude-val">Some</span>(tf)))) =&gt; <span class="kw-2">*</span>tf,
+                <span class="kw">let </span>tf_exp = <span class="kw">match </span>other_input_exprs.pop_front() {
+                    <span class="prelude-val">Some</span>(DfExpr::Literal(ScalarValue::Float64(<span class="prelude-val">Some</span>(tf)))) =&gt; tf,
                     other =&gt; UnexpectedPlanExprSnafu {
                         desc: <span class="macro">format!</span>(<span class="string">&quot;expect f64 literal as trend factor, but found {:?}&quot;</span>, other),
                     }
@@ -2945,7 +2947,7 @@
                     other_input_exprs.insert(field_column_pos, col_expr);
                     <span class="kw">let </span>fn_expr = DfExpr::ScalarFunction(ScalarFunction {
                         fun,
-                        args: other_input_exprs.clone(),
+                        args: other_input_exprs.clone().into(),
                     });
                     exprs.push(fn_expr);
                     <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos);
@@ -2960,7 +2962,7 @@
                     other_input_exprs.insert(field_column_pos + <span class="number">1</span>, col_expr);
                     <span class="kw">let </span>fn_expr = DfExpr::ScalarUDF(ScalarUDF {
                         fun: Arc::new(fun),
-                        args: other_input_exprs.clone(),
+                        args: other_input_exprs.clone().into(),
                     });
                     exprs.push(fn_expr);
                     <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos + <span class="number">1</span>);
@@ -2978,7 +2980,7 @@
                         .insert(field_column_pos + <span class="number">2</span>, <span class="self">self</span>.create_time_index_column_expr()<span class="question-mark">?</span>);
                     <span class="kw">let </span>fn_expr = DfExpr::ScalarUDF(ScalarUDF {
                         fun: Arc::new(fun),
-                        args: other_input_exprs.clone(),
+                        args: other_input_exprs.clone().into(),
                     });
                     exprs.push(fn_expr);
                     <span class="kw">let _ </span>= other_input_exprs.remove(field_column_pos + <span class="number">2</span>);

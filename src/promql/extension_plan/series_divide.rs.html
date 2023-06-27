@@ -479,6 +479,17 @@
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -508,8 +519,8 @@
 <span class="kw">use </span>datafusion::physical_expr::PhysicalSortExpr;
 <span class="kw">use </span>datafusion::physical_plan::metrics::{BaselineMetrics, ExecutionPlanMetricsSet, MetricsSet};
 <span class="kw">use </span>datafusion::physical_plan::{
-    DisplayFormatType, ExecutionPlan, Partitioning, RecordBatchStream, SendableRecordBatchStream,
-    Statistics,
+    DisplayFormatType, Distribution, ExecutionPlan, Partitioning, RecordBatchStream,
+    SendableRecordBatchStream, Statistics,
 };
 <span class="kw">use </span>datatypes::arrow::compute;
 <span class="kw">use </span>futures::{ready, Stream, StreamExt};
@@ -610,10 +621,16 @@
     }
 
     <span class="kw">fn </span>output_partitioning(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Partitioning {
-        <span class="self">self</span>.input.output_partitioning()
+        Partitioning::UnknownPartitioning(<span class="number">1</span>)
     }
 
-    <span class="kw">fn </span>output_ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[PhysicalSortExpr]&gt; {
+    <span class="kw">fn </span>required_input_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Distribution&gt; {
+        <span class="macro">vec!</span>[Distribution::SinglePartition]
+    }
+
+    <span class="comment">// TODO(ruihang): specify required input ordering
+
+    </span><span class="kw">fn </span>output_ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[PhysicalSortExpr]&gt; {
         <span class="self">self</span>.input.output_ordering()
     }
 
@@ -710,7 +727,7 @@
         <span class="kw">loop </span>{
             <span class="kw">if let </span><span class="prelude-val">Some</span>(batch) = <span class="self">self</span>.buffer.clone() {
                 <span class="kw">let </span>same_length = <span class="self">self</span>.find_first_diff_row(<span class="kw-2">&amp;</span>batch) + <span class="number">1</span>;
-                <span class="kw">if </span>same_length == batch.num_rows() {
+                <span class="kw">if </span>same_length &gt;= batch.num_rows() {
                     <span class="kw">let </span>next_batch = <span class="kw">match </span><span class="macro">ready!</span>(<span class="self">self</span>.as_mut().fetch_next_batch(cx)) {
                         <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(batch)) =&gt; batch,
                         <span class="prelude-val">None </span>=&gt; {
@@ -758,6 +775,11 @@
     }
 
     <span class="kw">fn </span>find_first_diff_row(<span class="kw-2">&amp;</span><span class="self">self</span>, batch: <span class="kw-2">&amp;</span>RecordBatch) -&gt; usize {
+        <span class="comment">// fast path: no tag columns means all data belongs to the same series.
+        </span><span class="kw">if </span><span class="self">self</span>.tag_indices.is_empty() {
+            <span class="kw">return </span>batch.num_rows();
+        }
+
         <span class="kw">let </span>num_rows = batch.num_rows();
         <span class="kw">let </span><span class="kw-2">mut </span>result = num_rows;
 
