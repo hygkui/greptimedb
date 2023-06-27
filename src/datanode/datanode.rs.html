@@ -471,6 +471,24 @@
 <a href="#471" id="471">471</a>
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -487,10 +505,10 @@
 
 </span><span class="doccomment">//! Datanode configurations
 
-</span><span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::time::Duration;
+</span><span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
+<span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>meta_client::MetaClientOptions;
@@ -498,13 +516,15 @@
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>servers::http::HttpOptions;
 <span class="kw">use </span>servers::Mode;
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>storage::config::{
     EngineConfig <span class="kw">as </span>StorageEngineConfig, DEFAULT_AUTO_FLUSH_INTERVAL, DEFAULT_MAX_FLUSH_TASKS,
     DEFAULT_PICKER_SCHEDULE_INTERVAL, DEFAULT_REGION_WRITE_BUFFER_SIZE,
 };
 <span class="kw">use </span>storage::scheduler::SchedulerConfig;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="prelude-ty">Result</span>, ShutdownInstanceSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
 <span class="kw">use </span><span class="kw">crate</span>::instance::{Instance, InstanceRef};
 <span class="kw">use </span><span class="kw">crate</span>::server::Services;
 
@@ -813,6 +833,7 @@
     <span class="kw">pub </span>rpc_addr: String,
     <span class="kw">pub </span>rpc_hostname: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>rpc_runtime_size: usize,
+    <span class="kw">pub </span>heartbeat_interval_millis: u64,
     <span class="kw">pub </span>http_opts: HttpOptions,
     <span class="kw">pub </span>meta_client_options: <span class="prelude-ty">Option</span>&lt;MetaClientOptions&gt;,
     <span class="kw">pub </span>wal: WalConfig,
@@ -836,6 +857,7 @@
             storage: StorageConfig::default(),
             procedure: ProcedureConfig::default(),
             logging: LoggingOptions::default(),
+            heartbeat_interval_millis: <span class="number">5000</span>,
         }
     }
 }
@@ -851,11 +873,12 @@
     opts: DatanodeOptions,
     services: <span class="prelude-ty">Option</span>&lt;Services&gt;,
     instance: InstanceRef,
+    heartbeat_task: <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;,
 }
 
 <span class="kw">impl </span>Datanode {
     <span class="kw">pub async fn </span>new(opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Datanode&gt; {
-        <span class="kw">let </span>instance = Arc::new(Instance::with_opts(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>);
+        <span class="kw">let </span>(instance, heartbeat_task) = Instance::with_opts(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>services = <span class="kw">match </span>opts.mode {
             Mode::Distributed =&gt; <span class="prelude-val">Some</span>(Services::try_new(instance.clone(), <span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>),
             Mode::Standalone =&gt; <span class="prelude-val">None</span>,
@@ -864,6 +887,7 @@
             opts,
             services,
             instance,
+            heartbeat_task,
         })
     }
 
@@ -875,8 +899,12 @@
 
     <span class="doccomment">/// Start only the internal component of datanode.
     </span><span class="kw">pub async fn </span>start_instance(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.instance.start().<span class="kw">await
-    </span>}
+        <span class="kw">let _ </span>= <span class="self">self</span>.instance.start().<span class="kw">await</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
+            task.start().<span class="kw">await</span><span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
 
     <span class="doccomment">/// Start services of datanode. This method call will block until services are shutdown.
     </span><span class="kw">pub async fn </span>start_services(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -892,8 +920,16 @@
     }
 
     <span class="kw">pub async fn </span>shutdown_instance(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.instance.shutdown().<span class="kw">await
-    </span>}
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(heartbeat_task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
+            heartbeat_task
+                .close()
+                .<span class="kw">await
+                </span>.map_err(BoxedError::new)
+                .context(ShutdownInstanceSnafu)<span class="question-mark">?</span>;
+        }
+        <span class="kw">let _ </span>= <span class="self">self</span>.instance.shutdown().<span class="kw">await</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
 
     <span class="kw">async fn </span>shutdown_services(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(service) = <span class="self">self</span>.services.as_ref() {

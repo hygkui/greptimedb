@@ -298,6 +298,12 @@
 <a href="#298" id="298">298</a>
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -327,6 +333,7 @@
 <span class="kw">use </span>common_runtime::Builder <span class="kw">as </span>RuntimeBuilder;
 <span class="kw">use </span>common_test_util::temp_dir::create_temp_dir;
 <span class="kw">use </span>datanode::datanode::{DatanodeOptions, ObjectStoreConfig};
+<span class="kw">use </span>datanode::heartbeat::HeartbeatTask;
 <span class="kw">use </span>datanode::instance::Instance <span class="kw">as </span>DatanodeInstance;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
@@ -349,6 +356,7 @@
     _wal_guards: Vec&lt;WalGuard&gt;,
 
     <span class="kw">pub </span>datanode_instances: HashMap&lt;DatanodeId, Arc&lt;DatanodeInstance&gt;&gt;,
+    <span class="kw">pub </span>datanode_heartbeat_tasks: HashMap&lt;DatanodeId, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;&gt;,
     <span class="kw">pub </span>kv_store: KvStoreRef,
     <span class="kw">pub </span>meta_srv: MetaSrv,
     <span class="kw">pub </span>frontend: Arc&lt;FeInstance&gt;,
@@ -386,7 +394,7 @@
 
         <span class="kw">let </span>meta_srv = <span class="self">self</span>.build_metasrv().<span class="kw">await</span>;
 
-        <span class="kw">let </span>(datanode_instances, storage_guards, wal_guards) =
+        <span class="kw">let </span>(datanode_instances, heartbeat_tasks, storage_guards, wal_guards) =
             <span class="self">self</span>.build_datanodes(meta_srv.clone(), datanodes).<span class="kw">await</span>;
 
         <span class="kw">let </span>datanode_clients = build_datanode_clients(<span class="kw-2">&amp;</span>datanode_instances, datanodes).<span class="kw">await</span>;
@@ -403,6 +411,7 @@
             storage_guards,
             _wal_guards: wal_guards,
             datanode_instances,
+            datanode_heartbeat_tasks: heartbeat_tasks,
             kv_store: <span class="self">self</span>.kv_store.clone(),
             meta_srv: meta_srv.meta_srv,
             frontend,
@@ -419,10 +428,12 @@
         datanodes: u32,
     ) -&gt; (
         HashMap&lt;DatanodeId, Arc&lt;DatanodeInstance&gt;&gt;,
+        HashMap&lt;DatanodeId, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;&gt;,
         Vec&lt;StorageGuard&gt;,
         Vec&lt;WalGuard&gt;,
     ) {
         <span class="kw">let </span><span class="kw-2">mut </span>instances = HashMap::with_capacity(datanodes <span class="kw">as </span>usize);
+        <span class="kw">let </span><span class="kw-2">mut </span>heartbeat_tasks = HashMap::with_capacity(datanodes <span class="kw">as </span>usize);
         <span class="kw">let </span><span class="kw-2">mut </span>storage_guards = Vec::with_capacity(datanodes <span class="kw">as </span>usize);
         <span class="kw">let </span><span class="kw-2">mut </span>wal_guards = Vec::with_capacity(datanodes <span class="kw">as </span>usize);
 
@@ -451,9 +462,10 @@
 
             <span class="kw">let </span>dn_instance = <span class="self">self</span>.create_datanode(<span class="kw-2">&amp;</span>opts, meta_srv.clone()).<span class="kw">await</span>;
 
-            instances.insert(datanode_id, dn_instance.clone());
+            instances.insert(datanode_id, dn_instance.<span class="number">0</span>.clone());
+            heartbeat_tasks.insert(datanode_id, dn_instance.<span class="number">1</span>);
         }
-        (instances, storage_guards, wal_guards)
+        (instances, heartbeat_tasks, storage_guards, wal_guards)
     }
 
     <span class="kw">async fn </span>wait_datanodes_alive(<span class="kw-2">&amp;</span><span class="self">self</span>, expected_datanodes: u32) {
@@ -475,14 +487,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         opts: <span class="kw-2">&amp;</span>DatanodeOptions,
         meta_srv: MockInfo,
-    ) -&gt; Arc&lt;DatanodeInstance&gt; {
-        <span class="kw">let </span>instance = Arc::new(
-            DatanodeInstance::with_mock_meta_server(opts, meta_srv)
-                .<span class="kw">await
-                </span>.unwrap(),
-        );
+    ) -&gt; (Arc&lt;DatanodeInstance&gt;, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;) {
+        <span class="kw">let </span>(instance, heartbeat) = DatanodeInstance::with_mock_meta_server(opts, meta_srv)
+            .<span class="kw">await
+            </span>.unwrap();
         instance.start().<span class="kw">await</span>.unwrap();
-
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(heartbeat) = heartbeat.as_ref() {
+            heartbeat.start().<span class="kw">await</span>.unwrap();
+        }
         <span class="comment">// create another catalog and schema for testing
         </span>instance
             .catalog_manager()
@@ -492,7 +504,7 @@
             .create_catalog_and_schema(<span class="string">&quot;another_catalog&quot;</span>, <span class="string">&quot;another_schema&quot;</span>)
             .<span class="kw">await
             </span>.unwrap();
-        instance
+        (instance, heartbeat)
     }
 
     <span class="kw">async fn </span>build_frontend(

@@ -462,6 +462,27 @@
 <a href="#462" id="462">462</a>
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -512,7 +533,7 @@
 <span class="kw">use </span>storage::scheduler::{LocalScheduler, SchedulerConfig};
 <span class="kw">use </span>storage::EngineImpl;
 <span class="kw">use </span>store_api::logstore::LogStore;
-<span class="kw">use </span>table::engine::manager::MemoryTableEngineManager;
+<span class="kw">use </span>table::engine::manager::{MemoryTableEngineManager, TableEngineManagerRef};
 <span class="kw">use </span>table::engine::{TableEngine, TableEngineProcedureRef};
 <span class="kw">use </span>table::requests::FlushTableRequest;
 <span class="kw">use </span>table::table::numbers::NumbersTable;
@@ -542,14 +563,13 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) sql_handler: SqlHandler,
     <span class="kw">pub</span>(<span class="kw">crate</span>) catalog_manager: CatalogManagerRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) table_id_provider: <span class="prelude-ty">Option</span>&lt;TableIdProviderRef&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) heartbeat_task: <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;,
     procedure_manager: ProcedureManagerRef,
 }
 
 <span class="kw">pub type </span>InstanceRef = Arc&lt;Instance&gt;;
 
 <span class="kw">impl </span>Instance {
-    <span class="kw">pub async fn </span>with_opts(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub async fn </span>with_opts(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;(InstanceRef, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;)&gt; {
         <span class="kw">let </span>meta_client = <span class="kw">match </span>opts.mode {
             Mode::Standalone =&gt; <span class="prelude-val">None</span>,
             Mode::Distributed =&gt; {
@@ -569,11 +589,57 @@
         <span class="self">Self</span>::new(opts, meta_client, compaction_scheduler).<span class="kw">await
     </span>}
 
+    <span class="kw">fn </span>build_heartbeat_task(
+        opts: <span class="kw-2">&amp;</span>DatanodeOptions,
+        meta_client: <span class="prelude-ty">Option</span>&lt;Arc&lt;MetaClient&gt;&gt;,
+        catalog_manager: CatalogManagerRef,
+        engine_manager: TableEngineManagerRef,
+        region_alive_keepers: <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionAliveKeepers&gt;&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;&gt; {
+        <span class="prelude-val">Ok</span>(<span class="kw">match </span>opts.mode {
+            Mode::Standalone =&gt; <span class="prelude-val">None</span>,
+            Mode::Distributed =&gt; {
+                <span class="kw">let </span>node_id = opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>meta_client = meta_client.context(IncorrectInternalStateSnafu {
+                    state: <span class="string">&quot;meta client is not provided when building heartbeat task&quot;</span>,
+                })<span class="question-mark">?</span>;
+                <span class="kw">let </span>region_alive_keepers =
+                    region_alive_keepers.context(IncorrectInternalStateSnafu {
+                        state: <span class="string">&quot;region_alive_keepers is not provided when building heartbeat task&quot;</span>,
+                    })<span class="question-mark">?</span>;
+                <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
+                    Arc::new(ParseMailboxMessageHandler::default()),
+                    Arc::new(OpenRegionHandler::new(
+                        catalog_manager.clone(),
+                        engine_manager.clone(),
+                        region_alive_keepers.clone(),
+                    )),
+                    Arc::new(CloseRegionHandler::new(
+                        catalog_manager.clone(),
+                        engine_manager,
+                        region_alive_keepers.clone(),
+                    )),
+                    region_alive_keepers.clone(),
+                ]);
+
+                <span class="prelude-val">Some</span>(HeartbeatTask::new(
+                    node_id,
+                    opts,
+                    meta_client,
+                    catalog_manager,
+                    Arc::new(handlers_executor),
+                    opts.heartbeat_interval_millis,
+                    region_alive_keepers,
+                ))
+            }
+        })
+    }
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new(
         opts: <span class="kw-2">&amp;</span>DatanodeOptions,
         meta_client: <span class="prelude-ty">Option</span>&lt;Arc&lt;MetaClient&gt;&gt;,
         compaction_scheduler: CompactionSchedulerRef&lt;RaftEngineLogStore&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(InstanceRef, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;)&gt; {
         <span class="kw">let </span>object_store = store::new_object_store(<span class="kw-2">&amp;</span>opts.storage.store).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>log_store = Arc::new(create_log_store(<span class="kw-2">&amp;</span>opts.storage.store, <span class="kw-2">&amp;</span>opts.wal).<span class="kw">await</span><span class="question-mark">?</span>);
 
@@ -615,7 +681,7 @@
         );
 
         <span class="comment">// create remote catalog manager
-        </span><span class="kw">let </span>(catalog_manager, table_id_provider, heartbeat_task) = <span class="kw">match </span>opts.mode {
+        </span><span class="kw">let </span>(catalog_manager, table_id_provider, region_alive_keepers) = <span class="kw">match </span>opts.mode {
             Mode::Standalone =&gt; {
                 <span class="kw">if </span>opts.enable_memory_catalog {
                     <span class="kw">let </span>catalog = Arc::new(catalog::local::MemoryCatalogManager::default());
@@ -653,17 +719,15 @@
             }
 
             Mode::Distributed =&gt; {
-                <span class="kw">let </span>meta_client = meta_client.context(IncorrectInternalStateSnafu {
+                <span class="kw">let </span>meta_client = meta_client.clone().context(IncorrectInternalStateSnafu {
                     state: <span class="string">&quot;meta client is not provided when creating distributed Datanode&quot;</span>,
                 })<span class="question-mark">?</span>;
 
-                <span class="kw">let </span>kv_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
-
-                <span class="kw">let </span>heartbeat_interval_millis = <span class="number">5000</span>;
+                <span class="kw">let </span>kv_backend = Arc::new(CachedMetaKvBackend::new(meta_client));
 
                 <span class="kw">let </span>region_alive_keepers = Arc::new(RegionAliveKeepers::new(
                     engine_manager.clone(),
-                    heartbeat_interval_millis,
+                    opts.heartbeat_interval_millis,
                 ));
 
                 <span class="kw">let </span>catalog_manager = Arc::new(RemoteCatalogManager::new(
@@ -673,32 +737,11 @@
                     region_alive_keepers.clone(),
                 ));
 
-                <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
-                    Arc::new(ParseMailboxMessageHandler::default()),
-                    Arc::new(OpenRegionHandler::new(
-                        catalog_manager.clone(),
-                        engine_manager.clone(),
-                        region_alive_keepers.clone(),
-                    )),
-                    Arc::new(CloseRegionHandler::new(
-                        catalog_manager.clone(),
-                        engine_manager.clone(),
-                        region_alive_keepers.clone(),
-                    )),
-                    region_alive_keepers.clone(),
-                ]);
-
-                <span class="kw">let </span>heartbeat_task = <span class="prelude-val">Some</span>(HeartbeatTask::new(
-                    opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
-                    opts,
-                    meta_client,
-                    catalog_manager.clone(),
-                    Arc::new(handlers_executor),
-                    heartbeat_interval_millis,
-                    region_alive_keepers,
-                ));
-
-                (catalog_manager <span class="kw">as </span>CatalogManagerRef, <span class="prelude-val">None</span>, heartbeat_task)
+                (
+                    catalog_manager <span class="kw">as </span>CatalogManagerRef,
+                    <span class="prelude-val">None</span>,
+                    <span class="prelude-val">Some</span>(region_alive_keepers),
+                )
             }
         };
 
@@ -722,18 +765,27 @@
             <span class="kw-2">&amp;*</span>procedure_manager,
         );
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+        <span class="kw">let </span>instance = Arc::new(<span class="self">Self </span>{
             query_engine: query_engine.clone(),
             sql_handler: SqlHandler::new(
-                engine_manager,
+                engine_manager.clone(),
                 catalog_manager.clone(),
                 procedure_manager.clone(),
             ),
-            catalog_manager,
-            heartbeat_task,
+            catalog_manager: catalog_manager.clone(),
             table_id_provider,
             procedure_manager,
-        })
+        });
+
+        <span class="kw">let </span>heartbeat_task = Instance::build_heartbeat_task(
+            opts,
+            meta_client,
+            catalog_manager,
+            engine_manager,
+            region_alive_keepers,
+        )<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>((instance, heartbeat_task))
     }
 
     <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -741,9 +793,6 @@
             .start()
             .<span class="kw">await
             </span>.context(NewCatalogSnafu)<span class="question-mark">?</span>;
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
-            task.start().<span class="kw">await</span><span class="question-mark">?</span>;
-        }
 
         <span class="comment">// Recover procedures after the catalog manager is started, so we can
         // ensure we can access all tables from the catalog manager.
@@ -762,13 +811,6 @@
             .stop()
             .<span class="kw">await
             </span>.context(StopProcedureManagerSnafu)<span class="question-mark">?</span>;
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(heartbeat_task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
-            heartbeat_task
-                .close()
-                .<span class="kw">await
-                </span>.map_err(BoxedError::new)
-                .context(ShutdownInstanceSnafu)<span class="question-mark">?</span>;
-        }
 
         <span class="self">self</span>.flush_tables().<span class="kw">await</span><span class="question-mark">?</span>;
 
