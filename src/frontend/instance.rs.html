@@ -861,7 +861,6 @@
 <a href="#861" id="861">861</a>
 <a href="#862" id="862">862</a>
 <a href="#863" id="863">863</a>
-<a href="#864" id="864">864</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1575,7 +1574,7 @@
             ..Default::default()
         };
         <span class="comment">// If nullable is true, it doesn&#39;t matter whether the insert request has the column.
-        </span><span class="macro">assert!</span>(validate_insert_request(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>request).is_ok());
+        </span>validate_insert_request(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>request).unwrap();
 
         <span class="kw">let </span>schema = Schema::new(<span class="macro">vec!</span>[
             ColumnSchema::new(<span class="string">&quot;a&quot;</span>, ConcreteDataType::int32_datatype(), <span class="bool-val">false</span>)
@@ -1599,7 +1598,7 @@
         };
         <span class="comment">// If nullable is false, but the column is defined with default value,
         // it also doesn&#39;t matter whether the insert request has the column.
-        </span><span class="macro">assert!</span>(validate_insert_request(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>request).is_ok());
+        </span>validate_insert_request(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>request).unwrap();
 
         <span class="kw">let </span>request = InsertRequest {
             columns: <span class="macro">vec!</span>[Column {
@@ -1636,7 +1635,7 @@
         <span class="macro">assert_eq!</span>(stmts.len(), <span class="number">4</span>);
         <span class="kw">for </span>stmt <span class="kw">in </span>stmts {
             <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt, <span class="kw-2">&amp;</span>query_ctx);
-            <span class="macro">assert!</span>(re.is_ok());
+            re.unwrap();
         }
 
         <span class="kw">let </span>sql = <span class="string">r#&quot;
@@ -1647,13 +1646,13 @@
         <span class="macro">assert_eq!</span>(stmts.len(), <span class="number">2</span>);
         <span class="kw">for </span>stmt <span class="kw">in </span>stmts {
             <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt, <span class="kw-2">&amp;</span>query_ctx);
-            <span class="macro">assert!</span>(re.is_ok());
+            re.unwrap();
         }
 
         <span class="kw">let </span>sql = <span class="string">&quot;USE randomschema&quot;</span>;
         <span class="kw">let </span>stmts = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmts[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx);
-        <span class="macro">assert!</span>(re.is_ok());
+        re.unwrap();
 
         <span class="kw">fn </span>replace_test(template_sql: <span class="kw-2">&amp;</span>str, plugins: Arc&lt;Plugins&gt;, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef) {
             <span class="comment">// test right
@@ -1687,7 +1686,7 @@
             <span class="kw">let </span>stmt = <span class="kw-2">&amp;</span>parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap()[<span class="number">0</span>];
             <span class="kw">let </span>re = check_permission(plugins, stmt, query_ctx);
             <span class="kw">if </span>is_ok {
-                <span class="macro">assert!</span>(re.is_ok());
+                re.unwrap();
             } <span class="kw">else </span>{
                 <span class="macro">assert!</span>(re.is_err());
             }
@@ -1713,8 +1712,7 @@
         <span class="comment">// test show tables
         </span><span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES FROM public&quot;</span>;
         <span class="kw">let </span>stmt = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
-        <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx);
-        <span class="macro">assert!</span>(re.is_ok());
+        check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx).unwrap();
 
         <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES FROM wrongschema&quot;</span>;
         <span class="kw">let </span>stmt = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();

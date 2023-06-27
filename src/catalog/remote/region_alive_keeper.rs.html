@@ -1499,7 +1499,7 @@
         <span class="kw">let </span>region = <span class="number">1</span>;
         <span class="macro">assert!</span>(keeper.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await</span>.is_none());
         keeper.register_region(region).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(keeper.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await</span>.is_some());
+        <span class="kw">let _ </span>= keeper.find_handle(<span class="kw-2">&amp;</span>region).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>ten_seconds_later = || Instant::now() + Duration::from_secs(<span class="number">10</span>);
 
@@ -1542,7 +1542,7 @@
         <span class="kw">let </span>tx = handle.tx.clone();
 
         <span class="comment">// assert countdown task is running
-        </span><span class="macro">assert!</span>(tx.send(CountdownCommand::Start(<span class="number">5000</span>)).<span class="kw">await</span>.is_ok());
+        </span>tx.send(CountdownCommand::Start(<span class="number">5000</span>)).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!finished.load(Ordering::Relaxed));
 
         drop(handle);
@@ -1594,7 +1594,7 @@
         };
 
         <span class="kw">let </span>table_engine = Arc::new(MockTableEngine::default());
-        <span class="macro">assert!</span>(table_engine.create_table(ctx, request).<span class="kw">await</span>.is_ok());
+        <span class="kw">let _ </span>= table_engine.create_table(ctx, request).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>table_ident = TableIdent {
             catalog: catalog.to_string(),

@@ -867,8 +867,8 @@
 
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>new_meta.primary_key_indices[..]);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>], <span class="kw-2">&amp;</span>new_meta.value_indices[..]);
-        <span class="macro">assert!</span>(new_schema.column_schema_by_name(<span class="string">&quot;my_tag&quot;</span>).is_some());
-        <span class="macro">assert!</span>(new_schema.column_schema_by_name(<span class="string">&quot;my_field&quot;</span>).is_some());
+        <span class="kw">let _ </span>= new_schema.column_schema_by_name(<span class="string">&quot;my_tag&quot;</span>).unwrap();
+        <span class="kw">let _ </span>= new_schema.column_schema_by_name(<span class="string">&quot;my_field&quot;</span>).unwrap();
         <span class="macro">assert_eq!</span>(new_schema.version(), schema.version() + <span class="number">1</span>);
         <span class="macro">assert_eq!</span>(new_meta.next_column_id, old_meta.next_column_id + <span class="number">2</span>);
 
@@ -896,7 +896,7 @@
 
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">6</span>], <span class="kw-2">&amp;</span>new_meta.primary_key_indices[..]);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">7</span>], <span class="kw-2">&amp;</span>new_meta.value_indices[..]);
-        <span class="macro">assert!</span>(new_schema.column_schema_by_name(<span class="string">&quot;my_tag_first&quot;</span>).is_some());
+        <span class="kw">let _ </span>= new_schema.column_schema_by_name(<span class="string">&quot;my_tag_first&quot;</span>).unwrap();
         <span class="macro">assert!</span>(new_schema
             .column_schema_by_name(<span class="string">&quot;my_field_after_ts&quot;</span>)
             .is_some());

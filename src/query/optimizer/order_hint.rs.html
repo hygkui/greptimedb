@@ -317,7 +317,7 @@
             .unwrap();
 
         <span class="kw">let </span>context = OptimizerContext::default();
-        <span class="macro">assert!</span>(OrderHintRule.try_optimize(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>context).is_ok());
+        <span class="kw">let _ </span>= OrderHintRule.try_optimize(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>context).unwrap();
 
         <span class="comment">// should read the first (with `.sort(true, false)`) sort option
         </span><span class="kw">let </span>scan_req = adapter.get_scan_req();

@@ -471,7 +471,6 @@
 <a href="#471" id="471">471</a>
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -677,11 +676,10 @@
 
     <span class="kw">async fn </span>on_prepare&lt;<span class="lifetime">&#39;a</span>&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>,
-        query: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        raw_query: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
         w: StatementMetaWriter&lt;<span class="lifetime">&#39;a</span>, W&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>raw_query = query.clone();
-        <span class="kw">let </span>(query, param_num) = replace_placeholders(query);
+        <span class="kw">let </span>(query, param_num) = replace_placeholders(raw_query);
 
         <span class="kw">let </span>statement = validate_query(raw_query).<span class="kw">await</span><span class="question-mark">?</span>;
 

@@ -864,7 +864,7 @@
             table: Arc::new(NumbersTable::default()),
         };
 
-        <span class="macro">assert!</span>(catalog_list.register_table(register_request).<span class="kw">await</span>.is_ok());
+        <span class="kw">let _ </span>= catalog_list.register_table(register_request).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>table = catalog_list
             .table(
                 DEFAULT_CATALOG_NAME,
@@ -873,7 +873,7 @@
             )
             .<span class="kw">await
             </span>.unwrap();
-        <span class="macro">assert!</span>(table.is_some());
+        <span class="kw">let _ </span>= table.unwrap();
         <span class="macro">assert!</span>(catalog_list
             .table(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, <span class="string">&quot;not_exists&quot;</span>)
             .<span class="kw">await
@@ -913,7 +913,7 @@
             new_table_name: new_table_name.to_string(),
             table_id,
         };
-        <span class="macro">assert!</span>(catalog.rename_table(rename_request).<span class="kw">await</span>.is_ok());
+        <span class="kw">let _ </span>= catalog.rename_table(rename_request).<span class="kw">await</span>.unwrap();
 
         <span class="comment">// test old table name not exist
         </span><span class="macro">assert!</span>(!catalog
@@ -1015,7 +1015,7 @@
             table_id: <span class="number">2333</span>,
             table: Arc::new(NumbersTable::default()),
         };
-        <span class="macro">assert!</span>(catalog.register_table(register_table_req).<span class="kw">await</span>.is_ok());
+        <span class="kw">let _ </span>= catalog.register_table(register_table_req).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(catalog
             .table(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, table_name)
             .<span class="kw">await

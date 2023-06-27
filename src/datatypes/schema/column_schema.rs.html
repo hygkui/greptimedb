@@ -664,7 +664,7 @@
 
         <span class="kw">let </span>field = Field::try_from(<span class="kw-2">&amp;</span>column_schema).unwrap();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;v1&quot;</span>, field.metadata().get(<span class="string">&quot;k1&quot;</span>).unwrap());
-        <span class="macro">assert!</span>(field.metadata().get(DEFAULT_CONSTRAINT_KEY).is_some());
+        <span class="kw">let _ </span>= field.metadata().get(DEFAULT_CONSTRAINT_KEY).unwrap();
 
         <span class="kw">let </span>new_column_schema = ColumnSchema::try_from(<span class="kw-2">&amp;</span>field).unwrap();
         <span class="macro">assert_eq!</span>(column_schema, new_column_schema);

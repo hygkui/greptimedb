@@ -1035,8 +1035,8 @@
             handler,
         );
 
-        <span class="macro">assert!</span>(scheduler.schedule(MockRequest { region_id: <span class="number">1 </span>}).is_ok());
-        <span class="macro">assert!</span>(scheduler.schedule(MockRequest { region_id: <span class="number">2 </span>}).is_ok());
+        <span class="kw">let _ </span>= scheduler.schedule(MockRequest { region_id: <span class="number">1 </span>}).unwrap();
+        <span class="kw">let _ </span>= scheduler.schedule(MockRequest { region_id: <span class="number">2 </span>}).unwrap();
 
         tokio::time::timeout(Duration::from_secs(<span class="number">1</span>), latch.wait())
             .<span class="kw">await

@@ -1660,7 +1660,7 @@
         </span>manager.recover().<span class="kw">await</span>.unwrap();
 
         <span class="comment">// The manager should submit the root procedure.
-        </span><span class="macro">assert!</span>(manager.procedure_state(root_id).<span class="kw">await</span>.unwrap().is_some());
+        </span><span class="kw">let _ </span>= manager.procedure_state(root_id).<span class="kw">await</span>.unwrap().unwrap();
         <span class="comment">// Since the mocked root procedure actually doesn&#39;t submit subprocedures, so there is no
         // related state.
         </span><span class="macro">assert!</span>(manager.procedure_state(child_id).<span class="kw">await</span>.unwrap().is_none());

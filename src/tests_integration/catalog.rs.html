@@ -123,15 +123,15 @@
             engine: MITO_ENGINE.to_string(),
         };
 
-        <span class="kw">let </span>result = instance
+        instance
             .frontend()
             .catalog_manager()
             .register_system_table(RegisterSystemTableRequest {
                 create_table_request: request,
                 open_hook: <span class="prelude-val">None</span>,
             })
-            .<span class="kw">await</span>;
-        <span class="macro">assert!</span>(result.is_ok());
+            .<span class="kw">await
+            </span>.unwrap();
 
         <span class="macro">assert!</span>(
             instance

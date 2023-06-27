@@ -1120,7 +1120,7 @@
         <span class="kw">let </span>namespace = Namespace::with_id(<span class="number">42</span>);
         <span class="kw">for </span>id <span class="kw">in </span><span class="number">0</span>..<span class="number">4096 </span>{
             <span class="kw">let </span>entry = Entry::create(id, namespace.id(), [<span class="string">b&#39;x&#39;</span>; <span class="number">4096</span>].to_vec());
-            <span class="macro">assert!</span>(logstore.append(entry).<span class="kw">await</span>.is_ok());
+            <span class="kw">let _ </span>= logstore.append(entry).<span class="kw">await</span>.unwrap();
         }
 
         <span class="kw">let </span>before_purge = wal_dir_usage(dir.path().to_str().unwrap()).<span class="kw">await</span>;
@@ -1152,7 +1152,7 @@
         <span class="kw">let </span>namespace = Namespace::with_id(<span class="number">42</span>);
         <span class="kw">for </span>id <span class="kw">in </span><span class="number">0</span>..<span class="number">1024 </span>{
             <span class="kw">let </span>entry = Entry::create(id, namespace.id(), [<span class="string">b&#39;x&#39;</span>; <span class="number">4096</span>].to_vec());
-            <span class="macro">assert!</span>(logstore.append(entry).<span class="kw">await</span>.is_ok());
+            <span class="kw">let _ </span>= logstore.append(entry).<span class="kw">await</span>.unwrap();
         }
 
         logstore.obsolete(namespace.clone(), <span class="number">100</span>).<span class="kw">await</span>.unwrap();

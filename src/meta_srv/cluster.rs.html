@@ -312,7 +312,6 @@
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -582,7 +581,7 @@
 
         <span class="kw">let </span>kv_map = to_stat_kv_map(<span class="macro">vec!</span>[kv]).unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, kv_map.len());
-        <span class="macro">assert!</span>(kv_map.get(<span class="kw-2">&amp;</span>stat_key).is_some());
+        <span class="kw">let _ </span>= kv_map.get(<span class="kw-2">&amp;</span>stat_key).unwrap();
 
         <span class="kw">let </span>stat_val = kv_map.get(<span class="kw-2">&amp;</span>stat_key).unwrap();
         <span class="kw">let </span>stat = stat_val.stats.get(<span class="number">0</span>).unwrap();
@@ -599,8 +598,7 @@
             error: <span class="prelude-val">None</span>,
             ..Default::default()
         });
-        <span class="kw">let </span>result = check_resp_header(<span class="kw-2">&amp;</span>header, mock_ctx());
-        <span class="macro">assert!</span>(result.is_ok());
+        check_resp_header(<span class="kw-2">&amp;</span>header, mock_ctx()).unwrap();
 
         <span class="kw">let </span>result = check_resp_header(<span class="kw-2">&amp;</span><span class="prelude-val">None</span>, mock_ctx());
         <span class="macro">assert!</span>(result.is_err());

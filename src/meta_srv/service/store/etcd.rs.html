@@ -1608,7 +1608,7 @@
         <span class="kw">let </span>get: Get = req.try_into().unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_key&quot;</span>.to_vec(), get.key);
-        <span class="macro">assert!</span>(get.options.is_some());
+        <span class="kw">let _ </span>= get.options.unwrap();
     }
 
     <span class="attr">#[test]
@@ -1624,7 +1624,7 @@
 
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_key&quot;</span>.to_vec(), put.key);
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_value&quot;</span>.to_vec(), put.value);
-        <span class="macro">assert!</span>(put.options.is_some());
+        <span class="kw">let _ </span>= put.options.unwrap();
     }
 
     <span class="attr">#[test]
@@ -1657,7 +1657,7 @@
 
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_key&quot;</span>.to_vec(), batch_put.kvs.get(<span class="number">0</span>).unwrap().key);
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_value&quot;</span>.to_vec(), batch_put.kvs.get(<span class="number">0</span>).unwrap().value);
-        <span class="macro">assert!</span>(batch_put.options.is_some());
+        <span class="kw">let _ </span>= batch_put.options.unwrap();
     }
 
     <span class="attr">#[test]
@@ -1674,7 +1674,7 @@
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;k1&quot;</span>.to_vec(), batch_delete.keys.get(<span class="number">0</span>).unwrap().clone());
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;k2&quot;</span>.to_vec(), batch_delete.keys.get(<span class="number">1</span>).unwrap().clone());
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;k3&quot;</span>.to_vec(), batch_delete.keys.get(<span class="number">2</span>).unwrap().clone());
-        <span class="macro">assert!</span>(batch_delete.options.is_some());
+        <span class="kw">let _ </span>= batch_delete.options.unwrap();
     }
 
     <span class="attr">#[test]
@@ -1691,7 +1691,7 @@
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_key&quot;</span>.to_vec(), compare_and_put.key);
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_expect&quot;</span>.to_vec(), compare_and_put.expect);
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_value&quot;</span>.to_vec(), compare_and_put.value);
-        <span class="macro">assert!</span>(compare_and_put.put_options.is_some());
+        <span class="kw">let _ </span>= compare_and_put.put_options.unwrap();
     }
 
     <span class="attr">#[test]
@@ -1706,7 +1706,7 @@
         <span class="kw">let </span>delete: Delete = req.try_into().unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_key&quot;</span>.to_vec(), delete.key);
-        <span class="macro">assert!</span>(delete.options.is_some());
+        <span class="kw">let _ </span>= delete.options.unwrap();
     }
 
     <span class="attr">#[test]
@@ -1721,7 +1721,7 @@
 
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_from_key&quot;</span>.to_vec(), move_value.from_key);
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;test_to_key&quot;</span>.to_vec(), move_value.to_key);
-        <span class="macro">assert!</span>(move_value.delete_options.is_some());
+        <span class="kw">let _ </span>= move_value.delete_options.unwrap();
     }
 }
 </code></pre></div></section></main></body></html>

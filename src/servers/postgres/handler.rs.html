@@ -1275,7 +1275,7 @@
         ];
         <span class="kw">let </span><span class="kw-2">mut </span>builder = DataRowEncoder::new(Arc::new(schema));
         <span class="kw">for </span>i <span class="kw">in </span>values.iter() {
-            <span class="macro">assert!</span>(encode_value(i, <span class="kw-2">&amp;mut </span>builder).is_ok());
+            encode_value(i, <span class="kw-2">&amp;mut </span>builder).unwrap();
         }
 
         <span class="kw">let </span>err = encode_value(

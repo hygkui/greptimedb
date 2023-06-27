@@ -1192,7 +1192,7 @@
 
         <span class="kw">let </span>res = mgr.build_endpoint(<span class="string">&quot;test_addr&quot;</span>);
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -1201,7 +1201,7 @@
 
         <span class="kw">let </span>addr = <span class="string">&quot;test_addr&quot;</span>;
         <span class="kw">let </span>res = mgr.get(addr);
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
 
         mgr.retain_channel(|addr, channel| {
             <span class="macro">assert_eq!</span>(<span class="string">&quot;test_addr&quot;</span>, addr);
@@ -1219,7 +1219,7 @@
             }),
         );
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
 
         mgr.retain_channel(|addr, channel| {
             <span class="macro">assert_eq!</span>(<span class="string">&quot;test_addr&quot;</span>, addr);

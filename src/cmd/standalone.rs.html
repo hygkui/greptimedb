@@ -569,9 +569,6 @@
 <a href="#569" id="569">569</a>
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -930,18 +927,15 @@
         };
 
         <span class="kw">let </span>plugins = load_frontend_plugins(<span class="kw-2">&amp;</span>command.user_provider);
-        <span class="macro">assert!</span>(plugins.is_ok());
         <span class="kw">let </span>plugins = plugins.unwrap();
-        <span class="kw">let </span>provider = plugins.get::&lt;UserProviderRef&gt;();
-        <span class="macro">assert!</span>(provider.is_some());
-        <span class="kw">let </span>provider = provider.unwrap();
+        <span class="kw">let </span>provider = plugins.get::&lt;UserProviderRef&gt;().unwrap();
         <span class="kw">let </span>result = provider
             .authenticate(
                 Identity::UserId(<span class="string">&quot;test&quot;</span>, <span class="prelude-val">None</span>),
                 Password::PlainText(<span class="string">&quot;test&quot;</span>.to_string().into()),
             )
             .<span class="kw">await</span>;
-        <span class="macro">assert!</span>(result.is_ok());
+        <span class="kw">let _ </span>= result.unwrap();
     }
 
     <span class="attr">#[test]

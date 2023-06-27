@@ -955,7 +955,7 @@
         table_id: table.table_info().ident.table_id,
         table,
     };
-    <span class="macro">assert!</span>(catalog_manager.register_table(req).<span class="kw">await</span>.is_ok());
+    <span class="kw">let _ </span>= catalog_manager.register_table(req).<span class="kw">await</span>.unwrap();
     <span class="prelude-val">Ok</span>(())
 }
 

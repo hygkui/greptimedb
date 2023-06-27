@@ -311,17 +311,19 @@
         <span class="kw">let </span>kv_store = Arc::new(MemStore::default());
         <span class="kw">let </span>service = DefaultMetadataService::new(kv_store.clone());
 
-        <span class="kw">let </span>result = service.create_schema(<span class="string">&quot;catalog&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="bool-val">false</span>).<span class="kw">await</span>;
-
-        <span class="macro">assert!</span>(result.is_ok());
+        service
+            .create_schema(<span class="string">&quot;catalog&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="bool-val">false</span>)
+            .<span class="kw">await
+            </span>.unwrap();
         verify_result(kv_store.clone()).<span class="kw">await</span>;
 
         <span class="kw">let </span>result = service.create_schema(<span class="string">&quot;catalog&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="bool-val">false</span>).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_err());
 
-        <span class="kw">let </span>result = service.create_schema(<span class="string">&quot;catalog&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="bool-val">true</span>).<span class="kw">await</span>;
-
-        <span class="macro">assert!</span>(result.is_ok());
+        service
+            .create_schema(<span class="string">&quot;catalog&quot;</span>, <span class="string">&quot;public&quot;</span>, <span class="bool-val">true</span>)
+            .<span class="kw">await
+            </span>.unwrap();
         verify_result(kv_store.clone()).<span class="kw">await</span>;
     }
 
@@ -334,7 +336,6 @@
 
         <span class="kw">let </span>result = kv_store.get(key.clone()).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert!</span>(result.is_some());
         <span class="kw">let </span>kv = result.unwrap();
 
         <span class="macro">assert_eq!</span>(key, kv.key);
@@ -348,7 +349,6 @@
 
         <span class="kw">let </span>result = kv_store.get(key.clone()).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert!</span>(result.is_some());
         <span class="kw">let </span>kv = result.unwrap();
 
         <span class="macro">assert_eq!</span>(key, kv.key);

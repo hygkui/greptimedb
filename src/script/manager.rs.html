@@ -412,11 +412,11 @@ def test(n):
 
         <span class="comment">// try to find and compile
         </span><span class="kw">let </span>script = mgr.try_find_script_and_compile(schema, name).<span class="kw">await</span>.unwrap();
-        <span class="macro">assert!</span>(script.is_some());
+        <span class="kw">let _ </span>= script.unwrap();
 
         {
             <span class="kw">let </span>cached = mgr.compiled.read().unwrap();
-            <span class="macro">assert!</span>(cached.get(name).is_some());
+            <span class="kw">let _ </span>= cached.get(name).unwrap();
         }
     }
 }

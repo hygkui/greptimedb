@@ -946,7 +946,6 @@
 <a href="#946" id="946">946</a>
 <a href="#947" id="947">947</a>
 <a href="#948" id="948">948</a>
-<a href="#949" id="949">949</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1370,7 +1369,7 @@
                     .with_value(<span class="macro">format!</span>(<span class="string">&quot;{}-{}&quot;</span>, <span class="string">&quot;value&quot;</span>, i).into_bytes())
                     .with_prev_kv();
                 <span class="kw">let </span>res = <span class="self">self</span>.client.put(req).<span class="kw">await</span>;
-                <span class="macro">assert!</span>(res.is_ok());
+                <span class="kw">let _ </span>= res.unwrap();
             }
         }
 
@@ -1378,7 +1377,7 @@
             <span class="kw">let </span>req =
                 DeleteRangeRequest::new().with_prefix(<span class="macro">format!</span>(<span class="string">&quot;{}-{}&quot;</span>, TEST_KEY_PREFIX, <span class="self">self</span>.ns));
             <span class="kw">let </span>res = <span class="self">self</span>.client.delete_range(req).<span class="kw">await</span>;
-            <span class="macro">assert!</span>(res.is_ok());
+            <span class="kw">let _ </span>= res.unwrap();
         }
     }
 
@@ -1395,7 +1394,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Datanode)
             .enable_heartbeat()
             .build();
-        <span class="macro">assert!</span>(meta_client.heartbeat_client().is_ok());
+        <span class="kw">let _ </span>= meta_client.heartbeat_client().unwrap();
         <span class="macro">assert!</span>(meta_client.router_client().is_err());
         <span class="macro">assert!</span>(meta_client.store_client().is_err());
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
@@ -1405,7 +1404,7 @@
             .enable_router()
             .build();
         <span class="macro">assert!</span>(meta_client.heartbeat_client().is_err());
-        <span class="macro">assert!</span>(meta_client.router_client().is_ok());
+        <span class="kw">let _ </span>= meta_client.router_client().unwrap();
         <span class="macro">assert!</span>(meta_client.store_client().is_err());
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(meta_client.router_client().unwrap().is_started().<span class="kw">await</span>);
@@ -1415,7 +1414,7 @@
             .build();
         <span class="macro">assert!</span>(meta_client.heartbeat_client().is_err());
         <span class="macro">assert!</span>(meta_client.router_client().is_err());
-        <span class="macro">assert!</span>(meta_client.store_client().is_ok());
+        <span class="kw">let _ </span>= meta_client.store_client().unwrap();
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(meta_client.store_client().unwrap().is_started().<span class="kw">await</span>);
 
@@ -1426,9 +1425,9 @@
             .build();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, meta_client.id().<span class="number">0</span>);
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, meta_client.id().<span class="number">1</span>);
-        <span class="macro">assert!</span>(meta_client.heartbeat_client().is_ok());
-        <span class="macro">assert!</span>(meta_client.router_client().is_ok());
-        <span class="macro">assert!</span>(meta_client.store_client().is_ok());
+        <span class="kw">let _ </span>= meta_client.heartbeat_client().unwrap();
+        <span class="kw">let _ </span>= meta_client.router_client().unwrap();
+        <span class="kw">let _ </span>= meta_client.store_client().unwrap();
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(meta_client.heartbeat_client().unwrap().is_started().<span class="kw">await</span>);
         <span class="macro">assert!</span>(meta_client.router_client().unwrap().is_started().<span class="kw">await</span>);
@@ -1517,8 +1516,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_ask_leader() {
         <span class="kw">let </span>tc = new_client(<span class="string">&quot;test_ask_leader&quot;</span>).<span class="kw">await</span>;
-        <span class="kw">let </span>res = tc.client.ask_leader().<span class="kw">await</span>;
-        <span class="macro">assert!</span>(res.is_ok());
+        tc.client.ask_leader().<span class="kw">await</span>.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -1599,7 +1597,7 @@
 
         <span class="kw">let </span>req = DeleteRequest::new(table_name.clone());
         <span class="kw">let </span>res = client.delete_route(req).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]

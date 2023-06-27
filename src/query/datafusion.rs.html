@@ -962,7 +962,7 @@
             table_id: NUMBERS_TABLE_ID,
             table: Arc::new(NumbersTable::default()),
         };
-        <span class="macro">assert!</span>(catalog_manager.register_table(req).<span class="kw">await</span>.is_ok());
+        <span class="kw">let _ </span>= catalog_manager.register_table(req).<span class="kw">await</span>.unwrap();
 
         QueryEngineFactory::new(catalog_manager, <span class="bool-val">false</span>).query_engine()
     }

@@ -194,7 +194,7 @@
         <span class="macro">assert!</span>(registry.get_function(<span class="string">&quot;test_and&quot;</span>).is_none());
         <span class="macro">assert!</span>(registry.functions().is_empty());
         registry.register(func);
-        <span class="macro">assert!</span>(registry.get_function(<span class="string">&quot;test_and&quot;</span>).is_some());
+        <span class="kw">let _ </span>= registry.get_function(<span class="string">&quot;test_and&quot;</span>).unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, registry.functions().len());
     }
 }

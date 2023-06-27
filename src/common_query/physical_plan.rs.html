@@ -754,7 +754,7 @@
             Arc::new(Schema::try_from(df_schema.clone()).unwrap()),
             Arc::new(EmptyExec::new(<span class="bool-val">true</span>, df_schema.clone())),
         );
-        <span class="macro">assert!</span>(plan.df_plan.as_any().downcast_ref::&lt;EmptyExec&gt;().is_some());
+        <span class="kw">let _ </span>= plan.df_plan.as_any().downcast_ref::&lt;EmptyExec&gt;().unwrap();
 
         <span class="kw">let </span>df_plan = DfPhysicalPlanAdapter(Arc::new(plan));
         <span class="macro">assert_eq!</span>(df_schema, df_plan.schema());

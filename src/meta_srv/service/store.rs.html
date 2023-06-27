@@ -323,7 +323,7 @@
         <span class="kw">let </span>req = RangeRequest::default();
         <span class="kw">let </span>res = meta_srv.range(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -333,7 +333,7 @@
         <span class="kw">let </span>req = PutRequest::default();
         <span class="kw">let </span>res = meta_srv.put(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -343,7 +343,7 @@
         <span class="kw">let </span>req = BatchGetRequest::default();
         <span class="kw">let </span>res = meta_srv.batch_get(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -353,7 +353,7 @@
         <span class="kw">let </span>req = BatchPutRequest::default();
         <span class="kw">let </span>res = meta_srv.batch_put(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -363,7 +363,7 @@
         <span class="kw">let </span>req = BatchDeleteRequest::default();
         <span class="kw">let </span>res = meta_srv.batch_delete(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -373,7 +373,7 @@
         <span class="kw">let </span>req = CompareAndPutRequest::default();
         <span class="kw">let </span>res = meta_srv.compare_and_put(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -383,7 +383,7 @@
         <span class="kw">let </span>req = DeleteRangeRequest::default();
         <span class="kw">let </span>res = meta_srv.delete_range(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 
     <span class="attr">#[tokio::test]
@@ -393,7 +393,7 @@
         <span class="kw">let </span>req = MoveValueRequest::default();
         <span class="kw">let </span>res = meta_srv.move_value(req.into_request()).<span class="kw">await</span>;
 
-        <span class="macro">assert!</span>(res.is_ok());
+        <span class="kw">let _ </span>= res.unwrap();
     }
 }
 </code></pre></div></section></main></body></html>

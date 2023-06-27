@@ -1308,9 +1308,9 @@
         <span class="macro">assert_eq!</span>(<span class="number">3</span>, v);
 
         <span class="comment">//delete (,4) logs and keep checkpoint 3.
-        </span><span class="macro">assert!</span>(log_store.delete_until(<span class="number">4</span>, <span class="bool-val">true</span>).<span class="kw">await</span>.is_ok());
-        <span class="macro">assert!</span>(log_store.load_checkpoint(<span class="number">3</span>).<span class="kw">await</span>.unwrap().is_some());
-        <span class="macro">assert!</span>(log_store.load_last_checkpoint().<span class="kw">await</span>.unwrap().is_some());
+        </span><span class="kw">let _ </span>= log_store.delete_until(<span class="number">4</span>, <span class="bool-val">true</span>).<span class="kw">await</span>.unwrap();
+        <span class="kw">let _ </span>= log_store.load_checkpoint(<span class="number">3</span>).<span class="kw">await</span>.unwrap().unwrap();
+        <span class="kw">let _ </span>= log_store.load_last_checkpoint().<span class="kw">await</span>.unwrap().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>it = log_store.scan(<span class="number">0</span>, <span class="number">11</span>).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>(version, bytes) = it.next_log().<span class="kw">await</span>.unwrap().unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">4</span>, version);
@@ -1318,7 +1318,7 @@
         <span class="macro">assert!</span>(it.next_log().<span class="kw">await</span>.unwrap().is_none());
 
         <span class="comment">// delete all logs and checkpoints
-        </span><span class="macro">assert!</span>(log_store.delete_until(<span class="number">11</span>, <span class="bool-val">false</span>).<span class="kw">await</span>.is_ok());
+        </span><span class="kw">let _ </span>= log_store.delete_until(<span class="number">11</span>, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(log_store.load_checkpoint(<span class="number">3</span>).<span class="kw">await</span>.unwrap().is_none());
         <span class="macro">assert!</span>(log_store.load_last_checkpoint().<span class="kw">await</span>.unwrap().is_none());
         <span class="kw">let </span><span class="kw-2">mut </span>it = log_store.scan(<span class="number">0</span>, <span class="number">11</span>).<span class="kw">await</span>.unwrap();
