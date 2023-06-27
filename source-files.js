@@ -1,7 +1,7 @@
 var sourcesIndex = JSON.parse('{\
 "api":["",[["v1",[],["column_def.rs"]]],["error.rs","helper.rs","lib.rs","v1.rs"]],\
 "catalog":["",[["information_schema",[],["columns.rs","tables.rs"]],["local",[],["manager.rs","memory.rs"]],["remote",[],["client.rs","manager.rs","mock.rs","region_alive_keeper.rs"]]],["error.rs","helper.rs","information_schema.rs","lib.rs","local.rs","metrics.rs","remote.rs","system.rs","table_source.rs","tables.rs"]],\
-"client":["",[],["client.rs","client_manager.rs","database.rs","error.rs","lib.rs","load_balance.rs","metrics.rs"]],\
+"client":["",[],["client.rs","client_manager.rs","database.rs","error.rs","lib.rs","load_balance.rs","metrics.rs","stream_insert.rs"]],\
 "cmd":["",[["cli",[],["cmd.rs","helper.rs","repl.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","options.rs","standalone.rs"]],\
 "common_base":["",[],["bit_vec.rs","buffer.rs","bytes.rs","lib.rs","paths.rs","readable_size.rs"]],\
 "common_catalog":["",[],["consts.rs","error.rs","lib.rs"]],\
