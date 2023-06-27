@@ -483,6 +483,17 @@
 <a href="#483" id="483">483</a>
 <a href="#484" id="484">484</a>
 <a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -507,6 +518,7 @@
 <span class="kw">use </span>catalog::remote::{CachedMetaKvBackend, RemoteCatalogManager};
 <span class="kw">use </span>catalog::{CatalogManager, CatalogManagerRef, RegisterTableRequest};
 <span class="kw">use </span>common_base::paths::{CLUSTER_DIR, WAL_DIR};
+<span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MIN_USER_TABLE_ID};
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
@@ -569,7 +581,10 @@
 <span class="kw">pub type </span>InstanceRef = Arc&lt;Instance&gt;;
 
 <span class="kw">impl </span>Instance {
-    <span class="kw">pub async fn </span>with_opts(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;(InstanceRef, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;)&gt; {
+    <span class="kw">pub async fn </span>with_opts(
+        opts: <span class="kw-2">&amp;</span>DatanodeOptions,
+        plugins: Arc&lt;Plugins&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(InstanceRef, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;)&gt; {
         <span class="kw">let </span>meta_client = <span class="kw">match </span>opts.mode {
             Mode::Standalone =&gt; <span class="prelude-val">None</span>,
             Mode::Distributed =&gt; {
@@ -586,7 +601,7 @@
 
         <span class="kw">let </span>compaction_scheduler = create_compaction_scheduler(opts);
 
-        <span class="self">Self</span>::new(opts, meta_client, compaction_scheduler).<span class="kw">await
+        <span class="self">Self</span>::new(opts, meta_client, compaction_scheduler, plugins).<span class="kw">await
     </span>}
 
     <span class="kw">fn </span>build_heartbeat_task(
@@ -639,6 +654,7 @@
         opts: <span class="kw-2">&amp;</span>DatanodeOptions,
         meta_client: <span class="prelude-ty">Option</span>&lt;Arc&lt;MetaClient&gt;&gt;,
         compaction_scheduler: CompactionSchedulerRef&lt;RaftEngineLogStore&gt;,
+        plugins: Arc&lt;Plugins&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(InstanceRef, <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;)&gt; {
         <span class="kw">let </span>object_store = store::new_object_store(<span class="kw-2">&amp;</span>opts.storage.store).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>log_store = Arc::new(create_log_store(<span class="kw-2">&amp;</span>opts.storage.store, <span class="kw-2">&amp;</span>opts.wal).<span class="kw">await</span><span class="question-mark">?</span>);
@@ -746,7 +762,13 @@
         };
 
         catalog_manager.start().<span class="kw">await</span>.context(CatalogSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_manager.clone(), <span class="bool-val">false</span>);
+        <span class="kw">let </span>factory = QueryEngineFactory::new_with_plugins(
+            catalog_manager.clone(),
+            <span class="bool-val">false</span>,
+            <span class="prelude-val">None</span>,
+            <span class="prelude-val">None</span>,
+            plugins,
+        );
         <span class="kw">let </span>query_engine = factory.query_engine();
 
         <span class="kw">let </span>procedure_manager =

@@ -532,6 +532,19 @@
 <a href="#532" id="532">532</a>
 <a href="#533" id="533">533</a>
 <a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -556,6 +569,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_function::scalars::aggregate::AggregateFunctionMetaRef;
 <span class="kw">use </span>common_function::scalars::udf::create_udf;
@@ -587,6 +601,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::logical_optimizer::LogicalOptimizer;
 <span class="kw">use </span><span class="kw">crate</span>::physical_optimizer::PhysicalOptimizer;
 <span class="kw">use </span><span class="kw">crate</span>::physical_planner::PhysicalPlanner;
+<span class="kw">use </span><span class="kw">crate</span>::physical_wrapper::PhysicalPlanWrapperRef;
 <span class="kw">use </span><span class="kw">crate</span>::plan::LogicalPlan;
 <span class="kw">use </span><span class="kw">crate</span>::planner::{DfLogicalPlanner, LogicalPlanner};
 <span class="kw">use </span><span class="kw">crate</span>::query_engine::{DescribeResult, QueryEngineContext, QueryEngineState};
@@ -594,19 +609,30 @@
 
 <span class="kw">pub struct </span>DatafusionQueryEngine {
     state: Arc&lt;QueryEngineState&gt;,
+    plugins: Arc&lt;Plugins&gt;,
 }
 
 <span class="kw">impl </span>DatafusionQueryEngine {
-    <span class="kw">pub fn </span>new(state: Arc&lt;QueryEngineState&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ state }
+    <span class="kw">pub fn </span>new(state: Arc&lt;QueryEngineState&gt;, plugins: Arc&lt;Plugins&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ state, plugins }
     }
 
-    <span class="kw">async fn </span>exec_query_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: LogicalPlan) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">async fn </span>exec_query_plan(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        plan: LogicalPlan,
+        query_ctx: QueryContextRef,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>ctx = QueryEngineContext::new(<span class="self">self</span>.state.session_state());
 
         <span class="comment">// `create_physical_plan` will optimize logical plan internally
         </span><span class="kw">let </span>physical_plan = <span class="self">self</span>.create_physical_plan(<span class="kw-2">&amp;mut </span>ctx, <span class="kw-2">&amp;</span>plan).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>physical_plan = <span class="self">self</span>.optimize_physical_plan(<span class="kw-2">&amp;mut </span>ctx, physical_plan)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>physical_plan = <span class="kw">if let </span><span class="prelude-val">Some</span>(wrapper) = <span class="self">self</span>.plugins.get::&lt;PhysicalPlanWrapperRef&gt;() {
+            wrapper.wrap(physical_plan, query_ctx)
+        } <span class="kw">else </span>{
+            physical_plan
+        };
 
         <span class="prelude-val">Ok</span>(Output::Stream(<span class="self">self</span>.execute_stream(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>physical_plan)<span class="question-mark">?</span>))
     }
@@ -629,7 +655,7 @@
         <span class="kw">let </span>table = <span class="self">self</span>.find_table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>output = <span class="self">self
-            </span>.exec_query_plan(LogicalPlan::DfPlan((<span class="kw-2">*</span>dml.input).clone()))
+            </span>.exec_query_plan(LogicalPlan::DfPlan((<span class="kw-2">*</span>dml.input).clone()), query_ctx)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>stream = <span class="kw">match </span>output {
             Output::RecordBatches(batches) =&gt; batches.as_stream(),
@@ -750,7 +776,7 @@
             LogicalPlan::DfPlan(DfLogicalPlan::Dml(dml)) =&gt; {
                 <span class="self">self</span>.exec_dml_statement(dml, query_ctx).<span class="kw">await
             </span>}
-            <span class="kw">_ </span>=&gt; <span class="self">self</span>.exec_query_plan(plan).<span class="kw">await</span>,
+            <span class="kw">_ </span>=&gt; <span class="self">self</span>.exec_query_plan(plan, query_ctx).<span class="kw">await</span>,
         }
     }
 
