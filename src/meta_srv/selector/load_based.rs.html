@@ -209,8 +209,6 @@
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -228,7 +226,6 @@
 </span><span class="kw">use </span>api::v1::meta::Peer;
 <span class="kw">use </span>common_telemetry::warn;
 
-<span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClient;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::node_stat::RegionStat;
 <span class="kw">use </span><span class="kw">crate</span>::keys::{LeaseKey, LeaseValue, StatKey, StatValue};
@@ -238,9 +235,7 @@
 
 <span class="kw">const </span>MAX_REGION_NUMBER: u64 = u64::MAX;
 
-<span class="kw">pub struct </span>LoadBasedSelector {
-    <span class="kw">pub </span>meta_peer_client: MetaPeerClient,
-}
+<span class="kw">pub struct </span>LoadBasedSelector;
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>Selector <span class="kw">for </span>LoadBasedSelector {
@@ -249,13 +244,14 @@
 
     <span class="kw">async fn </span>select(<span class="kw-2">&amp;</span><span class="self">self</span>, ns: Namespace, ctx: <span class="kw-2">&amp;</span><span class="self">Self</span>::Context) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
         <span class="comment">// get alive datanodes
-        </span><span class="kw">let </span>lease_kvs = lease::alive_datanodes(ns, <span class="kw-2">&amp;</span>ctx.kv_store, ctx.datanode_lease_secs).<span class="kw">await</span><span class="question-mark">?</span>;
+        </span><span class="kw">let </span>lease_kvs =
+            lease::alive_datanodes(ns, <span class="kw-2">&amp;</span>ctx.meta_peer_client, ctx.datanode_lease_secs).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">if </span>lease_kvs.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]);
         }
 
         <span class="kw">let </span>stat_keys: Vec&lt;StatKey&gt; = lease_kvs.keys().map(|k| k.into()).collect();
-        <span class="kw">let </span>stat_kvs = <span class="self">self</span>.meta_peer_client.get_dn_stat_kvs(stat_keys).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>stat_kvs = ctx.meta_peer_client.get_dn_stat_kvs(stat_keys).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>tuples: Vec&lt;(LeaseKey, LeaseValue, u64)&gt; = lease_kvs
             .into_iter()

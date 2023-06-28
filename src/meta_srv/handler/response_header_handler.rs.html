@@ -93,6 +93,15 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -148,6 +157,7 @@
     <span class="kw">use </span>api::v1::meta::{HeartbeatResponse, RequestHeader};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClientBuilder;
     <span class="kw">use </span><span class="kw">crate</span>::handler::{Context, HeartbeatMailbox, Pushers};
     <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
@@ -158,10 +168,18 @@
         <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
         <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_store.clone());
         <span class="kw">let </span>mailbox = HeartbeatMailbox::create(Pushers::default(), seq);
+        <span class="kw">let </span>meta_peer_client = MetaPeerClientBuilder::default()
+            .election(<span class="prelude-val">None</span>)
+            .in_memory(in_memory.clone())
+            .build()
+            .map(Arc::new)
+            <span class="comment">// Safety: all required fields set at initialization
+            </span>.unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>ctx = Context {
             server_addr: <span class="string">&quot;127.0.0.1:0000&quot;</span>.to_string(),
             in_memory,
             kv_store,
+            meta_peer_client,
             mailbox,
             election: <span class="prelude-val">None</span>,
             skip_all: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),

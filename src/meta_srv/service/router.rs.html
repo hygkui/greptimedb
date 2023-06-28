@@ -459,6 +459,7 @@
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
 <a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -545,6 +546,7 @@
             datanode_lease_secs: <span class="self">self</span>.options().datanode_lease_secs,
             server_addr: <span class="self">self</span>.options().server_addr.clone(),
             kv_store: <span class="self">self</span>.kv_store(),
+            meta_peer_client: <span class="self">self</span>.meta_peer_client(),
             catalog: <span class="prelude-val">Some</span>(table_name.catalog_name.clone()),
             schema: <span class="prelude-val">Some</span>(table_name.schema_name.clone()),
             table: <span class="prelude-val">Some</span>(table_name.table_name.clone()),

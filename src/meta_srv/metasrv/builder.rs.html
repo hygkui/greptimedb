@@ -226,6 +226,10 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -245,7 +249,7 @@
 
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 
-<span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClient;
+<span class="kw">use </span><span class="kw">crate</span>::cluster::{MetaPeerClientBuilder, MetaPeerClientRef};
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::mailbox_handler::MailboxHandler;
 <span class="kw">use </span><span class="kw">crate</span>::handler::region_lease_handler::RegionLeaseHandler;
@@ -275,7 +279,7 @@
     selector: <span class="prelude-ty">Option</span>&lt;SelectorRef&gt;,
     handler_group: <span class="prelude-ty">Option</span>&lt;HeartbeatHandlerGroup&gt;,
     election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
-    meta_peer_client: <span class="prelude-ty">Option</span>&lt;MetaPeerClient&gt;,
+    meta_peer_client: <span class="prelude-ty">Option</span>&lt;MetaPeerClientRef&gt;,
     lock: <span class="prelude-ty">Option</span>&lt;DistLockRef&gt;,
     metadata_service: <span class="prelude-ty">Option</span>&lt;MetadataServiceRef&gt;,
 }
@@ -320,7 +324,7 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>meta_peer_client(<span class="kw-2">mut </span><span class="self">self</span>, meta_peer_client: MetaPeerClient) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>meta_peer_client(<span class="kw-2">mut </span><span class="self">self</span>, meta_peer_client: MetaPeerClientRef) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.meta_peer_client = <span class="prelude-val">Some</span>(meta_peer_client);
         <span class="self">self
     </span>}
@@ -358,18 +362,22 @@
         <span class="kw">let </span>options = options.unwrap_or_default();
 
         <span class="kw">let </span>kv_store = kv_store.unwrap_or_else(|| Arc::new(MemStore::default()));
-
         <span class="kw">let </span>in_memory = in_memory.unwrap_or_else(|| Arc::new(MemStore::default()));
-
+        <span class="kw">let </span>meta_peer_client = meta_peer_client.unwrap_or_else(|| {
+            MetaPeerClientBuilder::default()
+                .election(election.clone())
+                .in_memory(in_memory.clone())
+                .build()
+                .map(Arc::new)
+                <span class="comment">// Safety: all required fields set at initialization
+                </span>.unwrap()
+        });
         <span class="kw">let </span>selector = selector.unwrap_or_else(|| Arc::new(LeaseBasedSelector));
-
         <span class="kw">let </span>pushers = Pushers::default();
         <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">1</span>, <span class="number">100</span>, kv_store.clone());
         <span class="kw">let </span>mailbox = HeartbeatMailbox::create(pushers.clone(), mailbox_sequence);
-
         <span class="kw">let </span>state_store = Arc::new(MetaStateStore::new(kv_store.clone()));
         <span class="kw">let </span>procedure_manager = Arc::new(LocalManager::new(ManagerConfig::default(), state_store));
-
         <span class="kw">let </span>lock = lock.unwrap_or_else(|| Arc::new(MemLock::default()));
 
         <span class="kw">let </span>handler_group = <span class="kw">match </span>handler_group {
@@ -386,6 +394,7 @@
                             server_addr: options.server_addr.clone(),
                             datanode_lease_secs: options.datanode_lease_secs,
                             kv_store: kv_store.clone(),
+                            meta_peer_client: meta_peer_client.clone(),
                             catalog: <span class="prelude-val">None</span>,
                             schema: <span class="prelude-val">None</span>,
                             table: <span class="prelude-val">None</span>,
@@ -407,12 +416,11 @@
                 );
 
                 <span class="kw">let </span>group = HeartbeatHandlerGroup::new(pushers);
-                <span class="kw">let </span>keep_lease_handler = KeepLeaseHandler::new(kv_store.clone());
                 group.add_handler(ResponseHeaderHandler::default()).<span class="kw">await</span>;
                 <span class="comment">// `KeepLeaseHandler` should preferably be in front of `CheckLeaderHandler`,
                 // because even if the current meta-server node is no longer the leader it can
                 // still help the datanode to keep lease.
-                </span>group.add_handler(keep_lease_handler).<span class="kw">await</span>;
+                </span>group.add_handler(KeepLeaseHandler::default()).<span class="kw">await</span>;
                 group.add_handler(CheckLeaderHandler::default()).<span class="kw">await</span>;
                 group.add_handler(OnLeaderStartHandler::default()).<span class="kw">await</span>;
                 group.add_handler(CollectStatsHandler::default()).<span class="kw">await</span>;
@@ -436,11 +444,11 @@
             options,
             in_memory,
             kv_store,
+            meta_peer_client,
             table_id_sequence,
             selector,
             handler_group,
             election,
-            meta_peer_client,
             lock,
             procedure_manager,
             metadata_service,

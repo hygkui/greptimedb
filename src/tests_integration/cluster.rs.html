@@ -304,6 +304,8 @@
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
 <a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -337,6 +339,7 @@
 <span class="kw">use </span>datanode::instance::Instance <span class="kw">as </span>DatanodeInstance;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
+<span class="kw">use </span>meta_srv::cluster::MetaPeerClientRef;
 <span class="kw">use </span>meta_srv::metasrv::{MetaSrv, MetaSrvOptions};
 <span class="kw">use </span>meta_srv::mocks::MockInfo;
 <span class="kw">use </span>meta_srv::service::store::kv::KvStoreRef;
@@ -399,7 +402,8 @@
 
         <span class="kw">let </span>datanode_clients = build_datanode_clients(<span class="kw-2">&amp;</span>datanode_instances, datanodes).<span class="kw">await</span>;
 
-        <span class="self">self</span>.wait_datanodes_alive(datanodes).<span class="kw">await</span>;
+        <span class="self">self</span>.wait_datanodes_alive(<span class="kw-2">&amp;</span>meta_srv.meta_srv.meta_peer_client(), datanodes)
+            .<span class="kw">await</span>;
 
         <span class="kw">let </span>frontend = <span class="self">self
             </span>.build_frontend(meta_srv.clone(), datanode_clients)
@@ -468,13 +472,17 @@
         (instances, heartbeat_tasks, storage_guards, wal_guards)
     }
 
-    <span class="kw">async fn </span>wait_datanodes_alive(<span class="kw-2">&amp;</span><span class="self">self</span>, expected_datanodes: u32) {
-        <span class="kw">let </span>kv_store = <span class="self">self</span>.kv_store();
+    <span class="kw">async fn </span>wait_datanodes_alive(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        meta_peer_client: <span class="kw-2">&amp;</span>MetaPeerClientRef,
+        expected_datanodes: u32,
+    ) {
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">10 </span>{
-            <span class="kw">let </span>alive_datanodes = meta_srv::lease::filter_datanodes(<span class="number">1000</span>, <span class="kw-2">&amp;</span>kv_store, |<span class="kw">_</span>, <span class="kw">_</span>| <span class="bool-val">true</span>)
-                .<span class="kw">await
-                </span>.unwrap()
-                .len() <span class="kw">as </span>u32;
+            <span class="kw">let </span>alive_datanodes =
+                meta_srv::lease::filter_datanodes(<span class="number">1000</span>, meta_peer_client, |<span class="kw">_</span>, <span class="kw">_</span>| <span class="bool-val">true</span>)
+                    .<span class="kw">await
+                    </span>.unwrap()
+                    .len() <span class="kw">as </span>u32;
             <span class="kw">if </span>alive_datanodes == expected_datanodes {
                 <span class="kw">return</span>;
             }
@@ -530,10 +538,6 @@
             .<span class="kw">await
             </span>.unwrap(),
         )
-    }
-
-    <span class="kw">fn </span>kv_store(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; KvStoreRef {
-        <span class="self">self</span>.kv_store.clone()
     }
 }
 

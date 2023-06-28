@@ -201,6 +201,23 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -215,7 +232,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, PutRequest, Role};
+</span><span class="kw">use </span>std::cmp::Ordering;
+
+<span class="kw">use </span>api::v1::meta::{HeartbeatRequest, PutRequest, Role};
+<span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>dashmap::DashMap;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
@@ -293,14 +313,19 @@
         <span class="kw">let </span>epoch_stats = entry.value_mut();
 
         <span class="kw">let </span>refresh = <span class="kw">if let </span><span class="prelude-val">Some</span>(epoch) = epoch_stats.epoch() {
-            <span class="comment">// This node may have been redeployed.
-            </span><span class="kw">if </span>current_stat.node_epoch &gt; epoch {
-                epoch_stats.set_epoch(current_stat.node_epoch);
-                epoch_stats.clear();
-                <span class="bool-val">true
-            </span>} <span class="kw">else </span>{
-                <span class="bool-val">false
-            </span>}
+            <span class="kw">match </span>current_stat.node_epoch.cmp(<span class="kw-2">&amp;</span>epoch) {
+                Ordering::Greater =&gt; {
+                    <span class="comment">// This node may have been redeployed.
+                    </span>epoch_stats.set_epoch(current_stat.node_epoch);
+                    epoch_stats.clear();
+                    <span class="bool-val">true
+                </span>}
+                Ordering::Less =&gt; {
+                    <span class="macro">warn!</span>(<span class="string">&quot;Ignore stale heartbeat: {:?}&quot;</span>, current_stat);
+                    <span class="bool-val">false
+                </span>}
+                Ordering::Equal =&gt; <span class="bool-val">false</span>,
+            }
         } <span class="kw">else </span>{
             epoch_stats.set_epoch(current_stat.node_epoch);
             <span class="comment">// If the epoch is empty, it indicates that the current node sending the heartbeat
@@ -337,6 +362,7 @@
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClientBuilder;
     <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatMailbox, Pushers};
     <span class="kw">use </span><span class="kw">crate</span>::keys::StatKey;
     <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
@@ -349,10 +375,18 @@
         <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
         <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_store.clone());
         <span class="kw">let </span>mailbox = HeartbeatMailbox::create(Pushers::default(), seq);
+        <span class="kw">let </span>meta_peer_client = MetaPeerClientBuilder::default()
+            .election(<span class="prelude-val">None</span>)
+            .in_memory(in_memory.clone())
+            .build()
+            .map(Arc::new)
+            <span class="comment">// Safety: all required fields set at initialization
+            </span>.unwrap();
         <span class="kw">let </span>ctx = Context {
             server_addr: <span class="string">&quot;127.0.0.1:0000&quot;</span>.to_string(),
             in_memory,
             kv_store,
+            meta_peer_client,
             mailbox,
             election: <span class="prelude-val">None</span>,
             skip_all: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),

@@ -479,10 +479,6 @@
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
-<a href="#482" id="482">482</a>
-<a href="#483" id="483">483</a>
-<a href="#484" id="484">484</a>
-<a href="#485" id="485">485</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -706,9 +702,6 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;MetaSrv has no meta peer client&quot;</span>))]
-    </span>NoMetaPeerClient { location: Location },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid http body, source: {}&quot;</span>, source))]
     </span>InvalidHttpBody {
         source: http::Error,
@@ -884,7 +877,6 @@
             | Error::Range { .. }
             | Error::ResponseHeaderNotFound { .. }
             | Error::IsNotLeader { .. }
-            | Error::NoMetaPeerClient { .. }
             | Error::InvalidHttpBody { .. }
             | Error::Lock { .. }
             | Error::Unlock { .. }
