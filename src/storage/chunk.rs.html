@@ -284,6 +284,17 @@
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
 <a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -512,10 +523,16 @@
             reader_builder = reader_builder.push_batch_iter(iter);
         }
 
+        <span class="kw">let </span>predicate = Predicate::try_new(
+            <span class="self">self</span>.filters.clone(),
+            <span class="self">self</span>.schema.store_schema().schema().clone(),
+        )
+        .context(error::BuildPredicateSnafu)<span class="question-mark">?</span>;
+
         <span class="kw">let </span>read_opts = ReadOptions {
             batch_size: <span class="self">self</span>.iter_ctx.batch_size,
             projected_schema: schema.clone(),
-            predicate: Predicate::new(<span class="self">self</span>.filters.clone()),
+            predicate,
             time_range: <span class="kw-2">*</span>time_range,
         };
         <span class="kw">for </span>file <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.files_to_read {
@@ -556,7 +573,12 @@
     <span class="doccomment">/// Build time range predicate from schema and filters.
     </span><span class="kw">pub fn </span>build_time_range_predicate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TimestampRange {
         <span class="kw">let </span><span class="prelude-val">Some</span>(ts_col) = <span class="self">self</span>.schema.user_schema().timestamp_column() <span class="kw">else </span>{ <span class="kw">return </span>TimestampRange::min_to_max() };
-        TimeRangePredicateBuilder::new(<span class="kw-2">&amp;</span>ts_col.name, <span class="kw-2">&amp;</span><span class="self">self</span>.filters).build()
+        <span class="kw">let </span>unit = ts_col
+            .data_type
+            .as_timestamp()
+            .expect(<span class="string">&quot;Timestamp column must have timestamp-compatible type&quot;</span>)
+            .unit();
+        TimeRangePredicateBuilder::new(<span class="kw-2">&amp;</span>ts_col.name, unit, <span class="kw-2">&amp;</span><span class="self">self</span>.filters).build()
     }
 
     <span class="doccomment">/// Check if SST file&#39;s time range matches predicate.

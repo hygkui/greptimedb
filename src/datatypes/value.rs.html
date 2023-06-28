@@ -1935,7 +1935,7 @@
     Field::new(<span class="string">&quot;item&quot;</span>, data_type, <span class="bool-val">false</span>)
 }
 
-<span class="kw">fn </span>timestamp_to_scalar_value(unit: TimeUnit, val: <span class="prelude-ty">Option</span>&lt;i64&gt;) -&gt; ScalarValue {
+<span class="kw">pub fn </span>timestamp_to_scalar_value(unit: TimeUnit, val: <span class="prelude-ty">Option</span>&lt;i64&gt;) -&gt; ScalarValue {
     <span class="kw">match </span>unit {
         TimeUnit::Second =&gt; ScalarValue::TimestampSecond(val, <span class="prelude-val">None</span>),
         TimeUnit::Millisecond =&gt; ScalarValue::TimestampMillisecond(val, <span class="prelude-val">None</span>),

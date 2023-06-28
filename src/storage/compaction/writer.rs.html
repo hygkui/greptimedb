@@ -491,6 +491,69 @@
 <a href="#491" id="491">491</a>
 <a href="#492" id="492">492</a>
 <a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -506,8 +569,9 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>common_query::logical_plan::{DfExpr, Expr};
-<span class="kw">use </span>datafusion_common::ScalarValue;
-<span class="kw">use </span>datafusion_expr::{BinaryExpr, Operator};
+<span class="kw">use </span>common_time::timestamp::TimeUnit;
+<span class="kw">use </span>datafusion_expr::Operator;
+<span class="kw">use </span>datatypes::value::timestamp_to_scalar_value;
 
 <span class="kw">use </span><span class="kw">crate</span>::chunk::{ChunkReaderBuilder, ChunkReaderImpl};
 <span class="kw">use </span><span class="kw">crate</span>::error;
@@ -524,53 +588,84 @@
 ) -&gt; error::Result&lt;ChunkReaderImpl&gt; {
     <span class="comment">// TODO(hl): Schemas in different SSTs may differ, thus we should infer
     // timestamp column name from Parquet metadata.
-    </span><span class="kw">let </span>ts_col_name = schema
-        .user_schema()
-        .timestamp_column()
-        .unwrap()
-        .name
-        .clone();
+
+    // safety: Region schema&#39;s timestamp column must present
+    </span><span class="kw">let </span>ts_col = schema.user_schema().timestamp_column().unwrap();
+    <span class="kw">let </span>ts_col_unit = ts_col.data_type.as_timestamp().unwrap().unit();
+    <span class="kw">let </span>ts_col_name = ts_col.name.clone();
 
     ChunkReaderBuilder::new(schema, sst_layer)
         .pick_ssts(files)
-        .filters(<span class="macro">vec!</span>[build_time_range_filter(
-            lower_sec_inclusive,
-            upper_sec_exclusive,
-            <span class="kw-2">&amp;</span>ts_col_name,
-        )])
+        .filters(
+            build_time_range_filter(
+                lower_sec_inclusive,
+                upper_sec_exclusive,
+                <span class="kw-2">&amp;</span>ts_col_name,
+                ts_col_unit,
+            )
+            .into_iter()
+            .collect(),
+        )
         .build()
         .<span class="kw">await
 </span>}
 
-<span class="kw">fn </span>build_time_range_filter(low_sec: i64, high_sec: i64, ts_col_name: <span class="kw-2">&amp;</span>str) -&gt; Expr {
-    <span class="kw">let </span>ts_col = Box::new(DfExpr::Column(datafusion_common::Column::from_name(
-        ts_col_name,
-    )));
-    <span class="kw">let </span>lower_bound_expr = Box::new(DfExpr::Literal(ScalarValue::TimestampSecond(
-        <span class="prelude-val">Some</span>(low_sec),
-        <span class="prelude-val">None</span>,
-    )));
+<span class="doccomment">/// Build time range filter expr from lower (inclusive) and upper bound(exclusive).
+/// Returns `None` if time range overflows.
+</span><span class="kw">fn </span>build_time_range_filter(
+    low_sec: i64,
+    high_sec: i64,
+    ts_col_name: <span class="kw-2">&amp;</span>str,
+    ts_col_unit: TimeUnit,
+) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+    <span class="macro">debug_assert!</span>(low_sec &lt;= high_sec);
+    <span class="kw">let </span>ts_col = DfExpr::Column(datafusion_common::Column::from_name(ts_col_name));
 
-    <span class="kw">let </span>upper_bound_expr = Box::new(DfExpr::Literal(ScalarValue::TimestampSecond(
-        <span class="prelude-val">Some</span>(high_sec),
-        <span class="prelude-val">None</span>,
-    )));
+    <span class="comment">// Converting seconds to whatever unit won&#39;t lose precision.
+    // Here only handles overflow.
+    </span><span class="kw">let </span>low_ts = common_time::Timestamp::new_second(low_sec)
+        .convert_to(ts_col_unit)
+        .map(|ts| ts.value());
+    <span class="kw">let </span>high_ts = common_time::Timestamp::new_second(high_sec)
+        .convert_to(ts_col_unit)
+        .map(|ts| ts.value());
 
-    <span class="kw">let </span>expr = DfExpr::BinaryExpr(BinaryExpr {
-        left: Box::new(DfExpr::BinaryExpr(BinaryExpr {
-            left: ts_col.clone(),
-            op: Operator::GtEq,
-            right: lower_bound_expr,
-        })),
-        op: Operator::And,
-        right: Box::new(DfExpr::BinaryExpr(BinaryExpr {
-            left: ts_col,
-            op: Operator::Lt,
-            right: upper_bound_expr,
-        })),
-    });
+    <span class="kw">let </span>expr = <span class="kw">match </span>(low_ts, high_ts) {
+        (<span class="prelude-val">Some</span>(low), <span class="prelude-val">Some</span>(high)) =&gt; {
+            <span class="kw">let </span>lower_bound_expr =
+                DfExpr::Literal(timestamp_to_scalar_value(ts_col_unit, <span class="prelude-val">Some</span>(low)));
+            <span class="kw">let </span>upper_bound_expr =
+                DfExpr::Literal(timestamp_to_scalar_value(ts_col_unit, <span class="prelude-val">Some</span>(high)));
+            <span class="prelude-val">Some</span>(datafusion_expr::and(
+                datafusion_expr::binary_expr(ts_col.clone(), Operator::GtEq, lower_bound_expr),
+                datafusion_expr::binary_expr(ts_col, Operator::Lt, upper_bound_expr),
+            ))
+        }
 
-    Expr::from(expr)
+        (<span class="prelude-val">Some</span>(low), <span class="prelude-val">None</span>) =&gt; {
+            <span class="kw">let </span>lower_bound_expr =
+                datafusion_expr::lit(timestamp_to_scalar_value(ts_col_unit, <span class="prelude-val">Some</span>(low)));
+            <span class="prelude-val">Some</span>(datafusion_expr::binary_expr(
+                ts_col,
+                Operator::GtEq,
+                lower_bound_expr,
+            ))
+        }
+
+        (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(high)) =&gt; {
+            <span class="kw">let </span>upper_bound_expr =
+                datafusion_expr::lit(timestamp_to_scalar_value(ts_col_unit, <span class="prelude-val">Some</span>(high)));
+            <span class="prelude-val">Some</span>(datafusion_expr::binary_expr(
+                ts_col,
+                Operator::Lt,
+                upper_bound_expr,
+            ))
+        }
+
+        (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
+    };
+
+    expr.map(Expr::from)
 }
 
 <span class="attr">#[cfg(test)]
@@ -982,6 +1077,37 @@
             read_file(<span class="kw-2">&amp;</span>output_files, schema.clone(), sst_layer.clone()).<span class="kw">await</span>;
 
         <span class="macro">assert_eq!</span>(timestamps_in_outputs, timestamps_in_inputs);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_build_time_range_filter() {
+        <span class="macro">assert!</span>(build_time_range_filter(i64::MIN, i64::MAX, <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).is_none());
+
+        <span class="macro">assert_eq!</span>(
+            Expr::from(datafusion_expr::binary_expr(
+                datafusion_expr::col(<span class="string">&quot;ts&quot;</span>),
+                Operator::Lt,
+                datafusion_expr::lit(timestamp_to_scalar_value(
+                    TimeUnit::Nanosecond,
+                    <span class="prelude-val">Some</span>(TimeUnit::Second.factor() <span class="kw">as </span>i64 / TimeUnit::Nanosecond.factor() <span class="kw">as </span>i64)
+                ))
+            )),
+            build_time_range_filter(i64::MIN, <span class="number">1</span>, <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).unwrap()
+        );
+
+        <span class="macro">assert_eq!</span>(
+            Expr::from(datafusion_expr::binary_expr(
+                datafusion_expr::col(<span class="string">&quot;ts&quot;</span>),
+                Operator::GtEq,
+                datafusion_expr::lit(timestamp_to_scalar_value(
+                    TimeUnit::Nanosecond,
+                    <span class="prelude-val">Some</span>(
+                        <span class="number">2 </span>* TimeUnit::Second.factor() <span class="kw">as </span>i64 / TimeUnit::Nanosecond.factor() <span class="kw">as </span>i64
+                    )
+                ))
+            )),
+            build_time_range_filter(<span class="number">2</span>, i64::MAX, <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).unwrap()
+        );
     }
 }
 </code></pre></div></section></main></body></html>
