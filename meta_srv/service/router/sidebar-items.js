@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_table_global_value","fetch_tables","fill_table_routes","handle_create","handle_delete","handle_route","move_value","remove_table_global_value","remove_table_route_value","table_route_key"]};
+window.SIDEBAR_ITEMS = {"fn":["create_table_global_value","fetch_tables","fill_table_routes","handle_create","handle_delete","handle_route","table_route_key"]};
