@@ -363,20 +363,6 @@
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -399,6 +385,7 @@
 <span class="kw">use </span>common_datasource::file_format::Format;
 <span class="kw">use </span>common_query::physical_plan::{PhysicalPlanAdapter, PhysicalPlanRef};
 <span class="kw">use </span>common_query::prelude::Expr;
+<span class="kw">use </span>common_query::DfPhysicalPlan;
 <span class="kw">use </span>common_recordbatch::adapter::RecordBatchStreamAdapter;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>datafusion::common::ToDFSchema;
@@ -407,17 +394,16 @@
 <span class="kw">use </span>datafusion::optimizer::utils::conjunction;
 <span class="kw">use </span>datafusion::physical_expr::create_physical_expr;
 <span class="kw">use </span>datafusion::physical_expr::execution_props::ExecutionProps;
-<span class="kw">use </span>datafusion::physical_plan::file_format::{
-    FileOpener, FileScanConfig, FileStream, ParquetExec, ParquetOpener,
-};
+<span class="kw">use </span>datafusion::physical_plan::file_format::{FileOpener, FileScanConfig, FileStream, ParquetExec};
 <span class="kw">use </span>datafusion::physical_plan::metrics::ExecutionPlanMetricsSet;
+<span class="kw">use </span>datafusion::prelude::SessionContext;
 <span class="kw">use </span>datatypes::arrow::datatypes::Schema <span class="kw">as </span>ArrowSchema;
 <span class="kw">use </span>datatypes::schema::{Schema, SchemaRef};
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::table::scan::StreamScanAdapter;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, BuildStreamSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 
 <span class="kw">const </span>DEFAULT_BATCH_SIZE: usize = <span class="number">8192</span>;
 
@@ -643,7 +629,7 @@
     )))
 }
 
-<span class="kw">fn </span>new_parquet_stream(
+<span class="kw">fn </span>new_parquet_stream_with_exec_plan(
     _ctx: <span class="kw-2">&amp;</span>CreateScanPlanContext,
     config: <span class="kw-2">&amp;</span>ScanPlanConfig,
     _format: <span class="kw-2">&amp;</span>ParquetFormat,
@@ -658,7 +644,8 @@
         ..
     } = config;
 
-    <span class="kw">let </span>scan_config = FileScanConfig {
+    <span class="comment">// construct config for ParquetExec
+    </span><span class="kw">let </span>scan_config = FileScanConfig {
         object_store_url: ObjectStoreUrl::parse(<span class="string">&quot;empty://&quot;</span>).unwrap(), <span class="comment">// won&#39;t be used
         </span>file_schema: file_schema.clone(),
         file_groups: <span class="macro">vec!</span>[files
@@ -673,11 +660,11 @@
         infinite_source: <span class="bool-val">false</span>,
     };
 
-    <span class="kw">let </span>filters = filters
+    <span class="comment">// build predicate filter
+    </span><span class="kw">let </span>filters = filters
         .iter()
         .map(|f| f.df_expr().clone())
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-
     <span class="kw">let </span>filters = <span class="kw">if let </span><span class="prelude-val">Some</span>(expr) = conjunction(filters) {
         <span class="kw">let </span>df_schema = file_schema
             .clone()
@@ -691,34 +678,19 @@
         <span class="prelude-val">None
     </span>};
 
-    <span class="kw">let </span>parquet_opener = ParquetOpener {
-        partition_index: <span class="number">0</span>, <span class="comment">// partition: hard-code. This is only for statistics purpose
-        </span>projection: Arc::from(projection.cloned().unwrap_or_default()),
-        batch_size: DEFAULT_BATCH_SIZE,
-        limit: <span class="kw-2">*</span>limit,
-        predicate: filters,
-        pruning_predicate: <span class="prelude-val">None</span>,
-        page_pruning_predicate: <span class="prelude-val">None</span>,
-        table_schema: file_schema.clone(),
-        metadata_size_hint: <span class="prelude-val">None</span>,
-        metrics: ExecutionPlanMetricsSet::new(),
-        parquet_file_reader_factory: Arc::new(DefaultParquetFileReaderFactory::new(store.clone())),
-        pushdown_filters: <span class="bool-val">true</span>,
-        reorder_filters: <span class="bool-val">true</span>,
-        enable_page_index: <span class="bool-val">true</span>,
-    };
+    <span class="comment">// TODO(ruihang): get this from upper layer
+    </span><span class="kw">let </span>task_ctx = SessionContext::default().task_ctx();
+    <span class="kw">let </span>parquet_exec = ParquetExec::new(scan_config, filters, <span class="prelude-val">None</span>)
+        .with_parquet_file_reader_factory(Arc::new(DefaultParquetFileReaderFactory::new(
+            store.clone(),
+        )));
+    <span class="kw">let </span>stream = parquet_exec
+        .execute(<span class="number">0</span>, task_ctx)
+        .context(error::ParquetScanPlanSnafu)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>stream = FileStream::new(
-        <span class="kw-2">&amp;</span>scan_config,
-        <span class="number">0</span>,
-        parquet_opener,
-        <span class="kw-2">&amp;</span>ExecutionPlanMetricsSet::new(),
-    )
-    .context(BuildStreamSnafu)<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>adapter = RecordBatchStreamAdapter::try_new(Box::pin(stream))
-        .context(error::BuildStreamAdapterSnafu)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(Box::pin(adapter))
+    <span class="prelude-val">Ok</span>(Box::pin(
+        RecordBatchStreamAdapter::try_new(stream).context(error::BuildStreamAdapterSnafu)<span class="question-mark">?</span>,
+    ))
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -752,7 +724,7 @@
     <span class="kw">match </span>format {
         Format::Csv(format) =&gt; new_csv_stream(ctx, config, format),
         Format::Json(format) =&gt; new_json_stream(ctx, config, format),
-        Format::Parquet(format) =&gt; new_parquet_stream(ctx, config, format),
+        Format::Parquet(format) =&gt; new_parquet_stream_with_exec_plan(ctx, config, format),
         <span class="kw">_ </span>=&gt; error::UnsupportedFormatSnafu { format: <span class="kw-2">*</span>format }.fail(),
     }
 }
