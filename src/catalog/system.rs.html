@@ -582,14 +582,6 @@
 <a href="#582" id="582">582</a>
 <a href="#583" id="583">583</a>
 <a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -612,8 +604,6 @@
     DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME, MITO_ENGINE,
     SYSTEM_CATALOG_NAME, SYSTEM_CATALOG_TABLE_ID, SYSTEM_CATALOG_TABLE_NAME,
 };
-<span class="kw">use </span>common_query::logical_plan::Expr;
-<span class="kw">use </span>common_query::physical_plan::{PhysicalPlanRef, SessionContext};
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>common_time::util;
@@ -651,15 +641,6 @@
     <span class="kw">fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SchemaRef {
         <span class="self">self</span>.<span class="number">0</span>.schema()
     }
-
-    <span class="kw">async fn </span>scan(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        projection: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Vec&lt;usize&gt;&gt;,
-        filters: <span class="kw-2">&amp;</span>[Expr],
-        limit: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-    ) -&gt; table::Result&lt;PhysicalPlanRef&gt; {
-        <span class="self">self</span>.<span class="number">0</span>.scan(projection, filters, limit).<span class="kw">await
-    </span>}
 
     <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {
         <span class="self">self</span>.<span class="number">0</span>.scan_to_stream(request).<span class="kw">await
@@ -728,14 +709,17 @@
     <span class="doccomment">/// Create a stream of all entries inside system catalog table
     </span><span class="kw">pub async fn </span>records(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
         <span class="kw">let </span>full_projection = <span class="prelude-val">None</span>;
-        <span class="kw">let </span>ctx = SessionContext::new();
-        <span class="kw">let </span>scan = <span class="self">self
-            </span>.scan(full_projection, <span class="kw-2">&amp;</span>[], <span class="prelude-val">None</span>)
+        <span class="kw">let </span>scan_req = ScanRequest {
+            sequence: <span class="prelude-val">None</span>,
+            projection: full_projection,
+            filters: <span class="macro">vec!</span>[],
+            output_ordering: <span class="prelude-val">None</span>,
+            limit: <span class="prelude-val">None</span>,
+        };
+        <span class="kw">let </span>stream = <span class="self">self
+            </span>.scan_to_stream(scan_req)
             .<span class="kw">await
             </span>.context(error::SystemCatalogTableScanSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span>stream = scan
-            .execute(<span class="number">0</span>, ctx.task_ctx())
-            .context(error::SystemCatalogTableScanExecSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(stream)
     }
 }

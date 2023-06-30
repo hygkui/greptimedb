@@ -132,19 +132,6 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -168,7 +155,6 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_query::logical_plan::Expr;
-<span class="kw">use </span>common_query::physical_plan::PhysicalPlanRef;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>datatypes::schema::SchemaRef;
 <span class="kw">use </span>store_api::storage::{RegionNumber, ScanRequest};
@@ -208,18 +194,6 @@
         }
         .fail()<span class="question-mark">?
     </span>}
-
-    <span class="doccomment">/// Scan the table and returns a SendableRecordBatchStream.
-    </span><span class="kw">async fn </span>scan(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        projection: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Vec&lt;usize&gt;&gt;,
-        filters: <span class="kw-2">&amp;</span>[Expr],
-        <span class="comment">// limit can be used to reduce the amount scanned
-        // from the datasource as a performance optimization.
-        // If set, it contains the amount of rows needed by the `LogicalPlan`,
-        // The datasource should return *at least* this number of rows if available.
-        </span>limit: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;PhysicalPlanRef&gt;;
 
     <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt;;
 
