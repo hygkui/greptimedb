@@ -713,13 +713,6 @@
 <a href="#713" id="713">713</a>
 <a href="#714" id="714">714</a>
 <a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a>
-<a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
-<a href="#719" id="719">719</a>
-<a href="#720" id="720">720</a>
-<a href="#721" id="721">721</a>
-<a href="#722" id="722">722</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1305,28 +1298,21 @@
         <span class="comment">// Remove the table from the engine to avoid further access from users.
         </span><span class="kw">let </span>_lock = <span class="self">self</span>.table_mutex.lock(request.table_id).<span class="kw">await</span>;
         <span class="kw">let </span>removed_table = <span class="self">self</span>.tables.remove(<span class="kw-2">&amp;</span>request.table_id);
+
         <span class="comment">// Close the table to close all regions. Closing a region is idempotent.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, table)) = <span class="kw-2">&amp;</span>removed_table {
-            <span class="kw">let </span>regions = table.region_ids();
-            <span class="kw">let </span>table_id = table.table_info().ident.table_id;
-
-            table
-                .drop_regions(<span class="kw-2">&amp;</span>regions)
-                .<span class="kw">await
-                </span>.map_err(BoxedError::new)
-                .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>regions = table.remove_regions(<span class="kw-2">&amp;</span>table.region_ids()).<span class="kw">await</span><span class="question-mark">?</span>;
 
             <span class="kw">let </span>ctx = StorageEngineContext::default();
 
-            <span class="kw">let </span>opts = CloseOptions::default();
-            <span class="comment">// Releases regions in storage engine
-            </span><span class="kw">for </span>region_number <span class="kw">in </span>regions {
-                <span class="self">self</span>.storage_engine
-                    .close_region(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>region_name(table_id, region_number), <span class="kw-2">&amp;</span>opts)
-                    .<span class="kw">await
-                    </span>.map_err(BoxedError::new)
-                    .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
-            }
+            <span class="kw">let _ </span>= futures::future::try_join_all(
+                regions
+                    .drain()
+                    .map(|(<span class="kw">_</span>, region)| <span class="self">self</span>.storage_engine.drop_region(<span class="kw-2">&amp;</span>ctx, region)),
+            )
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
 
             <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
         } <span class="kw">else </span>{

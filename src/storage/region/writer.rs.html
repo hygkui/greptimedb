@@ -907,6 +907,12 @@
 <a href="#907" id="907">907</a>
 <a href="#908" id="908">908</a>
 <a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -930,7 +936,7 @@
 <span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
-<span class="kw">use </span>store_api::manifest::{Manifest, ManifestVersion, MetaAction};
+<span class="kw">use </span>store_api::manifest::{Manifest, ManifestLogStorage, ManifestVersion, MetaAction};
 <span class="kw">use </span>store_api::storage::{
     AlterRequest, FlushContext, FlushReason, SequenceNumber, WriteContext, WriteResponse,
 };
@@ -1198,6 +1204,7 @@
         // 5. Mark all data obsolete in the WAL.
         // 6. Delete the namespace of the region from the WAL.
         // 7. Mark all SSTs deleted.
+        // 8. Remove all manifests.
         </span><span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
         inner.mark_closed();
 
@@ -1226,7 +1233,7 @@
             action_list
         );
 
-        <span class="kw">let _ </span>= drop_ctx.manifest.update(action_list).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>remove_action_version = drop_ctx.manifest.update(action_list).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// Mark all data obsolete and delete the namespace in the WAL
         </span>drop_ctx.wal.obsolete(committed_sequence).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1245,6 +1252,11 @@
             files
         );
 
+        drop_ctx
+            .manifest
+            .manifest_store()
+            .delete_all(remove_action_version)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 

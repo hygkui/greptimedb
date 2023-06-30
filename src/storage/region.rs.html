@@ -746,6 +746,25 @@
 <a href="#746" id="746">746</a>
 <a href="#747" id="747">747</a>
 <a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -776,7 +795,9 @@
 <span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
-<span class="kw">use </span>store_api::manifest::{<span class="self">self</span>, Manifest, ManifestVersion, MetaActionIterator};
+<span class="kw">use </span>store_api::manifest::{
+    <span class="self">self</span>, Manifest, ManifestLogStorage, ManifestVersion, MetaActionIterator,
+};
 <span class="kw">use </span>store_api::storage::{
     AlterRequest, CloseContext, FlushContext, FlushReason, OpenOptions, ReadContext, Region,
     RegionId, SequenceNumber, WriteContext, WriteResponse,
@@ -875,6 +896,7 @@
     </span>}
 
     <span class="kw">async fn </span>drop_region(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
         <span class="self">self</span>.inner.drop_region().<span class="kw">await
     </span>}
 
@@ -1228,6 +1250,22 @@
                         <span class="kw">let _ </span>= recovered_metadata
                             .insert(c.committed_sequence, (manifest_version, c.metadata));
                         version = <span class="prelude-val">Some</span>(v);
+                    }
+                    (RegionMetaAction::Remove(r), <span class="prelude-val">Some</span>(v)) =&gt; {
+                        manifest.stop().<span class="kw">await</span><span class="question-mark">?</span>;
+
+                        <span class="kw">let </span>files = v.ssts().mark_all_files_deleted();
+                        <span class="macro">logging::info!</span>(
+                            <span class="string">&quot;Try to remove all SSTs, region: {}, files: {:?}&quot;</span>,
+                            r.region_id,
+                            files
+                        );
+
+                        manifest
+                            .manifest_store()
+                            .delete_all(v.manifest_version())
+                            .<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, recovered_metadata));
                     }
                     (action, <span class="prelude-val">None</span>) =&gt; {
                         actions.push((manifest_version, action));
