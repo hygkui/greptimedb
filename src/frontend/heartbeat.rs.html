@@ -217,14 +217,14 @@
 <span class="kw">impl </span>HeartbeatTask {
     <span class="kw">pub fn </span>new(
         meta_client: Arc&lt;MetaClient&gt;,
-        report_interval: u64,
-        retry_interval: u64,
+        heartbeat_interval_millis: u64,
+        retry_interval_millis: u64,
         resp_handler_executor: HeartbeatResponseHandlerExecutorRef,
     ) -&gt; <span class="self">Self </span>{
         HeartbeatTask {
             meta_client,
-            report_interval,
-            retry_interval,
+            report_interval: heartbeat_interval_millis,
+            retry_interval: retry_interval_millis,
             resp_handler_executor,
         }
     }
@@ -266,7 +266,7 @@
                     <span class="prelude-val">Err</span>(e) =&gt; {
                         <span class="macro">error!</span>(e; <span class="string">&quot;Occur error while reading heartbeat response&quot;</span>);
                         capture_self
-                            .start_with_retry(Duration::from_secs(retry_interval))
+                            .start_with_retry(Duration::from_millis(retry_interval))
                             .<span class="kw">await</span>;
 
                         <span class="kw">break</span>;
@@ -310,7 +310,7 @@
                         </span>}
                     }
                     <span class="kw">_ </span>= <span class="kw-2">&amp;mut </span>sleep =&gt; {
-                        sleep.as_mut().reset(Instant::now() + Duration::from_secs(report_interval));
+                        sleep.as_mut().reset(Instant::now() + Duration::from_millis(report_interval));
                         <span class="prelude-val">Some</span>(HeartbeatRequest::default())
                     }
                 };

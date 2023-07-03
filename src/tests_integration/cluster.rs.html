@@ -306,6 +306,10 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -337,6 +341,7 @@
 <span class="kw">use </span>datanode::datanode::{DatanodeOptions, ObjectStoreConfig};
 <span class="kw">use </span>datanode::heartbeat::HeartbeatTask;
 <span class="kw">use </span>datanode::instance::Instance <span class="kw">as </span>DatanodeInstance;
+<span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
 <span class="kw">use </span>meta_srv::cluster::MetaPeerClientRef;
@@ -529,11 +534,14 @@
         meta_client.start(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>meta_srv.server_addr]).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>meta_client = Arc::new(meta_client);
 
+        <span class="kw">let </span>frontend_opts = FrontendOptions::default();
+
         Arc::new(
             FeInstance::try_new_distributed_with(
                 meta_client,
                 datanode_clients,
                 Arc::new(Plugins::default()),
+                <span class="kw-2">&amp;</span>frontend_opts,
             )
             .<span class="kw">await
             </span>.unwrap(),

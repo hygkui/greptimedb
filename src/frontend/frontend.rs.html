@@ -74,6 +74,10 @@
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -103,6 +107,8 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>FrontendOptions {
     <span class="kw">pub </span>mode: Mode,
+    <span class="kw">pub </span>heartbeat_interval_millis: u64,
+    <span class="kw">pub </span>retry_interval_millis: u64,
     <span class="kw">pub </span>http_options: <span class="prelude-ty">Option</span>&lt;HttpOptions&gt;,
     <span class="kw">pub </span>grpc_options: <span class="prelude-ty">Option</span>&lt;GrpcOptions&gt;,
     <span class="kw">pub </span>mysql_options: <span class="prelude-ty">Option</span>&lt;MysqlOptions&gt;,
@@ -119,6 +125,8 @@
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mode: Mode::Standalone,
+            heartbeat_interval_millis: <span class="number">5000</span>,
+            retry_interval_millis: <span class="number">5000</span>,
             http_options: <span class="prelude-val">Some</span>(HttpOptions::default()),
             grpc_options: <span class="prelude-val">Some</span>(GrpcOptions::default()),
             mysql_options: <span class="prelude-val">Some</span>(MysqlOptions::default()),
