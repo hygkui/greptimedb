@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["memory"],"struct":["Kv"],"trait":["KvBackend"],"type":["KvBackendRef","ValueIter"]};

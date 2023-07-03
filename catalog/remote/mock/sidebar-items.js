@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"static":["CALLSITE"],"struct":["MockKvBackend","MockTableEngine"]};
+window.SIDEBAR_ITEMS = {"struct":["MockTableEngine"]};

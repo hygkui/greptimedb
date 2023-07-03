@@ -372,6 +372,13 @@
 <a href="#372" id="372">372</a>
 <a href="#373" id="373">373</a>
 <a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -617,6 +624,12 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;A generic error has occurred, msg: {}&quot;</span>, msg))]
     </span>Generic { msg: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table metadata manager error: {}&quot;</span>, source))]
+    </span>TableMetadataManager {
+        source: common_meta::error::Error,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -672,6 +685,7 @@
             Error::Unimplemented { .. } | Error::NotSupported { .. } =&gt; StatusCode::Unsupported,
             Error::QueryAccessDenied { .. } =&gt; StatusCode::AccessDenied,
             Error::Datafusion { .. } =&gt; StatusCode::EngineExecuteQuery,
+            Error::TableMetadataManager { source, .. } =&gt; source.status_code(),
         }
     }
 

@@ -560,10 +560,10 @@
     <span class="kw">use </span>catalog::helper::{
         CatalogKey, CatalogValue, SchemaKey, SchemaValue, TableGlobalKey, TableGlobalValue,
     };
-    <span class="kw">use </span>catalog::remote::mock::MockKvBackend;
-    <span class="kw">use </span>catalog::remote::{KvBackend, KvBackendRef};
     <span class="kw">use </span>client::client_manager::DatanodeClients;
     <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+    <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
+    <span class="kw">use </span>common_meta::kv_backend::{KvBackend, KvBackendRef};
     <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, VectorRef};
     <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, Schema};
     <span class="kw">use </span>datatypes::vectors::Int32Vector;
@@ -574,7 +574,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::table::test::create_partition_rule_manager;
 
     <span class="kw">async fn </span>prepare_mocked_backend() -&gt; KvBackendRef {
-        <span class="kw">let </span>backend = Arc::new(MockKvBackend::default());
+        <span class="kw">let </span>backend = Arc::new(MemoryKvBackend::default());
 
         <span class="kw">let </span>default_catalog = CatalogKey {
             catalog_name: DEFAULT_CATALOG_NAME.to_string(),

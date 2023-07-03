@@ -914,6 +914,30 @@
 <a href="#914" id="914">914</a>
 <a href="#915" id="915">915</a>
 <a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -937,6 +961,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::{MAX_SYS_TABLE_ID, MITO_ENGINE};
 <span class="kw">use </span>common_meta::ident::TableIdent;
+<span class="kw">use </span>common_meta::kv_backend::{Kv, KvBackendRef};
 <span class="kw">use </span>common_telemetry::{debug, error, info, warn};
 <span class="kw">use </span>futures::Stream;
 <span class="kw">use </span>futures_util::{StreamExt, TryStreamExt};
@@ -951,6 +976,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CatalogNotFoundSnafu, CreateTableSnafu, InvalidCatalogValueSnafu, OpenTableSnafu,
     ParallelOpenTableSnafu, <span class="prelude-ty">Result</span>, SchemaNotFoundSnafu, TableEngineNotFoundSnafu,
+    TableMetadataManagerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::helper::{
     build_catalog_prefix, build_schema_prefix, build_table_global_prefix,
@@ -958,7 +984,6 @@
     TableGlobalValue, TableRegionalKey, TableRegionalValue, CATALOG_KEY_PREFIX,
 };
 <span class="kw">use </span><span class="kw">crate</span>::remote::region_alive_keeper::RegionAliveKeepers;
-<span class="kw">use </span><span class="kw">crate</span>::remote::{Kv, KvBackendRef};
 <span class="kw">use crate</span>::{
     handle_system_table_request, CatalogManager, DeregisterTableRequest, RegisterSchemaRequest,
     RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
@@ -996,7 +1021,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.backend.range(catalog_range_prefix.as_bytes());
         Box::pin(<span class="macro">stream!</span>({
             <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = catalogs.next().<span class="kw">await </span>{
-                <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
+                <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
                 <span class="kw">if </span>!k.starts_with(catalog_range_prefix.as_bytes()) {
                     <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-catalog key: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
                     <span class="kw">continue</span>;
@@ -1050,7 +1075,8 @@
                     .as_bytes()
                     .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
             )
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Created schema &#39;{schema_key}&#39;&quot;</span>);
 
         <span class="kw">let </span>catalog_key = CatalogKey {
@@ -1064,7 +1090,8 @@
                     .as_bytes()
                     .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
             )
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Created catalog &#39;{catalog_key}&quot;</span>);
         <span class="prelude-val">Ok</span>(())
     }
@@ -1232,7 +1259,8 @@
                 table_key.as_bytes(),
                 <span class="kw-2">&amp;</span>table_value.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
             )
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(
             <span class="string">&quot;Successfully set catalog table entry, key: {}, table value: {:?}&quot;</span>,
             table_key, table_value
@@ -1259,7 +1287,8 @@
         <span class="kw">let </span>engine_opt = <span class="self">self
             </span>.backend
             .get(table_key.as_bytes())
-            .<span class="kw">await</span><span class="question-mark">?
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.map(|Kv(<span class="kw">_</span>, v)| {
                 <span class="kw">let </span>TableRegionalValue {
                     table_id,
@@ -1277,7 +1306,10 @@
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
             };
 
-        <span class="self">self</span>.backend.delete(table_key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.backend
+            .delete(table_key.as_bytes())
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(
             <span class="string">&quot;Successfully deleted catalog table entry, key: {}&quot;</span>,
             table_key
@@ -1344,7 +1376,7 @@
 
     Box::pin(<span class="macro">stream!</span>({
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
-            <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r<span class="question-mark">?</span>;
+            <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
             <span class="kw">if </span>!k.starts_with(schema_prefix.as_bytes()) {
                 <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-schema key: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
                 <span class="kw">continue</span>;
@@ -1368,7 +1400,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>tables = backend.range(table_prefix.as_bytes());
     Box::pin(<span class="macro">stream!</span>({
         <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = tables.next().<span class="kw">await </span>{
-            <span class="kw">let </span>Kv(k, v) = r<span class="question-mark">?</span>;
+            <span class="kw">let </span>Kv(k, v) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
             <span class="kw">if </span>!k.starts_with(table_prefix.as_bytes()) {
                 <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-table prefix: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
                 <span class="kw">continue</span>;
@@ -1617,7 +1649,8 @@
                     .as_bytes()
                     .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
             )
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
         <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
@@ -1636,7 +1669,7 @@
             node_id: <span class="self">self</span>.node_id,
         }
         .to_string();
-        <span class="kw">let </span><span class="prelude-val">Some</span>(Kv(<span class="kw">_</span>, value_bytes)) = <span class="self">self</span>.backend.get(old_table_key.as_bytes()).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
+        <span class="kw">let </span><span class="prelude-val">Some</span>(Kv(<span class="kw">_</span>, value_bytes)) = <span class="self">self</span>.backend.get(old_table_key.as_bytes()).<span class="kw">await</span>.context(TableMetadataManagerSnafu)<span class="question-mark">? </span><span class="kw">else </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
         };
         <span class="kw">let </span>new_table_key = TableRegionalKey {
@@ -1647,10 +1680,12 @@
         };
         <span class="self">self</span>.backend
             .set(new_table_key.to_string().as_bytes(), <span class="kw-2">&amp;</span>value_bytes)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="self">self</span>.backend
             .delete(old_table_key.to_string().as_bytes())
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
@@ -1672,7 +1707,12 @@
         <span class="kw">let </span>key = <span class="self">self
             </span>.build_schema_key(catalog.to_string(), schema.to_string())
             .to_string();
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.backend.get(key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>.is_some())
+        <span class="prelude-val">Ok</span>(<span class="self">self
+            </span>.backend
+            .get(key.as_bytes())
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.is_some())
     }
 
     <span class="kw">async fn </span>table(
@@ -1694,7 +1734,8 @@
         <span class="kw">let </span>table_opt = <span class="self">self
             </span>.backend
             .get(key.as_bytes())
-            .<span class="kw">await</span><span class="question-mark">?
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.map(|Kv(<span class="kw">_</span>, v)| {
                 <span class="kw">let </span>TableRegionalValue {
                     table_id,
@@ -1737,7 +1778,8 @@
         <span class="prelude-val">Ok</span>(<span class="self">self
             </span>.backend
             .get(key.to_string().as_bytes())
-            .<span class="kw">await</span><span class="question-mark">?
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.is_some())
     }
 
@@ -1752,7 +1794,12 @@
         }
         .to_string();
 
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.backend.get(key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>.is_some())
+        <span class="prelude-val">Ok</span>(<span class="self">self
+            </span>.backend
+            .get(key.as_bytes())
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.is_some())
     }
 
     <span class="kw">async fn </span>catalog_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;&gt; {
@@ -1821,7 +1868,8 @@
                     .as_bytes()
                     .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
             )
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
         <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
     }

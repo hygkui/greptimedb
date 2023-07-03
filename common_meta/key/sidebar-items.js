@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["REMOVED_PREFIX","TABLE_ROUTE_PREFIX"],"fn":["to_removed_key"],"mod":["table_route"],"struct":["TableRouteKey"]};
+window.SIDEBAR_ITEMS = {"constant":["REMOVED_PREFIX","TABLE_INFO_KEY_PREFIX","TABLE_REGION_KEY_PREFIX","TABLE_ROUTE_PREFIX"],"fn":["to_removed_key"],"macro":["impl_table_meta_value"],"mod":["table_info","table_region","table_route"],"struct":["TableMetadataManager","TableRouteKey"],"trait":["TableMetaKey"],"type":["TableMetadataManagerRef"]};

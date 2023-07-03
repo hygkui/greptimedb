@@ -103,61 +103,6 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -172,17 +117,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::any::Any;
-<span class="kw">use </span>std::fmt::Debug;
-<span class="kw">use </span>std::pin::Pin;
-<span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">pub use </span>client::{CachedMetaKvBackend, MetaKvBackend};
-<span class="kw">use </span>futures::Stream;
-<span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">pub use </span>manager::RemoteCatalogManager;
-
-<span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
 <span class="kw">mod </span>client;
 <span class="kw">mod </span>manager;
@@ -190,59 +128,6 @@
 <span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
 </span><span class="kw">pub mod </span>mock;
 <span class="kw">pub mod </span>region_alive_keeper;
-
-<span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub struct </span>Kv(<span class="kw">pub </span>Vec&lt;u8&gt;, <span class="kw">pub </span>Vec&lt;u8&gt;);
-
-<span class="kw">pub type </span>ValueIter&lt;<span class="lifetime">&#39;a</span>, E&gt; = Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;Kv, E&gt;&gt; + Send + <span class="lifetime">&#39;a</span>&gt;&gt;;
-
-<span class="attr">#[async_trait::async_trait]
-</span><span class="kw">pub trait </span>KvBackend: Send + Sync {
-    <span class="kw">fn </span>range&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; ValueIter&lt;<span class="lifetime">&#39;b</span>, Error&gt;
-    <span class="kw">where
-        </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>;
-
-    <span class="kw">async fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], val: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
-
-    <span class="doccomment">/// Compare and set value of key. `expect` is the expected value, if backend&#39;s current value associated
-    /// with key is the same as `expect`, the value will be updated to `val`.
-    ///
-    /// - If the compare-and-set operation successfully updated value, this method will return an `Ok(Ok())`
-    /// - If associated value is not the same as `expect`, no value will be updated and an `Ok(Err(Vec&lt;u8&gt;))`
-    /// will be returned, the `Err(Vec&lt;u8&gt;)` indicates the current associated value of key.
-    /// - If any error happens during operation, an `Err(Error)` will be returned.
-    </span><span class="kw">async fn </span>compare_and_set(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        key: <span class="kw-2">&amp;</span>[u8],
-        expect: <span class="kw-2">&amp;</span>[u8],
-        val: <span class="kw-2">&amp;</span>[u8],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;(), <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;&gt;, Error&gt;;
-
-    <span class="kw">async fn </span>delete_range(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], end: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
-
-    <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        <span class="self">self</span>.delete_range(key, <span class="kw-2">&amp;</span>[]).<span class="kw">await
-    </span>}
-
-    <span class="doccomment">/// Default get is implemented based on `range` method.
-    </span><span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Kv&gt;, Error&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.range(key);
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = iter.next().<span class="kw">await </span>{
-            <span class="kw">let </span>kv = r<span class="question-mark">?</span>;
-            <span class="kw">if </span>kv.<span class="number">0 </span>== key {
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(kv));
-            }
-        }
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
-    }
-
-    <span class="doccomment">/// MoveValue atomically renames the key to the given updated key.
-    </span><span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, from_key: <span class="kw-2">&amp;</span>[u8], to_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
-
-    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any;
-}
-
-<span class="kw">pub type </span>KvBackendRef = Arc&lt;<span class="kw">dyn </span>KvBackend&gt;;
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">pub trait </span>KvCacheInvalidator: Send + Sync {
@@ -253,14 +138,19 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>async_stream::stream;
+    <span class="kw">use </span>std::any::Any;
 
-    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>async_stream::stream;
+    <span class="kw">use </span>common_meta::kv_backend::{Kv, KvBackend, ValueIter};
+
+    <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
     <span class="kw">struct </span>MockKvBackend {}
 
     <span class="attr">#[async_trait::async_trait]
     </span><span class="kw">impl </span>KvBackend <span class="kw">for </span>MockKvBackend {
+        <span class="kw">type </span>Error = Error;
+
         <span class="kw">fn </span>range&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, _key: <span class="kw-2">&amp;</span>[u8]) -&gt; ValueIter&lt;<span class="lifetime">&#39;b</span>, Error&gt;
         <span class="kw">where
             </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,

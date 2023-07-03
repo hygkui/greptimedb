@@ -969,6 +969,8 @@
 <a href="#969" id="969">969</a>
 <a href="#970" id="970">970</a>
 <a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1026,7 +1028,9 @@
 <span class="kw">use </span>tokio::sync::RwLock;
 
 <span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, FindDatanodeSnafu, FindTableRouteSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    <span class="self">self</span>, FindDatanodeSnafu, FindTableRouteSnafu, <span class="prelude-ty">Result</span>, TableMetadataManagerSnafu,
+};
 <span class="kw">use </span><span class="kw">crate</span>::instance::distributed::inserter::DistInserter;
 <span class="kw">use </span><span class="kw">crate</span>::table::delete::to_grpc_delete_request;
 <span class="kw">use </span><span class="kw">crate</span>::table::scan::{DatanodeInstance, TableScanPlan};
@@ -1227,7 +1231,7 @@
             .backend()
             .get(key.to_string().as_bytes())
             .<span class="kw">await
-            </span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(raw) = raw {
             <span class="prelude-val">Some</span>(TableGlobalValue::from_bytes(raw.<span class="number">1</span>).context(error::CatalogEntrySerdeSnafu)<span class="question-mark">?</span>)
         } <span class="kw">else </span>{
@@ -1245,7 +1249,7 @@
             .backend()
             .set(key.to_string().as_bytes(), <span class="kw-2">&amp;</span>value)
             .<span class="kw">await
-            </span>.context(error::CatalogSnafu)
+            </span>.context(TableMetadataManagerSnafu)
     }
 
     <span class="kw">async fn </span>delete_table_global_value(<span class="kw-2">&amp;</span><span class="self">self</span>, key: TableGlobalKey) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -1253,7 +1257,7 @@
             .backend()
             .delete(key.to_string().as_bytes())
             .<span class="kw">await
-            </span>.context(error::CatalogSnafu)
+            </span>.context(TableMetadataManagerSnafu)
     }
 
     <span class="kw">async fn </span>move_table_route_value(
@@ -1284,7 +1288,7 @@
             .backend()
             .move_value(old_key.as_bytes(), new_key.as_bytes())
             .<span class="kw">await
-            </span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.catalog_manager
             .partition_manager()
