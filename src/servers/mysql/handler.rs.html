@@ -471,6 +471,12 @@
 <a href="#471" id="471">471</a>
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -817,10 +823,16 @@
 
     <span class="kw">async fn </span>on_init&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>, database: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, w: InitWriter&lt;<span class="lifetime">&#39;a</span>, W&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(database);
-        <span class="macro">ensure!</span>(
-            <span class="self">self</span>.query_handler.is_valid_schema(catalog, schema).<span class="kw">await</span><span class="question-mark">?</span>,
-            error::DatabaseNotFoundSnafu { catalog, schema }
-        );
+
+        <span class="kw">if </span>!<span class="self">self</span>.query_handler.is_valid_schema(catalog, schema).<span class="kw">await</span><span class="question-mark">? </span>{
+            <span class="kw">return </span>w
+                .error(
+                    ErrorKind::ER_WRONG_DB_NAME,
+                    <span class="macro">format!</span>(<span class="string">&quot;Unknown database &#39;{}&#39;&quot;</span>, database).as_bytes(),
+                )
+                .<span class="kw">await
+                </span>.map_err(|e| e.into());
+        }
 
         <span class="kw">let </span>user_info = <span class="kw-2">&amp;</span><span class="self">self</span>.session.user_info();
 
