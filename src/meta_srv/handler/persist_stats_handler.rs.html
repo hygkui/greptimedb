@@ -218,6 +218,10 @@
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -366,6 +370,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatMailbox, Pushers};
     <span class="kw">use </span><span class="kw">crate</span>::keys::StatKey;
     <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
+    <span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::LeaderCachedKvStore;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::ext::KvStoreExt;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 
@@ -373,6 +378,8 @@
     </span><span class="kw">async fn </span>test_handle_datanode_stats() {
         <span class="kw">let </span>in_memory = Arc::new(MemStore::new());
         <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
+        <span class="kw">let </span>leader_cached_kv_store =
+            Arc::new(LeaderCachedKvStore::with_always_leader(kv_store.clone()));
         <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_store.clone());
         <span class="kw">let </span>mailbox = HeartbeatMailbox::create(Pushers::default(), seq);
         <span class="kw">let </span>meta_peer_client = MetaPeerClientBuilder::default()
@@ -386,6 +393,7 @@
             server_addr: <span class="string">&quot;127.0.0.1:0000&quot;</span>.to_string(),
             in_memory,
             kv_store,
+            leader_cached_kv_store,
             meta_peer_client,
             mailbox,
             election: <span class="prelude-val">None</span>,

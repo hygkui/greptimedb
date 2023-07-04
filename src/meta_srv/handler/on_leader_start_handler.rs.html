@@ -42,6 +42,7 @@
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -81,6 +82,7 @@
             <span class="kw">if </span>election.in_infancy() {
                 ctx.is_infancy = <span class="bool-val">true</span>;
                 ctx.reset_in_memory();
+                ctx.reset_leader_cached_kv_store();
             }
         }
         <span class="prelude-val">Ok</span>(())
