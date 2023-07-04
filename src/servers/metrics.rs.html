@@ -198,7 +198,6 @@
 <span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>hyper::Body;
 <span class="kw">use </span>metrics::gauge;
-<span class="kw">use </span>metrics_process::Collector;
 <span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>tikv_jemalloc_ctl::stats::{allocated_mib, resident_mib};
@@ -251,8 +250,9 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_JEMALLOC_ALLOCATED: <span class="kw-2">&amp;</span>str = <span class="string">&quot;sys.jemalloc.allocated&quot;</span>;
 
 <span class="doccomment">/// Prometheus style process metrics collector.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">static </span>PROCESS_COLLECTOR: Lazy&lt;Collector&gt; = Lazy::new(|| {
-    <span class="kw">let </span>collector = Collector::default();
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;metrics-process&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">static </span>PROCESS_COLLECTOR: Lazy&lt;metrics_process::Collector&gt; = Lazy::new(|| {
+    <span class="kw">let </span>collector = metrics_process::Collector::default();
     <span class="comment">// Describe collector.
     </span>collector.describe();
     collector

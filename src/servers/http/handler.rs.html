@@ -182,6 +182,8 @@
 <a href="#182" id="182">182</a>
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -211,7 +213,7 @@
 <span class="kw">use </span>session::context::UserInfo;
 
 <span class="kw">use </span><span class="kw">crate</span>::http::{ApiState, JsonResponse};
-<span class="kw">use </span><span class="kw">crate</span>::metrics::{JEMALLOC_COLLECTOR, PROCESS_COLLECTOR};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::JEMALLOC_COLLECTOR;
 <span class="kw">use </span><span class="kw">crate</span>::metrics_handler::MetricsHandler;
 
 <span class="attr">#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
@@ -321,7 +323,9 @@
     Query(_params): Query&lt;HashMap&lt;String, String&gt;&gt;,
 ) -&gt; String {
     <span class="comment">// Collect process metrics.
-    </span>PROCESS_COLLECTOR.collect();
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;metrics-process&quot;</span>)]
+    </span><span class="kw">crate</span>::metrics::PROCESS_COLLECTOR.collect();
+
     <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = JEMALLOC_COLLECTOR.as_ref() {
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = c.update() {
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to update jemalloc metrics&quot;</span>);
