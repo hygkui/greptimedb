@@ -554,6 +554,37 @@
 <a href="#554" id="554">554</a>
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -572,6 +603,7 @@
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>datafusion_expr::Operator;
 <span class="kw">use </span>datatypes::value::timestamp_to_scalar_value;
+<span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::chunk::{ChunkReaderBuilder, ChunkReaderImpl};
 <span class="kw">use </span><span class="kw">crate</span>::error;
@@ -580,11 +612,11 @@
 
 <span class="doccomment">/// Builds an SST reader that only reads rows within given time range.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>build_sst_reader(
+    region_id: RegionId,
     schema: RegionSchemaRef,
     sst_layer: AccessLayerRef,
     files: <span class="kw-2">&amp;</span>[FileHandle],
-    lower_sec_inclusive: i64,
-    upper_sec_exclusive: i64,
+    time_range: (<span class="prelude-ty">Option</span>&lt;i64&gt;, <span class="prelude-ty">Option</span>&lt;i64&gt;),
 ) -&gt; error::Result&lt;ChunkReaderImpl&gt; {
     <span class="comment">// TODO(hl): Schemas in different SSTs may differ, thus we should infer
     // timestamp column name from Parquet metadata.
@@ -594,17 +626,12 @@
     <span class="kw">let </span>ts_col_unit = ts_col.data_type.as_timestamp().unwrap().unit();
     <span class="kw">let </span>ts_col_name = ts_col.name.clone();
 
-    ChunkReaderBuilder::new(schema, sst_layer)
+    ChunkReaderBuilder::new(region_id, schema, sst_layer)
         .pick_ssts(files)
         .filters(
-            build_time_range_filter(
-                lower_sec_inclusive,
-                upper_sec_exclusive,
-                <span class="kw-2">&amp;</span>ts_col_name,
-                ts_col_unit,
-            )
-            .into_iter()
-            .collect(),
+            build_time_range_filter(time_range, <span class="kw-2">&amp;</span>ts_col_name, ts_col_unit)
+                .into_iter()
+                .collect(),
         )
         .build()
         .<span class="kw">await
@@ -613,21 +640,22 @@
 <span class="doccomment">/// Build time range filter expr from lower (inclusive) and upper bound(exclusive).
 /// Returns `None` if time range overflows.
 </span><span class="kw">fn </span>build_time_range_filter(
-    low_sec: i64,
-    high_sec: i64,
+    time_range: (<span class="prelude-ty">Option</span>&lt;i64&gt;, <span class="prelude-ty">Option</span>&lt;i64&gt;),
     ts_col_name: <span class="kw-2">&amp;</span>str,
     ts_col_unit: TimeUnit,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
-    <span class="macro">debug_assert!</span>(low_sec &lt;= high_sec);
+    <span class="kw">let </span>(low_ts_inclusive, high_ts_exclusive) = time_range;
     <span class="kw">let </span>ts_col = DfExpr::Column(datafusion_common::Column::from_name(ts_col_name));
 
     <span class="comment">// Converting seconds to whatever unit won&#39;t lose precision.
     // Here only handles overflow.
-    </span><span class="kw">let </span>low_ts = common_time::Timestamp::new_second(low_sec)
-        .convert_to(ts_col_unit)
+    </span><span class="kw">let </span>low_ts = low_ts_inclusive
+        .map(common_time::Timestamp::new_second)
+        .and_then(|ts| ts.convert_to(ts_col_unit))
         .map(|ts| ts.value());
-    <span class="kw">let </span>high_ts = common_time::Timestamp::new_second(high_sec)
-        .convert_to(ts_col_unit)
+    <span class="kw">let </span>high_ts = high_ts_exclusive
+        .map(common_time::Timestamp::new_second)
+        .and_then(|ts| ts.convert_to(ts_col_unit))
         .map(|ts| ts.value());
 
     <span class="kw">let </span>expr = <span class="kw">match </span>(low_ts, high_ts) {
@@ -694,6 +722,8 @@
     <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::ParquetWriter;
     <span class="kw">use </span><span class="kw">crate</span>::sst::{<span class="self">self</span>, FileId, FileMeta, FsAccessLayer, Source, SstInfo, WriteOptions};
     <span class="kw">use </span><span class="kw">crate</span>::test_util::descriptor_util::RegionDescBuilder;
+
+    <span class="kw">const </span>REGION_ID: RegionId = <span class="number">1</span>;
 
     <span class="kw">fn </span>schema_for_test() -&gt; RegionSchemaRef {
         <span class="comment">// Just build a region desc and use its columns metadata.
@@ -833,7 +863,9 @@
         handle
     }
 
-    <span class="kw">async fn </span>check_reads(
+    <span class="comment">// The region id is only used to build the reader, we don&#39;t check its content.
+    </span><span class="kw">async fn </span>check_reads(
+        region_id: RegionId,
         schema: RegionSchemaRef,
         sst_layer: AccessLayerRef,
         files: <span class="kw-2">&amp;</span>[FileHandle],
@@ -842,11 +874,11 @@
         expect: <span class="kw-2">&amp;</span>[i64],
     ) {
         <span class="kw">let </span><span class="kw-2">mut </span>reader = build_sst_reader(
+            region_id,
             schema,
             sst_layer,
             files,
-            lower_sec_inclusive,
-            upper_sec_exclusive,
+            (<span class="prelude-val">Some</span>(lower_sec_inclusive), <span class="prelude-val">Some</span>(upper_sec_exclusive)),
         )
         .<span class="kw">await
         </span>.unwrap();
@@ -908,6 +940,7 @@
         <span class="kw">let </span>files = <span class="macro">vec!</span>[file1, file2];
         <span class="comment">// read from two sst files with time range filter,
         </span>check_reads(
+            REGION_ID,
             schema.clone(),
             sst_layer.clone(),
             <span class="kw-2">&amp;</span>files,
@@ -917,7 +950,7 @@
         )
         .<span class="kw">await</span>;
 
-        check_reads(schema, sst_layer, <span class="kw-2">&amp;</span>files, <span class="number">1</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span>[<span class="number">1000</span>]).<span class="kw">await</span>;
+        check_reads(REGION_ID, schema, sst_layer, <span class="kw-2">&amp;</span>files, <span class="number">1</span>, <span class="number">2</span>, <span class="kw-2">&amp;</span>[<span class="number">1000</span>]).<span class="kw">await</span>;
     }
 
     <span class="kw">async fn </span>read_file(
@@ -926,9 +959,15 @@
         sst_layer: AccessLayerRef,
     ) -&gt; Vec&lt;i64&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>timestamps = <span class="macro">vec!</span>[];
-        <span class="kw">let </span><span class="kw-2">mut </span>reader = build_sst_reader(schema, sst_layer, files, i64::MIN, i64::MAX)
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>reader = build_sst_reader(
+            REGION_ID,
+            schema,
+            sst_layer,
+            files,
+            (<span class="prelude-val">Some</span>(i64::MIN), <span class="prelude-val">Some</span>(i64::MAX)),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
         <span class="kw">while let </span><span class="prelude-val">Some</span>(chunk) = reader.next_chunk().<span class="kw">await</span>.unwrap() {
             <span class="kw">let </span>ts = chunk.columns[<span class="number">0</span>]
                 .as_any()
@@ -990,15 +1029,33 @@
         <span class="kw">let </span>sst_layer = Arc::new(FsAccessLayer::new(<span class="string">&quot;./&quot;</span>, object_store.clone()));
         <span class="kw">let </span>input_files = <span class="macro">vec!</span>[file2, file1];
 
-        <span class="kw">let </span>reader1 = build_sst_reader(schema.clone(), sst_layer.clone(), <span class="kw-2">&amp;</span>input_files, <span class="number">0</span>, <span class="number">3</span>)
-            .<span class="kw">await
-            </span>.unwrap();
-        <span class="kw">let </span>reader2 = build_sst_reader(schema.clone(), sst_layer.clone(), <span class="kw-2">&amp;</span>input_files, <span class="number">3</span>, <span class="number">6</span>)
-            .<span class="kw">await
-            </span>.unwrap();
-        <span class="kw">let </span>reader3 = build_sst_reader(schema.clone(), sst_layer.clone(), <span class="kw-2">&amp;</span>input_files, <span class="number">6</span>, <span class="number">10</span>)
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="kw">let </span>reader1 = build_sst_reader(
+            REGION_ID,
+            schema.clone(),
+            sst_layer.clone(),
+            <span class="kw-2">&amp;</span>input_files,
+            (<span class="prelude-val">Some</span>(<span class="number">0</span>), <span class="prelude-val">Some</span>(<span class="number">3</span>)),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
+        <span class="kw">let </span>reader2 = build_sst_reader(
+            REGION_ID,
+            schema.clone(),
+            sst_layer.clone(),
+            <span class="kw-2">&amp;</span>input_files,
+            (<span class="prelude-val">Some</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">6</span>)),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
+        <span class="kw">let </span>reader3 = build_sst_reader(
+            REGION_ID,
+            schema.clone(),
+            sst_layer.clone(),
+            <span class="kw-2">&amp;</span>input_files,
+            (<span class="prelude-val">Some</span>(<span class="number">6</span>), <span class="prelude-val">Some</span>(<span class="number">10</span>)),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
 
         <span class="kw">let </span>opts = WriteOptions {
             sst_write_buffer_size: ReadableSize::mb(<span class="number">8</span>),
@@ -1081,7 +1138,12 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_build_time_range_filter() {
-        <span class="macro">assert!</span>(build_time_range_filter(i64::MIN, i64::MAX, <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).is_none());
+        <span class="macro">assert!</span>(build_time_range_filter(
+            (<span class="prelude-val">Some</span>(i64::MIN), <span class="prelude-val">Some</span>(i64::MAX)),
+            <span class="string">&quot;ts&quot;</span>,
+            TimeUnit::Nanosecond
+        )
+        .is_none());
 
         <span class="macro">assert_eq!</span>(
             Expr::from(datafusion_expr::binary_expr(
@@ -1089,10 +1151,10 @@
                 Operator::Lt,
                 datafusion_expr::lit(timestamp_to_scalar_value(
                     TimeUnit::Nanosecond,
-                    <span class="prelude-val">Some</span>(TimeUnit::Second.factor() <span class="kw">as </span>i64 / TimeUnit::Nanosecond.factor() <span class="kw">as </span>i64)
-                ))
+                    <span class="prelude-val">Some</span>(TimeUnit::Second.factor() <span class="kw">as </span>i64 / TimeUnit::Nanosecond.factor() <span class="kw">as </span>i64),
+                )),
             )),
-            build_time_range_filter(i64::MIN, <span class="number">1</span>, <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).unwrap()
+            build_time_range_filter((<span class="prelude-val">Some</span>(i64::MIN), <span class="prelude-val">Some</span>(<span class="number">1</span>)), <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).unwrap()
         );
 
         <span class="macro">assert_eq!</span>(
@@ -1103,10 +1165,10 @@
                     TimeUnit::Nanosecond,
                     <span class="prelude-val">Some</span>(
                         <span class="number">2 </span>* TimeUnit::Second.factor() <span class="kw">as </span>i64 / TimeUnit::Nanosecond.factor() <span class="kw">as </span>i64
-                    )
-                ))
+                    ),
+                )),
             )),
-            build_time_range_filter(<span class="number">2</span>, i64::MAX, <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).unwrap()
+            build_time_range_filter((<span class="prelude-val">Some</span>(<span class="number">2</span>), <span class="prelude-val">Some</span>(i64::MAX)), <span class="string">&quot;ts&quot;</span>, TimeUnit::Nanosecond).unwrap()
         );
     }
 }

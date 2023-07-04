@@ -363,6 +363,8 @@
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -390,7 +392,7 @@
 <span class="kw">use </span>tokio::sync::oneshot::{Receiver, Sender};
 <span class="kw">use </span>tokio::sync::{oneshot, Notify};
 
-<span class="kw">use </span><span class="kw">crate</span>::compaction::{CompactionRequestImpl, CompactionSchedulerRef};
+<span class="kw">use </span><span class="kw">crate</span>::compaction::{CompactionPickerRef, CompactionRequestImpl, CompactionSchedulerRef};
 <span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
 <span class="kw">use </span><span class="kw">crate</span>::engine::RegionMap;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
@@ -474,6 +476,7 @@
     </span><span class="kw">pub </span>ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="doccomment">/// Time window for compaction.
     </span><span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+    <span class="kw">pub </span>compaction_picker: CompactionPickerRef&lt;S&gt;,
 }
 
 <span class="kw">impl</span>&lt;S: LogStore&gt; FlushRegionRequest&lt;S&gt; {
@@ -511,6 +514,7 @@
             ttl: req.ttl,
             compaction_time_window: req.compaction_time_window,
             sender: <span class="prelude-val">None</span>,
+            picker: req.compaction_picker.clone(),
             sst_write_buffer_size: req.engine_config.sst_write_buffer_size,
         }
     }

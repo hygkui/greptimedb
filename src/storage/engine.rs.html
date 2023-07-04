@@ -695,6 +695,10 @@
 <a href="#695" id="695">695</a>
 <a href="#696" id="696">696</a>
 <a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -720,8 +724,8 @@
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::manifest::Manifest;
 <span class="kw">use </span>store_api::storage::{
-    CloseContext, CloseOptions, CreateOptions, EngineContext, OpenOptions, Region,
-    RegionDescriptor, StorageEngine,
+    CloseContext, CloseOptions, CompactionStrategy, CreateOptions, EngineContext, OpenOptions,
+    Region, RegionDescriptor, StorageEngine,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionSchedulerRef;
@@ -1092,6 +1096,7 @@
                 name,
                 <span class="kw-2">&amp;</span><span class="self">self</span>.config,
                 opts.ttl,
+                opts.compaction_strategy.clone(),
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1137,6 +1142,7 @@
                 <span class="kw-2">&amp;</span>region_name,
                 <span class="kw-2">&amp;</span><span class="self">self</span>.config,
                 opts.ttl,
+                opts.compaction_strategy.clone(),
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1168,6 +1174,7 @@
         region_name: <span class="kw-2">&amp;</span>str,
         config: <span class="kw-2">&amp;</span>EngineConfig,
         region_ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+        compaction_strategy: CompactionStrategy,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;StoreConfig&lt;S&gt;&gt; {
         <span class="kw">let </span>parent_dir = util::normalize_dir(parent_dir);
 
@@ -1200,6 +1207,7 @@
             ttl,
             write_buffer_size: write_buffer_size
                 .unwrap_or(<span class="self">self</span>.config.region_write_buffer_size.as_bytes() <span class="kw">as </span>usize),
+            compaction_strategy,
         })
     }
 

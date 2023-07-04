@@ -913,6 +913,9 @@
 <a href="#913" id="913">913</a>
 <a href="#914" id="914">914</a>
 <a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -942,7 +945,7 @@
 };
 <span class="kw">use </span>tokio::sync::{oneshot, Mutex};
 
-<span class="kw">use </span><span class="kw">crate</span>::compaction::{CompactionRequestImpl, CompactionSchedulerRef};
+<span class="kw">use </span><span class="kw">crate</span>::compaction::{CompactionPickerRef, CompactionRequestImpl, CompactionSchedulerRef};
 <span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::flush::{
@@ -1327,6 +1330,7 @@
     <span class="kw">pub </span>wal: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Wal&lt;S&gt;,
     <span class="kw">pub </span>writer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RegionWriterRef,
     <span class="kw">pub </span>manifest: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RegionManifest,
+    <span class="kw">pub </span>compaction_picker: CompactionPickerRef&lt;S&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, S: LogStore&gt; WriterContext&lt;<span class="lifetime">&#39;a</span>, S&gt; {
@@ -1694,6 +1698,7 @@
             engine_config: <span class="self">self</span>.engine_config.clone(),
             ttl: <span class="self">self</span>.ttl,
             compaction_time_window: current_version.ssts().compaction_time_window(),
+            compaction_picker: ctx.compaction_picker.clone(),
         };
 
         <span class="kw">let </span>flush_handle = ctx
@@ -1731,6 +1736,7 @@
             ttl: <span class="self">self</span>.ttl,
             compaction_time_window,
             sender: <span class="prelude-val">None</span>,
+            picker: writer_ctx.compaction_picker.clone(),
             sst_write_buffer_size,
         };
 
