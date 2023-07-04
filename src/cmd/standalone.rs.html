@@ -570,6 +570,16 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -914,6 +924,7 @@
     <span class="kw">use </span>std::io::Write;
     <span class="kw">use </span>std::time::Duration;
 
+    <span class="kw">use </span>common_base::readable_size::ReadableSize;
     <span class="kw">use </span>common_test_util::temp_dir::create_named_temp_file;
     <span class="kw">use </span>servers::auth::{Identity, Password, UserProviderRef};
     <span class="kw">use </span>servers::Mode;
@@ -981,6 +992,7 @@
             [http_options]
             addr = &quot;127.0.0.1:4000&quot;
             timeout = &quot;30s&quot;
+            body_limit = &quot;128MB&quot;
 
             [logging]
             level = &quot;debug&quot;
@@ -1005,6 +1017,10 @@
         <span class="macro">assert_eq!</span>(
             Duration::from_secs(<span class="number">30</span>),
             fe_opts.http_options.as_ref().unwrap().timeout
+        );
+        <span class="macro">assert_eq!</span>(
+            ReadableSize::mb(<span class="number">128</span>),
+            fe_opts.http_options.as_ref().unwrap().body_limit
         );
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;127.0.0.1:4001&quot;</span>.to_string(),
@@ -1132,6 +1148,10 @@
                     opts.fe_opts.http_options.as_ref().unwrap().addr,
                     <span class="string">&quot;127.0.0.1:14000&quot;
                 </span>);
+                <span class="macro">assert_eq!</span>(
+                    ReadableSize::mb(<span class="number">64</span>),
+                    opts.fe_opts.http_options.as_ref().unwrap().body_limit
+                );
 
                 <span class="comment">// Should be default value.
                 </span><span class="macro">assert_eq!</span>(

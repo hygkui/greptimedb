@@ -479,6 +479,17 @@
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -717,6 +728,7 @@
     <span class="kw">use </span>std::io::Write;
     <span class="kw">use </span>std::time::Duration;
 
+    <span class="kw">use </span>common_base::readable_size::ReadableSize;
     <span class="kw">use </span>common_test_util::temp_dir::create_named_temp_file;
     <span class="kw">use </span>frontend::service_config::GrpcOptions;
     <span class="kw">use </span>servers::auth::{Identity, Password, UserProviderRef};
@@ -741,6 +753,10 @@
             command.load_options(TopLevelOptions::default()).unwrap() <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };
 
         <span class="macro">assert_eq!</span>(opts.http_options.as_ref().unwrap().addr, <span class="string">&quot;127.0.0.1:1234&quot;</span>);
+        <span class="macro">assert_eq!</span>(
+            ReadableSize::mb(<span class="number">64</span>),
+            opts.http_options.as_ref().unwrap().body_limit
+        );
         <span class="macro">assert_eq!</span>(opts.mysql_options.as_ref().unwrap().addr, <span class="string">&quot;127.0.0.1:5678&quot;</span>);
         <span class="macro">assert_eq!</span>(
             opts.postgres_options.as_ref().unwrap().addr,
@@ -782,6 +798,7 @@
             [http_options]
             addr = &quot;127.0.0.1:4000&quot;
             timeout = &quot;30s&quot;
+            body_limit = &quot;2GB&quot;
 
             [logging]
             level = &quot;debug&quot;
@@ -805,6 +822,11 @@
         <span class="macro">assert_eq!</span>(
             Duration::from_secs(<span class="number">30</span>),
             fe_opts.http_options.as_ref().unwrap().timeout
+        );
+
+        <span class="macro">assert_eq!</span>(
+            ReadableSize::gb(<span class="number">2</span>),
+            fe_opts.http_options.as_ref().unwrap().body_limit
         );
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, fe_opts.logging.level.as_ref().unwrap());
