@@ -244,6 +244,18 @@
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -261,9 +273,11 @@
 </span><span class="kw">use </span>std::sync::atomic::AtomicBool;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 
 <span class="kw">use </span><span class="kw">crate</span>::cluster::{MetaPeerClientBuilder, MetaPeerClientRef};
+<span class="kw">use </span><span class="kw">crate</span>::ddl::DdlManager;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::mailbox_handler::MailboxHandler;
 <span class="kw">use </span><span class="kw">crate</span>::handler::region_lease_handler::RegionLeaseHandler;
@@ -456,6 +470,15 @@
             }
         };
 
+        <span class="comment">// TODO(weny): considers to modify the default config of procedure manager
+        </span><span class="kw">let </span>ddl_manager = Arc::new(DdlManager::new(
+            procedure_manager.clone(),
+            kv_store.clone(),
+            Arc::new(DatanodeClients::default()),
+        ));
+
+        <span class="kw">let _ </span>= ddl_manager.try_start();
+
         <span class="prelude-val">Ok</span>(MetaSrv {
             started,
             options,
@@ -471,6 +494,7 @@
             procedure_manager,
             metadata_service,
             mailbox,
+            ddl_manager,
         })
     }
 }

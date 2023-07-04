@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["handle_create_table_route","handle_create_table_task"]};

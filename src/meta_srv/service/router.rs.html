@@ -675,7 +675,7 @@
     })
 }
 
-<span class="kw">fn </span>create_table_global_value(
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create_table_global_value(
     table_route_value: <span class="kw-2">&amp;</span>TableRouteValue,
     table_info: RawTableInfo,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TableGlobalValue&gt; {
@@ -766,7 +766,7 @@
     })
 }
 
-<span class="kw">fn </span>fill_table_routes(
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fill_table_routes(
     tables: Vec&lt;(TableGlobalValue, TableRouteValue)&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;Peer&gt;, Vec&lt;TableRoute&gt;)&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>peer_dict = PeerDict::default();
@@ -824,7 +824,7 @@
     <span class="prelude-val">Ok</span>(tables)
 }
 
-<span class="kw">fn </span>table_route_key(table_id: u64, t: <span class="kw-2">&amp;</span>TableGlobalKey) -&gt; TableRouteKey&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>table_route_key(table_id: u64, t: <span class="kw-2">&amp;</span>TableGlobalKey) -&gt; TableRouteKey&lt;<span class="lifetime">&#39;_</span>&gt; {
     TableRouteKey {
         table_id,
         catalog_name: <span class="kw-2">&amp;</span>t.catalog_name,
