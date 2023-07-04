@@ -1580,7 +1580,7 @@
                 <span class="kw">match </span>expr {
                     DdlExpr::CreateDatabase(expr) =&gt; <span class="self">self</span>.handle_create_database(expr, ctx).<span class="kw">await</span>,
                     DdlExpr::CreateTable(<span class="kw-2">mut </span>expr) =&gt; {
-                        <span class="kw">let _ </span>= <span class="self">self</span>.create_table(<span class="kw-2">&amp;mut </span>expr, <span class="prelude-val">None</span>).<span class="kw">await</span>;
+                        <span class="kw">let _ </span>= <span class="self">self</span>.create_table(<span class="kw-2">&amp;mut </span>expr, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
                         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
                     }
                     DdlExpr::Alter(expr) =&gt; <span class="self">self</span>.handle_alter_table(expr).<span class="kw">await</span>,

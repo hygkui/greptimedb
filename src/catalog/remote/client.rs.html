@@ -278,6 +278,14 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -299,7 +307,8 @@
 
 <span class="kw">use </span>async_stream::stream;
 <span class="kw">use </span>common_error::prelude::BoxedError;
-<span class="kw">use </span>common_meta::error::{Error, GetKvCacheSnafu, MetaSrvSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>common_meta::error::Error::{CacheNotGet, GetKvCache};
+<span class="kw">use </span>common_meta::error::{CacheNotGetSnafu, Error, MetaSrvSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>common_meta::kv_backend::{Kv, KvBackend, KvBackendRef, ValueIter};
 <span class="kw">use </span>common_meta::rpc::store::{
     CompareAndPutRequest, DeleteRangeRequest, MoveValueRequest, PutRequest, RangeRequest,
@@ -307,7 +316,7 @@
 <span class="kw">use </span>common_telemetry::{info, timer};
 <span class="kw">use </span>meta_client::client::MetaClient;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">super</span>::KvCacheInvalidator;
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{METRIC_CATALOG_KV_GET, METRIC_CATALOG_KV_REMOTE_GET};
@@ -316,7 +325,7 @@
 <span class="kw">const </span>CACHE_TTL_SECOND: u64 = <span class="number">10 </span>* <span class="number">60</span>;
 <span class="kw">const </span>CACHE_TTI_SECOND: u64 = <span class="number">5 </span>* <span class="number">60</span>;
 
-<span class="kw">pub type </span>CacheBackendRef = Arc&lt;Cache&lt;Vec&lt;u8&gt;, <span class="prelude-ty">Option</span>&lt;Kv&gt;&gt;&gt;;
+<span class="kw">pub type </span>CacheBackendRef = Arc&lt;Cache&lt;Vec&lt;u8&gt;, Kv&gt;&gt;;
 <span class="kw">pub struct </span>CachedMetaKvBackend {
     kv_backend: KvBackendRef,
     cache: CacheBackendRef,
@@ -338,19 +347,26 @@
 
         <span class="kw">let </span>init = <span class="kw">async </span>{
             <span class="kw">let </span>_timer = <span class="macro">timer!</span>(METRIC_CATALOG_KV_REMOTE_GET);
-
-            <span class="self">self</span>.kv_backend.get(key).<span class="kw">await
+            <span class="self">self</span>.kv_backend.get(key).<span class="kw">await</span>.map(|val| {
+                val.with_context(|| CacheNotGetSnafu {
+                    key: String::from_utf8_lossy(key),
+                })
+            })<span class="question-mark">?
         </span>};
 
-        <span class="self">self</span>.cache
-            .try_get_with_by_ref(key, init)
-            .<span class="kw">await
-            </span>.map_err(|e| {
-                GetKvCacheSnafu {
-                    err_msg: e.to_string(),
-                }
-                .build()
-            })
+        <span class="comment">// currently moka doesn&#39;t have `optionally_try_get_with_by_ref`
+        // TODO(fys): change to moka method when available
+        // https://github.com/moka-rs/moka/issues/254
+        </span><span class="kw">match </span><span class="self">self</span>.cache.try_get_with_by_ref(key, init).<span class="kw">await </span>{
+            <span class="prelude-val">Ok</span>(val) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(val)),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">match </span>e.as_ref() {
+                CacheNotGet { .. } =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(e),
+            },
+        }
+        .map_err(|e| GetKvCache {
+            err_msg: e.to_string(),
+        })
     }
 
     <span class="kw">async fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], val: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
