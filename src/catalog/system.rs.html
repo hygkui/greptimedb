@@ -582,6 +582,28 @@
 <a href="#582" id="582">582</a>
 <a href="#583" id="583">583</a>
 <a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -787,20 +809,32 @@
     build_insert_request(
         EntryType::Table,
         entry_key.as_bytes(),
-        serde_json::to_string(<span class="kw-2">&amp;</span>TableEntryValue { table_name, engine })
-            .unwrap()
-            .as_bytes(),
+        serde_json::to_string(<span class="kw-2">&amp;</span>TableEntryValue {
+            table_name,
+            engine,
+            is_deleted: <span class="bool-val">false</span>,
+        })
+        .unwrap()
+        .as_bytes(),
     )
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>build_table_deletion_request(
     request: <span class="kw-2">&amp;</span>DeregisterTableRequest,
     table_id: TableId,
-) -&gt; DeleteRequest {
-    <span class="kw">let </span>table_key = format_table_entry_key(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema, table_id);
-    DeleteRequest {
-        key_column_values: build_primary_key_columns(EntryType::Table, table_key.as_bytes()),
-    }
+) -&gt; InsertRequest {
+    <span class="kw">let </span>entry_key = format_table_entry_key(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema, table_id);
+    build_insert_request(
+        EntryType::Table,
+        entry_key.as_bytes(),
+        serde_json::to_string(<span class="kw-2">&amp;</span>TableEntryValue {
+            table_name: <span class="string">&quot;&quot;</span>.to_string(),
+            engine: <span class="string">&quot;&quot;</span>.to_string(),
+            is_deleted: <span class="bool-val">true</span>,
+        })
+        .unwrap()
+        .as_bytes(),
+    )
 }
 
 <span class="kw">fn </span>build_primary_key_columns(entry_type: EntryType, key: <span class="kw-2">&amp;</span>[u8]) -&gt; HashMap&lt;String, VectorRef&gt; {
@@ -919,6 +953,7 @@
                 table_name: table_meta.table_name,
                 table_id,
                 engine: table_meta.engine,
+                is_deleted: table_meta.is_deleted,
             }))
         }
     }
@@ -975,6 +1010,7 @@
     <span class="kw">pub </span>table_name: String,
     <span class="kw">pub </span>table_id: TableId,
     <span class="kw">pub </span>engine: String,
+    <span class="kw">pub </span>is_deleted: bool,
 }
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -983,11 +1019,18 @@
 
     <span class="attr">#[serde(default = <span class="string">&quot;mito_engine&quot;</span>)]
     </span><span class="kw">pub </span>engine: String,
+
+    <span class="attr">#[serde(default = <span class="string">&quot;not_deleted&quot;</span>)]
+    </span><span class="kw">pub </span>is_deleted: bool,
 }
 
 <span class="kw">fn </span>mito_engine() -&gt; String {
     MITO_ENGINE.to_string()
 }
+
+<span class="kw">fn </span>not_deleted() -&gt; bool {
+    <span class="bool-val">false
+</span>}
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
@@ -1147,6 +1190,7 @@
             table_name: <span class="string">&quot;my_table&quot;</span>.to_string(),
             table_id: <span class="number">1</span>,
             engine: MITO_ENGINE.to_string(),
+            is_deleted: <span class="bool-val">false</span>,
         });
         <span class="macro">assert_eq!</span>(entry, expected);
 
@@ -1158,12 +1202,12 @@
             },
             <span class="number">1</span>,
         );
-        <span class="kw">let </span>result = catalog_table.delete(table_deletion).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>result = catalog_table.insert(table_deletion).<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(result, <span class="number">1</span>);
 
         <span class="kw">let </span>records = catalog_table.records().<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>batches = RecordBatches::try_collect(records).<span class="kw">await</span>.unwrap().take();
-        <span class="macro">assert_eq!</span>(batches.len(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(batches.len(), <span class="number">1</span>);
     }
 }
 </code></pre></div></section></main></body></html>

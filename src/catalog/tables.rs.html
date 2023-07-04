@@ -170,7 +170,7 @@
     ) -&gt; CatalogResult&lt;()&gt; {
         <span class="self">self</span>.information_schema
             .system
-            .delete(build_table_deletion_request(request, table_id))
+            .insert(build_table_deletion_request(request, table_id))
             .<span class="kw">await
             </span>.map(|x| {
                 <span class="kw">if </span>x != <span class="number">1 </span>{

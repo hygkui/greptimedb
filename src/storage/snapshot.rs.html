@@ -97,6 +97,10 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -152,15 +156,19 @@
         <span class="kw">let </span>mutables = memtable_version.mutable_memtable();
         <span class="kw">let </span>immutables = memtable_version.immutable_memtables();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>builder =
-            ChunkReaderBuilder::new(<span class="self">self</span>.version.schema().clone(), <span class="self">self</span>.sst_layer.clone())
-                .reserve_num_memtables(memtable_version.num_memtables())
-                .projection(request.projection)
-                .filters(request.filters)
-                .batch_size(ctx.batch_size)
-                .output_ordering(request.output_ordering)
-                .visible_sequence(visible_sequence)
-                .pick_memtables(mutables.clone());
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = ChunkReaderBuilder::new(
+            <span class="self">self</span>.version.metadata().id(),
+            <span class="self">self</span>.version.schema().clone(),
+            <span class="self">self</span>.sst_layer.clone(),
+        )
+        .reserve_num_memtables(memtable_version.num_memtables())
+        .projection(request.projection)
+        .filters(request.filters)
+        .batch_size(ctx.batch_size)
+        .output_ordering(request.output_ordering)
+        .visible_sequence(visible_sequence)
+        .pick_memtables(mutables.clone())
+        .use_chain_reader(<span class="bool-val">true</span>);
 
         <span class="kw">for </span>memtable <span class="kw">in </span>immutables {
             builder = builder.pick_memtables(memtable.clone());
