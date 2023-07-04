@@ -304,6 +304,19 @@
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
 <a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -439,7 +452,7 @@
 }
 
 <span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>Inner {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Inner {
     id: Id,
     role: Role,
     channel_manager: ChannelManager,
@@ -448,7 +461,16 @@
 }
 
 <span class="kw">impl </span>Inner {
-    <span class="kw">async fn </span>start&lt;U, A&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, urls: A) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(id: Id, role: Role, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            id,
+            role,
+            channel_manager,
+            peers: HashSet::new(),
+            leader: <span class="prelude-val">None</span>,
+        }
+    }
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>start&lt;U, A&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, urls: A) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;
     <span class="kw">where
         </span>U: AsRef&lt;str&gt;,
         A: AsRef&lt;[U]&gt;,
@@ -469,7 +491,11 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>ask_leader(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_leader(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+        <span class="self">self</span>.leader.clone()
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>ask_leader(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">ensure!</span>(
             <span class="self">self</span>.is_started(),
             error::IllegalGrpcClientStateSnafu {
@@ -548,7 +574,7 @@
     }
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>is_started(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_started(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         !<span class="self">self</span>.peers.is_empty()
     }
 }

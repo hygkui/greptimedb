@@ -946,6 +946,20 @@
 <a href="#946" id="946">946</a>
 <a href="#947" id="947">947</a>
 <a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -960,7 +974,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>heartbeat;
+</span><span class="kw">mod </span>ddl;
+<span class="kw">mod </span>heartbeat;
 <span class="kw">mod </span>load_balance;
 <span class="kw">mod </span>lock;
 <span class="kw">mod </span>router;
@@ -977,6 +992,7 @@
     RangeRequest, RangeResponse,
 };
 <span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>ddl::Client <span class="kw">as </span>DdlClient;
 <span class="kw">use </span>heartbeat::Client <span class="kw">as </span>HeartbeatClient;
 <span class="kw">use </span>lock::Client <span class="kw">as </span>LockClient;
 <span class="kw">use </span>router::Client <span class="kw">as </span>RouterClient;
@@ -997,6 +1013,7 @@
     enable_router: bool,
     enable_store: bool,
     enable_lock: bool,
+    enable_ddl: bool,
     channel_manager: <span class="prelude-ty">Option</span>&lt;ChannelManager&gt;,
 }
 
@@ -1037,6 +1054,13 @@
         </span>}
     }
 
+    <span class="kw">pub fn </span>enable_ddl(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            enable_ddl: <span class="bool-val">true</span>,
+            ..<span class="self">self
+        </span>}
+    }
+
     <span class="kw">pub fn </span>channel_manager(<span class="self">self</span>, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             channel_manager: <span class="prelude-val">Some</span>(channel_manager),
@@ -1067,7 +1091,10 @@
             client.store = <span class="prelude-val">Some</span>(StoreClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr.clone()));
         }
         <span class="kw">if </span><span class="self">self</span>.enable_lock {
-            client.lock = <span class="prelude-val">Some</span>(LockClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr));
+            client.lock = <span class="prelude-val">Some</span>(LockClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr.clone()));
+        }
+        <span class="kw">if </span><span class="self">self</span>.enable_ddl {
+            client.ddl = <span class="prelude-val">Some</span>(DdlClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr));
         }
 
         client
@@ -1082,6 +1109,7 @@
     router: <span class="prelude-ty">Option</span>&lt;RouterClient&gt;,
     store: <span class="prelude-ty">Option</span>&lt;StoreClient&gt;,
     lock: <span class="prelude-ty">Option</span>&lt;LockClient&gt;,
+    ddl: <span class="prelude-ty">Option</span>&lt;DdlClient&gt;,
 }
 
 <span class="kw">impl </span>MetaClient {
