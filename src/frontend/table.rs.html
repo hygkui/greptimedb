@@ -1274,7 +1274,7 @@
             schema_name,
             table_name: old_table_name,
         }
-        .key();
+        .to_string();
 
         <span class="kw">let </span>new_key = TableRouteKey {
             table_id: table_id.into(),
@@ -1282,7 +1282,7 @@
             schema_name,
             table_name: new_table_name,
         }
-        .key();
+        .to_string();
 
         <span class="self">self</span>.catalog_manager
             .backend()

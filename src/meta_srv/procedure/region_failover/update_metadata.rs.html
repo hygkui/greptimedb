@@ -654,7 +654,7 @@
         <span class="kw">let </span>table_route = value
             .table_route
             .with_context(|| CorruptedTableRouteSnafu {
-                key: key.key(),
+                key: key.to_string(),
                 reason: <span class="string">&quot;&#39;table_route&#39; is empty&quot;</span>,
             })<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>table_route = TableRoute::try_from_raw(<span class="kw-2">&amp;</span>value.peers, table_route)
@@ -710,7 +710,7 @@
     <span class="macro">info!</span>(
         <span class="string">&quot;Updating region routes in table route value (key = &#39;{}&#39;) to [{}]. \
         Failed region {} was on Datanode {}.&quot;</span>,
-        key.key(),
+        key.to_string(),
         region_routes.join(<span class="string">&quot;, &quot;</span>),
         failed_region.region_number,
         failed_region.datanode_id,

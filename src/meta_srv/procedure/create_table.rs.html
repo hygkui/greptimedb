@@ -440,7 +440,7 @@
         <span class="kw">let </span>table_id = <span class="self">self</span>.creator.data.table_route.table.id;
 
         <span class="kw">let </span>table_route_key = TableRouteKey::with_table_name(table_id, <span class="kw-2">&amp;</span>table_name.clone().into())
-            .key()
+            .to_string()
             .into_bytes();
 
         <span class="kw">let </span>table_global_key = TableGlobalKey {

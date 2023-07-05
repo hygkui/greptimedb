@@ -599,7 +599,7 @@
     table_info.ident.table_id = id <span class="kw">as </span>u32;
 
     <span class="kw">let </span>table_route_key = TableRouteKey::with_table_name(id, <span class="kw-2">&amp;</span>table_name)
-        .key()
+        .to_string()
         .into_bytes();
 
     <span class="kw">let </span>table = Table {

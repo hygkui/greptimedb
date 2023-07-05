@@ -349,6 +349,10 @@
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -450,9 +454,11 @@
     key: <span class="kw-2">&amp;</span>TableRouteKey&lt;<span class="lifetime">&#39;_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TableRouteValue&gt; {
     <span class="kw">let </span>kv = kv_store
-        .get(key.key().into_bytes())
+        .get(key.to_string().into_bytes())
         .<span class="kw">await</span><span class="question-mark">?
-        </span>.with_context(|| TableRouteNotFoundSnafu { key: key.key() })<span class="question-mark">?</span>;
+        </span>.with_context(|| TableRouteNotFoundSnafu {
+            key: key.to_string(),
+        })<span class="question-mark">?</span>;
     kv.value
         .as_slice()
         .try_into()
@@ -466,7 +472,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>req = PutRequest {
         header: <span class="prelude-val">None</span>,
-        key: key.key().into_bytes(),
+        key: key.to_string().into_bytes(),
         value: value.into(),
         prev_kv: <span class="bool-val">false</span>,
     };
@@ -478,11 +484,13 @@
     kv_store: <span class="kw-2">&amp;</span>KvStoreRef,
     key: <span class="kw-2">&amp;</span>TableRouteKey&lt;<span class="lifetime">&#39;_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;u8&gt;, TableRouteValue)&gt; {
-    <span class="kw">let </span>from_key = key.key().into_bytes();
+    <span class="kw">let </span>from_key = key.to_string().into_bytes();
     <span class="kw">let </span>to_key = key.removed_key().into_bytes();
     <span class="kw">let </span>v = move_value(kv_store, from_key, to_key)
         .<span class="kw">await</span><span class="question-mark">?
-        </span>.context(TableRouteNotFoundSnafu { key: key.key() })<span class="question-mark">?</span>;
+        </span>.context(TableRouteNotFoundSnafu {
+            key: key.to_string(),
+        })<span class="question-mark">?</span>;
     <span class="kw">let </span>trv: TableRouteValue = v.<span class="number">1</span>.as_slice().try_into().context(DecodeTableRouteSnafu)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((v.<span class="number">0</span>, trv))
