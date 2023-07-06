@@ -135,6 +135,11 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -163,6 +168,7 @@
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::ScanRequest;
 <span class="kw">use </span>table::error::{SchemaConversionSnafu, TablesRecordBatchSnafu};
+<span class="kw">use </span>table::metadata::TableType;
 <span class="kw">use </span>table::{<span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
 
 <span class="kw">use </span><span class="self">self</span>::columns::InformationSchemaColumns;
@@ -237,6 +243,10 @@
 
     <span class="kw">fn </span>table_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; table::metadata::TableInfoRef {
         <span class="macro">unreachable!</span>(<span class="string">&quot;Should not call table_info() of InformationTable directly&quot;</span>)
+    }
+
+    <span class="kw">fn </span>table_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; table::metadata::TableType {
+        TableType::View
     }
 
     <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {

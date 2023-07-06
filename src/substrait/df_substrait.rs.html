@@ -84,7 +84,6 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>bytes::{Buf, Bytes, BytesMut};
-<span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>datafusion::catalog::catalog::CatalogList;
 <span class="kw">use </span>datafusion::execution::context::SessionState;
 <span class="kw">use </span>datafusion::execution::runtime_env::RuntimeEnv;
@@ -111,9 +110,10 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         message: B,
         catalog_list: Arc&lt;<span class="kw">dyn </span>CatalogList&gt;,
+        catalog: <span class="kw-2">&amp;</span>str,
+        schema: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Plan, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>state_config = SessionConfig::new()
-            .with_default_catalog_and_schema(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME);
+        <span class="kw">let </span>state_config = SessionConfig::new().with_default_catalog_and_schema(catalog, schema);
         <span class="kw">let </span>state = SessionState::with_config_rt(state_config, Arc::new(RuntimeEnv::default()));
         <span class="kw">let </span><span class="kw-2">mut </span>context = SessionContext::with_state(state);
         context.register_catalog_list(catalog_list);

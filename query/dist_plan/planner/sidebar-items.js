@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DistExtensionPlanner","TableNameExtractor"]};
+window.SIDEBAR_ITEMS = {"enum":["TableType"],"struct":["DistExtensionPlanner","TableNameExtractor","TableNameRewriter"]};
