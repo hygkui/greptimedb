@@ -858,6 +858,7 @@
 <a href="#858" id="858">858</a>
 <a href="#859" id="859">859</a>
 <a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1261,6 +1262,7 @@
             schema_name: ctx.current_schema(),
             table_name: table_name.to_string(),
             kind: <span class="prelude-val">Some</span>(Kind::AddColumns(add_columns)),
+            ..Default::default()
         };
 
         <span class="self">self</span>.grpc_query_handler

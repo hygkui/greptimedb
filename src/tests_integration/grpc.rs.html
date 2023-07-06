@@ -870,6 +870,9 @@
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
 <a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -991,6 +994,7 @@
                         location: <span class="prelude-val">None</span>,
                     }],
                 })),
+                ..Default::default()
             })),
         });
         <span class="kw">let </span>output = query(instance, request).<span class="kw">await</span>;
@@ -1024,6 +1028,7 @@
                 catalog_name: <span class="string">&quot;greptime&quot;</span>.to_string(),
                 schema_name: <span class="string">&quot;database_created_through_grpc&quot;</span>.to_string(),
                 table_name: <span class="string">&quot;table_created_through_grpc&quot;</span>.to_string(),
+                ..Default::default()
             })),
         });
         <span class="kw">let </span>output = query(instance, request).<span class="kw">await</span>;
@@ -1288,6 +1293,7 @@ CREATE TABLE {table_name} (
                 schema_name: schema_name.to_string(),
                 table_name: table_name.to_string(),
                 region_number,
+                ..Default::default()
             })),
         });
 
