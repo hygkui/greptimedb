@@ -286,6 +286,50 @@
 <a href="#286" id="286">286</a>
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -305,15 +349,18 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
-<span class="kw">use </span>async_stream::stream;
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_meta::error::Error::{CacheNotGet, GetKvCache};
 <span class="kw">use </span>common_meta::error::{CacheNotGetSnafu, Error, MetaSrvSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span>common_meta::kv_backend::{Kv, KvBackend, KvBackendRef, ValueIter};
+<span class="kw">use </span>common_meta::kv_backend::{KvBackend, KvBackendRef, TxnService};
 <span class="kw">use </span>common_meta::rpc::store::{
-    CompareAndPutRequest, DeleteRangeRequest, MoveValueRequest, PutRequest, RangeRequest,
+    BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
+    BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
+    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
+    RangeRequest, RangeResponse,
 };
-<span class="kw">use </span>common_telemetry::{info, timer};
+<span class="kw">use </span>common_meta::rpc::KeyValue;
+<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>meta_client::client::MetaClient;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -325,24 +372,29 @@
 <span class="kw">const </span>CACHE_TTL_SECOND: u64 = <span class="number">10 </span>* <span class="number">60</span>;
 <span class="kw">const </span>CACHE_TTI_SECOND: u64 = <span class="number">5 </span>* <span class="number">60</span>;
 
-<span class="kw">pub type </span>CacheBackendRef = Arc&lt;Cache&lt;Vec&lt;u8&gt;, Kv&gt;&gt;;
+<span class="kw">pub type </span>CacheBackendRef = Arc&lt;Cache&lt;Vec&lt;u8&gt;, KeyValue&gt;&gt;;
+
 <span class="kw">pub struct </span>CachedMetaKvBackend {
     kv_backend: KvBackendRef,
     cache: CacheBackendRef,
+    name: String,
+}
+
+<span class="kw">impl </span>TxnService <span class="kw">for </span>CachedMetaKvBackend {
+    <span class="kw">type </span>Error = Error;
 }
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>KvBackend <span class="kw">for </span>CachedMetaKvBackend {
-    <span class="kw">type </span>Error = Error;
-
-    <span class="kw">fn </span>range&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; ValueIter&lt;<span class="lifetime">&#39;b</span>, Error&gt;
-    <span class="kw">where
-        </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,
-    {
-        <span class="self">self</span>.kv_backend.range(key)
+    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.name
     }
 
-    <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Kv&gt;&gt; {
+    <span class="kw">async fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: RangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RangeResponse&gt; {
+        <span class="self">self</span>.kv_backend.range(req).<span class="kw">await
+    </span>}
+
+    <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt; {
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(METRIC_CATALOG_KV_GET);
 
         <span class="kw">let </span>init = <span class="kw">async </span>{
@@ -369,8 +421,10 @@
         })
     }
 
-    <span class="kw">async fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], val: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.set(key, val).<span class="kw">await</span>;
+    <span class="kw">async fn </span>put(<span class="kw-2">&amp;</span><span class="self">self</span>, req: PutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;PutResponse&gt; {
+        <span class="kw">let </span>key = <span class="kw-2">&amp;</span>req.key.clone();
+
+        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.put(req).<span class="kw">await</span>;
 
         <span class="kw">if </span>ret.is_ok() {
             <span class="self">self</span>.invalidate_key(key).<span class="kw">await</span>;
@@ -379,8 +433,72 @@
         ret
     }
 
-    <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.delete_range(key, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span>;
+    <span class="kw">async fn </span>batch_put(<span class="kw-2">&amp;</span><span class="self">self</span>, req: BatchPutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchPutResponse&gt; {
+        <span class="kw">let </span>keys = req
+            .kvs
+            .iter()
+            .map(|kv| kv.key().to_vec())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+
+        <span class="kw">let </span>resp = <span class="self">self</span>.kv_backend.batch_put(req).<span class="kw">await</span>;
+
+        <span class="kw">if </span>resp.is_ok() {
+            <span class="kw">for </span>key <span class="kw">in </span>keys {
+                <span class="self">self</span>.invalidate_key(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
+            }
+        }
+
+        resp
+    }
+
+    <span class="kw">async fn </span>delete_range(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: DeleteRangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;DeleteRangeResponse&gt; {
+        <span class="kw">let </span>prev_kv = req.prev_kv;
+
+        req.prev_kv = <span class="bool-val">true</span>;
+        <span class="kw">let </span>resp = <span class="self">self</span>.kv_backend.delete_range(req).<span class="kw">await</span>;
+        <span class="kw">match </span>resp {
+            <span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>resp) =&gt; {
+                <span class="kw">for </span>prev_kv <span class="kw">in </span>resp.prev_kvs.iter() {
+                    <span class="self">self</span>.invalidate_key(prev_kv.key()).<span class="kw">await</span>;
+                }
+
+                <span class="kw">if </span>!prev_kv {
+                    resp.prev_kvs = <span class="macro">vec!</span>[];
+                }
+                <span class="prelude-val">Ok</span>(resp)
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
+        }
+    }
+
+    <span class="kw">async fn </span>batch_delete(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: BatchDeleteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchDeleteResponse&gt; {
+        <span class="kw">let </span>prev_kv = req.prev_kv;
+
+        req.prev_kv = <span class="bool-val">true</span>;
+        <span class="kw">let </span>resp = <span class="self">self</span>.kv_backend.batch_delete(req).<span class="kw">await</span>;
+        <span class="kw">match </span>resp {
+            <span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>resp) =&gt; {
+                <span class="kw">for </span>prev_kv <span class="kw">in </span>resp.prev_kvs.iter() {
+                    <span class="self">self</span>.invalidate_key(prev_kv.key()).<span class="kw">await</span>;
+                }
+
+                <span class="kw">if </span>!prev_kv {
+                    resp.prev_kvs = <span class="macro">vec!</span>[];
+                }
+                <span class="prelude-val">Ok</span>(resp)
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
+        }
+    }
+
+    <span class="kw">async fn </span>batch_get(<span class="kw-2">&amp;</span><span class="self">self</span>, req: BatchGetRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchGetResponse&gt; {
+        <span class="self">self</span>.kv_backend.batch_get(req).<span class="kw">await
+    </span>}
+
+    <span class="kw">async fn </span>compare_and_put(<span class="kw-2">&amp;</span><span class="self">self</span>, req: CompareAndPutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;CompareAndPutResponse&gt; {
+        <span class="kw">let </span>key = <span class="kw-2">&amp;</span>req.key.clone();
+
+        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.compare_and_put(req).<span class="kw">await</span>;
 
         <span class="kw">if </span>ret.is_ok() {
             <span class="self">self</span>.invalidate_key(key).<span class="kw">await</span>;
@@ -389,28 +507,11 @@
         ret
     }
 
-    <span class="kw">async fn </span>delete_range(<span class="kw-2">&amp;</span><span class="self">self</span>, _key: <span class="kw-2">&amp;</span>[u8], _end: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="comment">// TODO(fys): implement it
-        </span><span class="macro">unimplemented!</span>()
-    }
+    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse&gt; {
+        <span class="kw">let </span>from_key = <span class="kw-2">&amp;</span>req.from_key.clone();
+        <span class="kw">let </span>to_key = <span class="kw-2">&amp;</span>req.to_key.clone();
 
-    <span class="kw">async fn </span>compare_and_set(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        key: <span class="kw-2">&amp;</span>[u8],
-        expect: <span class="kw-2">&amp;</span>[u8],
-        val: <span class="kw-2">&amp;</span>[u8],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;std::result::Result&lt;(), <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;&gt;&gt; {
-        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.compare_and_set(key, expect, val).<span class="kw">await</span>;
-
-        <span class="kw">if </span>ret.is_ok() {
-            <span class="self">self</span>.invalidate_key(key).<span class="kw">await</span>;
-        }
-
-        ret
-    }
-
-    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, from_key: <span class="kw-2">&amp;</span>[u8], to_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.move_value(from_key, to_key).<span class="kw">await</span>;
+        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.move_value(req).<span class="kw">await</span>;
 
         <span class="kw">if </span>ret.is_ok() {
             <span class="self">self</span>.invalidate_key(from_key).<span class="kw">await</span>;
@@ -434,15 +535,8 @@
 
 <span class="kw">impl </span>CachedMetaKvBackend {
     <span class="kw">pub fn </span>new(client: Arc&lt;MetaClient&gt;) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>cache = Arc::new(
-            CacheBuilder::new(CACHE_MAX_CAPACITY)
-                .time_to_live(Duration::from_secs(CACHE_TTL_SECOND))
-                .time_to_idle(Duration::from_secs(CACHE_TTI_SECOND))
-                .build(),
-        );
         <span class="kw">let </span>kv_backend = Arc::new(MetaKvBackend { client });
-
-        <span class="self">Self </span>{ kv_backend, cache }
+        <span class="self">Self</span>::wrap(kv_backend)
     }
 
     <span class="kw">pub fn </span>wrap(kv_backend: KvBackendRef) -&gt; <span class="self">Self </span>{
@@ -453,7 +547,12 @@
                 .build(),
         );
 
-        <span class="self">Self </span>{ kv_backend, cache }
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;CachedKvBackend({})&quot;</span>, kv_backend.name());
+        <span class="self">Self </span>{
+            kv_backend,
+            cache,
+            name,
+        }
     }
 
     <span class="kw">pub fn </span>cache(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>CacheBackendRef {
@@ -466,108 +565,97 @@
     <span class="kw">pub </span>client: Arc&lt;MetaClient&gt;,
 }
 
+<span class="kw">impl </span>TxnService <span class="kw">for </span>MetaKvBackend {
+    <span class="kw">type </span>Error = Error;
+}
+
 <span class="doccomment">/// Implement `KvBackend` trait for `MetaKvBackend` instead of opendal&#39;s `Accessor` since
 /// `MetaClient`&#39;s range method can return both keys and values, which can reduce IO overhead
 /// comparing to `Accessor`&#39;s list and get method.
 </span><span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>KvBackend <span class="kw">for </span>MetaKvBackend {
-    <span class="kw">type </span>Error = Error;
+    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="string">&quot;MetaKvBackend&quot;
+    </span>}
 
-    <span class="kw">fn </span>range&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; ValueIter&lt;<span class="lifetime">&#39;b</span>, Error&gt;
-    <span class="kw">where
-        </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,
-    {
-        <span class="kw">let </span>key = key.to_vec();
-        Box::pin(<span class="macro">stream!</span>({
-            <span class="kw">let </span><span class="kw-2">mut </span>resp = <span class="self">self
-                </span>.client
-                .range(RangeRequest::new().with_prefix(key))
-                .<span class="kw">await
-                </span>.map_err(BoxedError::new)
-                .context(MetaSrvSnafu)<span class="question-mark">?</span>;
-            <span class="kw">let </span>kvs = resp.take_kvs();
-            <span class="kw">for </span><span class="kw-2">mut </span>kv <span class="kw">in </span>kvs.into_iter() {
-                <span class="kw">yield </span><span class="prelude-val">Ok</span>(Kv(kv.take_key(), kv.take_value()))
-            }
-        }))
+    <span class="kw">async fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: RangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RangeResponse&gt; {
+        <span class="self">self</span>.client
+            .range(req)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(MetaSrvSnafu)
     }
 
-    <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Kv&gt;&gt; {
+    <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>response = <span class="self">self
             </span>.client
             .range(RangeRequest::new().with_key(key))
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(MetaSrvSnafu)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(response
-            .take_kvs()
-            .get_mut(<span class="number">0</span>)
-            .map(|kv| Kv(kv.take_key(), kv.take_value())))
+        <span class="prelude-val">Ok</span>(response.take_kvs().get_mut(<span class="number">0</span>).map(|kv| KeyValue {
+            key: kv.take_key(),
+            value: kv.take_value(),
+        }))
     }
 
-    <span class="kw">async fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], val: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>req = PutRequest::new()
-            .with_key(key.to_vec())
-            .with_value(val.to_vec());
-        <span class="kw">let _ </span>= <span class="self">self
-            </span>.client
+    <span class="kw">async fn </span>batch_put(<span class="kw-2">&amp;</span><span class="self">self</span>, req: BatchPutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchPutResponse&gt; {
+        <span class="self">self</span>.client
+            .batch_put(req)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(MetaSrvSnafu)
+    }
+
+    <span class="kw">async fn </span>put(<span class="kw-2">&amp;</span><span class="self">self</span>, req: PutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;PutResponse&gt; {
+        <span class="self">self</span>.client
             .put(req)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
-            .context(MetaSrvSnafu)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
+            .context(MetaSrvSnafu)
     }
 
-    <span class="kw">async fn </span>delete_range(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8], end: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>req = DeleteRangeRequest::new().with_range(key.to_vec(), end.to_vec());
-        <span class="kw">let </span>resp = <span class="self">self
-            </span>.client
+    <span class="kw">async fn </span>delete_range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: DeleteRangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;DeleteRangeResponse&gt; {
+        <span class="self">self</span>.client
             .delete_range(req)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
-            .context(MetaSrvSnafu)<span class="question-mark">?</span>;
-        <span class="macro">info!</span>(
-            <span class="string">&quot;Delete range, key: {}, end: {}, deleted: {}&quot;</span>,
-            String::from_utf8_lossy(key),
-            String::from_utf8_lossy(end),
-            resp.deleted()
-        );
-
-        <span class="prelude-val">Ok</span>(())
+            .context(MetaSrvSnafu)
     }
 
-    <span class="kw">async fn </span>compare_and_set(
+    <span class="kw">async fn </span>batch_delete(<span class="kw-2">&amp;</span><span class="self">self</span>, req: BatchDeleteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchDeleteResponse&gt; {
+        <span class="self">self</span>.client
+            .batch_delete(req)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(MetaSrvSnafu)
+    }
+
+    <span class="kw">async fn </span>batch_get(<span class="kw-2">&amp;</span><span class="self">self</span>, req: BatchGetRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchGetResponse&gt; {
+        <span class="self">self</span>.client
+            .batch_get(req)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(MetaSrvSnafu)
+    }
+
+    <span class="kw">async fn </span>compare_and_put(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        key: <span class="kw-2">&amp;</span>[u8],
-        expect: <span class="kw-2">&amp;</span>[u8],
-        val: <span class="kw-2">&amp;</span>[u8],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;std::result::Result&lt;(), <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;&gt;&gt; {
-        <span class="kw">let </span>request = CompareAndPutRequest::new()
-            .with_key(key.to_vec())
-            .with_expect(expect.to_vec())
-            .with_value(val.to_vec());
-        <span class="kw">let </span><span class="kw-2">mut </span>response = <span class="self">self
-            </span>.client
+        request: CompareAndPutRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;CompareAndPutResponse&gt; {
+        <span class="self">self</span>.client
             .compare_and_put(request)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
-            .context(MetaSrvSnafu)<span class="question-mark">?</span>;
-        <span class="kw">if </span>response.is_success() {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(()))
-        } <span class="kw">else </span>{
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(response.take_prev_kv().map(|v| v.value().to_vec())))
-        }
+            .context(MetaSrvSnafu)
     }
 
-    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, from_key: <span class="kw-2">&amp;</span>[u8], to_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>req = MoveValueRequest::new(from_key, to_key);
-        <span class="kw">let _ </span>= <span class="self">self
-            </span>.client
+    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse&gt; {
+        <span class="self">self</span>.client
             .move_value(req)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
-            .context(MetaSrvSnafu)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
+            .context(MetaSrvSnafu)
     }
 
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {

@@ -971,6 +971,15 @@
 <a href="#971" id="971">971</a>
 <a href="#972" id="972">972</a>
 <a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -996,6 +1005,7 @@
 <span class="kw">use </span>client::Database;
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_meta::key::TableRouteKey;
+<span class="kw">use </span>common_meta::rpc::store::{MoveValueRequest, PutRequest};
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::error::Result <span class="kw">as </span>QueryResult;
 <span class="kw">use </span>common_query::logical_plan::Expr;
@@ -1233,7 +1243,7 @@
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(raw) = raw {
-            <span class="prelude-val">Some</span>(TableGlobalValue::from_bytes(raw.<span class="number">1</span>).context(error::CatalogEntrySerdeSnafu)<span class="question-mark">?</span>)
+            <span class="prelude-val">Some</span>(TableGlobalValue::from_bytes(raw.value).context(error::CatalogEntrySerdeSnafu)<span class="question-mark">?</span>)
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>})
@@ -1245,19 +1255,26 @@
         value: TableGlobalValue,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>value = value.as_bytes().context(error::CatalogEntrySerdeSnafu)<span class="question-mark">?</span>;
-        <span class="self">self</span>.catalog_manager
+        <span class="kw">let </span>req = PutRequest::new()
+            .with_key(key.to_string().as_bytes())
+            .with_value(value);
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.catalog_manager
             .backend()
-            .set(key.to_string().as_bytes(), <span class="kw-2">&amp;</span>value)
+            .put(req)
             .<span class="kw">await
-            </span>.context(TableMetadataManagerSnafu)
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>delete_table_global_value(<span class="kw-2">&amp;</span><span class="self">self</span>, key: TableGlobalKey) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.catalog_manager
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.catalog_manager
             .backend()
-            .delete(key.to_string().as_bytes())
+            .delete(key.to_string().as_bytes(), <span class="bool-val">false</span>)
             .<span class="kw">await
-            </span>.context(TableMetadataManagerSnafu)
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>move_table_route_value(
@@ -1284,9 +1301,10 @@
         }
         .to_string();
 
+        <span class="kw">let </span>req = MoveValueRequest::new(old_key.as_bytes(), new_key.as_bytes());
         <span class="self">self</span>.catalog_manager
             .backend()
-            .move_value(old_key.as_bytes(), new_key.as_bytes())
+            .move_value(req)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 

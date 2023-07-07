@@ -188,6 +188,21 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -212,6 +227,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::key::{to_removed_key, TableMetaKey};
 <span class="kw">use </span><span class="kw">crate</span>::kv_backend::KvBackendRef;
+<span class="kw">use </span><span class="kw">crate</span>::rpc::store::{CompareAndPutRequest, MoveValueRequest};
 <span class="kw">use </span><span class="kw">crate</span>::DatanodeId;
 
 <span class="kw">pub type </span>RegionDistribution = BTreeMap&lt;DatanodeId, Vec&lt;RegionNumber&gt;&gt;;
@@ -253,11 +269,18 @@
         <span class="self">self</span>.kv_backend
             .get(<span class="kw-2">&amp;</span>raw_key)
             .<span class="kw">await</span><span class="question-mark">?
-            </span>.map(|x| TableRegionValue::try_from_raw_value(x.<span class="number">1</span>))
+            </span>.map(|x| TableRegionValue::try_from_raw_value(x.value))
             .transpose()
     }
 
-    <span class="kw">pub async fn </span>compare_and_set(
+    <span class="doccomment">/// Compare and put value of key. `expect` is the expected value, if backend&#39;s current value associated
+    /// with key is the same as `expect`, the value will be updated to `val`.
+    ///
+    /// - If the compare-and-set operation successfully updated value, this method will return an `Ok(Ok())`
+    /// - If associated value is not the same as `expect`, no value will be updated and an `Ok(Err(Vec&lt;u8&gt;))`
+    /// will be returned, the `Err(Vec&lt;u8&gt;)` indicates the current associated value of key.
+    /// - If any error happens during operation, an `Err(Error)` will be returned.
+    </span><span class="kw">pub async fn </span>compare_and_put(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_id: TableId,
         expect: <span class="prelude-ty">Option</span>&lt;TableRegionValue&gt;,
@@ -278,18 +301,25 @@
         };
         <span class="kw">let </span>raw_value = value.try_as_raw_value()<span class="question-mark">?</span>;
 
-        <span class="self">self</span>.kv_backend
-            .compare_and_set(<span class="kw-2">&amp;</span>raw_key, <span class="kw-2">&amp;</span>expect, <span class="kw-2">&amp;</span>raw_value)
-            .<span class="kw">await
-    </span>}
+        <span class="kw">let </span>req = CompareAndPutRequest::new()
+            .with_key(raw_key)
+            .with_expect(expect)
+            .with_value(raw_value);
+        <span class="kw">let </span>resp = <span class="self">self</span>.kv_backend.compare_and_put(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="kw">if </span>resp.success {
+            <span class="prelude-val">Ok</span>(())
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(resp.prev_kv.map(|x| x.value))
+        })
+    }
 
     <span class="kw">pub async fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>key = TableRegionKey::new(table_id);
-        <span class="kw">let </span>remove_key = to_removed_key(<span class="kw-2">&amp;</span>String::from_utf8_lossy(key.as_raw_key().as_slice()));
-        <span class="self">self</span>.kv_backend
-            .move_value(<span class="kw-2">&amp;</span>key.as_raw_key(), remove_key.as_bytes())
-            .<span class="kw">await
-    </span>}
+        <span class="kw">let </span>key = TableRegionKey::new(table_id).as_raw_key();
+        <span class="kw">let </span>remove_key = to_removed_key(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>key));
+        <span class="kw">let </span>req = MoveValueRequest::new(key, remove_key.as_bytes());
+        <span class="self">self</span>.kv_backend.move_value(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -308,7 +338,7 @@
         <span class="kw">let </span>region_distribution =
             RegionDistribution::from([(<span class="number">1</span>, <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]), (<span class="number">2</span>, <span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>])]);
         <span class="kw">let </span>result = manager
-            .compare_and_set(<span class="number">1</span>, <span class="prelude-val">None</span>, region_distribution.clone())
+            .compare_and_put(<span class="number">1</span>, <span class="prelude-val">None</span>, region_distribution.clone())
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert!</span>(result.is_ok());
@@ -316,7 +346,7 @@
         <span class="kw">let </span>new_region_distribution =
             RegionDistribution::from([(<span class="number">1</span>, <span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]), (<span class="number">2</span>, <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])]);
         <span class="kw">let </span>curr = manager
-            .compare_and_set(<span class="number">1</span>, <span class="prelude-val">None</span>, new_region_distribution.clone())
+            .compare_and_put(<span class="number">1</span>, <span class="prelude-val">None</span>, new_region_distribution.clone())
             .<span class="kw">await
             </span>.unwrap()
             .unwrap_err()
@@ -331,7 +361,7 @@
         );
 
         <span class="macro">assert!</span>(manager
-            .compare_and_set(<span class="number">1</span>, <span class="prelude-val">Some</span>(curr), new_region_distribution.clone())
+            .compare_and_put(<span class="number">1</span>, <span class="prelude-val">Some</span>(curr), new_region_distribution.clone())
             .<span class="kw">await
             </span>.unwrap()
             .is_ok());
@@ -353,8 +383,8 @@
             .<span class="kw">await
             </span>.unwrap()
             .unwrap();
-        <span class="macro">assert_eq!</span>(<span class="string">b&quot;__removed-__table_region/1&quot;</span>, kv.<span class="number">0</span>.as_slice());
-        <span class="kw">let </span>value = TableRegionValue::try_from_raw_value(kv.<span class="number">1</span>).unwrap();
+        <span class="macro">assert_eq!</span>(<span class="string">b&quot;__removed-__table_region/1&quot;</span>, kv.key.as_slice());
+        <span class="kw">let </span>value = TableRegionValue::try_from_raw_value(kv.value).unwrap();
         <span class="macro">assert_eq!</span>(value.region_distribution, new_region_distribution);
         <span class="macro">assert_eq!</span>(value.version, <span class="number">1</span>);
     }

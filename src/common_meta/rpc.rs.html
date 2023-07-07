@@ -110,6 +110,53 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -130,17 +177,14 @@
 <span class="kw">pub mod </span>store;
 <span class="kw">pub mod </span>util;
 
+<span class="kw">use </span>std::fmt::{Display, Formatter};
+
 <span class="kw">use </span>api::v1::meta::{KeyValue <span class="kw">as </span>PbKeyValue, ResponseHeader <span class="kw">as </span>PbResponseHeader};
 
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ResponseHeader(PbResponseHeader);
 
 <span class="kw">impl </span>ResponseHeader {
-    <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(header: PbResponseHeader) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(header)
-    }
-
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>protocol_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
         <span class="self">self</span>.<span class="number">0</span>.protocol_version
@@ -168,33 +212,83 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub struct </span>KeyValue(PbKeyValue);
+<span class="attr">#[derive(Debug, Clone, PartialEq)]
+</span><span class="kw">pub struct </span>KeyValue {
+    <span class="kw">pub </span>key: Vec&lt;u8&gt;,
+    <span class="kw">pub </span>value: Vec&lt;u8&gt;,
+}
+
+<span class="kw">impl </span>From&lt;KeyValue&gt; <span class="kw">for </span>PbKeyValue {
+    <span class="kw">fn </span>from(kv: KeyValue) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            key: kv.key,
+            value: kv.value,
+        }
+    }
+}
+
+<span class="kw">impl </span>From&lt;etcd_client::KeyValue&gt; <span class="kw">for </span>KeyValue {
+    <span class="kw">fn </span>from(kv: etcd_client::KeyValue) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            key: kv.key().to_vec(),
+            value: kv.value().to_vec(),
+        }
+    }
+}
+
+<span class="kw">impl </span>From&lt;KeyValue&gt; <span class="kw">for </span>(Vec&lt;u8&gt;, Vec&lt;u8&gt;) {
+    <span class="kw">fn </span>from(kv: KeyValue) -&gt; <span class="self">Self </span>{
+        (kv.key, kv.value)
+    }
+}
+
+<span class="kw">impl </span>From&lt;(Vec&lt;u8&gt;, Vec&lt;u8&gt;)&gt; <span class="kw">for </span>KeyValue {
+    <span class="kw">fn </span>from(kv: (Vec&lt;u8&gt;, Vec&lt;u8&gt;)) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            key: kv.<span class="number">0</span>,
+            value: kv.<span class="number">1</span>,
+        }
+    }
+}
+
+<span class="kw">impl </span>Display <span class="kw">for </span>KeyValue {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="macro">write!</span>(
+            f,
+            <span class="string">&quot;({}, {})&quot;</span>,
+            String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.key),
+            String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.value)
+        )
+    }
+}
 
 <span class="kw">impl </span>KeyValue {
     <span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(kv: PbKeyValue) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(kv)
+    </span><span class="kw">pub fn </span>new(kv: PbKeyValue) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            key: kv.key,
+            value: kv.value,
+        }
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.key
+        <span class="kw-2">&amp;</span><span class="self">self</span>.key
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>take_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
-        std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>.key)
+        std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.key)
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.value
+        <span class="kw-2">&amp;</span><span class="self">self</span>.value
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>take_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
-        std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>.value)
+        std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.value)
     }
 }
 
@@ -215,7 +309,7 @@
             }),
         };
 
-        <span class="kw">let </span>header = ResponseHeader::new(pb_header);
+        <span class="kw">let </span>header = ResponseHeader(pb_header);
         <span class="macro">assert_eq!</span>(<span class="number">101</span>, header.protocol_version());
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, header.cluster_id());
         <span class="macro">assert_eq!</span>(<span class="number">100</span>, header.error_code());

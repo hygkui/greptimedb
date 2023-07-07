@@ -84,6 +84,8 @@
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -100,16 +102,18 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="kw">use </span>api::v1::meta::{RangeRequest, RangeResponse, TableRouteValue};
+<span class="kw">use </span>api::v1::meta::TableRouteValue;
 <span class="kw">use </span>common_meta::key::TABLE_ROUTE_PREFIX;
+<span class="kw">use </span>common_meta::rpc::store::{RangeRequest, RangeResponse};
+<span class="kw">use </span>common_meta::util;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>tonic::codegen::http;
 
 <span class="kw">use </span><span class="kw">super</span>::HttpHandler;
+<span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStoreRef;
-<span class="kw">use crate</span>::{error, util};
 
 <span class="kw">pub struct </span>RouteHandler {
     <span class="kw">pub </span>kv_store: KvStoreRef,

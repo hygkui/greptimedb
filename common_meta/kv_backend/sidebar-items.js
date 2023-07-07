@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["memory"],"struct":["Kv"],"trait":["KvBackend"],"type":["KvBackendRef","ValueIter"]};
+window.SIDEBAR_ITEMS = {"mod":["memory","txn"],"trait":["KvBackend"],"type":["KvBackendRef"]};

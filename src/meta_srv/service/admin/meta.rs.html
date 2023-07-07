@@ -264,18 +264,18 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="kw">use </span>api::v1::meta::{RangeRequest, RangeResponse};
 <span class="kw">use </span>catalog::helper::{
     build_catalog_prefix, build_schema_prefix, build_table_global_prefix, TABLE_GLOBAL_KEY_PREFIX,
 };
+<span class="kw">use </span>common_meta::rpc::store::{RangeRequest, RangeResponse};
+<span class="kw">use </span>common_meta::util;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>tonic::codegen::http;
 
+<span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::service::admin::HttpHandler;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::ext::KvStoreExt;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStoreRef;
-<span class="kw">use crate</span>::{error, util};
 
 <span class="kw">pub struct </span>CatalogsHandler {
     <span class="kw">pub </span>kv_store: KvStoreRef,
@@ -354,7 +354,7 @@
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>table_key = <span class="macro">format!</span>(<span class="string">&quot;{TABLE_GLOBAL_KEY_PREFIX}-{table_name}&quot;</span>);
 
-        <span class="kw">let </span>response = <span class="self">self</span>.kv_store.get(table_key.into_bytes()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>response = <span class="self">self</span>.kv_store.get(table_key.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>value: String = <span class="string">&quot;Not found result&quot;</span>.to_string();
         <span class="kw">if let </span><span class="prelude-val">Some</span>(key_value) = response {
             value = String::from_utf8(key_value.value).context(error::InvalidUtf8ValueSnafu)<span class="question-mark">?</span>;
@@ -411,11 +411,11 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::sync::Arc;
 
-    <span class="kw">use </span>api::v1::meta::PutRequest;
     <span class="kw">use </span>catalog::helper::{
         build_catalog_prefix, build_schema_prefix, build_table_global_prefix, CatalogKey,
         SchemaKey, TableGlobalKey,
     };
+    <span class="kw">use </span>common_meta::rpc::store::PutRequest;
 
     <span class="kw">use </span><span class="kw">crate</span>::service::admin::meta::get_keys_by_prefix;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStoreRef;
@@ -434,7 +434,7 @@
             .put(PutRequest {
                 key: catalog.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
-                ..Default::default()
+                prev_kv: <span class="bool-val">false</span>,
             })
             .<span class="kw">await
             </span>.is_ok());
@@ -447,7 +447,7 @@
             .put(PutRequest {
                 key: schema.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
-                ..Default::default()
+                prev_kv: <span class="bool-val">false</span>,
             })
             .<span class="kw">await
             </span>.is_ok());
@@ -466,7 +466,7 @@
             .put(PutRequest {
                 key: table1.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
-                ..Default::default()
+                prev_kv: <span class="bool-val">false</span>,
             })
             .<span class="kw">await
             </span>.is_ok());
@@ -474,7 +474,7 @@
             .put(PutRequest {
                 key: table2.to_string().as_bytes().to_vec(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
-                ..Default::default()
+                prev_kv: <span class="bool-val">false</span>,
             })
             .<span class="kw">await
             </span>.is_ok());

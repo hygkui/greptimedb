@@ -538,6 +538,10 @@
 <a href="#538" id="538">538</a>
 <a href="#539" id="539">539</a>
 <a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -949,8 +953,11 @@
         source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Etcd txn got an error: {err_msg}&quot;</span>))]
-    </span>EtcdTxnOpResponse { err_msg: String, location: Location },
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Etcd txn object: {source}&quot;</span>))]
+    </span>ConvertEtcdTxnObject {
+        source: common_meta::error::Error,
+        location: Location,
+    },
 
     <span class="comment">// this error is used for custom error mapping
     // please do not delete it
@@ -1030,7 +1037,6 @@
             | Error::InvalidTxnResult { .. }
             | Error::InvalidUtf8Value { .. }
             | Error::UnexpectedInstructionReply { .. }
-            | Error::EtcdTxnOpResponse { .. }
             | Error::Unexpected { .. }
             | Error::Txn { .. }
             | Error::TableIdChanged { .. } =&gt; StatusCode::Unexpected,
@@ -1047,9 +1053,11 @@
             Error::RegionFailoverCandidatesNotFound { .. } =&gt; StatusCode::RuntimeResourcesExhausted,
 
             Error::RegisterProcedureLoader { source, .. } =&gt; source.status_code(),
-            Error::TableRouteConversion { source, .. } | Error::ConvertProtoData { source, .. } =&gt; {
-                source.status_code()
-            }
+
+            Error::TableRouteConversion { source, .. }
+            | Error::ConvertProtoData { source, .. }
+            | Error::ConvertEtcdTxnObject { source, .. } =&gt; source.status_code(),
+
             Error::Other { source, .. } =&gt; source.status_code(),
         }
     }

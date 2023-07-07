@@ -1701,7 +1701,7 @@
             .with_key(tc.key(<span class="string">&quot;key&quot;</span>))
             .with_value(<span class="string">b&quot;value&quot;</span>.to_vec());
         <span class="kw">let </span>res = tc.client.put(req).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(res.unwrap().take_prev_kv().is_none());
+        <span class="macro">assert!</span>(res.unwrap().prev_kv.is_none());
     }
 
     <span class="attr">#[tokio::test]
@@ -1714,14 +1714,14 @@
             .with_value(<span class="string">b&quot;value&quot;</span>.to_vec())
             .with_prev_kv();
         <span class="kw">let </span>res = tc.client.put(req).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(res.unwrap().take_prev_kv().is_none());
+        <span class="macro">assert!</span>(res.unwrap().prev_kv.is_none());
 
         <span class="kw">let </span>req = PutRequest::new()
             .with_key(key.as_slice())
             .with_value(<span class="string">b&quot;value1&quot;</span>.to_vec())
             .with_prev_kv();
         <span class="kw">let </span>res = tc.client.put(req).<span class="kw">await</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>kv = res.unwrap().take_prev_kv().unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>kv = res.unwrap().prev_kv.unwrap();
         <span class="macro">assert_eq!</span>(key, kv.take_key());
         <span class="macro">assert_eq!</span>(<span class="string">b&quot;value&quot;</span>.to_vec(), kv.take_value());
     }
@@ -1756,16 +1756,14 @@
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">256 </span>{
             req = req.add_key(tc.key(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;key-{}&quot;</span>, i)));
         }
-        <span class="kw">let </span><span class="kw-2">mut </span>res = tc.client.batch_get(req).<span class="kw">await</span>.unwrap();
-
-        <span class="macro">assert_eq!</span>(<span class="number">10</span>, res.take_kvs().len());
+        <span class="kw">let </span>res = tc.client.batch_get(req).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">10</span>, res.kvs.len());
 
         <span class="kw">let </span>req = BatchGetRequest::default()
             .add_key(tc.key(<span class="string">&quot;key-1&quot;</span>))
             .add_key(tc.key(<span class="string">&quot;key-999&quot;</span>));
-        <span class="kw">let </span><span class="kw-2">mut </span>res = tc.client.batch_get(req).<span class="kw">await</span>.unwrap();
-
-        <span class="macro">assert_eq!</span>(<span class="number">1</span>, res.take_kvs().len());
+        <span class="kw">let </span>res = tc.client.batch_get(req).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, res.kvs.len());
     }
 
     <span class="attr">#[tokio::test]
@@ -1829,7 +1827,9 @@
         <span class="kw">let </span>res = tc.client.compare_and_put(req).<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>res = res.unwrap();
         <span class="macro">assert!</span>(res.is_success());
-        <span class="macro">assert_eq!</span>(<span class="string">b&quot;value&quot;</span>.to_vec(), res.take_prev_kv().unwrap().take_value());
+
+        <span class="comment">// If compare-and-put is success, previous value doesn&#39;t need to be returned.
+        </span><span class="macro">assert!</span>(res.take_prev_kv().is_none());
     }
 
     <span class="attr">#[tokio::test]

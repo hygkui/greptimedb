@@ -395,6 +395,27 @@
 <a href="#395" id="395">395</a>
 <a href="#396" id="396">396</a>
 <a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -431,11 +452,11 @@
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::BoxedError;
-<span class="kw">use </span>common_meta::kv_backend::{Kv, KvBackendRef};
+<span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
+<span class="kw">use </span>common_meta::rpc::store::RangeRequest;
+<span class="kw">use </span>common_meta::rpc::KeyValue;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_telemetry::warn;
-<span class="kw">use </span>futures::StreamExt;
-<span class="kw">use </span>futures_util::TryStreamExt;
 <span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>table::table::numbers::NumbersTable;
@@ -649,10 +670,17 @@
 
     <span class="kw">async fn </span>catalog_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CatalogResult&lt;Vec&lt;String&gt;&gt; {
         <span class="kw">let </span>key = build_catalog_prefix();
-        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.backend.range(key.as_bytes());
+        <span class="kw">let </span>req = RangeRequest::new().with_prefix(key.as_bytes());
+
+        <span class="kw">let </span>kvs = <span class="self">self
+            </span>.backend
+            .range(req)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.kvs;
+
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashSet::new();
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = iter.next().<span class="kw">await </span>{
-            <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+        <span class="kw">for </span>KeyValue { key: k, value: <span class="kw">_ </span>} <span class="kw">in </span>kvs {
             <span class="kw">let </span>catalog_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>k);
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = CatalogKey::parse(catalog_key.as_ref()) {
                 <span class="kw">let _ </span>= res.insert(key.catalog_name);
@@ -665,10 +693,17 @@
 
     <span class="kw">async fn </span>schema_names(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;Vec&lt;String&gt;&gt; {
         <span class="kw">let </span>key = build_schema_prefix(catalog);
-        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.backend.range(key.as_bytes());
+        <span class="kw">let </span>req = RangeRequest::new().with_prefix(key.as_bytes());
+
+        <span class="kw">let </span>kvs = <span class="self">self
+            </span>.backend
+            .range(req)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.kvs;
+
         <span class="kw">let </span><span class="kw-2">mut </span>res = HashSet::new();
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = iter.next().<span class="kw">await </span>{
-            <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+        <span class="kw">for </span>KeyValue { key: k, value: <span class="kw">_ </span>} <span class="kw">in </span>kvs {
             <span class="kw">let </span>key =
                 SchemaKey::parse(String::from_utf8_lossy(<span class="kw-2">&amp;</span>k)).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
             <span class="kw">let _ </span>= res.insert(key.schema_name);
@@ -682,16 +717,23 @@
             tables.push(<span class="string">&quot;numbers&quot;</span>.to_string());
         }
         <span class="kw">let </span>key = build_table_global_prefix(catalog, schema);
-        <span class="kw">let </span>iter = <span class="self">self</span>.backend.range(key.as_bytes());
+        <span class="kw">let </span>req = RangeRequest::new().with_prefix(key.as_bytes());
+
+        <span class="kw">let </span>iter = <span class="self">self
+            </span>.backend
+            .range(req)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.kvs
+            .into_iter();
+
         <span class="kw">let </span>result = iter
-            .map(|r| {
-                <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+            .map(|KeyValue { key: k, value: <span class="kw">_ </span>}| {
                 <span class="kw">let </span>key = TableGlobalKey::parse(String::from_utf8_lossy(<span class="kw-2">&amp;</span>k))
                     .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(key.table_name)
             })
-            .try_collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .collect::&lt;CatalogResult&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
         tables.extend(result);
         <span class="prelude-val">Ok</span>(tables)
     }
@@ -774,7 +816,7 @@
         <span class="kw">let </span><span class="prelude-val">Some</span>(kv) = <span class="self">self</span>.backend().get(table_global_key.to_string().as_bytes()).<span class="kw">await</span>.context(TableMetadataManagerSnafu)<span class="question-mark">? </span><span class="kw">else </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         };
-        <span class="kw">let </span>v = TableGlobalValue::from_bytes(kv.<span class="number">1</span>).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>v = TableGlobalValue::from_bytes(kv.value).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>table_info = Arc::new(
             v.table_info
                 .try_into()

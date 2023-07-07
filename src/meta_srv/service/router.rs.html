@@ -380,7 +380,6 @@
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
 <a href="#382" id="382">382</a>
-<a href="#383" id="383">383</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -398,12 +397,13 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>api::v1::meta::{
-    router_server, BatchPutRequest, CreateRequest, DeleteRequest, Error, KeyValue, Peer, PeerDict,
-    Region, RegionRoute, ResponseHeader, RouteRequest, RouteResponse, Table, TableRoute,
-    TableRouteValue,
+    router_server, CreateRequest, DeleteRequest, Error, Peer, PeerDict, Region, RegionRoute,
+    ResponseHeader, RouteRequest, RouteResponse, Table, TableRoute, TableRouteValue,
 };
 <span class="kw">use </span>catalog::helper::{TableGlobalKey, TableGlobalValue};
 <span class="kw">use </span>common_meta::key::TableRouteKey;
+<span class="kw">use </span>common_meta::rpc::store::BatchPutRequest;
+<span class="kw">use </span>common_meta::rpc::KeyValue;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_telemetry::{timer, warn};
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -416,7 +416,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{Context, MetaSrv, SelectorContext, SelectorRef};
 <span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_META_ROUTE_REQUEST;
 <span class="kw">use </span><span class="kw">crate</span>::sequence::SequenceRef;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::ext::KvStoreExt;
 <span class="kw">use </span><span class="kw">crate</span>::service::GrpcResult;
 <span class="kw">use </span><span class="kw">crate</span>::table_routes::{
     fetch_tables, get_table_global_value, remove_table_global_value, remove_table_route_value,
@@ -449,7 +448,7 @@
         .to_string()
         .into_bytes();
         <span class="macro">ensure!</span>(
-            <span class="self">self</span>.kv_store().get(table_global_key).<span class="kw">await</span><span class="question-mark">?</span>.is_none(),
+            <span class="self">self</span>.kv_store().get(<span class="kw-2">&amp;</span>table_global_key).<span class="kw">await</span><span class="question-mark">?</span>.is_none(),
             error::TableAlreadyExistsSnafu {
                 table_name: table_name.to_string(),
             }
@@ -621,7 +620,6 @@
             },
         ],
         prev_kv: <span class="bool-val">true</span>,
-        ..Default::default()
     };
 
     <span class="kw">let </span>resp = ctx.kv_store.batch_put(req).<span class="kw">await</span><span class="question-mark">?</span>;

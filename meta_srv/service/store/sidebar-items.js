@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cached_kv","etcd","etcd_util","ext","kv","memory","txn"]};
+window.SIDEBAR_ITEMS = {"mod":["cached_kv","etcd","etcd_util","kv","memory"]};

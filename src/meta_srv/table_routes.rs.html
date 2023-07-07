@@ -395,21 +395,6 @@
 <a href="#395" id="395">395</a>
 <a href="#396" id="396">396</a>
 <a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -426,26 +411,25 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="kw">use </span>api::v1::meta::{MoveValueRequest, PutRequest, TableRouteValue};
+<span class="kw">use </span>api::v1::meta::TableRouteValue;
 <span class="kw">use </span>catalog::helper::{TableGlobalKey, TableGlobalValue};
 <span class="kw">use </span>common_meta::key::TableRouteKey;
-<span class="kw">use </span>common_meta::rpc::store::{BatchGetRequest, BatchGetResponse};
+<span class="kw">use </span>common_meta::rpc::store::{BatchGetRequest, MoveValueRequest, PutRequest};
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>table::engine::TableReference;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    ConvertProtoDataSnafu, DecodeTableRouteSnafu, InvalidCatalogValueSnafu, <span class="prelude-ty">Result</span>,
-    TableNotFoundSnafu, TableRouteNotFoundSnafu,
+    DecodeTableRouteSnafu, InvalidCatalogValueSnafu, <span class="prelude-ty">Result</span>, TableNotFoundSnafu,
+    TableRouteNotFoundSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::service::store::ext::KvStoreExt;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStoreRef;
 
 <span class="kw">pub async fn </span>get_table_global_value(
     kv_store: <span class="kw-2">&amp;</span>KvStoreRef,
     key: <span class="kw-2">&amp;</span>TableGlobalKey,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableGlobalValue&gt;&gt; {
-    <span class="kw">let </span>kv = kv_store.get(key.to_raw_key()).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>kv = kv_store.get(<span class="kw-2">&amp;</span>key.to_raw_key()).<span class="kw">await</span><span class="question-mark">?</span>;
     kv.map(|kv| TableGlobalValue::from_bytes(kv.value).context(InvalidCatalogValueSnafu))
         .transpose()
 }
@@ -457,13 +441,8 @@
     <span class="kw">let </span>req = BatchGetRequest {
         keys: keys.iter().map(|x| x.to_raw_key()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
     };
-    <span class="kw">let </span><span class="kw-2">mut </span>resp: BatchGetResponse = kv_store
-        .batch_get(req.into())
-        .<span class="kw">await</span><span class="question-mark">?
-        </span>.try_into()
-        .context(ConvertProtoDataSnafu)<span class="question-mark">?</span>;
+    <span class="kw">let </span>kvs = kv_store.batch_get(req).<span class="kw">await</span><span class="question-mark">?</span>.kvs;
 
-    <span class="kw">let </span>kvs = resp.take_kvs();
     <span class="kw">let </span><span class="kw-2">mut </span>result = HashMap::with_capacity(kvs.len());
     <span class="kw">for </span>kv <span class="kw">in </span>kvs {
         <span class="kw">let </span>key = TableGlobalKey::try_from_raw_key(kv.key()).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
@@ -485,7 +464,6 @@
     value: <span class="kw-2">&amp;</span>TableGlobalValue,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>req = PutRequest {
-        header: <span class="prelude-val">None</span>,
         key: key.to_raw_key(),
         value: value.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
         prev_kv: <span class="bool-val">false</span>,
@@ -513,15 +491,12 @@
     key: <span class="kw-2">&amp;</span>TableRouteKey&lt;<span class="lifetime">&#39;_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TableRouteValue&gt; {
     <span class="kw">let </span>kv = kv_store
-        .get(key.to_string().into_bytes())
+        .get(key.to_string().as_bytes())
         .<span class="kw">await</span><span class="question-mark">?
         </span>.with_context(|| TableRouteNotFoundSnafu {
             key: key.to_string(),
         })<span class="question-mark">?</span>;
-    kv.value
-        .as_slice()
-        .try_into()
-        .context(DecodeTableRouteSnafu)
+    kv.value().try_into().context(DecodeTableRouteSnafu)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>put_table_route_value(
@@ -530,7 +505,6 @@
     value: TableRouteValue,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>req = PutRequest {
-        header: <span class="prelude-val">None</span>,
         key: key.to_string().into_bytes(),
         value: value.into(),
         prev_kv: <span class="bool-val">false</span>,
@@ -562,14 +536,10 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Vec&lt;u8&gt;, Vec&lt;u8&gt;)&gt;&gt; {
     <span class="kw">let </span>from_key = from_key.into();
     <span class="kw">let </span>to_key = to_key.into();
-    <span class="kw">let </span>move_req = MoveValueRequest {
-        from_key,
-        to_key,
-        ..Default::default()
-    };
+    <span class="kw">let </span>move_req = MoveValueRequest { from_key, to_key };
     <span class="kw">let </span>res = kv_store.move_value(move_req).<span class="kw">await</span><span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(res.kv.map(|kv| (kv.key, kv.value)))
+    <span class="prelude-val">Ok</span>(res.<span class="number">0</span>.map(Into::into))
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>table_route_key(table_id: u32, t: <span class="kw-2">&amp;</span>TableGlobalKey) -&gt; TableRouteKey&lt;<span class="lifetime">&#39;_</span>&gt; {

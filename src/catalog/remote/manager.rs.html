@@ -938,6 +938,26 @@
 <a href="#938" id="938">938</a>
 <a href="#939" id="939">939</a>
 <a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -954,17 +974,15 @@
 
 </span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::collections::HashSet;
-<span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>async_stream::stream;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::{MAX_SYS_TABLE_ID, MITO_ENGINE};
 <span class="kw">use </span>common_meta::ident::TableIdent;
-<span class="kw">use </span>common_meta::kv_backend::{Kv, KvBackendRef};
+<span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
+<span class="kw">use </span>common_meta::rpc::store::{PutRequest, RangeRequest};
+<span class="kw">use </span>common_meta::rpc::KeyValue;
 <span class="kw">use </span>common_telemetry::{debug, error, info, warn};
-<span class="kw">use </span>futures::Stream;
-<span class="kw">use </span>futures_util::{StreamExt, TryStreamExt};
 <span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::engine::manager::TableEngineManagerRef;
@@ -1014,35 +1032,39 @@
         }
     }
 
-    <span class="kw">async fn </span>iter_remote_catalogs(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;CatalogKey&gt;&gt; + Send + <span class="lifetime">&#39;_</span>&gt;&gt; {
+    <span class="kw">async fn </span>iter_remote_catalogs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;CatalogKey&gt;&gt; {
         <span class="kw">let </span>catalog_range_prefix = build_catalog_prefix();
-        <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.backend.range(catalog_range_prefix.as_bytes());
-        Box::pin(<span class="macro">stream!</span>({
-            <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = catalogs.next().<span class="kw">await </span>{
-                <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
-                <span class="kw">if </span>!k.starts_with(catalog_range_prefix.as_bytes()) {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-catalog key: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
-                    <span class="kw">continue</span>;
-                }
+        <span class="kw">let </span>req = RangeRequest::new().with_prefix(catalog_range_prefix.as_bytes());
 
-                <span class="kw">let </span>catalog_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>k);
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = CatalogKey::parse(<span class="kw-2">&amp;</span>catalog_key) {
-                    <span class="kw">yield </span><span class="prelude-val">Ok</span>(key)
-                } <span class="kw">else </span>{
-                    <span class="macro">error!</span>(<span class="string">&quot;Invalid catalog key: {:?}&quot;</span>, catalog_key);
+        <span class="kw">let </span>kvs = <span class="self">self
+            </span>.backend
+            .range(req)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.kvs;
+
+        <span class="kw">let </span>catalogs = kvs
+            .into_iter()
+            .filter_map(|kv| {
+                <span class="kw">let </span>catalog_key = String::from_utf8_lossy(kv.key());
+
+                <span class="kw">match </span>CatalogKey::parse(<span class="kw-2">&amp;</span>catalog_key) {
+                    <span class="prelude-val">Ok</span>(x) =&gt; <span class="prelude-val">Some</span>(x),
+                    <span class="prelude-val">Err</span>(e) =&gt; {
+                        <span class="macro">error!</span>(e; <span class="string">&quot;Ignore invalid catalog key {:?}&quot;</span>, catalog_key);
+                        <span class="prelude-val">None
+                    </span>}
                 }
-            }
-        }))
+            })
+            .collect();
+        <span class="prelude-val">Ok</span>(catalogs)
     }
 
     <span class="doccomment">/// Fetch catalogs/schemas/tables from remote catalog manager along with max table id allocated.
     </span><span class="kw">async fn </span>initiate_catalogs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.iter_remote_catalogs().<span class="kw">await</span>;
+        <span class="kw">let </span>catalogs = <span class="self">self</span>.iter_remote_catalogs().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>joins = Vec::new();
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = catalogs.next().<span class="kw">await </span>{
-            <span class="kw">let </span>CatalogKey { catalog_name, .. } = r<span class="question-mark">?</span>;
+        <span class="kw">for </span>CatalogKey { catalog_name } <span class="kw">in </span>catalogs {
             <span class="macro">info!</span>(<span class="string">&quot;Fetch catalog from metasrv: {}&quot;</span>, catalog_name);
 
             <span class="kw">let </span>node_id = <span class="self">self</span>.node_id;
@@ -1068,13 +1090,11 @@
             schema_name: schema_name.to_string(),
         }
         .to_string();
+        <span class="kw">let </span>req = PutRequest::new()
+            .with_key(schema_key.as_bytes())
+            .with_value(SchemaValue.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>);
         <span class="self">self</span>.backend
-            .set(
-                schema_key.as_bytes(),
-                <span class="kw-2">&amp;</span>SchemaValue {}
-                    .as_bytes()
-                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
-            )
+            .put(req)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Created schema &#39;{schema_key}&#39;&quot;</span>);
@@ -1083,13 +1103,11 @@
             catalog_name: catalog_name.to_string(),
         }
         .to_string();
+        <span class="kw">let </span>req = PutRequest::new()
+            .with_key(catalog_key.as_bytes())
+            .with_value(CatalogValue.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>);
         <span class="self">self</span>.backend
-            .set(
-                catalog_key.as_bytes(),
-                <span class="kw-2">&amp;</span>CatalogValue {}
-                    .as_bytes()
-                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
-            )
+            .put(req)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Created catalog &#39;{catalog_key}&quot;</span>);
@@ -1114,9 +1132,7 @@
         schema_name: String,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
         <span class="macro">info!</span>(<span class="string">&quot;initializing tables in {}.{}&quot;</span>, catalog_name, schema_name);
-        <span class="kw">let </span>tables = iter_remote_tables(node_id, <span class="kw-2">&amp;</span>backend, <span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name).<span class="kw">await</span>;
-
-        <span class="kw">let </span>kvs = tables.try_collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>kvs = iter_remote_tables(node_id, <span class="kw-2">&amp;</span>backend, <span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>table_num = kvs.len();
         <span class="kw">let </span>joins = kvs
             .into_iter()
@@ -1193,15 +1209,14 @@
         engine_manager: TableEngineManagerRef,
         catalog_name: String,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>schemas = iter_remote_schemas(<span class="kw-2">&amp;</span>backend, <span class="kw-2">&amp;</span>catalog_name).<span class="kw">await</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>joins = Vec::new();
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
-            <span class="kw">let </span>SchemaKey {
-                catalog_name,
-                schema_name,
-                ..
-            } = r<span class="question-mark">?</span>;
+        <span class="kw">let </span>schemas = iter_remote_schemas(<span class="kw-2">&amp;</span>backend, <span class="kw-2">&amp;</span>catalog_name).<span class="kw">await</span><span class="question-mark">?</span>;
 
+        <span class="kw">let </span><span class="kw-2">mut </span>joins = Vec::new();
+        <span class="kw">for </span>SchemaKey {
+            catalog_name,
+            schema_name,
+        } <span class="kw">in </span>schemas
+        {
             <span class="macro">info!</span>(
                 <span class="string">&quot;Fetch schema from metasrv: {}.{}&quot;</span>,
                 <span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name
@@ -1254,11 +1269,11 @@
         <span class="kw">let </span>table_key = <span class="self">self
             </span>.build_regional_table_key(catalog_name, schema_name, table_name)
             .to_string();
+        <span class="kw">let </span>req = PutRequest::new()
+            .with_key(table_key.as_bytes())
+            .with_value(table_value.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>);
         <span class="self">self</span>.backend
-            .set(
-                table_key.as_bytes(),
-                <span class="kw-2">&amp;</span>table_value.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
-            )
+            .put(req)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(
@@ -1289,7 +1304,7 @@
             .get(table_key.as_bytes())
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
-            </span>.map(|Kv(<span class="kw">_</span>, v)| {
+            </span>.map(|KeyValue { key: <span class="kw">_</span>, value: v }| {
                 <span class="kw">let </span>TableRegionalValue {
                     table_id,
                     engine_name,
@@ -1307,7 +1322,7 @@
             };
 
         <span class="self">self</span>.backend
-            .delete(table_key.as_bytes())
+            .delete(table_key.as_bytes(), <span class="bool-val">false</span>)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(
@@ -1370,23 +1385,30 @@
 <span class="kw">async fn </span>iter_remote_schemas&lt;<span class="lifetime">&#39;a</span>&gt;(
     backend: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>KvBackendRef,
     catalog_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
-) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;SchemaKey&gt;&gt; + Send + <span class="lifetime">&#39;a</span>&gt;&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SchemaKey&gt;&gt; {
     <span class="kw">let </span>schema_prefix = build_schema_prefix(catalog_name);
-    <span class="kw">let </span><span class="kw-2">mut </span>schemas = backend.range(schema_prefix.as_bytes());
+    <span class="kw">let </span>req = RangeRequest::new().with_prefix(schema_prefix.as_bytes());
 
-    Box::pin(<span class="macro">stream!</span>({
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = schemas.next().<span class="kw">await </span>{
-            <span class="kw">let </span>Kv(k, <span class="kw">_</span>) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
-            <span class="kw">if </span>!k.starts_with(schema_prefix.as_bytes()) {
-                <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-schema key: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
-                <span class="kw">continue</span>;
+    <span class="kw">let </span>kvs = backend
+        .range(req)
+        .<span class="kw">await
+        </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+        </span>.kvs;
+
+    <span class="kw">let </span>schemas = kvs
+        .into_iter()
+        .filter_map(|kv| {
+            <span class="kw">let </span>schema_key = String::from_utf8_lossy(kv.key());
+            <span class="kw">match </span>SchemaKey::parse(<span class="kw-2">&amp;</span>schema_key) {
+                <span class="prelude-val">Ok</span>(x) =&gt; <span class="prelude-val">Some</span>(x),
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">warn!</span>(<span class="string">&quot;Ignore invalid schema key {:?}: {e}&quot;</span>, schema_key);
+                    <span class="prelude-val">None
+                </span>}
             }
-
-            <span class="kw">let </span>schema_key =
-                SchemaKey::parse(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>k)).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-            <span class="kw">yield </span><span class="prelude-val">Ok</span>(schema_key)
-        }
-    }))
+        })
+        .collect();
+    <span class="prelude-val">Ok</span>(schemas)
 }
 
 <span class="doccomment">/// Iterate over all table entries on metasrv
@@ -1395,35 +1417,42 @@
     backend: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>KvBackendRef,
     catalog_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
     schema_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
-) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;(TableGlobalKey, TableGlobalValue)&gt;&gt; + Send + <span class="lifetime">&#39;a</span>&gt;&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(TableGlobalKey, TableGlobalValue)&gt;&gt; {
     <span class="kw">let </span>table_prefix = build_table_global_prefix(catalog_name, schema_name);
-    <span class="kw">let </span><span class="kw-2">mut </span>tables = backend.range(table_prefix.as_bytes());
-    Box::pin(<span class="macro">stream!</span>({
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(r) = tables.next().<span class="kw">await </span>{
-            <span class="kw">let </span>Kv(k, v) = r.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
-            <span class="kw">if </span>!k.starts_with(table_prefix.as_bytes()) {
-                <span class="macro">debug!</span>(<span class="string">&quot;Ignoring non-table prefix: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>k));
-                <span class="kw">continue</span>;
-            }
-            <span class="kw">let </span>table_key = TableGlobalKey::parse(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>k))
-                .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-            <span class="kw">let </span>table_value = TableGlobalValue::from_bytes(<span class="kw-2">&amp;</span>v).context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
+    <span class="kw">let </span>req = RangeRequest::new().with_prefix(table_prefix.as_bytes());
 
-            <span class="macro">info!</span>(
-                <span class="string">&quot;Found catalog table entry, key: {}, value: {:?}&quot;</span>,
-                table_key, table_value
-            );
-            <span class="comment">// metasrv has allocated region ids to current datanode
-            </span><span class="kw">if </span>table_value
-                .regions_id_map
-                .get(<span class="kw-2">&amp;</span>node_id)
-                .map(|v| !v.is_empty())
-                .unwrap_or(<span class="bool-val">false</span>)
-            {
-                <span class="kw">yield </span><span class="prelude-val">Ok</span>((table_key, table_value))
-            }
+    <span class="kw">let </span>kvs = backend
+        .range(req)
+        .<span class="kw">await
+        </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+        </span>.kvs;
+
+    <span class="kw">let </span><span class="kw-2">mut </span>tables = Vec::with_capacity(kvs.len());
+    <span class="kw">for </span>kv <span class="kw">in </span>kvs {
+        <span class="kw">let </span>tgk = <span class="kw-2">&amp;</span>String::from_utf8_lossy(kv.key());
+        <span class="kw">let </span><span class="prelude-val">Ok</span>(table_key) = TableGlobalKey::parse(tgk) <span class="kw">else </span>{
+            <span class="macro">warn!</span>(<span class="string">&quot;Ignore invalid table global key {:?}&quot;</span>, tgk);
+            <span class="kw">continue</span>;
+        };
+
+        <span class="kw">let </span><span class="prelude-val">Ok</span>(table_value) = TableGlobalValue::from_bytes(kv.value()) <span class="kw">else </span>{
+            <span class="macro">warn!</span>(<span class="string">&quot;Ignore invalid table global value {:?}&quot;</span>, String::from_utf8_lossy(kv.value()));
+            <span class="kw">continue</span>;
+        };
+
+        <span class="macro">info!</span>(<span class="string">&quot;Found catalog table entry, key: {table_key}, value: {table_value:?}&quot;</span>);
+
+        <span class="comment">// metasrv has allocated region ids to current datanode
+        </span><span class="kw">if </span>table_value
+            .regions_id_map
+            .get(<span class="kw-2">&amp;</span>node_id)
+            .map(|v| !v.is_empty())
+            .unwrap_or(<span class="bool-val">false</span>)
+        {
+            tables.push((table_key, table_value))
         }
-    }))
+    }
+    <span class="prelude-val">Ok</span>(tables)
 }
 
 <span class="kw">async fn </span>print_regional_key_debug_info(
@@ -1440,7 +1469,10 @@
     .to_string();
 
     <span class="kw">match </span>backend.get(regional_key.as_bytes()).<span class="kw">await </span>{
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Kv(<span class="kw">_</span>, values_bytes))) =&gt; {
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(KeyValue {
+            key: <span class="kw">_</span>,
+            value: values_bytes,
+        })) =&gt; {
             <span class="macro">debug!</span>(
                 <span class="string">&quot;Node id: {}, TableRegionalKey: {}, value: {},&quot;</span>,
                 node_id,
@@ -1642,13 +1674,11 @@
         <span class="kw">let </span>catalog_name = request.catalog;
         <span class="kw">let </span>schema_name = request.schema;
         <span class="kw">let </span>key = <span class="self">self</span>.build_schema_key(catalog_name, schema_name).to_string();
+        <span class="kw">let </span>req = PutRequest::new()
+            .with_key(key.as_bytes())
+            .with_value(SchemaValue.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>);
         <span class="self">self</span>.backend
-            .set(
-                key.as_bytes(),
-                <span class="kw-2">&amp;</span>SchemaValue {}
-                    .as_bytes()
-                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
-            )
+            .put(req)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
@@ -1669,21 +1699,27 @@
             node_id: <span class="self">self</span>.node_id,
         }
         .to_string();
-        <span class="kw">let </span><span class="prelude-val">Some</span>(Kv(<span class="kw">_</span>, value_bytes)) = <span class="self">self</span>.backend.get(old_table_key.as_bytes()).<span class="kw">await</span>.context(TableMetadataManagerSnafu)<span class="question-mark">? </span><span class="kw">else </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
-        };
+        <span class="kw">let </span><span class="prelude-val">Some</span>(KeyValue{ key: <span class="kw">_</span>, value }) = <span class="self">self</span>.backend
+            .get(old_table_key.as_bytes())
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">? </span><span class="kw">else </span>{
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+            };
         <span class="kw">let </span>new_table_key = TableRegionalKey {
             catalog_name: request.catalog.clone(),
             schema_name: request.schema.clone(),
             table_name: request.new_table_name,
             node_id: <span class="self">self</span>.node_id,
         };
+        <span class="kw">let </span>req = PutRequest::new()
+            .with_key(new_table_key.to_string().as_bytes())
+            .with_value(value);
         <span class="self">self</span>.backend
-            .set(new_table_key.to_string().as_bytes(), <span class="kw-2">&amp;</span>value_bytes)
+            .put(req)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="self">self</span>.backend
-            .delete(old_table_key.to_string().as_bytes())
+            .delete(old_table_key.to_string().as_bytes(), <span class="bool-val">false</span>)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
@@ -1736,7 +1772,7 @@
             .get(key.as_bytes())
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
-            </span>.map(|Kv(<span class="kw">_</span>, v)| {
+            </span>.map(|KeyValue { key: <span class="kw">_</span>, value: v }| {
                 <span class="kw">let </span>TableRegionalValue {
                     table_id,
                     engine_name,
@@ -1803,16 +1839,19 @@
     }
 
     <span class="kw">async fn </span>catalog_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>stream = <span class="self">self</span>.backend.range(CATALOG_KEY_PREFIX.as_bytes());
+        <span class="kw">let </span>req = RangeRequest::new().with_prefix(CATALOG_KEY_PREFIX.as_bytes());
+        <span class="kw">let </span>kvs = <span class="self">self
+            </span>.backend
+            .range(req)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.kvs;
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = HashSet::new();
 
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(catalog) = stream.next().<span class="kw">await </span>{
-            <span class="kw">if let </span><span class="prelude-val">Ok</span>(catalog) = catalog {
-                <span class="kw">let </span>catalog_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>catalog.<span class="number">0</span>);
-
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = CatalogKey::parse(<span class="kw-2">&amp;</span>catalog_key) {
-                    <span class="kw">let _ </span>= catalogs.insert(key.catalog_name);
-                }
+        <span class="kw">for </span>catalog <span class="kw">in </span>kvs {
+            <span class="kw">let </span>catalog_key = String::from_utf8_lossy(catalog.key());
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = CatalogKey::parse(<span class="kw-2">&amp;</span>catalog_key) {
+                <span class="kw">let _ </span>= catalogs.insert(key.catalog_name);
             }
         }
 
@@ -1820,18 +1859,19 @@
     }
 
     <span class="kw">async fn </span>schema_names(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>stream = <span class="self">self
+        <span class="kw">let </span>req = RangeRequest::new().with_prefix(build_schema_prefix(catalog_name).as_bytes());
+        <span class="kw">let </span>kvs = <span class="self">self
             </span>.backend
-            .range(build_schema_prefix(catalog_name).as_bytes());
+            .range(req)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.kvs;
         <span class="kw">let </span><span class="kw-2">mut </span>schemas = HashSet::new();
 
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(schema) = stream.next().<span class="kw">await </span>{
-            <span class="kw">if let </span><span class="prelude-val">Ok</span>(schema) = schema {
-                <span class="kw">let </span>schema_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>schema.<span class="number">0</span>);
-
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = SchemaKey::parse(<span class="kw-2">&amp;</span>schema_key) {
-                    <span class="kw">let _ </span>= schemas.insert(key.schema_name);
-                }
+        <span class="kw">for </span>schema <span class="kw">in </span>kvs {
+            <span class="kw">let </span>schema_key = String::from_utf8_lossy(schema.key());
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = SchemaKey::parse(<span class="kw-2">&amp;</span>schema_key) {
+                <span class="kw">let _ </span>= schemas.insert(key.schema_name);
             }
         }
         <span class="prelude-val">Ok</span>(schemas.into_iter().collect())
@@ -1841,18 +1881,20 @@
         <span class="self">self</span>.check_catalog_schema_exist(catalog_name, schema_name)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>stream = <span class="self">self
+        <span class="kw">let </span>req = RangeRequest::new()
+            .with_prefix(build_table_regional_prefix(catalog_name, schema_name).as_bytes());
+        <span class="kw">let </span>kvs = <span class="self">self
             </span>.backend
-            .range(build_table_regional_prefix(catalog_name, schema_name).as_bytes());
+            .range(req)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.kvs;
         <span class="kw">let </span><span class="kw-2">mut </span>tables = HashSet::new();
 
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(table) = stream.next().<span class="kw">await </span>{
-            <span class="kw">if let </span><span class="prelude-val">Ok</span>(table) = table {
-                <span class="kw">let </span>table_key = String::from_utf8_lossy(<span class="kw-2">&amp;</span>table.<span class="number">0</span>);
-
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = TableRegionalKey::parse(<span class="kw-2">&amp;</span>table_key) {
-                    <span class="kw">let _ </span>= tables.insert(key.table_name);
-                }
+        <span class="kw">for </span>table <span class="kw">in </span>kvs {
+            <span class="kw">let </span>table_key = String::from_utf8_lossy(table.key());
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(key) = TableRegionalKey::parse(<span class="kw-2">&amp;</span>table_key) {
+                <span class="kw">let _ </span>= tables.insert(key.table_name);
             }
         }
         <span class="prelude-val">Ok</span>(tables.into_iter().collect())
@@ -1861,13 +1903,11 @@
     <span class="kw">async fn </span>register_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>, name: String) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span>key = CatalogKey { catalog_name: name }.to_string();
         <span class="comment">// TODO(hl): use compare_and_swap to prevent concurrent update
-        </span><span class="self">self</span>.backend
-            .set(
-                key.as_bytes(),
-                <span class="kw-2">&amp;</span>CatalogValue {}
-                    .as_bytes()
-                    .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>,
-            )
+        </span><span class="kw">let </span>req = PutRequest::new()
+            .with_key(key.as_bytes())
+            .with_value(CatalogValue.as_bytes().context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>);
+        <span class="self">self</span>.backend
+            .put(req)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);

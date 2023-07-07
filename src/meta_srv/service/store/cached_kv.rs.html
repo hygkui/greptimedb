@@ -472,6 +472,8 @@
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
 <a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -486,22 +488,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::collections::HashSet;
+</span><span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::collections::HashSet;
 <span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>api::v1::meta::{
+<span class="kw">use </span>common_meta::kv_backend::txn::{Txn, TxnOp, TxnRequest, TxnResponse};
+<span class="kw">use </span>common_meta::kv_backend::{KvBackend, TxnService};
+<span class="kw">use </span>common_meta::rpc::store::{
     BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
     BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
-    DeleteRangeResponse, KeyValue, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
+    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
     RangeRequest, RangeResponse,
 };
+<span class="kw">use </span>common_meta::rpc::KeyValue;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::ext::KvStoreExt;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvStore, KvStoreRef, ResettableKvStore, ResettableKvStoreRef};
+<span class="kw">use </span><span class="kw">crate</span>::error::{Error, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvStoreRef, ResettableKvStore, ResettableKvStoreRef};
 <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::txn::{Txn, TxnOp, TxnRequest, TxnResponse, TxnService};
 
 <span class="kw">pub type </span>CheckLeaderRef = Arc&lt;<span class="kw">dyn </span>CheckLeader&gt;;
 
@@ -531,15 +535,18 @@
     store: KvStoreRef,
     cache: ResettableKvStoreRef,
     version: AtomicUsize,
+    name: String,
 }
 
 <span class="kw">impl </span>LeaderCachedKvStore {
     <span class="kw">pub fn </span>new(check_leader: CheckLeaderRef, store: KvStoreRef) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;LeaderCached({})&quot;</span>, store.name());
         <span class="self">Self </span>{
             check_leader,
             store,
             cache: Arc::new(MemStore::new()),
             version: AtomicUsize::new(<span class="number">0</span>),
+            name,
         }
     }
 
@@ -556,7 +563,7 @@
 
     <span class="attr">#[inline]
     </span><span class="kw">async fn </span>invalid_key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let _ </span>= <span class="self">self</span>.cache.delete(key, <span class="bool-val">false</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self</span>.cache.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -584,7 +591,11 @@
 }
 
 <span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl </span>KvStore <span class="kw">for </span>LeaderCachedKvStore {
+</span><span class="kw">impl </span>KvBackend <span class="kw">for </span>LeaderCachedKvStore {
+    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.name
+    }
+
     <span class="kw">async fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: RangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RangeResponse&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.is_leader() {
             <span class="kw">return </span><span class="self">self</span>.store.range(req).<span class="kw">await</span>;
@@ -660,16 +671,13 @@
             .filter(|key| !hit_keys.contains(<span class="kw-2">*</span>key))
             .cloned()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>remote_req = BatchGetRequest {
-            keys: missed_keys,
-            ..Default::default()
-        };
+        <span class="kw">let </span>remote_req = BatchGetRequest { keys: missed_keys };
 
         <span class="kw">let </span>ver = <span class="self">self</span>.get_version();
 
         <span class="kw">let </span>remote_res = <span class="self">self</span>.store.batch_get(remote_req).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>put_req = BatchPutRequest {
-            kvs: remote_res.kvs.clone(),
+            kvs: remote_res.kvs.clone().into_iter().map(Into::into).collect(),
             ..Default::default()
         };
         <span class="kw">let _ </span>= <span class="self">self</span>.cache.batch_put(put_req).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -678,7 +686,7 @@
             <span class="kw">let </span>keys = remote_res
                 .kvs
                 .iter()
-                .map(|kv| kv.key.clone())
+                .map(|kv| kv.key().to_vec())
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
             <span class="self">self</span>.invalid_keys(keys).<span class="kw">await</span><span class="question-mark">?</span>;
         }
@@ -765,10 +773,16 @@
         </span><span class="self">self</span>.invalid_keys(<span class="macro">vec!</span>[from_key, to_key]).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(res)
     }
+
+    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
+        <span class="self">self
+    </span>}
 }
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>TxnService <span class="kw">for </span>LeaderCachedKvStore {
+    <span class="kw">type </span>Error = Error;
+
     <span class="kw">async fn </span>txn(<span class="kw-2">&amp;</span><span class="self">self</span>, txn: Txn) -&gt; <span class="prelude-ty">Result</span>&lt;TxnResponse&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.is_leader() {
             <span class="kw">return </span><span class="self">self</span>.store.txn(txn).<span class="kw">await</span>;
@@ -812,7 +826,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>api::v1::meta::KeyValue;
+    <span class="kw">use </span>common_meta::rpc::KeyValue;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
@@ -838,23 +852,19 @@
         };
         <span class="kw">let _ </span>= inner_store.put(put_req).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>cached_value = inner_cache.get(key.clone()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>cached_value = inner_cache.get(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(cached_value.is_none());
 
-        <span class="kw">let </span>cached_value = cached_store.get(key.clone()).<span class="kw">await</span>.unwrap().unwrap();
-        <span class="macro">assert_eq!</span>(cached_value.value, value);
+        <span class="kw">let </span>cached_value = cached_store.get(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>.unwrap().unwrap();
+        <span class="macro">assert_eq!</span>(cached_value.value(), value);
 
-        <span class="kw">let </span>cached_value = inner_cache.get(key.clone()).<span class="kw">await</span>.unwrap().unwrap();
-        <span class="macro">assert_eq!</span>(cached_value.value, value);
+        <span class="kw">let </span>cached_value = inner_cache.get(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>.unwrap().unwrap();
+        <span class="macro">assert_eq!</span>(cached_value.value(), value);
 
-        <span class="kw">let </span>res = cached_store
-            .delete(key.clone(), <span class="bool-val">true</span>)
-            .<span class="kw">await
-            </span>.unwrap()
-            .unwrap();
-        <span class="macro">assert_eq!</span>(res.value, value);
+        <span class="kw">let </span>res = cached_store.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">true</span>).<span class="kw">await</span>.unwrap().unwrap();
+        <span class="macro">assert_eq!</span>(res.value(), value);
 
-        <span class="kw">let </span>cached_value = inner_cache.get(key.clone()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>cached_value = inner_cache.get(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(cached_value.is_none());
     }
 
@@ -883,10 +893,7 @@
             .map(|i| <span class="macro">format!</span>(<span class="string">&quot;test_key_{}&quot;</span>, i).into_bytes())
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="kw">let </span>batch_get_req = BatchGetRequest {
-            keys,
-            ..Default::default()
-        };
+        <span class="kw">let </span>batch_get_req = BatchGetRequest { keys };
 
         <span class="kw">let </span>cached_values = inner_cache.batch_get(batch_get_req.clone()).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(cached_values.kvs.is_empty());
@@ -925,10 +932,7 @@
         <span class="kw">let </span>keys = (<span class="number">1</span>..<span class="number">5</span>)
             .map(|i| <span class="macro">format!</span>(<span class="string">&quot;test_key_{}&quot;</span>, i).into_bytes())
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>batch_get_req = BatchGetRequest {
-            keys,
-            ..Default::default()
-        };
+        <span class="kw">let </span>batch_get_req = BatchGetRequest { keys };
         <span class="kw">let </span>cached_values = inner_cache.batch_get(batch_get_req.clone()).<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(cached_values.kvs.len(), <span class="number">4</span>);
 

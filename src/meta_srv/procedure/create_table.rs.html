@@ -324,6 +324,7 @@
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_meta::key::TableRouteKey;
+<span class="kw">use </span>common_meta::kv_backend::txn::{Compare, CompareOp, Txn, TxnOp};
 <span class="kw">use </span>common_meta::rpc::ddl::CreateTableTask;
 <span class="kw">use </span>common_meta::rpc::router::TableRoute;
 <span class="kw">use </span>common_meta::table_name::TableName;
@@ -339,7 +340,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::ddl::DdlContext;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::service::router::create_table_global_value;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::txn::{Compare, CompareOp, Txn, TxnOp};
 <span class="kw">use </span><span class="kw">crate</span>::table_routes::get_table_global_value;
 
 <span class="comment">// TODO(weny): removes in following PRs.
