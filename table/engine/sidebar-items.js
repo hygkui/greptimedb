@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["CloseTableResult"],"fn":["region_id","region_name","region_number","table_dir","table_id"],"mod":["manager"],"struct":["EngineContext","TableReference"],"trait":["TableEngine","TableEngineProcedure"],"type":["TableEngineProcedureRef","TableEngineRef"]};
+window.SIDEBAR_ITEMS = {"enum":["CloseTableResult"],"fn":["region_name","table_dir"],"mod":["manager"],"struct":["EngineContext","TableReference"],"trait":["TableEngine","TableEngineProcedure"],"type":["TableEngineProcedureRef","TableEngineRef"]};

@@ -851,7 +851,7 @@
     <span class="kw">pub fn </span>new(table: Table, region_routes: Vec&lt;RegionRoute&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>region_leaders = region_routes
             .iter()
-            .map(|x| (x.region.id <span class="kw">as </span>RegionNumber, x.leader_peer.clone()))
+            .map(|x| (x.region.id.region_number(), x.leader_peer.clone()))
             .collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
 
         <span class="self">Self </span>{
@@ -968,13 +968,13 @@
             .collect()
     }
 
-    <span class="kw">pub fn </span>find_leader_regions(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode: <span class="kw-2">&amp;</span>Peer) -&gt; Vec&lt;u32&gt; {
+    <span class="kw">pub fn </span>find_leader_regions(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode: <span class="kw-2">&amp;</span>Peer) -&gt; Vec&lt;RegionNumber&gt; {
         <span class="self">self</span>.region_routes
             .iter()
             .filter_map(|x| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(peer) = <span class="kw-2">&amp;</span>x.leader_peer {
                     <span class="kw">if </span>peer == datanode {
-                        <span class="kw">return </span><span class="prelude-val">Some</span>(x.region.id <span class="kw">as </span>u32);
+                        <span class="kw">return </span><span class="prelude-val">Some</span>(x.region.id.region_number());
                     }
                 }
                 <span class="prelude-val">None
@@ -1043,7 +1043,7 @@
 <span class="kw">impl </span>From&lt;PbRegion&gt; <span class="kw">for </span>Region {
     <span class="kw">fn </span>from(r: PbRegion) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            id: r.id,
+            id: r.id.into(),
             name: r.name,
             partition: r.partition.map(Into::into),
             attrs: r.attrs,
@@ -1054,7 +1054,7 @@
 <span class="kw">impl </span>From&lt;Region&gt; <span class="kw">for </span>PbRegion {
     <span class="kw">fn </span>from(region: Region) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            id: region.id,
+            id: region.id.into(),
             name: region.name,
             partition: region.partition.map(Into::into),
             attrs: region.attrs,
@@ -1371,7 +1371,7 @@
             region_routes: <span class="macro">vec!</span>[
                 RegionRoute {
                     region: Region {
-                        id: <span class="number">1</span>,
+                        id: <span class="number">1</span>.into(),
                         name: <span class="string">&quot;r1&quot;</span>.to_string(),
                         partition: <span class="prelude-val">None</span>,
                         attrs: HashMap::new(),
@@ -1381,7 +1381,7 @@
                 },
                 RegionRoute {
                     region: Region {
-                        id: <span class="number">2</span>,
+                        id: <span class="number">2</span>.into(),
                         name: <span class="string">&quot;r2&quot;</span>.to_string(),
                         partition: <span class="prelude-val">None</span>,
                         attrs: HashMap::new(),

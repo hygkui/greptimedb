@@ -457,14 +457,14 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>partitions = Vec::with_capacity(route.region_routes.len());
         <span class="kw">for </span>r <span class="kw">in </span>route.region_routes.iter() {
-            <span class="kw">let </span>partition = r
-                .region
-                .partition
-                .clone()
-                .context(error::FindRegionRoutesSnafu {
-                    region_id: r.region.id,
-                    table_name: table.to_string(),
-                })<span class="question-mark">?</span>;
+            <span class="kw">let </span>partition =
+                r.region
+                    .partition
+                    .clone()
+                    .with_context(|| error::FindRegionRoutesSnafu {
+                        region_id: r.region.id,
+                        table_name: table.to_string(),
+                    })<span class="question-mark">?</span>;
             <span class="kw">let </span>partition_def = PartitionDef::try_from(partition)<span class="question-mark">?</span>;
 
             partitions.push(PartitionInfo {
@@ -506,7 +506,7 @@
 
         <span class="kw">let </span>regions = partitions
             .iter()
-            .map(|x| x.id <span class="kw">as </span>u32)
+            .map(|x| x.id.region_number())
             .collect::&lt;Vec&lt;RegionNumber&gt;&gt;();
 
         <span class="comment">// TODO(LFC): Serializing and deserializing partition rule is ugly, must find a much more elegant way.

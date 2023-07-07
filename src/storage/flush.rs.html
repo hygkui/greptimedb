@@ -849,13 +849,13 @@
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, strategy.memory_active.load(Ordering::Relaxed));
 
         <span class="kw">let </span>status = RegionStatus {
-            region_id: <span class="number">1</span>,
+            region_id: <span class="number">1</span>.into(),
             bytes_mutable: <span class="number">400</span>,
             write_buffer_size: <span class="number">300</span>,
         };
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(FlushType::Region), strategy.should_flush(status));
         <span class="kw">let </span>status = RegionStatus {
-            region_id: <span class="number">1</span>,
+            region_id: <span class="number">1</span>.into(),
             bytes_mutable: <span class="number">100</span>,
             write_buffer_size: <span class="number">300</span>,
         };
@@ -867,7 +867,7 @@
         <span class="kw">let </span>strategy = SizeBasedStrategy::new(<span class="prelude-val">Some</span>(<span class="number">1000</span>));
         strategy.reserve_mem(<span class="number">500</span>);
         <span class="kw">let </span>status = RegionStatus {
-            region_id: <span class="number">1</span>,
+            region_id: <span class="number">1</span>.into(),
             bytes_mutable: <span class="number">300</span>,
             write_buffer_size: <span class="number">500</span>,
         };
@@ -876,7 +876,7 @@
 
         <span class="comment">// Flush region.
         </span><span class="kw">let </span>status = RegionStatus {
-            region_id: <span class="number">1</span>,
+            region_id: <span class="number">1</span>.into(),
             bytes_mutable: <span class="number">400</span>,
             write_buffer_size: <span class="number">300</span>,
         };
@@ -884,7 +884,7 @@
 
         <span class="comment">// More than mutable limitation, Flush global.
         </span><span class="kw">let </span>status = RegionStatus {
-            region_id: <span class="number">1</span>,
+            region_id: <span class="number">1</span>.into(),
             bytes_mutable: <span class="number">100</span>,
             write_buffer_size: <span class="number">300</span>,
         };
@@ -909,7 +909,7 @@
         strategy.schedule_free_mem(<span class="number">200</span>);
         <span class="comment">// More than global limit.
         </span><span class="kw">let </span>status = RegionStatus {
-            region_id: <span class="number">1</span>,
+            region_id: <span class="number">1</span>.into(),
             bytes_mutable: <span class="number">100</span>,
             write_buffer_size: <span class="number">300</span>,
         };
@@ -918,7 +918,7 @@
         <span class="comment">// More than global limit, but mutable not enough (&lt; 500).
         </span>strategy.schedule_free_mem(<span class="number">450</span>);
         <span class="kw">let </span>status = RegionStatus {
-            region_id: <span class="number">1</span>,
+            region_id: <span class="number">1</span>.into(),
             bytes_mutable: <span class="number">100</span>,
             write_buffer_size: <span class="number">300</span>,
         };

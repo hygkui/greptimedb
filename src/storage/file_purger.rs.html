@@ -390,7 +390,7 @@
         (
             FileHandle::new(
                 FileMeta {
-                    region_id: <span class="number">0</span>,
+                    region_id: <span class="number">0</span>.into(),
                     file_id: sst_file_id,
                     time_range: <span class="prelude-val">None</span>,
                     level: <span class="number">0</span>,
@@ -420,7 +420,7 @@
         <span class="kw">let </span>(_file, path, layer) =
             create_sst_file(object_store.clone(), sst_file_id, noop_file_purger).<span class="kw">await</span>;
         <span class="kw">let </span>request = FilePurgeRequest {
-            region_id: <span class="number">0</span>,
+            region_id: <span class="number">0</span>.into(),
             file_id: sst_file_id,
             sst_layer: layer,
         };

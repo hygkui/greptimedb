@@ -192,31 +192,6 @@
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -236,7 +211,7 @@
 
 <span class="kw">use </span>common_base::paths::DATA_DIR;
 <span class="kw">use </span>common_procedure::BoxedProcedure;
-<span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
+<span class="kw">use </span>store_api::storage::RegionNumber;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::metadata::TableId;
@@ -391,24 +366,6 @@
     <span class="macro">format!</span>(<span class="string">&quot;{table_id}_{region_number:010}&quot;</span>)
 }
 
-<span class="doccomment">/// Construct a [RegionId] from specific `table_id` and `region_number`.
-</span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>region_id(table_id: TableId, region_number: RegionNumber) -&gt; RegionId {
-    (u64::from(table_id) &lt;&lt; <span class="number">32</span>) | u64::from(region_number)
-}
-
-<span class="doccomment">/// Retrieve the table id from specific `region_id`.
-</span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>table_id(region_id: RegionId) -&gt; TableId {
-    (region_id &gt;&gt; <span class="number">32</span>) <span class="kw">as </span>TableId
-}
-
-<span class="doccomment">/// Retrieve the region_number from specific `region_id`.
-</span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>region_number(region_id: RegionId) -&gt; RegionNumber {
-    region_id <span class="kw">as </span>RegionNumber
-}
-
 <span class="attr">#[inline]
 </span><span class="kw">pub fn </span>table_dir(catalog_name: <span class="kw-2">&amp;</span>str, schema_name: <span class="kw-2">&amp;</span>str, table_id: TableId) -&gt; String {
     <span class="macro">format!</span>(<span class="string">&quot;{DATA_DIR}{catalog_name}/{schema_name}/{table_id}/&quot;</span>)
@@ -427,13 +384,6 @@
         };
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;greptime.public.test&quot;</span>, table_ref.to_string());
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_table_id() {
-        <span class="kw">let </span>region_id = region_id(u32::MAX, <span class="number">1</span>);
-        <span class="kw">let </span>table_id = table_id(region_id);
-        <span class="macro">assert_eq!</span>(u32::MAX, table_id);
     }
 }
 </code></pre></div></section></main></body></html>

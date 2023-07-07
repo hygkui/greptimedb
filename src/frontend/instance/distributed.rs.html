@@ -982,7 +982,7 @@
 <span class="kw">use </span>sql::statements::statement::Statement;
 <span class="kw">use </span>sql::statements::{<span class="self">self</span>, sql_value_to_value};
 <span class="kw">use </span>store_api::storage::RegionNumber;
-<span class="kw">use </span>table::engine::{<span class="self">self</span>, TableReference};
+<span class="kw">use </span>table::engine::TableReference;
 <span class="kw">use </span>table::metadata::{RawTableInfo, RawTableMeta, TableIdent, TableType};
 <span class="kw">use </span>table::requests::TableOptions;
 <span class="kw">use </span>table::table::AlterContext;
@@ -1261,7 +1261,7 @@
         <span class="kw">for </span>table_route <span class="kw">in </span><span class="kw-2">&amp;</span>route_response.table_routes {
             <span class="kw">let </span>should_send_rpc = table_route.region_routes.iter().any(|route| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(n) = region_number {
-                    n == engine::region_number(route.region.id)
+                    n == route.region.id.region_number()
                 } <span class="kw">else </span>{
                     <span class="bool-val">true
                 </span>}
@@ -1620,7 +1620,7 @@
         .into_iter()
         .map(|info| {
             <span class="comment">// Generated the partition name from id
-            </span><span class="kw">let </span>name = <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;r{}&quot;</span>, info.id);
+            </span><span class="kw">let </span>name = <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;r{}&quot;</span>, info.id.as_u64());
             <span class="kw">let </span>bounds = info.partition.partition_bounds();
             <span class="kw">let </span>value_list = bounds
                 .iter()

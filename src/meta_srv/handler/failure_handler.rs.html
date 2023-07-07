@@ -185,7 +185,7 @@
 <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
 <span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::RegionIdent;
-<span class="kw">use </span>table::engine::table_id;
+<span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::failure_handler::runner::{FailureDetectControl, FailureDetectRunner};
@@ -256,7 +256,7 @@
                         catalog: x.catalog.clone(),
                         schema: x.schema.clone(),
                         table: x.table.clone(),
-                        table_id: table_id(x.id),
+                        table_id: RegionId::from(x.id).table_id(),
                         <span class="comment">// TODO(#1583): Use the actual table engine.
                         </span>engine: MITO_ENGINE.to_string(),
                     },

@@ -246,7 +246,7 @@
 <span class="kw">use </span>catalog::helper::TableGlobalKey;
 <span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::ClusterId;
-<span class="kw">use </span>store_api::storage::RegionNumber;
+<span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
@@ -328,7 +328,7 @@
             datanode_regions
                 .entry(key)
                 .or_insert_with(Vec::new)
-                .push(table::engine::region_number(x.id));
+                .push(RegionId::from(x.id).region_number());
         });
 
         <span class="comment">// TODO(LFC): Retrieve table global values from some cache here.

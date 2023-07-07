@@ -723,7 +723,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::sst::{<span class="self">self</span>, FileId, FileMeta, FsAccessLayer, Source, SstInfo, WriteOptions};
     <span class="kw">use </span><span class="kw">crate</span>::test_util::descriptor_util::RegionDescBuilder;
 
-    <span class="kw">const </span>REGION_ID: RegionId = <span class="number">1</span>;
+    <span class="kw">const </span>REGION_ID: RegionId = RegionId::from_u64(<span class="number">1</span>);
 
     <span class="kw">fn </span>schema_for_test() -&gt; RegionSchemaRef {
         <span class="comment">// Just build a region desc and use its columns metadata.
@@ -850,7 +850,7 @@
             .unwrap();
         <span class="kw">let </span>handle = FileHandle::new(
             FileMeta {
-                region_id: <span class="number">0</span>,
+                region_id: <span class="number">0</span>.into(),
                 file_id: sst_file_id,
                 time_range,
                 level: <span class="number">0</span>,
@@ -1117,7 +1117,7 @@
             .map(|f| {
                 FileHandle::new(
                     FileMeta {
-                        region_id: <span class="number">0</span>,
+                        region_id: <span class="number">0</span>.into(),
                         file_id: f,
                         level: <span class="number">1</span>,
                         time_range: <span class="prelude-val">None</span>,

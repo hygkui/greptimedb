@@ -473,9 +473,9 @@
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::storage::{
     ColumnId, CompactionStrategy, CreateOptions, EngineContext, OpenOptions,
-    RegionDescriptorBuilder, RegionNumber, StorageEngine,
+    RegionDescriptorBuilder, RegionId, RegionNumber, StorageEngine,
 };
-<span class="kw">use </span>table::engine::{region_id, table_dir};
+<span class="kw">use </span>table::engine::table_dir;
 <span class="kw">use </span>table::metadata::{TableInfoBuilder, TableMetaBuilder, TableType};
 <span class="kw">use </span>table::requests::CreateTableRequest;
 <span class="kw">use </span>table::TableRef;
@@ -731,7 +731,7 @@
             }
 
             <span class="comment">// We need to create that region.
-            </span><span class="kw">let </span>region_id = region_id(<span class="self">self</span>.data.request.id, <span class="kw-2">*</span>number);
+            </span><span class="kw">let </span>region_id = RegionId::new(<span class="self">self</span>.data.request.id, <span class="kw-2">*</span>number);
             <span class="kw">let </span>region_desc = RegionDescriptorBuilder::default()
                 .id(region_id)
                 .name(region_name.clone())

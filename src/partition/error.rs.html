@@ -188,7 +188,7 @@
 <span class="kw">use </span>common_query::prelude::Expr;
 <span class="kw">use </span>datafusion_common::ScalarValue;
 <span class="kw">use </span>snafu::{Location, Snafu};
-<span class="kw">use </span>store_api::storage::RegionId;
+<span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
 
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
@@ -205,7 +205,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find Datanode, table: {} region: {:?}&quot;</span>, table, region))]
     </span>FindDatanode {
         table: String,
-        region: RegionId,
+        region: RegionNumber,
         location: Location,
     },
 
