@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["create_table","region_failover","state_store"]};
+window.SIDEBAR_ITEMS = {"mod":["create_table","drop_table","region_failover","state_store","utils"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DdlTask"],"struct":["CreateTableTask","SubmitDdlTaskRequest","SubmitDdlTaskResponse"]};
+window.SIDEBAR_ITEMS = {"enum":["DdlTask"],"struct":["CreateTableTask","DropTableTask","SubmitDdlTaskRequest","SubmitDdlTaskResponse"]};

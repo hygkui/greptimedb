@@ -256,6 +256,8 @@
 <a href="#256" id="256">256</a>
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -416,6 +418,17 @@
             .unwrap_or_else(|| Arc::new(DefaultMetadataService::new(kv_store.clone())));
         <span class="kw">let </span>lock = lock.unwrap_or_else(|| Arc::new(MemLock::default()));
 
+        <span class="comment">// TODO(weny): considers to modify the default config of procedure manager
+        </span><span class="kw">let </span>ddl_manager = Arc::new(DdlManager::new(
+            procedure_manager.clone(),
+            kv_store.clone(),
+            Arc::new(DatanodeClients::default()),
+            mailbox.clone(),
+            options.server_addr.clone(),
+        ));
+
+        <span class="kw">let _ </span>= ddl_manager.try_start();
+
         <span class="kw">let </span>handler_group = <span class="kw">match </span>handler_group {
             <span class="prelude-val">Some</span>(handler_group) =&gt; handler_group,
             <span class="prelude-val">None </span>=&gt; {
@@ -469,15 +482,6 @@
                 group
             }
         };
-
-        <span class="comment">// TODO(weny): considers to modify the default config of procedure manager
-        </span><span class="kw">let </span>ddl_manager = Arc::new(DdlManager::new(
-            procedure_manager.clone(),
-            kv_store.clone(),
-            Arc::new(DatanodeClients::default()),
-        ));
-
-        <span class="kw">let _ </span>= ddl_manager.try_start();
 
         <span class="prelude-val">Ok</span>(MetaSrv {
             started,

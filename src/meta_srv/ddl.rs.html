@@ -108,6 +108,33 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -125,13 +152,15 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>client::client_manager::DatanodeClients;
-<span class="kw">use </span>common_meta::rpc::ddl::CreateTableTask;
+<span class="kw">use </span>common_meta::rpc::ddl::{CreateTableTask, DropTableTask};
 <span class="kw">use </span>common_meta::rpc::router::TableRoute;
 <span class="kw">use </span>common_procedure::{watcher, ProcedureId, ProcedureManagerRef, ProcedureWithId};
 <span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::procedure::create_table::CreateTableProcedure;
+<span class="kw">use </span><span class="kw">crate</span>::procedure::drop_table::DropTableProcedure;
+<span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvStoreRef;
 
 <span class="kw">pub type </span>DdlManagerRef = Arc&lt;DdlManager&gt;;
@@ -140,6 +169,8 @@
     procedure_manager: ProcedureManagerRef,
     kv_store: KvStoreRef,
     datanode_clients: Arc&lt;DatanodeClients&gt;,
+    mailbox: MailboxRef,
+    server_addr: String,
 }
 
 <span class="comment">// TODO(weny): removes in following PRs.
@@ -148,6 +179,8 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>DdlContext {
     <span class="kw">pub</span>(<span class="kw">crate</span>) kv_store: KvStoreRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) datanode_clients: Arc&lt;DatanodeClients&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) mailbox: MailboxRef,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) server_addr: String,
 }
 
 <span class="kw">impl </span>DdlManager {
@@ -155,11 +188,15 @@
         procedure_manager: ProcedureManagerRef,
         kv_store: KvStoreRef,
         datanode_clients: Arc&lt;DatanodeClients&gt;,
+        mailbox: MailboxRef,
+        server_addr: String,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             procedure_manager,
             kv_store,
             datanode_clients,
+            mailbox,
+            server_addr,
         }
     }
 
@@ -167,6 +204,8 @@
         DdlContext {
             kv_store: <span class="self">self</span>.kv_store.clone(),
             datanode_clients: <span class="self">self</span>.datanode_clients.clone(),
+            mailbox: <span class="self">self</span>.mailbox.clone(),
+            server_addr: <span class="self">self</span>.server_addr.clone(),
         }
     }
 
@@ -196,6 +235,21 @@
 
         <span class="kw">let </span>procedure =
             CreateTableProcedure::new(cluster_id, create_table_task, table_route, context);
+
+        <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
+
+        <span class="self">self</span>.submit_procedure(procedure_with_id).<span class="kw">await
+    </span>}
+
+    <span class="kw">pub async fn </span>submit_drop_table_task(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        cluster_id: u64,
+        drop_table_task: DropTableTask,
+        table_route: TableRoute,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProcedureId&gt; {
+        <span class="kw">let </span>context = <span class="self">self</span>.create_context();
+
+        <span class="kw">let </span>procedure = DropTableProcedure::new(cluster_id, drop_table_task, table_route, context);
 
         <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
 

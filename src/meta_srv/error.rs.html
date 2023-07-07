@@ -554,15 +554,21 @@
 
 </span><span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>common_meta::peer::Peer;
+<span class="kw">use </span>common_runtime::JoinError;
 <span class="kw">use </span>snafu::Location;
 <span class="kw">use </span>tokio::sync::mpsc::error::SendError;
-<span class="kw">use </span>tokio::sync::oneshot::error::TryRecvError;
 <span class="kw">use </span>tonic::codegen::http;
 <span class="kw">use </span>tonic::Code;
 
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join a future: {}&quot;</span>, source))]
+    </span>Join {
+        location: Location,
+        source: JoinError,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute transaction: {}&quot;</span>, msg))]
     </span>Txn { location: Location, msg: String },
 
@@ -575,12 +581,6 @@
         location: Location,
         expected: u64,
         found: u64,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to receive status, source: {}&quot;</span>, source,))]
-    </span>TryReceiveStatus {
-        location: Location,
-        source: TryRecvError,
     },
 
     <span class="attr">#[snafu(display(
@@ -1007,7 +1007,7 @@
             | Error::StartGrpc { .. }
             | Error::Combine { .. }
             | Error::NoEnoughAvailableDatanode { .. }
-            | Error::TryReceiveStatus { .. } =&gt; StatusCode::Internal,
+            | Error::Join { .. } =&gt; StatusCode::Internal,
             Error::EmptyKey { .. }
             | Error::MissingRequiredParameter { .. }
             | Error::MissingRequestHeader { .. }
