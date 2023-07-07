@@ -99,6 +99,7 @@
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -116,20 +117,21 @@
 </span><span class="kw">use </span>std::fmt::Display;
 
 <span class="kw">use </span>api::v1::meta::TableName;
+<span class="kw">use </span>table::metadata::TableId;
 
 <span class="kw">use </span><span class="kw">crate</span>::key::to_removed_key;
 
 <span class="kw">pub const </span>TABLE_ROUTE_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__meta_table_route&quot;</span>;
 
 <span class="kw">pub struct </span>TableRouteKey&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub </span>table_id: u64,
+    <span class="kw">pub </span>table_id: TableId,
     <span class="kw">pub </span>catalog_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
     <span class="kw">pub </span>schema_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
     <span class="kw">pub </span>table_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; TableRouteKey&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>with_table_name(table_id: u64, t: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TableName) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>with_table_name(table_id: TableId, t: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TableName) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             table_id,
             catalog_name: <span class="kw-2">&amp;</span>t.catalog_name,

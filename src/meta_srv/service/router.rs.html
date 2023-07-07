@@ -598,7 +598,7 @@
     <span class="kw">let </span>id = table_id_sequence.next().<span class="kw">await</span><span class="question-mark">?</span>;
     table_info.ident.table_id = id <span class="kw">as </span>u32;
 
-    <span class="kw">let </span>table_route_key = TableRouteKey::with_table_name(id, <span class="kw-2">&amp;</span>table_name)
+    <span class="kw">let </span>table_route_key = TableRouteKey::with_table_name(id <span class="kw">as _</span>, <span class="kw-2">&amp;</span>table_name)
         .to_string()
         .into_bytes();
 
@@ -826,7 +826,7 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>table_route_key(table_id: u64, t: <span class="kw-2">&amp;</span>TableGlobalKey) -&gt; TableRouteKey&lt;<span class="lifetime">&#39;_</span>&gt; {
     TableRouteKey {
-        table_id,
+        table_id: table_id <span class="kw">as _</span>,
         catalog_name: <span class="kw-2">&amp;</span>t.catalog_name,
         schema_name: <span class="kw-2">&amp;</span>t.schema_name,
         table_name: <span class="kw-2">&amp;</span>t.table_name,

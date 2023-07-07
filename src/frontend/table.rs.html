@@ -1269,7 +1269,7 @@
         new_table_name: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>old_key = TableRouteKey {
-            table_id: table_id.into(),
+            table_id,
             catalog_name,
             schema_name,
             table_name: old_table_name,
@@ -1277,7 +1277,7 @@
         .to_string();
 
         <span class="kw">let </span>new_key = TableRouteKey {
-            table_id: table_id.into(),
+            table_id,
             catalog_name,
             schema_name,
             table_name: new_table_name,
