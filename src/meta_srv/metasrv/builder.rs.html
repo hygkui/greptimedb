@@ -258,14 +258,6 @@
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -321,7 +313,6 @@
     meta_peer_client: <span class="prelude-ty">Option</span>&lt;MetaPeerClientRef&gt;,
     lock: <span class="prelude-ty">Option</span>&lt;DistLockRef&gt;,
     metadata_service: <span class="prelude-ty">Option</span>&lt;MetadataServiceRef&gt;,
-    datanode_clients: <span class="prelude-ty">Option</span>&lt;Arc&lt;DatanodeClients&gt;&gt;,
 }
 
 <span class="kw">impl </span>MetaSrvBuilder {
@@ -336,7 +327,6 @@
             options: <span class="prelude-val">None</span>,
             lock: <span class="prelude-val">None</span>,
             metadata_service: <span class="prelude-val">None</span>,
-            datanode_clients: <span class="prelude-val">None</span>,
         }
     }
 
@@ -385,11 +375,6 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>datanode_clients(<span class="kw-2">mut </span><span class="self">self</span>, clients: Arc&lt;DatanodeClients&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.datanode_clients = <span class="prelude-val">Some</span>(clients);
-        <span class="self">self
-    </span>}
-
     <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrv&gt; {
         <span class="kw">let </span>started = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
 
@@ -403,7 +388,6 @@
             handler_group,
             lock,
             metadata_service,
-            datanode_clients,
         } = <span class="self">self</span>;
 
         <span class="kw">let </span>options = options.unwrap_or_default();
@@ -438,7 +422,7 @@
         </span><span class="kw">let </span>ddl_manager = Arc::new(DdlManager::new(
             procedure_manager.clone(),
             kv_store.clone(),
-            datanode_clients.unwrap_or_else(|| Arc::new(DatanodeClients::default())),
+            Arc::new(DatanodeClients::default()),
             mailbox.clone(),
             options.server_addr.clone(),
         ));

@@ -845,6 +845,83 @@
 <a href="#845" id="845">845</a>
 <a href="#846" id="846">846</a>
 <a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -863,7 +940,6 @@
 
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
 <span class="kw">use </span>api::v1::ddl_request::Expr <span class="kw">as </span>DdlExpr;
@@ -881,14 +957,14 @@
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_error::prelude::BoxedError;
-<span class="kw">use </span>common_meta::rpc::ddl::{DdlTask, SubmitDdlTaskRequest, SubmitDdlTaskResponse};
 <span class="kw">use </span>common_meta::rpc::router::{
-    DeleteRequest <span class="kw">as </span>MetaDeleteRequest, Partition <span class="kw">as </span>MetaPartition, RouteRequest,
+    CreateRequest <span class="kw">as </span>MetaCreateRequest, DeleteRequest <span class="kw">as </span>MetaDeleteRequest,
+    Partition <span class="kw">as </span>MetaPartition, RouteRequest, RouteResponse,
 };
 <span class="kw">use </span>common_meta::rpc::store::CompareAndPutRequest;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::{debug, info};
+<span class="kw">use </span>common_telemetry::{debug, info, warn};
 <span class="kw">use </span>datanode::instance::sql::table_idents_to_full_name;
 <span class="kw">use </span>datanode::sql::SqlHandler;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
@@ -911,7 +987,6 @@
 <span class="kw">use </span>table::requests::TableOptions;
 <span class="kw">use </span>table::table::AlterContext;
 <span class="kw">use </span>table::TableRef;
-<span class="kw">use </span>tokio::time::timeout;
 
 <span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
@@ -947,6 +1022,17 @@
         }
     }
 
+    <span class="kw">async fn </span>find_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: <span class="kw-2">&amp;</span>TableName) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
+        <span class="self">self</span>.catalog_manager
+            .table(
+                <span class="kw-2">&amp;</span>table_name.catalog_name,
+                <span class="kw-2">&amp;</span>table_name.schema_name,
+                <span class="kw-2">&amp;</span>table_name.table_name,
+            )
+            .<span class="kw">await
+            </span>.context(CatalogSnafu)
+    }
+
     <span class="kw">pub async fn </span>create_table(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         create_table: <span class="kw-2">&amp;mut </span>CreateTableExpr,
@@ -959,14 +1045,56 @@
             <span class="kw-2">&amp;</span>create_table.table_name,
         );
 
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.find_table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span>{
+            <span class="kw">return if </span>create_table.create_if_not_exists {
+                <span class="prelude-val">Ok</span>(table)
+            } <span class="kw">else </span>{
+                TableAlreadyExistSnafu {
+                    table: table_name.to_string(),
+                }
+                .fail()
+            };
+        }
+
         <span class="kw">let </span><span class="kw-2">mut </span>table_info = create_table_info(create_table)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>resp = <span class="self">self
-            </span>.create_table_procedure(create_table, partitions, table_info.clone())
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>response = <span class="self">self
+            </span>.create_table_in_meta(create_table, partitions, <span class="kw-2">&amp;</span>table_info)
+            .<span class="kw">await</span>;
+        <span class="kw">let </span>response = <span class="kw">match </span>response {
+            <span class="prelude-val">Ok</span>(response) =&gt; response,
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="kw">return if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.find_table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span>{
+                    <span class="macro">warn!</span>(<span class="string">&quot;Table &#39;{table_name}&#39; is created concurrently by other Frontend nodes!&quot;</span>);
+                    <span class="prelude-val">Ok</span>(table)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">Err</span>(e)
+                }
+            }
+        };
 
-        <span class="kw">let </span>table_id = resp.table_id;
-        <span class="macro">info!</span>(<span class="string">&quot;Successfully created distributed table &#39;{table_name}&#39; with table id {table_id}&quot;</span>);
+        <span class="kw">let </span>table_routes = response.table_routes;
+        <span class="macro">ensure!</span>(
+            table_routes.len() == <span class="number">1</span>,
+            error::CreateTableRouteSnafu {
+                table_name: create_table.table_name.to_string()
+            }
+        );
+        <span class="kw">let </span>table_route = table_routes.first().unwrap();
+        <span class="macro">info!</span>(
+            <span class="string">&quot;Creating distributed table {table_name} with table routes: {}&quot;</span>,
+            serde_json::to_string_pretty(table_route)
+                .unwrap_or_else(|<span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;{table_route:#?}&quot;</span>))
+        );
+        <span class="kw">let </span>region_routes = <span class="kw-2">&amp;</span>table_route.region_routes;
+        <span class="macro">ensure!</span>(
+            !region_routes.is_empty(),
+            error::FindRegionRouteSnafu {
+                table_name: create_table.table_name.to_string()
+            }
+        );
+
+        <span class="kw">let </span>table_id = table_route.table.id <span class="kw">as </span>u32;
         table_info.ident.table_id = table_id;
         <span class="kw">let </span>table_info = Arc::new(table_info.try_into().context(error::CreateTableInfoSnafu)<span class="question-mark">?</span>);
 
@@ -994,6 +1122,26 @@
                 table: table_name.to_string()
             }
         );
+
+        <span class="kw">for </span>datanode <span class="kw">in </span>table_route.find_leaders() {
+            <span class="kw">let </span>client = <span class="self">self</span>.datanode_clients.get_client(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
+            <span class="kw">let </span>client = Database::new(<span class="kw-2">&amp;</span>table_name.catalog_name, <span class="kw-2">&amp;</span>table_name.schema_name, client);
+
+            <span class="kw">let </span>regions = table_route.find_leader_regions(<span class="kw-2">&amp;</span>datanode);
+            <span class="kw">let </span><span class="kw-2">mut </span>create_expr_for_region = create_table.clone();
+            create_expr_for_region.region_numbers = regions;
+
+            <span class="macro">debug!</span>(
+                <span class="string">&quot;Creating table {:?} on Datanode {:?} with regions {:?}&quot;</span>,
+                create_table, datanode, create_expr_for_region.region_numbers,
+            );
+
+            <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE_IN_DATANODE);
+            <span class="kw">let _ </span>= client
+                .create(create_expr_for_region)
+                .<span class="kw">await
+                </span>.context(RequestDatanodeSnafu)<span class="question-mark">?</span>;
+        }
 
         <span class="comment">// Since the table information created on meta does not go through KvBackend, so we
         // manually invalidate the cache here.
@@ -1330,27 +1478,33 @@
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
     }
 
-    <span class="kw">async fn </span>create_table_procedure(
+    <span class="kw">async fn </span>create_table_in_meta(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         create_table: <span class="kw-2">&amp;</span>CreateTableExpr,
         partitions: <span class="prelude-ty">Option</span>&lt;Partitions&gt;,
-        table_info: RawTableInfo,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;SubmitDdlTaskResponse&gt; {
+        table_info: <span class="kw-2">&amp;</span>RawTableInfo,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE_IN_META);
+        <span class="kw">let </span><span class="kw-2">mut </span>catalog_name = create_table.catalog_name.clone();
+        <span class="kw">if </span>catalog_name.is_empty() {
+            catalog_name = DEFAULT_CATALOG_NAME.to_string();
+        }
+        <span class="kw">let </span><span class="kw-2">mut </span>schema_name = create_table.schema_name.clone();
+        <span class="kw">if </span>schema_name.is_empty() {
+            schema_name = DEFAULT_SCHEMA_NAME.to_string();
+        }
+        <span class="kw">let </span>table_name = TableName::new(catalog_name, schema_name, create_table.table_name.clone());
+
         <span class="kw">let </span>partitions = parse_partitions(create_table, partitions)<span class="question-mark">?</span>;
-        <span class="kw">let </span>partitions = partitions.into_iter().map(Into::into).collect();
-
-        <span class="kw">let </span>request = SubmitDdlTaskRequest {
-            task: DdlTask::new_create_table(create_table.clone(), partitions, table_info),
+        <span class="kw">let </span>request = MetaCreateRequest {
+            table_name,
+            partitions,
+            table_info,
         };
-
-        timeout(
-            <span class="comment">// TODO(weny): makes timeout configurable.
-            </span>Duration::from_secs(<span class="number">10</span>),
-            <span class="self">self</span>.meta_client.submit_ddl_task(request),
-        )
-        .<span class="kw">await
-        </span>.context(error::TimeoutSnafu)<span class="question-mark">?
-        </span>.context(error::RequestMetaSnafu)
+        <span class="self">self</span>.meta_client
+            .create_route(request)
+            .<span class="kw">await
+            </span>.context(RequestMetaSnafu)
     }
 
     <span class="kw">async fn </span>handle_dist_insert(
