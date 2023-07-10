@@ -845,6 +845,9 @@
 <a href="#845" id="845">845</a>
 <a href="#846" id="846">846</a>
 <a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -866,7 +869,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
-<span class="kw">use </span>api::v1::ddl_request::Expr <span class="kw">as </span>DdlExpr;
+<span class="kw">use </span>api::v1::ddl_request::{Expr <span class="kw">as </span>DdlExpr, Expr};
 <span class="kw">use </span>api::v1::greptime_request::Request;
 <span class="kw">use </span>api::v1::{
     column_def, AlterExpr, CreateDatabaseExpr, CreateTableExpr, DeleteRequest, DropTableExpr,
@@ -1444,6 +1447,9 @@
                             TableName::new(<span class="kw-2">&amp;</span>expr.catalog_name, <span class="kw-2">&amp;</span>expr.schema_name, <span class="kw-2">&amp;</span>expr.table_name);
                         <span class="self">self</span>.flush_table(table_name, expr.region_number).<span class="kw">await
                     </span>}
+                    Expr::CompactTable(<span class="kw">_</span>) =&gt; {
+                        <span class="macro">unreachable!</span>(<span class="string">&quot;https://github.com/GreptimeTeam/greptimedb/pull/1912&quot;</span>)
+                    }
                 }
             }
         }
