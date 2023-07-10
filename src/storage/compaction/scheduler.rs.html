@@ -153,6 +153,8 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -211,7 +213,7 @@
 </span><span class="kw">pub struct </span>CompactionRequestImpl&lt;S: LogStore&gt; {
     <span class="kw">pub </span>region_id: RegionId,
     <span class="kw">pub </span>sst_layer: AccessLayerRef,
-    <span class="kw">pub </span>writer: RegionWriterRef,
+    <span class="kw">pub </span>writer: RegionWriterRef&lt;S&gt;,
     <span class="kw">pub </span>shared: SharedDataRef,
     <span class="kw">pub </span>manifest: RegionManifest,
     <span class="kw">pub </span>wal: Wal&lt;S&gt;,
@@ -221,6 +223,8 @@
     </span><span class="kw">pub </span>sender: <span class="prelude-ty">Option</span>&lt;Sender&lt;<span class="prelude-ty">Result</span>&lt;()&gt;&gt;&gt;,
     <span class="kw">pub </span>picker: CompactionPickerRef&lt;S&gt;,
     <span class="kw">pub </span>sst_write_buffer_size: ReadableSize,
+    <span class="doccomment">/// Whether to immediately reschedule another compaction when finished.
+    </span><span class="kw">pub </span>reschedule_on_finish: bool,
 }
 
 <span class="kw">impl</span>&lt;S: LogStore&gt; CompactionRequestImpl&lt;S&gt; {

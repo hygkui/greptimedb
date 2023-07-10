@@ -260,6 +260,53 @@
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -279,14 +326,17 @@
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_telemetry::{debug, error, info, timer};
+<span class="kw">use </span>itertools::Itertools;
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::writer::build_sst_reader;
+<span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::RegionEdit;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::region::RegionManifest;
-<span class="kw">use </span><span class="kw">crate</span>::region::{RegionWriterRef, SharedDataRef};
+<span class="kw">use </span><span class="kw">crate</span>::region::{CompactContext, RegionWriterRef, SharedDataRef, WriterCompactRequest};
 <span class="kw">use </span><span class="kw">crate</span>::schema::RegionSchemaRef;
 <span class="kw">use </span><span class="kw">crate</span>::sst::{
     AccessLayerRef, FileHandle, FileId, FileMeta, Level, Source, SstInfo, WriteOptions,
@@ -304,13 +354,14 @@
     <span class="kw">pub </span>schema: RegionSchemaRef,
     <span class="kw">pub </span>sst_layer: AccessLayerRef,
     <span class="kw">pub </span>outputs: Vec&lt;CompactionOutput&gt;,
-    <span class="kw">pub </span>writer: RegionWriterRef,
+    <span class="kw">pub </span>writer: RegionWriterRef&lt;S&gt;,
     <span class="kw">pub </span>shared_data: SharedDataRef,
     <span class="kw">pub </span>wal: Wal&lt;S&gt;,
     <span class="kw">pub </span>manifest: RegionManifest,
     <span class="kw">pub </span>expired_ssts: Vec&lt;FileHandle&gt;,
     <span class="kw">pub </span>sst_write_buffer_size: ReadableSize,
     <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+    <span class="kw">pub </span>reschedule_on_finish: bool,
 }
 
 <span class="kw">impl</span>&lt;S: LogStore&gt; Debug <span class="kw">for </span>CompactionTaskImpl&lt;S&gt; {
@@ -339,6 +390,16 @@
             <span class="kw">let </span>sst_write_buffer_size = <span class="self">self</span>.sst_write_buffer_size;
             compacted_inputs.extend(output.inputs.iter().map(FileHandle::meta));
 
+            <span class="macro">info!</span>(
+                <span class="string">&quot;Compaction output [{}]-&gt; {}&quot;</span>,
+                output
+                    .inputs
+                    .iter()
+                    .map(|f| f.file_id().to_string())
+                    .join(<span class="string">&quot;,&quot;</span>),
+                output.output_file_id
+            );
+
             <span class="comment">// TODO(hl): Maybe spawn to runtime to exploit in-job parallelism.
             </span>futs.push(<span class="kw">async move </span>{
                 output
@@ -352,10 +413,14 @@
             <span class="kw">let </span><span class="kw-2">mut </span>task_chunk = Vec::with_capacity(MAX_PARALLEL_COMPACTION);
             <span class="kw">for _ in </span><span class="number">0</span>..MAX_PARALLEL_COMPACTION {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = futs.pop() {
-                    task_chunk.push(task);
+                    task_chunk.push(common_runtime::spawn_bg(task));
                 }
             }
-            <span class="kw">let </span>metas = futures::future::try_join_all(task_chunk).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="kw">let </span>metas = futures::future::try_join_all(task_chunk)
+                .<span class="kw">await
+                </span>.context(error::JoinSnafu)<span class="question-mark">?
+                </span>.into_iter()
+                .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
             outputs.extend(metas.into_iter().flatten());
         }
 
@@ -417,12 +482,40 @@
             <span class="string">&quot;Compacting SST files, input: {:?}, output: {:?}, window: {:?}&quot;</span>,
             input_ids, output_ids, <span class="self">self</span>.compaction_time_window
         );
-        <span class="self">self</span>.write_manifest_and_apply(output, compacted)
+
+        <span class="kw">let </span>no_output = output.is_empty();
+        <span class="kw">let </span>write_result = <span class="self">self
+            </span>.write_manifest_and_apply(output, compacted)
             .<span class="kw">await
             </span>.map_err(|e| {
                 <span class="macro">error!</span>(e; <span class="string">&quot;Failed to update region manifest: {}&quot;</span>, <span class="self">self</span>.shared_data.name());
                 e
-            })
+            });
+
+        <span class="kw">if </span>!no_output &amp;&amp; <span class="self">self</span>.reschedule_on_finish {
+            <span class="comment">// only reschedule another compaction if current compaction has output and it&#39;s
+            // triggered by flush.
+            </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self
+                </span>.writer
+                .compact(WriterCompactRequest {
+                    shared_data: <span class="self">self</span>.shared_data.clone(),
+                    sst_layer: <span class="self">self</span>.sst_layer.clone(),
+                    manifest: <span class="self">self</span>.manifest.clone(),
+                    wal: <span class="self">self</span>.wal.clone(),
+                    region_writer: <span class="self">self</span>.writer.clone(),
+                    compact_ctx: CompactContext { wait: <span class="bool-val">false </span>},
+                })
+                .<span class="kw">await
+            </span>{
+                <span class="macro">error!</span>(e; <span class="string">&quot;Failed to schedule a compaction after compaction, region id: {}&quot;</span>, <span class="self">self</span>.shared_data.id());
+            } <span class="kw">else </span>{
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;Immediately schedule another compaction for region: {}&quot;</span>,
+                    <span class="self">self</span>.shared_data.id()
+                );
+            }
+        }
+        write_result
     }
 }
 
@@ -430,6 +523,7 @@
 /// and a many-to-one compaction from level n+1 to level n+1.
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>CompactionOutput {
+    <span class="kw">pub </span>output_file_id: FileId,
     <span class="doccomment">/// Compaction output file level.
     </span><span class="kw">pub </span>output_level: Level,
     <span class="doccomment">/// The left bound of time window.
@@ -468,13 +562,12 @@
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>output_file_id = FileId::random();
         <span class="kw">let </span>opts = WriteOptions {
             sst_write_buffer_size,
         };
-
-        <span class="prelude-val">Ok</span>(sst_layer
-            .write_sst(output_file_id, Source::Reader(reader), <span class="kw-2">&amp;</span>opts)
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::MERGE_ELAPSED);
+        <span class="kw">let </span>meta = sst_layer
+            .write_sst(<span class="self">self</span>.output_file_id, Source::Reader(reader), <span class="kw-2">&amp;</span>opts)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.map(
                 |SstInfo {
@@ -483,12 +576,13 @@
                      ..
                  }| FileMeta {
                     region_id,
-                    file_id: output_file_id,
+                    file_id: <span class="self">self</span>.output_file_id,
                     time_range,
                     level: <span class="self">self</span>.output_level,
                     file_size,
                 },
-            ))
+            );
+        <span class="prelude-val">Ok</span>(meta)
     }
 }
 

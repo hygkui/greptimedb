@@ -719,7 +719,7 @@
     <span class="doccomment">/// Sst access layer of the region.
     </span><span class="kw">pub </span>sst_layer: AccessLayerRef,
     <span class="doccomment">/// Region writer, used to persist log entry that points to the latest manifest file.
-    </span><span class="kw">pub </span>writer: RegionWriterRef,
+    </span><span class="kw">pub </span>writer: RegionWriterRef&lt;S&gt;,
     <span class="doccomment">/// Region write-ahead logging, used to write data/meta to the log file.
     </span><span class="kw">pub </span>wal: Wal&lt;S&gt;,
     <span class="doccomment">/// Region manifest service, used to persist metadata.

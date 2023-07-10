@@ -831,7 +831,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::metadata::{RegionMetaImpl, RegionMetadata, RegionMetadataRef};
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span><span class="kw">crate</span>::region::writer::schedule_compaction;
 <span class="kw">use </span><span class="kw">crate</span>::region::writer::DropContext;
-<span class="kw">pub use </span><span class="kw">crate</span>::region::writer::{AlterContext, RegionWriter, RegionWriterRef, WriterContext};
+<span class="kw">pub use </span><span class="kw">crate</span>::region::writer::{
+    AlterContext, RegionWriter, RegionWriterRef, WriterCompactRequest, WriterContext,
+};
 <span class="kw">use </span><span class="kw">crate</span>::schema::compat::CompatWrite;
 <span class="kw">use </span><span class="kw">crate</span>::snapshot::SnapshotImpl;
 <span class="kw">use </span><span class="kw">crate</span>::sst::AccessLayerRef;
@@ -956,16 +958,11 @@
 </span><span class="kw">pub struct </span>CompactContext {
     <span class="doccomment">/// Whether to wait the compaction result.
     </span><span class="kw">pub </span>wait: bool,
-    <span class="doccomment">/// Max file number in level 0.
-    </span><span class="kw">pub </span>max_files_in_l0: usize,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>CompactContext {
     <span class="kw">fn </span>default() -&gt; CompactContext {
-        CompactContext {
-            wait: <span class="bool-val">true</span>,
-            max_files_in_l0: <span class="number">1</span>,
-        }
+        CompactContext { wait: <span class="bool-val">true </span>}
     }
 }
 
@@ -1018,6 +1015,7 @@
         <span class="kw">let </span>version_control = VersionControl::with_version(version);
         <span class="kw">let </span>wal = Wal::new(id, store_config.log_store);
 
+        <span class="kw">let </span>compaction_picker = compaction_strategy_to_picker(<span class="kw-2">&amp;</span>store_config.compaction_strategy);
         <span class="kw">let </span>inner = Arc::new(RegionInner {
             shared: Arc::new(SharedData {
                 id,
@@ -1030,12 +1028,14 @@
                 store_config.engine_config.clone(),
                 store_config.ttl,
                 store_config.write_buffer_size,
+                store_config.compaction_scheduler.clone(),
+                compaction_picker.clone(),
             )),
             wal,
             flush_strategy: store_config.flush_strategy,
             flush_scheduler: store_config.flush_scheduler,
             compaction_scheduler: store_config.compaction_scheduler,
-            compaction_picker: compaction_strategy_to_picker(<span class="kw-2">&amp;</span>store_config.compaction_strategy),
+            compaction_picker,
             sst_layer: store_config.sst_layer,
             manifest: store_config.manifest,
         });
@@ -1114,14 +1114,16 @@
             last_flush_millis: AtomicI64::new(<span class="number">0</span>),
         });
 
+        <span class="kw">let </span>compaction_picker = compaction_strategy_to_picker(<span class="kw-2">&amp;</span>store_config.compaction_strategy);
         <span class="kw">let </span>writer = Arc::new(RegionWriter::new(
             store_config.memtable_builder,
             store_config.engine_config.clone(),
             store_config.ttl,
             store_config.write_buffer_size,
+            store_config.compaction_scheduler.clone(),
+            compaction_picker.clone(),
         ));
 
-        <span class="kw">let </span>compaction_picker = compaction_strategy_to_picker(<span class="kw-2">&amp;</span>store_config.compaction_strategy);
         <span class="kw">let </span>writer_ctx = WriterContext {
             shared: <span class="kw-2">&amp;</span>shared,
             flush_strategy: <span class="kw-2">&amp;</span>store_config.flush_strategy,
@@ -1426,7 +1428,7 @@
 
 <span class="kw">struct </span>RegionInner&lt;S: LogStore&gt; {
     shared: SharedDataRef,
-    writer: RegionWriterRef,
+    writer: RegionWriterRef&lt;S&gt;,
     wal: Wal&lt;S&gt;,
     flush_strategy: FlushStrategyRef,
     flush_scheduler: FlushSchedulerRef&lt;S&gt;,
@@ -1543,19 +1545,17 @@
     </span>}
 
     <span class="doccomment">/// Compact the region manually.
-    </span><span class="kw">async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: CompactContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>writer_ctx = WriterContext {
-            shared: <span class="kw-2">&amp;</span><span class="self">self</span>.shared,
-            flush_strategy: <span class="kw-2">&amp;</span><span class="self">self</span>.flush_strategy,
-            flush_scheduler: <span class="kw-2">&amp;</span><span class="self">self</span>.flush_scheduler,
-            compaction_scheduler: <span class="kw-2">&amp;</span><span class="self">self</span>.compaction_scheduler,
-            sst_layer: <span class="kw-2">&amp;</span><span class="self">self</span>.sst_layer,
-            wal: <span class="kw-2">&amp;</span><span class="self">self</span>.wal,
-            writer: <span class="kw-2">&amp;</span><span class="self">self</span>.writer,
-            manifest: <span class="kw-2">&amp;</span><span class="self">self</span>.manifest,
-            compaction_picker: <span class="self">self</span>.compaction_picker.clone(),
-        };
-        <span class="self">self</span>.writer.compact(writer_ctx, ctx).<span class="kw">await
+    </span><span class="kw">async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, compact_ctx: CompactContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.writer
+            .compact(WriterCompactRequest {
+                shared_data: <span class="self">self</span>.shared.clone(),
+                sst_layer: <span class="self">self</span>.sst_layer.clone(),
+                manifest: <span class="self">self</span>.manifest.clone(),
+                wal: <span class="self">self</span>.wal.clone(),
+                region_writer: <span class="self">self</span>.writer.clone(),
+                compact_ctx,
+            })
+            .<span class="kw">await
     </span>}
 }
 </code></pre></div></section></main></body></html>

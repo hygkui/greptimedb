@@ -427,6 +427,8 @@
 <a href="#427" id="427">427</a>
 <a href="#428" id="428">428</a>
 <a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -459,7 +461,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::compaction::task::{CompactionOutput, CompactionTask, CompactionTaskImpl};
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="prelude-ty">Result</span>, TtlCalculationSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::scheduler::Request;
-<span class="kw">use </span><span class="kw">crate</span>::sst::{FileHandle, LevelMeta};
+<span class="kw">use </span><span class="kw">crate</span>::sst::{FileHandle, FileId, LevelMeta};
 
 <span class="doccomment">/// Picker picks input SST files and builds the compaction task.
 /// Different compaction strategy may implement different pickers.
@@ -581,6 +583,7 @@
                 expired_ssts,
                 sst_write_buffer_size: req.sst_write_buffer_size,
                 compaction_time_window,
+                reschedule_on_finish: req.reschedule_on_finish,
             }));
         }
 
@@ -615,6 +618,7 @@
         <span class="macro">debug!</span>(<span class="string">&quot;File bucket:{}, file groups: {:?}&quot;</span>, time_window, buckets);
 
         results.extend(buckets.into_iter().map(|(bound, files)| CompactionOutput {
+            output_file_id: FileId::random(),
             output_level: <span class="number">1</span>,
             time_window_bound: bound,
             time_window_sec: time_window,

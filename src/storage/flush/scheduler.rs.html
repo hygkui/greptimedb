@@ -365,6 +365,17 @@
 <a href="#365" id="365">365</a>
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -463,7 +474,7 @@
     <span class="doccomment">/// Sst access layer of the region.
     </span><span class="kw">pub </span>sst_layer: AccessLayerRef,
     <span class="doccomment">/// Region writer, used to persist log entry that points to the latest manifest file.
-    </span><span class="kw">pub </span>writer: RegionWriterRef,
+    </span><span class="kw">pub </span>writer: RegionWriterRef&lt;S&gt;,
     <span class="doccomment">/// Region write-ahead logging, used to write data/meta to the log file.
     </span><span class="kw">pub </span>wal: Wal&lt;S&gt;,
     <span class="doccomment">/// Region manifest service, used to persist metadata.
@@ -516,6 +527,8 @@
             sender: <span class="prelude-val">None</span>,
             picker: req.compaction_picker.clone(),
             sst_write_buffer_size: req.engine_config.sst_write_buffer_size,
+            <span class="comment">// compaction triggered by flush always reschedules
+            </span>reschedule_on_finish: <span class="bool-val">true</span>,
         }
     }
 }
@@ -698,13 +711,22 @@
         <span class="kw">let </span>max_files_in_l0 = req.engine_config.max_files_in_l0;
         <span class="kw">let </span>shared_data = req.shared.clone();
 
-        <span class="comment">// If flush is success, schedule a compaction request for this region.
-        </span><span class="kw">let _ </span>= region::schedule_compaction(
-            shared_data,
-            compaction_scheduler,
-            compaction_request,
-            max_files_in_l0,
-        );
+        <span class="kw">let </span>level0_file_num = shared_data
+            .version_control
+            .current()
+            .ssts()
+            .level(<span class="number">0</span>)
+            .file_num();
+        <span class="kw">if </span>level0_file_num &lt;= max_files_in_l0 {
+            <span class="macro">logging::debug!</span>(
+                <span class="string">&quot;No enough SST files in level 0 (threshold: {}), skip compaction&quot;</span>,
+                max_files_in_l0
+            );
+        } <span class="kw">else </span>{
+            <span class="comment">// If flush is success, schedule a compaction request for this region.
+            </span><span class="kw">let _ </span>=
+                region::schedule_compaction(shared_data, compaction_scheduler, compaction_request);
+        }
 
         <span class="comment">// Complete the request.
         </span>FlushRequest::Region { req, sender }.complete(<span class="prelude-val">Ok</span>(()));

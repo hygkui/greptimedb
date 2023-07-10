@@ -916,6 +916,8 @@
 <a href="#916" id="916">916</a>
 <a href="#917" id="917">917</a>
 <a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -968,13 +970,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::wal::Wal;
 <span class="kw">use </span><span class="kw">crate</span>::write_batch::WriteBatch;
 
-<span class="kw">pub type </span>RegionWriterRef = Arc&lt;RegionWriter&gt;;
+<span class="kw">pub type </span>RegionWriterRef&lt;S&gt; = Arc&lt;RegionWriter&lt;S&gt;&gt;;
 
 <span class="comment">// TODO(yingwen): Add benches for write and support group commit to improve write throughput.
 
 </span><span class="doccomment">/// Region writer manages all write operations to the region.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>RegionWriter {
+</span><span class="kw">pub struct </span>RegionWriter&lt;S: LogStore&gt; {
     <span class="comment">// To avoid dead lock, we need to ensure the lock order is: inner -&gt; version_mutex.
     </span><span class="doccomment">/// Inner writer guarded by write lock, the write lock is used to ensure
     /// all write operations are serialized.
@@ -983,15 +985,23 @@
     ///
     /// Increasing committed sequence should be guarded by this lock.
     </span>version_mutex: Mutex&lt;()&gt;,
+
+    compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
+    compaction_picker: CompactionPickerRef&lt;S&gt;,
 }
 
-<span class="kw">impl </span>RegionWriter {
+<span class="kw">impl</span>&lt;S&gt; RegionWriter&lt;S&gt;
+<span class="kw">where
+    </span>S: LogStore,
+{
     <span class="kw">pub fn </span>new(
         memtable_builder: MemtableBuilderRef,
         config: Arc&lt;EngineConfig&gt;,
         ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
         write_buffer_size: usize,
-    ) -&gt; RegionWriter {
+        compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
+        compaction_picker: CompactionPickerRef&lt;S&gt;,
+    ) -&gt; RegionWriter&lt;S&gt; {
         RegionWriter {
             inner: Mutex::new(WriterInner::new(
                 memtable_builder,
@@ -1000,11 +1010,13 @@
                 write_buffer_size,
             )),
             version_mutex: Mutex::new(()),
+            compaction_scheduler,
+            compaction_picker,
         }
     }
 
     <span class="doccomment">/// Write to region in the write lock.
-    </span><span class="kw">pub async fn </span>write&lt;S: LogStore&gt;(
+    </span><span class="kw">pub async fn </span>write(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         ctx: <span class="kw-2">&amp;</span>WriteContext,
         request: WriteBatch,
@@ -1020,7 +1032,7 @@
     </span>}
 
     <span class="doccomment">/// Replay data to memtables.
-    </span><span class="kw">pub async fn </span>replay&lt;S: LogStore&gt;(
+    </span><span class="kw">pub async fn </span>replay(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         recovered_metadata: RecoveredMetadataMap,
         writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
@@ -1032,7 +1044,7 @@
     </span>}
 
     <span class="doccomment">/// Write and apply the region edit.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>write_edit_and_apply&lt;S: LogStore&gt;(
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>write_edit_and_apply(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         wal: <span class="kw-2">&amp;</span>Wal&lt;S&gt;,
         shared: <span class="kw-2">&amp;</span>SharedDataRef,
@@ -1090,11 +1102,7 @@
     </span>}
 
     <span class="doccomment">/// Alter schema of the region.
-    </span><span class="kw">pub async fn </span>alter&lt;S: LogStore&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        alter_ctx: AlterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
-        request: AlterRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>alter(<span class="kw-2">&amp;</span><span class="self">self</span>, alter_ctx: AlterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;, request: AlterRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// To alter the schema, we need to acquire the write lock first, so we could
         // avoid other writers write to the region and switch the memtable safely.
         // Another potential benefit is that the write lock also protect against concurrent
@@ -1157,7 +1165,7 @@
     <span class="doccomment">/// Allocate a sequence and persist the manifest version using that sequence to the wal.
     ///
     /// This method should be protected by the `version_mutex`.
-    </span><span class="kw">async fn </span>persist_manifest_version&lt;S: LogStore&gt;(
+    </span><span class="kw">async fn </span>persist_manifest_version(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         wal: <span class="kw-2">&amp;</span>Wal&lt;S&gt;,
         version_control: <span class="kw-2">&amp;</span>VersionControlRef,
@@ -1197,7 +1205,7 @@
         </span><span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub async fn </span>on_drop&lt;S: LogStore&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, drop_ctx: DropContext&lt;<span class="lifetime">&#39;_</span>, S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">pub async fn </span>on_drop(<span class="kw-2">&amp;</span><span class="self">self</span>, drop_ctx: DropContext&lt;<span class="lifetime">&#39;_</span>, S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// 1. Acquires the write lock.
         // 2. Close writer reject any potential writing.
         // 3. Waits or cancels the flush job.
@@ -1264,11 +1272,7 @@
     }
 
     <span class="doccomment">/// Flush task manually
-    </span><span class="kw">pub async fn </span>flush&lt;S: LogStore&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
-        ctx: <span class="kw-2">&amp;</span>FlushContext,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>, writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;, ctx: <span class="kw-2">&amp;</span>FlushContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
 
         <span class="kw">if </span>!ctx.force {
@@ -1287,17 +1291,19 @@
     }
 
     <span class="doccomment">/// Compact manually.
-    </span><span class="kw">pub async fn </span>compact&lt;S: LogStore&gt;(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
-        ctx: CompactContext,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, request: WriterCompactRequest&lt;S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
 
         <span class="macro">ensure!</span>(!inner.is_closed(), error::ClosedRegionSnafu);
         <span class="kw">let </span>sst_write_buffer_size = inner.engine_config.sst_write_buffer_size;
+
         inner
-            .manual_compact(writer_ctx, ctx, sst_write_buffer_size)
+            .manual_compact(
+                request,
+                <span class="self">self</span>.compaction_picker.clone(),
+                <span class="self">self</span>.compaction_scheduler.clone(),
+                sst_write_buffer_size,
+            )
             .<span class="kw">await
     </span>}
 
@@ -1315,10 +1321,23 @@
 
 <span class="comment">// Methods for tests.
 </span><span class="attr">#[cfg(test)]
-</span><span class="kw">impl </span>RegionWriter {
+</span><span class="kw">impl</span>&lt;S&gt; RegionWriter&lt;S&gt;
+<span class="kw">where
+    </span>S: LogStore,
+{
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>write_buffer_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.inner.lock().<span class="kw">await</span>.write_buffer_size
     }
+}
+
+<span class="doccomment">/// Structs needed by triggering a compaction.
+</span><span class="kw">pub struct </span>WriterCompactRequest&lt;S: LogStore&gt; {
+    <span class="kw">pub </span>shared_data: SharedDataRef,
+    <span class="kw">pub </span>sst_layer: AccessLayerRef,
+    <span class="kw">pub </span>manifest: RegionManifest,
+    <span class="kw">pub </span>wal: Wal&lt;S&gt;,
+    <span class="kw">pub </span>region_writer: RegionWriterRef&lt;S&gt;,
+    <span class="kw">pub </span>compact_ctx: CompactContext,
 }
 
 <span class="kw">pub struct </span>WriterContext&lt;<span class="lifetime">&#39;a</span>, S: LogStore&gt; {
@@ -1328,7 +1347,7 @@
     <span class="kw">pub </span>compaction_scheduler: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>CompactionSchedulerRef&lt;S&gt;,
     <span class="kw">pub </span>sst_layer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AccessLayerRef,
     <span class="kw">pub </span>wal: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Wal&lt;S&gt;,
-    <span class="kw">pub </span>writer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RegionWriterRef,
+    <span class="kw">pub </span>writer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RegionWriterRef&lt;S&gt;,
     <span class="kw">pub </span>manifest: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RegionManifest,
     <span class="kw">pub </span>compaction_picker: CompactionPickerRef&lt;S&gt;,
 }
@@ -1715,49 +1734,49 @@
 
     <span class="kw">async fn </span>manual_compact&lt;S: LogStore&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        writer_ctx: WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
-        compact_ctx: CompactContext,
+        request: WriterCompactRequest&lt;S&gt;,
+        compaction_picker: CompactionPickerRef&lt;S&gt;,
+        compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
         sst_write_buffer_size: ReadableSize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>region_id = writer_ctx.shared.id();
-        <span class="kw">let </span>compaction_time_window = writer_ctx
-            .shared
+        <span class="kw">let </span>region_id = request.shared_data.id();
+        <span class="kw">let </span>compaction_time_window = request
+            .shared_data
             .version_control
             .current()
             .ssts()
             .compaction_time_window();
         <span class="kw">let </span><span class="kw-2">mut </span>compaction_request = CompactionRequestImpl {
             region_id,
-            sst_layer: writer_ctx.sst_layer.clone(),
-            writer: writer_ctx.writer.clone(),
-            shared: writer_ctx.shared.clone(),
-            manifest: writer_ctx.manifest.clone(),
-            wal: writer_ctx.wal.clone(),
+            sst_layer: request.sst_layer,
+            writer: request.region_writer,
+            shared: request.shared_data.clone(),
+            manifest: request.manifest,
+            wal: request.wal,
             ttl: <span class="self">self</span>.ttl,
             compaction_time_window,
             sender: <span class="prelude-val">None</span>,
-            picker: writer_ctx.compaction_picker.clone(),
+            picker: compaction_picker,
             sst_write_buffer_size,
+            <span class="comment">// manual compaction does not reschedule itself.
+            </span>reschedule_on_finish: <span class="bool-val">false</span>,
         };
 
-        <span class="kw">let </span>compaction_scheduler = writer_ctx.compaction_scheduler.clone();
-        <span class="kw">let </span>shared_data = writer_ctx.shared.clone();
-
+        <span class="kw">let </span>compaction_scheduler = compaction_scheduler.clone();
         <span class="macro">logging::info!</span>(
             <span class="string">&quot;Manual compact, region_id: {}, compact_ctx: {:?}&quot;</span>,
             region_id,
-            compact_ctx
+            request.compact_ctx
         );
 
-        <span class="kw">if </span>compact_ctx.wait {
+        <span class="kw">if </span>request.compact_ctx.wait {
             <span class="kw">let </span>(sender, receiver) = oneshot::channel();
             compaction_request.sender = <span class="prelude-val">Some</span>(sender);
 
             <span class="kw">if </span>schedule_compaction(
-                shared_data,
+                request.shared_data,
                 compaction_scheduler,
                 compaction_request,
-                compact_ctx.max_files_in_l0,
             ) {
                 receiver
                     .<span class="kw">await
@@ -1765,10 +1784,9 @@
             }
         } <span class="kw">else </span>{
             <span class="kw">let _ </span>= schedule_compaction(
-                shared_data,
+                request.shared_data,
                 compaction_scheduler,
                 compaction_request,
-                compact_ctx.max_files_in_l0,
             );
         }
 
@@ -1800,23 +1818,9 @@
     shared_data: SharedDataRef,
     compaction_scheduler: CompactionSchedulerRef&lt;S&gt;,
     compaction_request: CompactionRequestImpl&lt;S&gt;,
-    max_files_in_l0: usize,
 ) -&gt; bool {
     <span class="kw">let </span>region_id = shared_data.id();
-    <span class="kw">let </span>level0_file_num = shared_data
-        .version_control
-        .current()
-        .ssts()
-        .level(<span class="number">0</span>)
-        .file_num();
 
-    <span class="kw">if </span>level0_file_num &lt;= max_files_in_l0 {
-        <span class="macro">logging::debug!</span>(
-            <span class="string">&quot;No enough SST files in level 0 (threshold: {}), skip compaction&quot;</span>,
-            max_files_in_l0
-        );
-        <span class="kw">return </span><span class="bool-val">false</span>;
-    }
     <span class="kw">match </span>compaction_scheduler.schedule(compaction_request) {
         <span class="prelude-val">Ok</span>(scheduled) =&gt; {
             <span class="macro">logging::info!</span>(

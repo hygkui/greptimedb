@@ -635,6 +635,17 @@
 <a href="#635" id="635">635</a>
 <a href="#636" id="636">636</a>
 <a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1165,6 +1176,16 @@
         source: table::error::Error,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to join spawned tasks, source: {}, location: {}&quot;</span>,
+        source,
+        location
+    ))]
+    </span>JoinError {
+        source: JoinError,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1265,6 +1286,7 @@
             TtlCalculation { source, .. } =&gt; source.status_code(),
             ConvertColumnsToRows { .. } | SortArrays { .. } =&gt; StatusCode::Unexpected,
             BuildPredicate { source, .. } =&gt; source.status_code(),
+            JoinError { .. } =&gt; StatusCode::Unexpected,
         }
     }
 

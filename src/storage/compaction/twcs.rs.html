@@ -396,6 +396,15 @@
 <a href="#396" id="396">396</a>
 <a href="#397" id="397">397</a>
 <a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -426,7 +435,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::compaction::picker::get_expired_ssts;
 <span class="kw">use </span><span class="kw">crate</span>::compaction::task::CompactionOutput;
 <span class="kw">use </span><span class="kw">crate</span>::compaction::{infer_time_bucket, CompactionRequestImpl, CompactionTaskImpl, Picker};
-<span class="kw">use </span><span class="kw">crate</span>::sst::{FileHandle, LevelMeta};
+<span class="kw">use </span><span class="kw">crate</span>::sst::{FileHandle, FileId, LevelMeta};
 
 <span class="doccomment">/// `TwcsPicker` picks files of which the max timestamp are in the same time window as compaction
 /// candidates.
@@ -474,6 +483,7 @@
             <span class="kw">if let </span><span class="prelude-val">Some</span>(active_window) = active_window &amp;&amp; <span class="kw-2">*</span>window == active_window {
                 <span class="kw">if </span>files.len() &gt; <span class="self">self</span>.max_active_window_files {
                     output.push(CompactionOutput {
+                        output_file_id: FileId::random(),
                         output_level: <span class="number">1</span>, <span class="comment">// we only have two levels and always compact to l1 
                         </span>time_window_bound: <span class="kw-2">*</span>window,
                         time_window_sec: window_size,
@@ -483,18 +493,21 @@
                         </span>strict_window: <span class="bool-val">false</span>,
                     });
                 } <span class="kw">else </span>{
-                    <span class="macro">debug!</span>(<span class="string">&quot;Active window not present or no enough files in active window {:?}&quot;</span>, active_window);
+                    <span class="macro">debug!</span>(<span class="string">&quot;Active window not present or no enough files in active window {:?}, window: {}&quot;</span>, active_window, <span class="kw-2">*</span>window);
                 }
             } <span class="kw">else </span>{
                 <span class="comment">// not active writing window
                 </span><span class="kw">if </span>files.len() &gt; <span class="self">self</span>.max_inactive_window_files {
                     output.push(CompactionOutput {
+                        output_file_id: FileId::random(),
                         output_level: <span class="number">1</span>,
                         time_window_bound: <span class="kw-2">*</span>window,
                         time_window_sec: window_size,
                         inputs: files.clone(),
                         strict_window: <span class="bool-val">false</span>,
                     });
+                } <span class="kw">else </span>{
+                    <span class="macro">debug!</span>(<span class="string">&quot;No enough files, current: {}, max_inactive_window_files: {}&quot;</span>, files.len(), <span class="self">self</span>.max_inactive_window_files)
                 }
             }
         }
@@ -540,6 +553,10 @@
         );
 
         <span class="kw">let </span>outputs = <span class="self">self</span>.build_output(<span class="kw-2">&amp;</span>windows, active_window, time_window_size);
+
+        <span class="kw">if </span>outputs.is_empty() &amp;&amp; expired_ssts.is_empty() {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        }
         <span class="kw">let </span>task = CompactionTaskImpl {
             schema: req.schema(),
             sst_layer: req.sst_layer.clone(),
@@ -551,6 +568,7 @@
             expired_ssts,
             sst_write_buffer_size: req.sst_write_buffer_size,
             compaction_time_window: <span class="prelude-val">Some</span>(time_window_size),
+            reschedule_on_finish: req.reschedule_on_finish,
         };
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(task))
     }
