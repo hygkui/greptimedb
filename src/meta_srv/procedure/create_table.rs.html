@@ -303,6 +303,10 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -342,16 +346,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::service::router::create_table_global_value;
 <span class="kw">use </span><span class="kw">crate</span>::table_routes::get_table_global_value;
 
-<span class="comment">// TODO(weny): removes in following PRs.
-</span><span class="attr">#[allow(unused)]
-</span><span class="kw">pub struct </span>CreateTableProcedure {
+<span class="kw">pub struct </span>CreateTableProcedure {
     context: DdlContext,
     creator: TableCreator,
 }
 
-<span class="comment">// TODO(weny): removes in following PRs.
-</span><span class="attr">#[allow(dead_code)]
-</span><span class="kw">impl </span>CreateTableProcedure {
+<span class="kw">impl </span>CreateTableProcedure {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>TYPE_NAME: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;metasrv-procedure::CreateTable&quot;</span>;
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
@@ -410,6 +410,9 @@
 
     <span class="doccomment">/// registers the `TableRouteValue`,`TableGlobalValue`
     </span><span class="kw">async fn </span>register_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_META_CREATE_TABLE_PROCEDURE_CREATE_META
+        );
         <span class="kw">let </span>table_name = <span class="self">self</span>.table_name();
 
         <span class="kw">let </span>table_id = <span class="self">self</span>.creator.data.table_route.table.id <span class="kw">as </span>TableId;
@@ -500,8 +503,10 @@
     }
 
     <span class="kw">async fn </span>on_datanode_create_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_META_CREATE_TABLE_PROCEDURE_CREATE_TABLE
+        );
         <span class="kw">let </span>table_route = <span class="kw-2">&amp;</span><span class="self">self</span>.creator.data.table_route;
-
         <span class="kw">let </span>table_name = <span class="self">self</span>.table_name();
         <span class="kw">let </span>clients = <span class="self">self</span>.context.datanode_clients.clone();
         <span class="kw">let </span>leaders = table_route.find_leaders();
@@ -514,6 +519,9 @@
             <span class="kw">let </span>regions = table_route.find_leader_regions(<span class="kw-2">&amp;</span>datanode);
             <span class="kw">let </span><span class="kw-2">mut </span>create_expr_for_region = <span class="self">self</span>.creator.data.task.create_table.clone();
             create_expr_for_region.region_numbers = regions;
+            create_expr_for_region.table_id = <span class="prelude-val">Some</span>(api::v1::TableId {
+                id: table_route.table.id <span class="kw">as </span>u32,
+            });
 
             joins.push(common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = client.create(create_expr_for_region).<span class="kw">await </span>{
@@ -585,7 +593,7 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Serialize, Deserialize)]
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
 </span><span class="kw">enum </span>CreateTableState {
     <span class="doccomment">/// Prepares to create the table
     </span>Prepare,
