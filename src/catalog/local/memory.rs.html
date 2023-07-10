@@ -518,6 +518,72 @@
 <a href="#518" id="518">518</a>
 <a href="#519" id="519">519</a>
 <a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -549,8 +615,8 @@
     CatalogNotFoundSnafu, <span class="prelude-ty">Result</span>, SchemaNotFoundSnafu, TableExistsSnafu, TableNotFoundSnafu,
 };
 <span class="kw">use crate</span>::{
-    CatalogManager, DeregisterTableRequest, RegisterSchemaRequest, RegisterSystemTableRequest,
-    RegisterTableRequest, RenameTableRequest,
+    CatalogManager, DeregisterSchemaRequest, DeregisterTableRequest, RegisterSchemaRequest,
+    RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
 };
 
 <span class="kw">type </span>SchemaEntries = HashMap&lt;String, HashMap&lt;String, TableRef&gt;&gt;;
@@ -668,6 +734,34 @@
             <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
         }
         <span class="prelude-val">Ok</span>(registered)
+    }
+
+    <span class="kw">async fn </span>deregister_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeregisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.catalogs.write().unwrap();
+        <span class="kw">let </span>schemas = catalogs
+            .get_mut(<span class="kw-2">&amp;</span>request.catalog)
+            .with_context(|| CatalogNotFoundSnafu {
+                catalog_name: <span class="kw-2">&amp;</span>request.catalog,
+            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_count = schemas
+            .remove(<span class="kw-2">&amp;</span>request.schema)
+            .with_context(|| SchemaNotFoundSnafu {
+                catalog: <span class="kw-2">&amp;</span>request.catalog,
+                schema: <span class="kw-2">&amp;</span>request.schema,
+            })<span class="question-mark">?
+            </span>.len();
+        <span class="macro">decrement_gauge!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
+            table_count <span class="kw">as </span>f64,
+            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema)],
+        );
+
+        <span class="macro">decrement_gauge!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT,
+            <span class="number">1.0</span>,
+            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema)],
+        );
+        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
     <span class="kw">async fn </span>register_system_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: RegisterSystemTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -1036,6 +1130,44 @@
             .<span class="kw">await
             </span>.unwrap()
             .is_none());
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_catalog_deregister_schema() {
+        <span class="kw">let </span>catalog = MemoryCatalogManager::default();
+
+        <span class="comment">// Registers a catalog, a schema, and a table.
+        </span><span class="kw">let </span>catalog_name = <span class="string">&quot;foo_catalog&quot;</span>.to_string();
+        <span class="kw">let </span>schema_name = <span class="string">&quot;foo_schema&quot;</span>.to_string();
+        <span class="kw">let </span>table_name = <span class="string">&quot;foo_table&quot;</span>.to_string();
+        <span class="kw">let </span>schema = RegisterSchemaRequest {
+            catalog: catalog_name.clone(),
+            schema: schema_name.clone(),
+        };
+        <span class="kw">let </span>table = RegisterTableRequest {
+            catalog: catalog_name.clone(),
+            schema: schema_name.clone(),
+            table_name,
+            table_id: <span class="number">0</span>,
+            table: Arc::new(NumbersTable::default()),
+        };
+        catalog
+            .register_catalog(catalog_name.clone())
+            .<span class="kw">await
+            </span>.unwrap();
+        catalog.register_schema(schema).<span class="kw">await</span>.unwrap();
+        catalog.register_table(table).<span class="kw">await</span>.unwrap();
+
+        <span class="kw">let </span>request = DeregisterSchemaRequest {
+            catalog: catalog_name.clone(),
+            schema: schema_name.clone(),
+        };
+
+        <span class="macro">assert!</span>(catalog.deregister_schema(request).<span class="kw">await</span>.unwrap());
+        <span class="macro">assert!</span>(!catalog
+            .schema_exist(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name)
+            .<span class="kw">await
+            </span>.unwrap());
     }
 }
 </code></pre></div></section></main></body></html>

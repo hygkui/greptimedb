@@ -416,6 +416,13 @@
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
 <a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -446,8 +453,8 @@
 <span class="kw">use </span>catalog::information_schema::InformationSchemaProvider;
 <span class="kw">use </span>catalog::remote::KvCacheInvalidatorRef;
 <span class="kw">use </span>catalog::{
-    CatalogManager, DeregisterTableRequest, RegisterSchemaRequest, RegisterSystemTableRequest,
-    RegisterTableRequest, RenameTableRequest,
+    CatalogManager, DeregisterSchemaRequest, DeregisterTableRequest, RegisterSchemaRequest,
+    RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
 };
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME};
@@ -548,7 +555,7 @@
     }
 
     <span class="kw">async fn </span>register_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>, _name: String) -&gt; CatalogResult&lt;bool&gt; {
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support register catalog&quot;</span>)
+        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support registering catalog&quot;</span>)
     }
 
     <span class="comment">// TODO(LFC): Handle the table caching in (de)register_table.
@@ -569,7 +576,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         _request: RegisterSchemaRequest,
     ) -&gt; catalog::error::Result&lt;bool&gt; {
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support register schema&quot;</span>)
+        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support registering schema&quot;</span>)
+    }
+
+    <span class="kw">async fn </span>deregister_schema(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        _request: DeregisterSchemaRequest,
+    ) -&gt; catalog_err::Result&lt;bool&gt; {
+        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support deregistering schema&quot;</span>)
     }
 
     <span class="kw">async fn </span>rename_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: RenameTableRequest) -&gt; catalog_err::Result&lt;bool&gt; {

@@ -958,6 +958,13 @@
 <a href="#958" id="958">958</a>
 <a href="#959" id="959">959</a>
 <a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -994,7 +1001,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CatalogNotFoundSnafu, CreateTableSnafu, InvalidCatalogValueSnafu, OpenTableSnafu,
     ParallelOpenTableSnafu, <span class="prelude-ty">Result</span>, SchemaNotFoundSnafu, TableEngineNotFoundSnafu,
-    TableMetadataManagerSnafu,
+    TableMetadataManagerSnafu, UnimplementedSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::helper::{
     build_catalog_prefix, build_schema_prefix, build_table_global_prefix,
@@ -1003,8 +1010,8 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::remote::region_alive_keeper::RegionAliveKeepers;
 <span class="kw">use crate</span>::{
-    handle_system_table_request, CatalogManager, DeregisterTableRequest, RegisterSchemaRequest,
-    RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
+    handle_system_table_request, CatalogManager, DeregisterSchemaRequest, DeregisterTableRequest,
+    RegisterSchemaRequest, RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
 };
 
 <span class="doccomment">/// Catalog manager based on metasrv.
@@ -1684,6 +1691,13 @@
 
         <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+    }
+
+    <span class="kw">async fn </span>deregister_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: DeregisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        UnimplementedSnafu {
+            operation: <span class="string">&quot;deregister schema&quot;</span>,
+        }
+        .fail()
     }
 
     <span class="kw">async fn </span>rename_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RenameTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {

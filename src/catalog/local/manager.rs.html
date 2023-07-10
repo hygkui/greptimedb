@@ -639,6 +639,14 @@
 <a href="#639" id="639">639</a>
 <a href="#640" id="640">640</a>
 <a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -682,7 +690,7 @@
     <span class="self">self</span>, CatalogNotFoundSnafu, IllegalManagerStateSnafu, OpenTableSnafu, ReadSystemCatalogSnafu,
     <span class="prelude-ty">Result</span>, SchemaExistsSnafu, SchemaNotFoundSnafu, SystemCatalogSnafu,
     SystemCatalogTypeMismatchSnafu, TableEngineNotFoundSnafu, TableExistsSnafu, TableNotExistSnafu,
-    TableNotFoundSnafu,
+    TableNotFoundSnafu, UnimplementedSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::information_schema::InformationSchemaProvider;
 <span class="kw">use </span><span class="kw">crate</span>::local::memory::MemoryCatalogManager;
@@ -692,8 +700,9 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::tables::SystemCatalog;
 <span class="kw">use crate</span>::{
-    handle_system_table_request, CatalogManager, CatalogManagerRef, DeregisterTableRequest,
-    RegisterSchemaRequest, RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
+    handle_system_table_request, CatalogManager, CatalogManagerRef, DeregisterSchemaRequest,
+    DeregisterTableRequest, RegisterSchemaRequest, RegisterSystemTableRequest,
+    RegisterTableRequest, RenameTableRequest,
 };
 
 <span class="doccomment">/// A `CatalogManager` consists of a system catalog and a bunch of user catalogs.
@@ -1155,6 +1164,13 @@
                 .<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="self">self</span>.catalogs.register_schema_sync(request)
         }
+    }
+
+    <span class="kw">async fn </span>deregister_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: DeregisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        UnimplementedSnafu {
+            operation: <span class="string">&quot;deregister schema&quot;</span>,
+        }
+        .fail()
     }
 
     <span class="kw">async fn </span>register_system_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterSystemTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
