@@ -139,10 +139,6 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -172,15 +168,11 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 
 <span class="attr">#[derive(Clone, Debug)]
-</span><span class="comment">// TODO(weny): removes this in following PRs.
-</span><span class="attr">#[allow(unused)]
 </span><span class="kw">pub struct </span>Client {
     inner: Arc&lt;RwLock&lt;Inner&gt;&gt;,
 }
 
-<span class="comment">// TODO(weny): removes this in following PRs.
-</span><span class="attr">#[allow(dead_code)]
-</span><span class="kw">impl </span>Client {
+<span class="kw">impl </span>Client {
     <span class="kw">pub fn </span>new(id: Id, role: Role, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>inner = Arc::new(RwLock::new(Inner {
             id,

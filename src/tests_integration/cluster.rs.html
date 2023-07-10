@@ -310,6 +310,14 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -400,12 +408,14 @@
     <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; GreptimeDbCluster {
         <span class="kw">let </span>datanodes = <span class="self">self</span>.datanodes.unwrap_or(<span class="number">4</span>);
 
-        <span class="kw">let </span>meta_srv = <span class="self">self</span>.build_metasrv().<span class="kw">await</span>;
+        <span class="kw">let </span>datanode_clients = Arc::new(DatanodeClients::default());
+
+        <span class="kw">let </span>meta_srv = <span class="self">self</span>.build_metasrv(datanode_clients.clone()).<span class="kw">await</span>;
 
         <span class="kw">let </span>(datanode_instances, heartbeat_tasks, storage_guards, wal_guards) =
             <span class="self">self</span>.build_datanodes(meta_srv.clone(), datanodes).<span class="kw">await</span>;
 
-        <span class="kw">let </span>datanode_clients = build_datanode_clients(<span class="kw-2">&amp;</span>datanode_instances, datanodes).<span class="kw">await</span>;
+        build_datanode_clients(datanode_clients.clone(), <span class="kw-2">&amp;</span>datanode_instances, datanodes).<span class="kw">await</span>;
 
         <span class="self">self</span>.wait_datanodes_alive(<span class="kw-2">&amp;</span>meta_srv.meta_srv.meta_peer_client(), datanodes)
             .<span class="kw">await</span>;
@@ -427,8 +437,14 @@
         }
     }
 
-    <span class="kw">async fn </span>build_metasrv(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MockInfo {
-        meta_srv::mocks::mock(MetaSrvOptions::default(), <span class="self">self</span>.kv_store.clone(), <span class="prelude-val">None</span>).<span class="kw">await
+    <span class="kw">async fn </span>build_metasrv(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode_clients: Arc&lt;DatanodeClients&gt;) -&gt; MockInfo {
+        meta_srv::mocks::mock(
+            MetaSrvOptions::default(),
+            <span class="self">self</span>.kv_store.clone(),
+            <span class="prelude-val">None</span>,
+            <span class="prelude-val">Some</span>(datanode_clients),
+        )
+        .<span class="kw">await
     </span>}
 
     <span class="kw">async fn </span>build_datanodes(
@@ -530,6 +546,7 @@
             .enable_store()
             .enable_heartbeat()
             .channel_manager(meta_srv.channel_manager)
+            .enable_ddl()
             .build();
         meta_client.start(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>meta_srv.server_addr]).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>meta_client = Arc::new(meta_client);
@@ -550,10 +567,10 @@
 }
 
 <span class="kw">async fn </span>build_datanode_clients(
+    clients: Arc&lt;DatanodeClients&gt;,
     instances: <span class="kw-2">&amp;</span>HashMap&lt;DatanodeId, Arc&lt;DatanodeInstance&gt;&gt;,
     datanodes: u32,
-) -&gt; Arc&lt;DatanodeClients&gt; {
-    <span class="kw">let </span>clients = Arc::new(DatanodeClients::default());
+) {
     <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..datanodes {
         <span class="kw">let </span>datanode_id = i <span class="kw">as </span>u64 + <span class="number">1</span>;
         <span class="kw">let </span>instance = instances.get(<span class="kw-2">&amp;</span>datanode_id).cloned().unwrap();
@@ -562,7 +579,6 @@
             .insert_client(Peer::new(datanode_id, addr), client)
             .<span class="kw">await</span>;
     }
-    clients
 }
 
 <span class="kw">async fn </span>create_datanode_client(datanode_instance: Arc&lt;DatanodeInstance&gt;) -&gt; (String, Client) {
