@@ -449,7 +449,7 @@
             }));
         }
 
-        <span class="kw">let _ </span>= join_all(joins)
+        <span class="kw">let </span>_r = join_all(joins)
             .<span class="kw">await
             </span>.into_iter()
             .map(|e| e.context(error::JoinSnafu).flatten())
