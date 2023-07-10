@@ -565,10 +565,6 @@
 <a href="#565" id="565">565</a>
 <a href="#566" id="566">566</a>
 <a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -809,12 +805,8 @@
             map.range(..)
         };
 
-        <span class="kw">let </span>(keys, sequences, op_types, values) = <span class="kw">if </span><span class="self">self</span>.ctx.for_flush {
-            collect_iter(iter, <span class="self">self</span>.ctx.batch_size)
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>iter = MapIterWrapper::new(iter, <span class="self">self</span>.ctx.visible_sequence, <span class="self">self</span>.ctx.time_range);
-            collect_iter(iter, <span class="self">self</span>.ctx.batch_size)
-        };
+        <span class="kw">let </span>iter = MapIterWrapper::new(iter, <span class="self">self</span>.ctx.visible_sequence, <span class="self">self</span>.ctx.time_range);
+        <span class="kw">let </span>(keys, sequences, op_types, values) = collect_iter(iter, <span class="self">self</span>.ctx.batch_size);
 
         <span class="kw">if </span>keys.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);

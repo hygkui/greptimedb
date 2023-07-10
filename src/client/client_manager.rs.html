@@ -81,6 +81,10 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -106,6 +110,8 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::Client;
 
+<span class="kw">const </span>DEFAULT_TIMEOUT: Duration = Duration::from_secs(<span class="number">10</span>);
+
 <span class="kw">pub struct </span>DatanodeClients {
     channel_manager: ChannelManager,
     clients: Cache&lt;Peer, Client&gt;,
@@ -114,7 +120,9 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>DatanodeClients {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>config = ChannelConfig::new().timeout(Duration::from_secs(<span class="number">8</span>));
+        <span class="kw">let </span>config = ChannelConfig::new()
+            .timeout(DEFAULT_TIMEOUT)
+            .connect_timeout(DEFAULT_TIMEOUT);
 
         <span class="self">Self </span>{
             channel_manager: ChannelManager::with_config(config),

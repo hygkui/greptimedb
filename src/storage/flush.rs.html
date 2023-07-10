@@ -747,10 +747,10 @@
         <span class="kw">let </span>region_id = <span class="self">self</span>.shared.id();
         <span class="kw">let </span><span class="kw-2">mut </span>futures = Vec::with_capacity(<span class="self">self</span>.memtables.len());
         <span class="kw">let </span>iter_ctx = IterContext {
-            for_flush: <span class="bool-val">true</span>,
             <span class="comment">// TODO(ruihang): dynamic row group size based on content (#412)
             </span>batch_size: WRITE_ROW_GROUP_SIZE,
-            ..Default::default()
+            <span class="comment">// All sequences are visible by default.
+            </span>..Default::default()
         };
 
         <span class="kw">for </span>m <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.memtables {
