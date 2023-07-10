@@ -926,7 +926,7 @@
         | StatusCode::DatabaseNotFound
         | StatusCode::UserNotFound =&gt; Code::NotFound,
         StatusCode::StorageUnavailable =&gt; Code::Unavailable,
-        StatusCode::RuntimeResourcesExhausted =&gt; Code::ResourceExhausted,
+        StatusCode::RuntimeResourcesExhausted | StatusCode::RateLimited =&gt; Code::ResourceExhausted,
         StatusCode::UnsupportedPasswordType
         | StatusCode::UserPasswordMismatch
         | StatusCode::AuthHeaderNotFound
