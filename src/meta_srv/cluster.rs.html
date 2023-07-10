@@ -315,6 +315,8 @@
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
 <a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -577,6 +579,7 @@
             cluster_id: <span class="number">0</span>,
             id: <span class="number">100</span>,
             addr: <span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(),
+            is_leader: <span class="bool-val">true</span>,
             ..Default::default()
         };
         <span class="kw">let </span>stat_val = StatValue { stats: <span class="macro">vec!</span>[stat] }.try_into().unwrap();
@@ -596,6 +599,7 @@
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, stat.cluster_id);
         <span class="macro">assert_eq!</span>(<span class="number">100</span>, stat.id);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:3001&quot;</span>, stat.addr);
+        <span class="macro">assert!</span>(stat.is_leader);
     }
 
     <span class="attr">#[test]

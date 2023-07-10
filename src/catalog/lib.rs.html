@@ -256,12 +256,6 @@
 <a href="#256" id="256">256</a>
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -285,7 +279,7 @@
 <span class="kw">use </span>std::fmt::{Debug, Formatter};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>api::v1::meta::{RegionStat, TableIdent, TableName};
+<span class="kw">use </span>api::v1::meta::{RegionStat, TableName};
 <span class="kw">use </span>common_telemetry::{info, warn};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::engine::{EngineContext, TableEngineRef};
@@ -490,25 +484,19 @@
             <span class="kw">for </span>table_name <span class="kw">in </span>table_names {
                 <span class="kw">let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(table)) = catalog_manager.table(<span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name, <span class="kw-2">&amp;</span>table_name).<span class="kw">await else </span>{ <span class="kw">continue </span>};
 
-                <span class="kw">let </span>table_info = table.table_info();
-                <span class="kw">let </span>region_numbers = <span class="kw-2">&amp;</span>table_info.meta.region_numbers;
+                <span class="kw">let </span>region_numbers = <span class="kw-2">&amp;</span>table.table_info().meta.region_numbers;
                 region_number += region_numbers.len() <span class="kw">as </span>u64;
 
-                <span class="kw">let </span>engine = <span class="kw-2">&amp;</span>table_info.meta.engine;
-                <span class="kw">let </span>table_id = table_info.ident.table_id;
+                <span class="kw">let </span>engine = <span class="kw-2">&amp;</span>table.table_info().meta.engine;
 
                 <span class="kw">match </span>table.region_stats() {
                     <span class="prelude-val">Ok</span>(stats) =&gt; {
                         <span class="kw">let </span>stats = stats.into_iter().map(|stat| RegionStat {
                             region_id: stat.region_id,
-                            table_ident: <span class="prelude-val">Some</span>(TableIdent {
-                                table_id,
-                                table_name: <span class="prelude-val">Some</span>(TableName {
-                                    catalog_name: catalog_name.clone(),
-                                    schema_name: schema_name.clone(),
-                                    table_name: table_name.clone(),
-                                }),
-                                engine: engine.clone(),
+                            table_name: <span class="prelude-val">Some</span>(TableName {
+                                catalog_name: catalog_name.clone(),
+                                schema_name: schema_name.clone(),
+                                table_name: table_name.clone(),
                             }),
                             approximate_bytes: stat.disk_usage_bytes <span class="kw">as </span>i64,
                             attrs: HashMap::from([(<span class="string">&quot;engine_name&quot;</span>.to_owned(), engine.clone())]),
