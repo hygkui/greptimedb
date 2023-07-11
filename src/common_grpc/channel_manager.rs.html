@@ -613,6 +613,7 @@
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
 <a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -643,7 +644,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{CreateChannelSnafu, InvalidConfigFilePathSnafu, InvalidTlsConfigSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="kw">const </span>RECYCLE_CHANNEL_INTERVAL_SECS: u64 = <span class="number">60</span>;
-<span class="kw">const </span>DEFAULT_REQUEST_TIMEOUT_SECS: u64 = <span class="number">2</span>;
+<span class="kw">const </span>DEFAULT_REQUEST_TIMEOUT_SECS: u64 = <span class="number">10</span>;
+<span class="kw">const </span>DEFAULT_CONNECT_TIMEOUT_SECS: u64 = <span class="number">10</span>;
 
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>ChannelManager {
@@ -853,7 +855,7 @@
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             timeout: <span class="prelude-val">Some</span>(Duration::from_secs(DEFAULT_REQUEST_TIMEOUT_SECS)),
-            connect_timeout: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">4</span>)),
+            connect_timeout: <span class="prelude-val">Some</span>(Duration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS)),
             concurrency_limit: <span class="prelude-val">None</span>,
             rate_limit: <span class="prelude-val">None</span>,
             initial_stream_window_size: <span class="prelude-val">None</span>,
@@ -1114,7 +1116,7 @@
         <span class="macro">assert_eq!</span>(
             ChannelConfig {
                 timeout: <span class="prelude-val">Some</span>(Duration::from_secs(DEFAULT_REQUEST_TIMEOUT_SECS)),
-                connect_timeout: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">4</span>)),
+                connect_timeout: <span class="prelude-val">Some</span>(Duration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS)),
                 concurrency_limit: <span class="prelude-val">None</span>,
                 rate_limit: <span class="prelude-val">None</span>,
                 initial_stream_window_size: <span class="prelude-val">None</span>,
