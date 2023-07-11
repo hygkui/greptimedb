@@ -1082,7 +1082,7 @@
             joins.push(<span class="self">self</span>.initiate_schemas(node_id, backend, engine_manager, catalog_name));
         }
 
-        <span class="kw">let _ </span>= futures::future::try_join_all(joins).<span class="kw">await</span><span class="question-mark">?</span>;
+        futures::future::try_join_all(joins).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }

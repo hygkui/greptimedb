@@ -329,14 +329,14 @@
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
-<span class="kw">use </span>store_api::storage::RegionId;
+<span class="kw">use </span>store_api::storage::{CompactContext, RegionId};
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::writer::build_sst_reader;
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::RegionEdit;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::region::RegionManifest;
-<span class="kw">use </span><span class="kw">crate</span>::region::{CompactContext, RegionWriterRef, SharedDataRef, WriterCompactRequest};
+<span class="kw">use </span><span class="kw">crate</span>::region::{RegionWriterRef, SharedDataRef, WriterCompactRequest};
 <span class="kw">use </span><span class="kw">crate</span>::schema::RegionSchemaRef;
 <span class="kw">use </span><span class="kw">crate</span>::sst::{
     AccessLayerRef, FileHandle, FileId, FileMeta, Level, Source, SstInfo, WriteOptions,

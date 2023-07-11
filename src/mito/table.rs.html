@@ -700,6 +700,34 @@
 <a href="#700" id="700">700</a>
 <a href="#701" id="701">701</a>
 <a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -735,8 +763,9 @@
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::manifest::{<span class="self">self</span>, Manifest, ManifestVersion, MetaActionIterator};
 <span class="kw">use </span>store_api::storage::{
-    AddColumn, AlterOperation, AlterRequest, ChunkReader, FlushContext, FlushReason, ReadContext,
-    Region, RegionMeta, RegionNumber, ScanRequest, SchemaRef, Snapshot, WriteContext, WriteRequest,
+    AddColumn, AlterOperation, AlterRequest, ChunkReader, CompactContext, FlushContext,
+    FlushReason, ReadContext, Region, RegionMeta, RegionNumber, ScanRequest, SchemaRef, Snapshot,
+    WriteContext, WriteRequest,
 };
 <span class="kw">use </span>table::error::{
     InvalidTableSnafu, RegionSchemaMismatchSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, TableOperationSnafu,
@@ -1031,6 +1060,33 @@
             .context(TableOperationSnafu)<span class="question-mark">?</span>;
         }
 
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async fn </span>compact(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        region_number: <span class="prelude-ty">Option</span>&lt;RegionNumber&gt;,
+        wait: <span class="prelude-ty">Option</span>&lt;bool&gt;,
+    ) -&gt; TableResult&lt;()&gt; {
+        <span class="kw">let </span>compact_ctx = wait.map(|wait| CompactContext { wait }).unwrap_or_default();
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.load();
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(region_number) = region_number {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(region) = regions.get(<span class="kw-2">&amp;</span>region_number) {
+                region
+                    .compact(<span class="kw-2">&amp;</span>compact_ctx)
+                    .<span class="kw">await
+                    </span>.map_err(BoxedError::new)
+                    .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+            }
+        } <span class="kw">else </span>{
+            <span class="kw">let _ </span>= futures::future::try_join_all(
+                regions.values().map(|region| region.compact(<span class="kw-2">&amp;</span>compact_ctx)),
+            )
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(TableOperationSnafu)<span class="question-mark">?</span>;
+        }
         <span class="prelude-val">Ok</span>(())
     }
 

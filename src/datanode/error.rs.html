@@ -602,14 +602,6 @@
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
-<a href="#612" id="612">612</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -958,13 +950,6 @@
         source: catalog::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find table {} from catalog, source: {}&quot;</span>, table_name, source))]
-    </span>FindTable {
-        table_name: String,
-        location: Location,
-        source: catalog::error::Error,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to initialize meta client, source: {}&quot;</span>, source))]
     </span>MetaClientInit {
         location: Location,
@@ -1111,7 +1096,6 @@
 
             DecodeLogicalPlan { source, .. } =&gt; source.status_code(),
             NewCatalog { source, .. } | RegisterSchema { source, .. } =&gt; source.status_code(),
-            FindTable { source, .. } =&gt; source.status_code(),
             CreateTable { source, .. } =&gt; source.status_code(),
             DropTable { source, .. } =&gt; source.status_code(),
             FlushTable { source, .. } =&gt; source.status_code(),

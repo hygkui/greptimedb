@@ -289,6 +289,25 @@
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -303,7 +322,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::{AlterExpr, CreateTableExpr, DropTableExpr, FlushTableExpr};
+</span><span class="kw">use </span>api::v1::{AlterExpr, CompactTableExpr, CreateTableExpr, DropTableExpr, FlushTableExpr};
 <span class="kw">use </span>common_catalog::consts::IMMUTABLE_FILE_ENGINE;
 <span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_grpc_expr::{alter_expr_to_request, create_expr_to_request};
@@ -311,7 +330,7 @@
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>session::context::QueryContext;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>table::requests::{DropTableRequest, FlushTableRequest};
+<span class="kw">use </span>table::requests::{CompactTableRequest, DropTableRequest, FlushTableRequest};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     AlterExprToRequestSnafu, BumpTableIdSnafu, CatalogSnafu, CreateExprToRequestSnafu,
@@ -422,6 +441,25 @@
         };
         <span class="self">self</span>.sql_handler()
             .execute(SqlRequest::FlushTable(req), QueryContext::arc())
+            .<span class="kw">await
+    </span>}
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_compact_table(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: CompactTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+        <span class="kw">let </span>table_name = <span class="kw">if </span>expr.table_name.trim().is_empty() {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="prelude-val">Some</span>(expr.table_name)
+        };
+
+        <span class="kw">let </span>req = CompactTableRequest {
+            catalog_name: expr.catalog_name,
+            schema_name: expr.schema_name,
+            table_name,
+            region_number: expr.region_number,
+            wait: <span class="prelude-val">None</span>,
+        };
+        <span class="self">self</span>.sql_handler()
+            .execute(SqlRequest::CompactTable(req), QueryContext::arc())
             .<span class="kw">await
     </span>}
 }

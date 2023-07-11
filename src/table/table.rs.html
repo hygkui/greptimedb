@@ -132,6 +132,14 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -255,6 +263,14 @@
     <span class="doccomment">/// Get statistics for this table, if available
     </span><span class="kw">fn </span>statistics(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TableStatistics&gt; {
         <span class="prelude-val">None
+    </span>}
+
+    <span class="kw">async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, region_number: <span class="prelude-ty">Option</span>&lt;RegionNumber&gt;, wait: <span class="prelude-ty">Option</span>&lt;bool&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let _ </span>= (region_number, wait);
+        UnsupportedSnafu {
+            operation: <span class="string">&quot;COMPACTION&quot;</span>,
+        }
+        .fail()<span class="question-mark">?
     </span>}
 }
 

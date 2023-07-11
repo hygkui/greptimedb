@@ -624,8 +624,6 @@
 <a href="#624" id="624">624</a>
 <a href="#625" id="625">625</a>
 <a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -826,9 +824,7 @@
             DdlExpr::CreateDatabase(expr) =&gt; <span class="self">self</span>.handle_create_database(expr, query_ctx).<span class="kw">await</span>,
             DdlExpr::DropTable(expr) =&gt; <span class="self">self</span>.handle_drop_table(expr).<span class="kw">await</span>,
             DdlExpr::FlushTable(expr) =&gt; <span class="self">self</span>.handle_flush_table(expr).<span class="kw">await</span>,
-            Expr::CompactTable(<span class="kw">_</span>) =&gt; {
-                <span class="macro">unreachable!</span>(<span class="string">&quot;https://github.com/GreptimeTeam/greptimedb/pull/1912&quot;</span>)
-            }
+            Expr::CompactTable(expr) =&gt; <span class="self">self</span>.handle_compact_table(expr).<span class="kw">await</span>,
         }
     }
 }

@@ -770,14 +770,6 @@
 <a href="#770" id="770">770</a>
 <a href="#771" id="771">771</a>
 <a href="#772" id="772">772</a>
-<a href="#773" id="773">773</a>
-<a href="#774" id="774">774</a>
-<a href="#775" id="775">775</a>
-<a href="#776" id="776">776</a>
-<a href="#777" id="777">777</a>
-<a href="#778" id="778">778</a>
-<a href="#779" id="779">779</a>
-<a href="#780" id="780">780</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -812,8 +804,8 @@
     <span class="self">self</span>, Manifest, ManifestLogStorage, ManifestVersion, MetaActionIterator,
 };
 <span class="kw">use </span>store_api::storage::{
-    AlterRequest, CloseContext, CompactionStrategy, FlushContext, FlushReason, OpenOptions,
-    ReadContext, Region, RegionId, SequenceNumber, WriteContext, WriteResponse,
+    AlterRequest, CloseContext, CompactContext, CompactionStrategy, FlushContext, FlushReason,
+    OpenOptions, ReadContext, Region, RegionId, SequenceNumber, WriteContext, WriteResponse,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::{
@@ -930,6 +922,10 @@
     <span class="kw">async fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>FlushContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.inner.flush(ctx).<span class="kw">await
     </span>}
+
+    <span class="kw">async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>CompactContext) -&gt; std::result::Result&lt;(), <span class="self">Self</span>::Error&gt; {
+        <span class="self">self</span>.inner.compact(ctx).<span class="kw">await
+    </span>}
 }
 
 <span class="doccomment">/// Storage related config for region.
@@ -953,18 +949,6 @@
 
 <span class="kw">pub type </span>RecoveredMetadata = (SequenceNumber, (ManifestVersion, RawRegionMetadata));
 <span class="kw">pub type </span>RecoveredMetadataMap = BTreeMap&lt;SequenceNumber, (ManifestVersion, RawRegionMetadata)&gt;;
-
-<span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>CompactContext {
-    <span class="doccomment">/// Whether to wait the compaction result.
-    </span><span class="kw">pub </span>wait: bool,
-}
-
-<span class="kw">impl </span>Default <span class="kw">for </span>CompactContext {
-    <span class="kw">fn </span>default() -&gt; CompactContext {
-        CompactContext { wait: <span class="bool-val">true </span>}
-    }
-}
 
 <span class="kw">impl</span>&lt;S: LogStore&gt; RegionImpl&lt;S&gt; {
     <span class="doccomment">/// Create a new region and also persist the region metadata to manifest.
@@ -1337,7 +1321,7 @@
     }
 
     <span class="doccomment">/// Compact the region manually.
-    </span><span class="kw">pub async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: CompactContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>CompactContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.inner.compact(ctx).<span class="kw">await
     </span>}
 
@@ -1545,7 +1529,7 @@
     </span>}
 
     <span class="doccomment">/// Compact the region manually.
-    </span><span class="kw">async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, compact_ctx: CompactContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">async fn </span>compact(<span class="kw-2">&amp;</span><span class="self">self</span>, compact_ctx: <span class="kw-2">&amp;</span>CompactContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.writer
             .compact(WriterCompactRequest {
                 shared_data: <span class="self">self</span>.shared.clone(),
@@ -1553,7 +1537,7 @@
                 manifest: <span class="self">self</span>.manifest.clone(),
                 wal: <span class="self">self</span>.wal.clone(),
                 region_writer: <span class="self">self</span>.writer.clone(),
-                compact_ctx,
+                compact_ctx: <span class="kw-2">*</span>compact_ctx,
             })
             .<span class="kw">await
     </span>}
