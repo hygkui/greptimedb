@@ -477,6 +477,7 @@
 <a href="#477" id="477">477</a>
 <a href="#478" id="478">478</a>
 <a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -527,13 +528,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::mysql::writer;
 <span class="kw">use </span><span class="kw">crate</span>::mysql::writer::create_mysql_column;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::sql::ServerSqlQueryHandlerRef;
-
-<span class="doccomment">/// Cached SQL and logical plan
-</span><span class="attr">#[derive(Clone)]
-</span><span class="kw">struct </span>SqlPlan {
-    query: String,
-    plan: <span class="prelude-ty">Option</span>&lt;LogicalPlan&gt;,
-}
+<span class="kw">use </span><span class="kw">crate</span>::SqlPlan;
 
 <span class="comment">// An intermediate shim for executing MySQL queries.
 </span><span class="kw">pub struct </span>MysqlInstanceShim {
@@ -693,10 +688,16 @@
         // in the form of &quot;$i&quot;, it can&#39;t process &quot;?&quot; right now.
         </span><span class="kw">let </span>statement = transform_placeholders(statement);
 
-        <span class="kw">let </span>plan = <span class="self">self
-            </span>.do_describe(statement.clone())
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.map(|DescribeResult { logical_plan, .. }| logical_plan);
+        <span class="kw">let </span>describe_result = <span class="self">self</span>.do_describe(statement.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>(plan, schema) = <span class="kw">if let </span><span class="prelude-val">Some</span>(DescribeResult {
+            logical_plan,
+            schema,
+        }) = describe_result
+        {
+            (<span class="prelude-val">Some</span>(logical_plan), <span class="prelude-val">Some</span>(schema))
+        } <span class="kw">else </span>{
+            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+        };
 
         <span class="kw">let </span>params = <span class="kw">if let </span><span class="prelude-val">Some</span>(plan) = <span class="kw-2">&amp;</span>plan {
             prepared_params(
@@ -713,6 +714,7 @@
         <span class="kw">let </span>stmt_id = <span class="self">self</span>.save_plan(SqlPlan {
             query: query.to_string(),
             plan,
+            schema,
         });
 
         w.reply(stmt_id, <span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>;
