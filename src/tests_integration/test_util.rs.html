@@ -674,6 +674,20 @@
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
 <a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -690,6 +704,7 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::env;
+<span class="kw">use </span>std::fmt::Display;
 <span class="kw">use </span>std::net::SocketAddr;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
@@ -737,7 +752,7 @@
 <span class="kw">use </span>table::engine::{EngineContext, TableEngineRef};
 <span class="kw">use </span>table::requests::{CreateTableRequest, InsertRequest, TableOptions};
 
-<span class="attr">#[derive(Debug, Eq, PartialEq)]
+<span class="attr">#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 </span><span class="kw">pub enum </span>StorageType {
     S3,
     S3WithCache,
@@ -745,6 +760,19 @@
     Oss,
     Azblob,
     Gcs,
+}
+
+<span class="kw">impl </span>Display <span class="kw">for </span>StorageType {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            StorageType::S3 =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;S3&quot;</span>),
+            StorageType::S3WithCache =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;S3&quot;</span>),
+            StorageType::File =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;File&quot;</span>),
+            StorageType::Oss =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Oss&quot;</span>),
+            StorageType::Azblob =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Azblob&quot;</span>),
+            StorageType::Gcs =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Gcs&quot;</span>),
+        }
+    }
 }
 
 <span class="kw">impl </span>StorageType {
