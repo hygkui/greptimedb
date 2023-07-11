@@ -671,6 +671,9 @@
 <a href="#671" id="671">671</a>
 <a href="#672" id="672">672</a>
 <a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1054,6 +1057,7 @@
         )))
         .with_grpc_handler(ServerGrpcQueryHandlerAdaptor::arc(instance.clone()))
         .with_metrics_handler(MetricsHandler)
+        .with_greptime_config_options(opts.to_toml_string())
         .build();
     (http_server.build(http_server.make_app()), guard)
 }
@@ -1090,6 +1094,7 @@
         .with_sql_handler(ServerSqlQueryHandlerAdaptor::arc(frontend_ref.clone()))
         .with_grpc_handler(ServerGrpcQueryHandlerAdaptor::arc(frontend_ref.clone()))
         .with_script_handler(frontend_ref)
+        .with_greptime_config_options(opts.to_toml_string())
         .build();
     <span class="kw">let </span>app = http_server.build(http_server.make_app());
     (app, guard)
@@ -1177,6 +1182,7 @@
         .with_grpc_handler(ServerGrpcQueryHandlerAdaptor::arc(frontend_ref.clone()))
         .with_script_handler(frontend_ref.clone())
         .with_prom_handler(frontend_ref.clone())
+        .with_greptime_config_options(opts.to_toml_string())
         .build();
     <span class="kw">let </span>prom_server = PromServer::create_server(frontend_ref);
     <span class="kw">let </span>app = http_server.build(http_server.make_app());
