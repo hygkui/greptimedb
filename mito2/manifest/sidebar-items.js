@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["action","gc_task","helper","impl_"]};
+window.SIDEBAR_ITEMS = {"mod":["action","gc_task","helper","impl_","storage"]};
