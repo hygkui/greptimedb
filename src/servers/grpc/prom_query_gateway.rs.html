@@ -120,6 +120,11 @@
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
 <a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -155,10 +160,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::InvalidQuerySnafu;
 <span class="kw">use </span><span class="kw">crate</span>::grpc::handler::create_query_context;
 <span class="kw">use </span><span class="kw">crate</span>::grpc::TonicResult;
-<span class="kw">use </span><span class="kw">crate</span>::prom::{retrieve_metric_name_and_result_type, PromHandlerRef, PromJsonResponse};
+<span class="kw">use </span><span class="kw">crate</span>::prometheus::{
+    retrieve_metric_name_and_result_type, PrometheusHandlerRef, PrometheusJsonResponse,
+};
 
 <span class="kw">pub struct </span>PrometheusGatewayService {
-    handler: PromHandlerRef,
+    handler: PrometheusHandlerRef,
 }
 
 <span class="attr">#[async_trait]
@@ -208,7 +215,7 @@
 }
 
 <span class="kw">impl </span>PrometheusGatewayService {
-    <span class="kw">pub fn </span>new(handler: PromHandlerRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(handler: PrometheusHandlerRef) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ handler }
     }
 
@@ -217,7 +224,7 @@
         query: PromQuery,
         ctx: Arc&lt;QueryContext&gt;,
         is_range_query: bool,
-    ) -&gt; PromJsonResponse {
+    ) -&gt; PrometheusJsonResponse {
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
             <span class="kw">crate</span>::metrics::METRIC_SERVER_GRPC_PROM_REQUEST_TIMER,
             <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, ctx.get_db_string())]
@@ -228,8 +235,11 @@
             <span class="kw">match </span>retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>query.query) {
                 <span class="prelude-val">Ok</span>((metric_name, result_type)) =&gt; (metric_name.unwrap_or_default(), result_type),
                 <span class="prelude-val">Err</span>(err) =&gt; {
-                    <span class="kw">return </span>PromJsonResponse::error(err.status_code().to_string(), err.to_string())
-                        .<span class="number">0
+                    <span class="kw">return </span>PrometheusJsonResponse::error(
+                        err.status_code().to_string(),
+                        err.to_string(),
+                    )
+                    .<span class="number">0
                 </span>}
             };
         <span class="comment">// range query only returns matrix
@@ -237,7 +247,7 @@
             result_type = ValueType::Matrix;
         };
 
-        PromJsonResponse::from_query_result(result, metric_name, result_type)
+        PrometheusJsonResponse::from_query_result(result, metric_name, result_type)
             .<span class="kw">await
             </span>.<span class="number">0
     </span>}

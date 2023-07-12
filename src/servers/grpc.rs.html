@@ -250,7 +250,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::grpc::database::DatabaseService;
 <span class="kw">use </span><span class="kw">crate</span>::grpc::flight::FlightHandler;
 <span class="kw">use </span><span class="kw">crate</span>::grpc::handler::GreptimeRequestHandler;
-<span class="kw">use </span><span class="kw">crate</span>::prom::PromHandlerRef;
+<span class="kw">use </span><span class="kw">crate</span>::prometheus::PrometheusHandlerRef;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::grpc::ServerGrpcQueryHandlerRef;
 <span class="kw">use </span><span class="kw">crate</span>::server::Server;
 
@@ -260,7 +260,7 @@
     shutdown_tx: Mutex&lt;<span class="prelude-ty">Option</span>&lt;Sender&lt;()&gt;&gt;&gt;,
     request_handler: Arc&lt;GreptimeRequestHandler&gt;,
     <span class="doccomment">/// Handler for Prometheus-compatible PromQL queries. Only present for frontend server.
-    </span>promql_handler: <span class="prelude-ty">Option</span>&lt;PromHandlerRef&gt;,
+    </span>prometheus_handler: <span class="prelude-ty">Option</span>&lt;PrometheusHandlerRef&gt;,
 
     <span class="doccomment">/// gRPC serving state receiver. Only present if the gRPC server is started.
     /// Used to wait for the server to stop, performing the old blocking fashion.
@@ -270,7 +270,7 @@
 <span class="kw">impl </span>GrpcServer {
     <span class="kw">pub fn </span>new(
         query_handler: ServerGrpcQueryHandlerRef,
-        promql_handler: <span class="prelude-ty">Option</span>&lt;PromHandlerRef&gt;,
+        prometheus_handler: <span class="prelude-ty">Option</span>&lt;PrometheusHandlerRef&gt;,
         user_provider: <span class="prelude-ty">Option</span>&lt;UserProviderRef&gt;,
         runtime: Arc&lt;Runtime&gt;,
     ) -&gt; <span class="self">Self </span>{
@@ -282,7 +282,7 @@
         <span class="self">Self </span>{
             shutdown_tx: Mutex::new(<span class="prelude-val">None</span>),
             request_handler,
-            promql_handler,
+            prometheus_handler,
             serve_state: Mutex::new(<span class="prelude-val">None</span>),
         }
     }
@@ -301,7 +301,7 @@
 
     <span class="kw">pub fn </span>create_prom_query_gateway_service(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        handler: PromHandlerRef,
+        handler: PrometheusHandlerRef,
     ) -&gt; PrometheusGatewayServer&lt;<span class="kw">impl </span>PrometheusGateway&gt; {
         PrometheusGatewayServer::new(PrometheusGatewayService::new(handler))
     }
@@ -382,9 +382,9 @@
             .add_service(<span class="self">self</span>.create_flight_service())
             .add_service(<span class="self">self</span>.create_database_service())
             .add_service(<span class="self">self</span>.create_healthcheck_service());
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(promql_handler) = <span class="kw-2">&amp;</span><span class="self">self</span>.promql_handler {
-            builder =
-                builder.add_service(<span class="self">self</span>.create_prom_query_gateway_service(promql_handler.clone()))
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(prometheus_handler) = <span class="kw-2">&amp;</span><span class="self">self</span>.prometheus_handler {
+            builder = builder
+                .add_service(<span class="self">self</span>.create_prom_query_gateway_service(prometheus_handler.clone()))
         }
         <span class="kw">let </span>builder = builder.add_service(reflection_service);
 

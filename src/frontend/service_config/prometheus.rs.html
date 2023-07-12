@@ -35,6 +35,8 @@
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
 <a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -53,12 +55,14 @@
 
 <span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>PrometheusOptions {
-    <span class="kw">pub </span>enable: bool,
+    <span class="kw">pub </span>addr: String,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>PrometheusOptions {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ enable: <span class="bool-val">true </span>}
+        <span class="self">Self </span>{
+            addr: <span class="string">&quot;127.0.0.1:4004&quot;</span>.to_string(),
+        }
     }
 }
 
@@ -69,7 +73,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_prometheus_options() {
         <span class="kw">let </span>default = PrometheusOptions::default();
-        <span class="macro">assert!</span>(default.enable);
+        <span class="macro">assert_eq!</span>(default.addr, <span class="string">&quot;127.0.0.1:4004&quot;</span>.to_string());
     }
 }
 </code></pre></div></section></main></body></html>

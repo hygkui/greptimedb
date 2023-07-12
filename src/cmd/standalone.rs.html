@@ -605,7 +605,7 @@
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>frontend::service_config::{
-    GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, PostgresOptions, PromOptions,
+    GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, PostgresOptions, PromStoreOptions,
     PrometheusOptions,
 };
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -671,8 +671,8 @@
     <span class="kw">pub </span>postgres_options: <span class="prelude-ty">Option</span>&lt;PostgresOptions&gt;,
     <span class="kw">pub </span>opentsdb_options: <span class="prelude-ty">Option</span>&lt;OpentsdbOptions&gt;,
     <span class="kw">pub </span>influxdb_options: <span class="prelude-ty">Option</span>&lt;InfluxdbOptions&gt;,
+    <span class="kw">pub </span>prom_store_options: <span class="prelude-ty">Option</span>&lt;PromStoreOptions&gt;,
     <span class="kw">pub </span>prometheus_options: <span class="prelude-ty">Option</span>&lt;PrometheusOptions&gt;,
-    <span class="kw">pub </span>prom_options: <span class="prelude-ty">Option</span>&lt;PromOptions&gt;,
     <span class="kw">pub </span>wal: WalConfig,
     <span class="kw">pub </span>storage: StorageConfig,
     <span class="kw">pub </span>procedure: ProcedureConfig,
@@ -690,8 +690,8 @@
             postgres_options: <span class="prelude-val">Some</span>(PostgresOptions::default()),
             opentsdb_options: <span class="prelude-val">Some</span>(OpentsdbOptions::default()),
             influxdb_options: <span class="prelude-val">Some</span>(InfluxdbOptions::default()),
+            prom_store_options: <span class="prelude-val">Some</span>(PromStoreOptions::default()),
             prometheus_options: <span class="prelude-val">Some</span>(PrometheusOptions::default()),
-            prom_options: <span class="prelude-val">Some</span>(PromOptions::default()),
             wal: WalConfig::default(),
             storage: StorageConfig::default(),
             procedure: ProcedureConfig::default(),
@@ -710,8 +710,8 @@
             postgres_options: <span class="self">self</span>.postgres_options,
             opentsdb_options: <span class="self">self</span>.opentsdb_options,
             influxdb_options: <span class="self">self</span>.influxdb_options,
+            prom_store_options: <span class="self">self</span>.prom_store_options,
             prometheus_options: <span class="self">self</span>.prometheus_options,
-            prom_options: <span class="self">self</span>.prom_options,
             meta_client_options: <span class="prelude-val">None</span>,
             logging: <span class="self">self</span>.logging,
             ..Default::default()
@@ -851,7 +851,7 @@
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.prom_addr {
-            opts.prom_options = <span class="prelude-val">Some</span>(PromOptions { addr: addr.clone() })
+            opts.prometheus_options = <span class="prelude-val">Some</span>(PrometheusOptions { addr: addr.clone() })
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.postgres_addr {

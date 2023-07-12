@@ -1118,7 +1118,7 @@
         <span class="string">&quot;Failed to create logical plan for prometheus query, source: {}&quot;</span>,
         source
     ))]
-    </span>PrometheusRemoteQueryPlan {
+    </span>PromStoreRemoteQueryPlan {
         <span class="attr">#[snafu(backtrace)]
         </span>source: servers::error::Error,
     },
@@ -1335,7 +1335,7 @@
             Error::HandleHeartbeatResponse { source, .. } =&gt; source.status_code(),
 
             Error::RuntimeResource { source, .. } =&gt; source.status_code(),
-            Error::PrometheusRemoteQueryPlan { source, .. }
+            Error::PromStoreRemoteQueryPlan { source, .. }
             | Error::ExecutePromql { source, .. } =&gt; source.status_code(),
 
             Error::SqlExecIntercepted { source, .. } =&gt; source.status_code(),

@@ -930,7 +930,7 @@
 <span class="kw">pub mod </span>mem_prof;
 <span class="kw">pub mod </span>opentsdb;
 <span class="kw">mod </span>pprof;
-<span class="kw">pub mod </span>prometheus;
+<span class="kw">pub mod </span>prom_store;
 <span class="kw">pub mod </span>script;
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;dashboard&quot;</span>)]
@@ -984,7 +984,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::grpc::ServerGrpcQueryHandlerRef;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::sql::ServerSqlQueryHandlerRef;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::{
-    InfluxdbLineProtocolHandlerRef, OpentsdbProtocolHandlerRef, PrometheusProtocolHandlerRef,
+    InfluxdbLineProtocolHandlerRef, OpentsdbProtocolHandlerRef, PromStoreProtocolHandlerRef,
     ScriptHandlerRef,
 };
 <span class="kw">use </span><span class="kw">crate</span>::server::Server;
@@ -1029,7 +1029,7 @@
     options: HttpOptions,
     influxdb_handler: <span class="prelude-ty">Option</span>&lt;InfluxdbLineProtocolHandlerRef&gt;,
     opentsdb_handler: <span class="prelude-ty">Option</span>&lt;OpentsdbProtocolHandlerRef&gt;,
-    prom_handler: <span class="prelude-ty">Option</span>&lt;PrometheusProtocolHandlerRef&gt;,
+    prom_handler: <span class="prelude-ty">Option</span>&lt;PromStoreProtocolHandlerRef&gt;,
     script_handler: <span class="prelude-ty">Option</span>&lt;ScriptHandlerRef&gt;,
     shutdown_tx: Mutex&lt;<span class="prelude-ty">Option</span>&lt;Sender&lt;()&gt;&gt;&gt;,
     user_provider: <span class="prelude-ty">Option</span>&lt;UserProviderRef&gt;,
@@ -1345,7 +1345,7 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>with_prom_handler(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handler: PrometheusProtocolHandlerRef) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+    <span class="kw">pub fn </span>with_prom_handler(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handler: PromStoreProtocolHandlerRef) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="kw">let _ </span>= <span class="self">self</span>.inner.prom_handler.get_or_insert(handler);
         <span class="self">self
     </span>}
@@ -1536,10 +1536,10 @@
             .with_state(api_state)
     }
 
-    <span class="kw">fn </span>route_prom&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, prom_handler: PrometheusProtocolHandlerRef) -&gt; Router&lt;S&gt; {
+    <span class="kw">fn </span>route_prom&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, prom_handler: PromStoreProtocolHandlerRef) -&gt; Router&lt;S&gt; {
         Router::new()
-            .route(<span class="string">&quot;/write&quot;</span>, routing::post(prometheus::remote_write))
-            .route(<span class="string">&quot;/read&quot;</span>, routing::post(prometheus::remote_read))
+            .route(<span class="string">&quot;/write&quot;</span>, routing::post(prom_store::remote_write))
+            .route(<span class="string">&quot;/read&quot;</span>, routing::post(prom_store::remote_read))
             .with_state(prom_handler)
     }
 
