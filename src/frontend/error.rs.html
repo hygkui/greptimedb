@@ -715,6 +715,13 @@
 <a href="#715" id="715">715</a>
 <a href="#716" id="716">716</a>
 <a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -742,6 +749,12 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected, violated: {}&quot;</span>, violated))]
+    </span>Unexpected {
+        violated: String,
+        location: Location,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Execute the operation timeout, source: {}&quot;</span>, source))]
     </span>Timeout {
         location: Location,
@@ -1369,7 +1382,8 @@
             | Error::BuildParquetRecordBatchStream { .. }
             | Error::ReadRecordBatch { .. }
             | Error::BuildFileStream { .. }
-            | Error::WriteStreamToFile { .. } =&gt; StatusCode::Unexpected,
+            | Error::WriteStreamToFile { .. }
+            | Error::Unexpected { .. } =&gt; StatusCode::Unexpected,
 
             Error::Catalog { source, .. } =&gt; source.status_code(),
             Error::CatalogEntrySerde { source, .. } =&gt; source.status_code(),

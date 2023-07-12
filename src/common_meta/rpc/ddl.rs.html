@@ -275,6 +275,18 @@
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -320,6 +332,20 @@
         table_info: RawTableInfo,
     ) -&gt; <span class="self">Self </span>{
         DdlTask::CreateTable(CreateTableTask::new(expr, partitions, table_info))
+    }
+
+    <span class="kw">pub fn </span>new_drop_table(
+        catalog: String,
+        schema: String,
+        table: String,
+        table_id: TableId,
+    ) -&gt; <span class="self">Self </span>{
+        DdlTask::DropTable(DropTableTask {
+            catalog,
+            schema,
+            table,
+            table_id,
+        })
     }
 }
 
@@ -369,19 +395,17 @@
 
 <span class="kw">pub struct </span>SubmitDdlTaskResponse {
     <span class="kw">pub </span>key: Vec&lt;u8&gt;,
-    <span class="kw">pub </span>table_id: TableId,
+    <span class="kw">pub </span>table_id: <span class="prelude-ty">Option</span>&lt;TableId&gt;,
 }
 
 <span class="kw">impl </span>TryFrom&lt;PbSubmitDdlTaskResponse&gt; <span class="kw">for </span>SubmitDdlTaskResponse {
     <span class="kw">type </span>Error = error::Error;
 
     <span class="kw">fn </span>try_from(resp: PbSubmitDdlTaskResponse) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>table_id = resp.table_id.context(error::InvalidProtoMsgSnafu {
-            err_msg: <span class="string">&quot;expected table_id&quot;</span>,
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_id = resp.table_id.map(|t| t.id);
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             key: resp.key,
-            table_id: table_id.id,
+            table_id,
         })
     }
 }

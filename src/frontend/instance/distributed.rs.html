@@ -883,14 +883,6 @@
 <a href="#883" id="883">883</a>
 <a href="#884" id="884">884</a>
 <a href="#885" id="885">885</a>
-<a href="#886" id="886">886</a>
-<a href="#887" id="887">887</a>
-<a href="#888" id="888">888</a>
-<a href="#889" id="889">889</a>
-<a href="#890" id="890">890</a>
-<a href="#891" id="891">891</a>
-<a href="#892" id="892">892</a>
-<a href="#893" id="893">893</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -916,11 +908,11 @@
 <span class="kw">use </span>api::v1::greptime_request::Request;
 <span class="kw">use </span>api::v1::{
     column_def, AlterExpr, CompactTableExpr, CreateDatabaseExpr, CreateTableExpr, DeleteRequest,
-    DropTableExpr, FlushTableExpr, InsertRequests, TableId,
+    FlushTableExpr, InsertRequests,
 };
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::helper::{SchemaKey, SchemaValue};
-<span class="kw">use </span>catalog::{CatalogManager, DeregisterTableRequest, RegisterTableRequest};
+<span class="kw">use </span>catalog::{CatalogManager, RegisterTableRequest};
 <span class="kw">use </span>chrono::DateTime;
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::Database;
@@ -929,9 +921,7 @@
 <span class="kw">use </span>common_error::prelude::BoxedError;
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::ddl::{DdlTask, SubmitDdlTaskRequest, SubmitDdlTaskResponse};
-<span class="kw">use </span>common_meta::rpc::router::{
-    DeleteRequest <span class="kw">as </span>MetaDeleteRequest, Partition <span class="kw">as </span>MetaPartition, RouteRequest,
-};
+<span class="kw">use </span>common_meta::rpc::router::{Partition <span class="kw">as </span>MetaPartition, RouteRequest};
 <span class="kw">use </span>common_meta::rpc::store::CompareAndPutRequest;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::Output;
@@ -954,7 +944,7 @@
 <span class="kw">use </span>sql::statements::{<span class="self">self</span>, sql_value_to_value};
 <span class="kw">use </span>store_api::storage::RegionNumber;
 <span class="kw">use </span>table::engine::TableReference;
-<span class="kw">use </span>table::metadata::{RawTableInfo, RawTableMeta, TableIdent, TableType};
+<span class="kw">use </span>table::metadata::{RawTableInfo, RawTableMeta, TableId, TableIdent, TableType};
 <span class="kw">use </span>table::requests::TableOptions;
 <span class="kw">use </span>table::table::AlterContext;
 <span class="kw">use </span>table::TableRef;
@@ -1012,12 +1002,15 @@
             </span>.create_table_procedure(create_table, partitions, table_info.clone())
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>table_id = resp.table_id;
+        <span class="kw">let </span>table_id = resp.table_id.context(error::UnexpectedSnafu {
+            violated: <span class="string">&quot;expected table_id&quot;</span>,
+        })<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Successfully created distributed table &#39;{table_name}&#39; with table id {table_id}&quot;</span>);
+
         table_info.ident.table_id = table_id;
         <span class="kw">let </span>table_info = Arc::new(table_info.try_into().context(error::CreateTableInfoSnafu)<span class="question-mark">?</span>);
 
-        create_table.table_id = <span class="prelude-val">Some</span>(TableId { id: table_id });
+        create_table.table_id = <span class="prelude-val">Some</span>(api::v1::TableId { id: table_id });
 
         <span class="kw">let </span>table = Arc::new(DistTable::new(
             table_name.clone(),
@@ -1058,7 +1051,7 @@
     }
 
     <span class="kw">async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let _ </span>= <span class="self">self
+        <span class="kw">let </span>table = <span class="self">self
             </span>.catalog_manager
             .table(
                 <span class="kw-2">&amp;</span>table_name.catalog_name,
@@ -1071,42 +1064,9 @@
                 table_name: table_name.to_string(),
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>route_response = <span class="self">self
-            </span>.meta_client
-            .delete_route(MetaDeleteRequest {
-                table_name: table_name.clone(),
-            })
-            .<span class="kw">await
-            </span>.context(RequestMetaSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_id = table.table_info().ident.table_id;
 
-        <span class="kw">let </span>request = DeregisterTableRequest {
-            catalog: table_name.catalog_name.clone(),
-            schema: table_name.schema_name.clone(),
-            table_name: table_name.table_name.clone(),
-        };
-        <span class="self">self</span>.catalog_manager
-            .deregister_table(request)
-            .<span class="kw">await
-            </span>.context(CatalogSnafu)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>expr = DropTableExpr {
-            catalog_name: table_name.catalog_name.clone(),
-            schema_name: table_name.schema_name.clone(),
-            table_name: table_name.table_name.clone(),
-            ..Default::default()
-        };
-        <span class="kw">for </span>table_route <span class="kw">in </span>route_response.table_routes.iter() {
-            <span class="kw">for </span>datanode <span class="kw">in </span>table_route.find_leaders() {
-                <span class="macro">debug!</span>(<span class="string">&quot;Dropping table {table_name} on Datanode {datanode:?}&quot;</span>);
-
-                <span class="kw">let </span>client = <span class="self">self</span>.datanode_clients.get_client(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
-                <span class="kw">let </span>client = Database::new(<span class="kw-2">&amp;</span>expr.catalog_name, <span class="kw-2">&amp;</span>expr.schema_name, client);
-                <span class="kw">let _ </span>= client
-                    .drop_table(expr.clone())
-                    .<span class="kw">await
-                    </span>.context(RequestDatanodeSnafu)<span class="question-mark">?</span>;
-            }
-        }
+        <span class="self">self</span>.drop_table_procedure(<span class="kw-2">&amp;</span>table_name, table_id).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// Since the table information dropped on meta does not go through KvBackend, so we
         // manually invalidate the cache here.
@@ -1428,6 +1388,30 @@
 
         <span class="kw">let </span>request = SubmitDdlTaskRequest {
             task: DdlTask::new_create_table(create_table.clone(), partitions, table_info),
+        };
+
+        timeout(
+            <span class="comment">// TODO(weny): makes timeout configurable.
+            </span>Duration::from_secs(<span class="number">10</span>),
+            <span class="self">self</span>.meta_client.submit_ddl_task(request),
+        )
+        .<span class="kw">await
+        </span>.context(error::TimeoutSnafu)<span class="question-mark">?
+        </span>.context(error::RequestMetaSnafu)
+    }
+
+    <span class="kw">async fn </span>drop_table_procedure(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        table_name: <span class="kw-2">&amp;</span>TableName,
+        table_id: TableId,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SubmitDdlTaskResponse&gt; {
+        <span class="kw">let </span>request = SubmitDdlTaskRequest {
+            task: DdlTask::new_drop_table(
+                table_name.catalog_name.to_string(),
+                table_name.schema_name.to_string(),
+                table_name.table_name.to_string(),
+                table_id,
+            ),
         };
 
         timeout(
