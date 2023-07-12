@@ -678,6 +678,20 @@
 <a href="#678" id="678">678</a>
 <a href="#679" id="679">679</a>
 <a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -941,10 +955,8 @@
     </span><span class="kw">fn </span>parse_describe(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
         <span class="kw">if </span><span class="self">self</span>.matches_keyword(Keyword::TABLE) {
             <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
-            <span class="self">self</span>.parse_describe_table()
-        } <span class="kw">else </span>{
-            <span class="self">self</span>.unsupported(<span class="self">self</span>.peek_token_as_string())
         }
+        <span class="self">self</span>.parse_describe_table()
     }
 
     <span class="kw">fn </span>parse_describe_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
@@ -1356,6 +1368,22 @@
         <span class="kw">let </span>expr =
             ParserContext::parse_function(<span class="string">&quot;current_timestamp()&quot;</span>, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(expr, Expr::Function(<span class="kw">_</span>)));
+    }
+
+    <span class="kw">fn </span>assert_describe_table(sql: <span class="kw-2">&amp;</span>str) {
+        <span class="kw">let </span>stmt = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {})
+            .unwrap()
+            .pop()
+            .unwrap();
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(stmt, Statement::DescribeTable(<span class="kw">_</span>)))
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_parse_describe_table() {
+        assert_describe_table(<span class="string">&quot;desc table t;&quot;</span>);
+        assert_describe_table(<span class="string">&quot;describe table t;&quot;</span>);
+        assert_describe_table(<span class="string">&quot;desc t;&quot;</span>);
+        assert_describe_table(<span class="string">&quot;describe t;&quot;</span>);
     }
 }
 </code></pre></div></section></main></body></html>
