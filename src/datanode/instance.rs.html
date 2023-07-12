@@ -493,6 +493,7 @@
 <a href="#493" id="493">493</a>
 <a href="#494" id="494">494</a>
 <a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -523,6 +524,7 @@
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
 <span class="kw">use </span>common_meta::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
 <span class="kw">use </span>common_meta::heartbeat::handler::HandlerGroupExecutor;
+<span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 <span class="kw">use </span>common_procedure::store::state_store::ObjectStateStore;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
@@ -748,8 +750,9 @@
                 <span class="kw">let </span>catalog_manager = Arc::new(RemoteCatalogManager::new(
                     engine_manager.clone(),
                     opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
-                    kv_backend,
+                    kv_backend.clone(),
                     region_alive_keepers.clone(),
+                    Arc::new(TableMetadataManager::new(kv_backend)),
                 ));
 
                 (
@@ -760,7 +763,6 @@
             }
         };
 
-        catalog_manager.start().<span class="kw">await</span>.context(CatalogSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>factory = QueryEngineFactory::new_with_plugins(
             catalog_manager.clone(),
             <span class="bool-val">false</span>,

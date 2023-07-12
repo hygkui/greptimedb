@@ -423,6 +423,11 @@
 <a href="#423" id="423">423</a>
 <a href="#424" id="424">424</a>
 <a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -459,6 +464,7 @@
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME};
 <span class="kw">use </span>common_error::prelude::BoxedError;
+<span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_meta::rpc::store::RangeRequest;
 <span class="kw">use </span>common_meta::rpc::KeyValue;
@@ -479,6 +485,7 @@
     backend_cache_invalidator: KvCacheInvalidatorRef,
     partition_manager: PartitionRuleManagerRef,
     datanode_clients: Arc&lt;DatanodeClients&gt;,
+    table_metadata_manager: TableMetadataManagerRef,
 
     <span class="comment">// TODO(LFC): Remove this field.
     // DistInstance in FrontendCatalogManager is only used for creating distributed script table now.
@@ -493,12 +500,14 @@
         backend_cache_invalidator: KvCacheInvalidatorRef,
         partition_manager: PartitionRuleManagerRef,
         datanode_clients: Arc&lt;DatanodeClients&gt;,
+        table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             backend,
             backend_cache_invalidator,
             partition_manager,
             datanode_clients,
+            table_metadata_manager,
             dist_instance: <span class="prelude-val">None</span>,
         }
     }
@@ -840,6 +849,7 @@
             TableName::new(catalog, schema, table_name),
             table_info,
             Arc::new(<span class="self">self</span>.clone()),
+            <span class="self">self</span>.table_metadata_manager.clone(),
         ));
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(table))
     }

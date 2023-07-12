@@ -317,6 +317,14 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -338,6 +346,7 @@
 
 <span class="kw">use </span>api::v1::meta::Peer;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+<span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
@@ -409,6 +418,7 @@
     <span class="kw">pub </span>election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
     <span class="kw">pub </span>skip_all: Arc&lt;AtomicBool&gt;,
     <span class="kw">pub </span>is_infancy: bool,
+    <span class="kw">pub </span>table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="kw">impl </span>Context {
@@ -464,6 +474,7 @@
     metadata_service: MetadataServiceRef,
     mailbox: MailboxRef,
     ddl_manager: DdlManagerRef,
+    table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="kw">impl </span>MetaSrv {
@@ -613,6 +624,10 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.procedure_manager
     }
 
+    <span class="kw">pub fn </span>table_metadata_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableMetadataManagerRef {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.table_metadata_manager
+    }
+
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>new_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Context {
         <span class="kw">let </span>server_addr = <span class="self">self</span>.options().server_addr.clone();
@@ -633,6 +648,7 @@
             election,
             skip_all,
             is_infancy: <span class="bool-val">false</span>,
+            table_metadata_manager: <span class="self">self</span>.table_metadata_manager.clone(),
         }
     }
 }

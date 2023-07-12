@@ -273,6 +273,15 @@
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
 <a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -291,6 +300,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>client::client_manager::DatanodeClients;
+<span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 
 <span class="kw">use </span><span class="kw">crate</span>::cluster::{MetaPeerClientBuilder, MetaPeerClientRef};
@@ -314,7 +324,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::selector::lease_based::LeaseBasedSelector;
 <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::{CheckLeader, LeaderCachedKvStore};
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvStoreRef, ResettableKvStoreRef};
+<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvBackendAdapter, KvStoreRef, ResettableKvStoreRef};
 <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 
 <span class="comment">// TODO(fys): try use derive_builder macro
@@ -448,6 +458,10 @@
             .unwrap_or_else(|| Arc::new(DefaultMetadataService::new(kv_store.clone())));
         <span class="kw">let </span>lock = lock.unwrap_or_else(|| Arc::new(MemLock::default()));
 
+        <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(KvBackendAdapter::wrap(
+            kv_store.clone(),
+        )));
+
         <span class="comment">// TODO(weny): considers to modify the default config of procedure manager
         </span><span class="kw">let </span>ddl_manager = Arc::new(DdlManager::new(
             procedure_manager.clone(),
@@ -455,6 +469,7 @@
             datanode_clients.unwrap_or_else(|| Arc::new(DatanodeClients::default())),
             mailbox.clone(),
             options.server_addr.clone(),
+            table_metadata_manager.clone(),
         ));
 
         <span class="kw">let _ </span>= ddl_manager.try_start();
@@ -479,6 +494,7 @@
                             table: <span class="prelude-val">None</span>,
                         },
                         lock.clone(),
+                        table_metadata_manager.clone(),
                     ));
 
                     <span class="prelude-val">Some</span>(
@@ -492,6 +508,7 @@
                     region_failover_handler
                         .as_ref()
                         .map(|x| x.region_failover_manager().clone()),
+                    table_metadata_manager.clone(),
                 );
 
                 <span class="kw">let </span>group = HeartbeatHandlerGroup::new(pushers);
@@ -529,6 +546,7 @@
             metadata_service,
             mailbox,
             ddl_manager,
+            table_metadata_manager,
         })
     }
 }

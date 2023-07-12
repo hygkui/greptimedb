@@ -341,7 +341,6 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::v1::meta::Role;
-<span class="kw">use </span>catalog::remote::RemoteCatalogManager;
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::Client;
 <span class="kw">use </span>common_base::Plugins;
@@ -357,6 +356,7 @@
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
 <span class="kw">use </span>meta_srv::cluster::MetaPeerClientRef;
+<span class="kw">use </span>meta_srv::metadata_service::{DefaultMetadataService, MetadataService};
 <span class="kw">use </span>meta_srv::metasrv::{MetaSrv, MetaSrvOptions};
 <span class="kw">use </span>meta_srv::mocks::MockInfo;
 <span class="kw">use </span>meta_srv::service::store::kv::KvStoreRef;
@@ -452,8 +452,17 @@
             ..Default::default()
         };
 
-        meta_srv::mocks::mock(opt, <span class="self">self</span>.kv_store.clone(), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(datanode_clients)).<span class="kw">await
-    </span>}
+        <span class="kw">let </span>mock =
+            meta_srv::mocks::mock(opt, <span class="self">self</span>.kv_store.clone(), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(datanode_clients)).<span class="kw">await</span>;
+
+        <span class="kw">let </span>metadata_service = DefaultMetadataService::new(mock.meta_srv.kv_store());
+        metadata_service
+            .create_schema(<span class="string">&quot;another_catalog&quot;</span>, <span class="string">&quot;another_schema&quot;</span>, <span class="bool-val">true</span>)
+            .<span class="kw">await
+            </span>.unwrap();
+
+        mock
+    }
 
     <span class="kw">async fn </span>build_datanodes(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -532,15 +541,6 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(heartbeat) = heartbeat.as_ref() {
             heartbeat.start().<span class="kw">await</span>.unwrap();
         }
-        <span class="comment">// create another catalog and schema for testing
-        </span>instance
-            .catalog_manager()
-            .as_any()
-            .downcast_ref::&lt;RemoteCatalogManager&gt;()
-            .unwrap()
-            .create_catalog_and_schema(<span class="string">&quot;another_catalog&quot;</span>, <span class="string">&quot;another_schema&quot;</span>)
-            .<span class="kw">await
-            </span>.unwrap();
         (instance, heartbeat)
     }
 

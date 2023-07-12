@@ -688,6 +688,18 @@
 <a href="#688" id="688">688</a>
 <a href="#689" id="689">689</a>
 <a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -717,6 +729,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::helper::TableGlobalKey;
 <span class="kw">use </span>common_meta::ident::TableIdent;
+<span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_meta::{ClusterId, RegionIdent};
 <span class="kw">use </span>common_procedure::error::{
     Error <span class="kw">as </span>ProcedureError, FromJsonSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>ProcedureResult, ToJsonSnafu,
@@ -764,6 +777,7 @@
     selector_ctx: SelectorContext,
     dist_lock: DistLockRef,
     running_procedures: Arc&lt;RwLock&lt;HashSet&lt;RegionFailoverKey&gt;&gt;&gt;,
+    table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="kw">struct </span>FailoverProcedureGuard {
@@ -784,6 +798,7 @@
         selector: SelectorRef,
         selector_ctx: SelectorContext,
         dist_lock: DistLockRef,
+        table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mailbox,
@@ -792,6 +807,7 @@
             selector_ctx,
             dist_lock,
             running_procedures: Arc::new(RwLock::new(HashSet::new())),
+            table_metadata_manager,
         }
     }
 
@@ -801,6 +817,7 @@
             selector: <span class="self">self</span>.selector.clone(),
             selector_ctx: <span class="self">self</span>.selector_ctx.clone(),
             dist_lock: <span class="self">self</span>.dist_lock.clone(),
+            table_metadata_manager: <span class="self">self</span>.table_metadata_manager.clone(),
         }
     }
 
@@ -918,6 +935,7 @@
     <span class="kw">pub </span>selector: SelectorRef,
     <span class="kw">pub </span>selector_ctx: SelectorContext,
     <span class="kw">pub </span>dist_lock: DistLockRef,
+    <span class="kw">pub </span>table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="doccomment">/// The state machine of region failover procedure. Driven by the call to `next`.
@@ -1064,6 +1082,7 @@
     <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MITO_ENGINE};
     <span class="kw">use </span>common_meta::ident::TableIdent;
     <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
+    <span class="kw">use </span>common_meta::key::TableMetadataManager;
     <span class="kw">use </span>common_meta::DatanodeId;
     <span class="kw">use </span>common_procedure::BoxedProcedure;
     <span class="kw">use </span>rand::prelude::SliceRandom;
@@ -1076,6 +1095,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::selector::{Namespace, Selector};
     <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
     <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::Channel;
+    <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvBackendAdapter, KvStoreRef};
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
     <span class="kw">use </span><span class="kw">crate</span>::table_routes;
 
@@ -1158,7 +1178,7 @@
         </span>}
 
         <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; TestingEnv {
-            <span class="kw">let </span>kv_store = Arc::new(MemStore::new()) <span class="kw">as _</span>;
+            <span class="kw">let </span>kv_store: KvStoreRef = Arc::new(MemStore::new());
             <span class="kw">let </span>meta_peer_client = MetaPeerClientBuilder::default()
                 .election(<span class="prelude-val">None</span>)
                 .in_memory(Arc::new(MemStore::new()))
@@ -1168,6 +1188,9 @@
                 </span>.unwrap();
 
             <span class="kw">let </span>table = <span class="string">&quot;my_table&quot;</span>;
+            <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(
+                KvBackendAdapter::wrap(kv_store.clone()),
+            ));
             <span class="kw">let </span>(<span class="kw">_</span>, table_global_value) =
                 table_routes::tests::prepare_table_global_value(<span class="kw-2">&amp;</span>kv_store, table).<span class="kw">await</span>;
 
@@ -1214,6 +1237,7 @@
                     selector,
                     selector_ctx,
                     dist_lock: Arc::new(MemLock::default()),
+                    table_metadata_manager,
                 },
                 pushers,
                 heartbeat_receivers,

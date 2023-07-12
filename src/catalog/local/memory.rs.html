@@ -584,6 +584,7 @@
 <a href="#584" id="584">584</a>
 <a href="#585" id="585">585</a>
 <a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -661,15 +662,7 @@
     }
 
     <span class="kw">async fn </span>register_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>catalog = request.catalog.clone();
-        <span class="kw">let </span>schema = request.schema.clone();
-        <span class="kw">let </span>result = <span class="self">self</span>.register_table_sync(request);
-        <span class="macro">increment_gauge!</span>(
-            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
-            <span class="number">1.0</span>,
-            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>schema)],
-        );
-        result
+        <span class="self">self</span>.register_table_sync(request)
     }
 
     <span class="kw">async fn </span>rename_table(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RenameTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
@@ -729,11 +722,7 @@
     }
 
     <span class="kw">async fn </span>register_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>registered = <span class="self">self</span>.register_schema_sync(request)<span class="question-mark">?</span>;
-        <span class="kw">if </span>registered {
-            <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
-        }
-        <span class="prelude-val">Ok</span>(registered)
+        <span class="self">self</span>.register_schema_sync(request)
     }
 
     <span class="kw">async fn </span>deregister_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeregisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
@@ -849,11 +838,7 @@
     }
 
     <span class="kw">async fn </span>register_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>, name: String) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>registered = <span class="self">self</span>.register_catalog_sync(name)<span class="question-mark">?</span>;
-        <span class="kw">if </span>registered {
-            <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
-        }
-        <span class="prelude-val">Ok</span>(registered)
+        <span class="self">self</span>.register_catalog_sync(name)
     }
 
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
@@ -877,7 +862,15 @@
 
     <span class="kw">pub fn </span>register_catalog_sync(<span class="kw-2">&amp;</span><span class="self">self</span>, name: String) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.catalogs.write().unwrap();
-        <span class="prelude-val">Ok</span>(catalogs.insert(name, HashMap::new()).is_some())
+
+        <span class="kw">match </span>catalogs.entry(name) {
+            Entry::Vacant(e) =&gt; {
+                e.insert(HashMap::new());
+                <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
+                <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+            }
+            Entry::Occupied(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
+        }
     }
 
     <span class="kw">pub fn </span>register_schema_sync(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
@@ -887,11 +880,15 @@
             .with_context(|| CatalogNotFoundSnafu {
                 catalog_name: <span class="kw-2">&amp;</span>request.catalog,
             })<span class="question-mark">?</span>;
-        <span class="kw">if </span>catalog.contains_key(<span class="kw-2">&amp;</span>request.schema) {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
+
+        <span class="kw">match </span>catalog.entry(request.schema) {
+            Entry::Vacant(e) =&gt; {
+                e.insert(HashMap::new());
+                <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
+                <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+            }
+            Entry::Occupied(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
         }
-        <span class="kw">let _ </span>= catalog.insert(request.schema, HashMap::new());
-        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
     <span class="kw">pub fn </span>register_table_sync(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
@@ -913,8 +910,13 @@
             }
             .fail();
         }
-
-        <span class="prelude-val">Ok</span>(schema.insert(request.table_name, request.table).is_none())
+        schema.insert(request.table_name, request.table);
+        <span class="macro">increment_gauge!</span>(
+            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
+            <span class="number">1.0</span>,
+            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema)],
+        );
+        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
     <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;testing&quot;</span>))]

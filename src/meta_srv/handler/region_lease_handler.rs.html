@@ -224,6 +224,20 @@
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -245,6 +259,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::helper::TableGlobalKey;
 <span class="kw">use </span>common_meta::ident::TableIdent;
+<span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_meta::ClusterId;
 <span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
 
@@ -263,16 +278,20 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RegionLeaseHandler {
     kv_store: KvStoreRef,
     region_failover_manager: <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionFailoverManager&gt;&gt;,
+    <span class="attr">#[allow(unused)]
+    </span>table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="kw">impl </span>RegionLeaseHandler {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
         kv_store: KvStoreRef,
         region_failover_manager: <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionFailoverManager&gt;&gt;,
+        table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             kv_store,
             region_failover_manager,
+            table_metadata_manager,
         }
     }
 
@@ -375,10 +394,12 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+    <span class="kw">use </span>common_meta::key::TableMetadataManager;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::handler::node_stat::{RegionStat, Stat};
     <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
+    <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvBackendAdapter;
     <span class="kw">use </span><span class="kw">crate</span>::test_util;
 
     <span class="attr">#[tokio::test]
@@ -391,6 +412,9 @@
             .clone();
 
         <span class="kw">let </span>table_name = <span class="string">&quot;my_table&quot;</span>;
+        <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(KvBackendAdapter::wrap(
+            kv_store.clone(),
+        )));
         <span class="kw">let _ </span>= table_routes::tests::prepare_table_global_value(<span class="kw-2">&amp;</span>kv_store, table_name).<span class="kw">await</span>;
 
         <span class="kw">let </span>table_ident = TableIdent {
@@ -410,7 +434,11 @@
                 region_number: <span class="number">1</span>,
             });
 
-        <span class="kw">let </span>handler = RegionLeaseHandler::new(kv_store, <span class="prelude-val">Some</span>(region_failover_manager));
+        <span class="kw">let </span>handler = RegionLeaseHandler::new(
+            kv_store,
+            <span class="prelude-val">Some</span>(region_failover_manager),
+            table_metadata_manager,
+        );
 
         <span class="kw">let </span>req = HeartbeatRequest {
             duration_since_epoch: <span class="number">1234</span>,

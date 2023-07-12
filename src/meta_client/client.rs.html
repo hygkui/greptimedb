@@ -985,6 +985,7 @@
 <a href="#985" id="985">985</a>
 <a href="#986" id="986">986</a>
 <a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1524,16 +1525,16 @@
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(res.err(), <span class="prelude-val">Some</span>(error::Error::NotStarted { .. })));
     }
 
-    <span class="kw">fn </span>new_table_info() -&gt; RawTableInfo {
+    <span class="kw">fn </span>new_table_info(table_name: <span class="kw-2">&amp;</span>TableName) -&gt; RawTableInfo {
         RawTableInfo {
             ident: TableIdent {
                 table_id: <span class="number">0</span>,
                 version: <span class="number">0</span>,
             },
-            name: <span class="string">&quot;t&quot;</span>.to_string(),
+            name: table_name.table_name.clone(),
             desc: <span class="prelude-val">None</span>,
-            catalog_name: <span class="string">&quot;c&quot;</span>.to_string(),
-            schema_name: <span class="string">&quot;s&quot;</span>.to_string(),
+            catalog_name: table_name.catalog_name.clone(),
+            schema_name: table_name.schema_name.clone(),
             meta: RawTableMeta {
                 schema: RawSchema {
                     column_schemas: <span class="macro">vec!</span>[ColumnSchema::new(
@@ -1566,8 +1567,9 @@
             .build();
         meta_client.start(urls).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>table_info = new_table_info();
-        <span class="kw">let </span>req = CreateRequest::new(TableName::new(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="string">&quot;t&quot;</span>), <span class="kw-2">&amp;</span>table_info);
+        <span class="kw">let </span>table_name = TableName::new(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="string">&quot;t&quot;</span>);
+        <span class="kw">let </span>table_info = new_table_info(<span class="kw-2">&amp;</span>table_name);
+        <span class="kw">let </span>req = CreateRequest::new(table_name, <span class="kw-2">&amp;</span>table_info);
         <span class="kw">let </span>res = meta_client.create_route(req).<span class="kw">await</span>;
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(res.err(), <span class="prelude-val">Some</span>(error::Error::NotStarted { .. })));
     }
@@ -1661,7 +1663,7 @@
             value_list: <span class="macro">vec!</span>[<span class="string">b&quot;Max1&quot;</span>.to_vec(), <span class="string">b&quot;Max2&quot;</span>.to_vec()],
         };
         <span class="kw">let </span>table_name = TableName::new(<span class="string">&quot;test_catalog&quot;</span>, <span class="string">&quot;test_schema&quot;</span>, <span class="string">&quot;test_table&quot;</span>);
-        <span class="kw">let </span>table_info = new_table_info();
+        <span class="kw">let </span>table_info = new_table_info(<span class="kw-2">&amp;</span>table_name);
         <span class="kw">let </span>req = CreateRequest::new(table_name.clone(), <span class="kw-2">&amp;</span>table_info)
             .add_partition(p1)
             .add_partition(p2);

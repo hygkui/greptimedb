@@ -147,6 +147,13 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -164,6 +171,7 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>client::client_manager::DatanodeClients;
+<span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_meta::rpc::ddl::{CreateTableTask, DropTableTask};
 <span class="kw">use </span>common_meta::rpc::router::TableRoute;
 <span class="kw">use </span>common_procedure::{watcher, ProcedureId, ProcedureManagerRef, ProcedureWithId};
@@ -183,6 +191,7 @@
     datanode_clients: Arc&lt;DatanodeClients&gt;,
     mailbox: MailboxRef,
     server_addr: String,
+    table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="attr">#[derive(Clone)]
@@ -191,6 +200,8 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) datanode_clients: Arc&lt;DatanodeClients&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) mailbox: MailboxRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) server_addr: String,
+    <span class="attr">#[allow(unused)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="kw">impl </span>DdlManager {
@@ -200,6 +211,7 @@
         datanode_clients: Arc&lt;DatanodeClients&gt;,
         mailbox: MailboxRef,
         server_addr: String,
+        table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             procedure_manager,
@@ -207,6 +219,7 @@
             datanode_clients,
             mailbox,
             server_addr,
+            table_metadata_manager,
         }
     }
 
@@ -216,6 +229,7 @@
             datanode_clients: <span class="self">self</span>.datanode_clients.clone(),
             mailbox: <span class="self">self</span>.mailbox.clone(),
             server_addr: <span class="self">self</span>.server_addr.clone(),
+            table_metadata_manager: <span class="self">self</span>.table_metadata_manager.clone(),
         }
     }
 

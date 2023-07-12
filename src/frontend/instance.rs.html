@@ -872,6 +872,10 @@
 <a href="#872" id="872">872</a>
 <a href="#873" id="873">873</a>
 <a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -913,6 +917,7 @@
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
 <span class="kw">use </span>common_meta::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
 <span class="kw">use </span>common_meta::heartbeat::handler::HandlerGroupExecutor;
+<span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::logging::{debug, info};
 <span class="kw">use </span>common_telemetry::timer;
@@ -1023,17 +1028,20 @@
         <span class="kw">let </span>table_routes = Arc::new(TableRoutes::new(meta_client.clone()));
         <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(table_routes));
 
+        <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(meta_backend.clone()));
         <span class="kw">let </span><span class="kw-2">mut </span>catalog_manager = FrontendCatalogManager::new(
             meta_backend.clone(),
             meta_backend.clone(),
             partition_manager.clone(),
             datanode_clients.clone(),
+            table_metadata_manager.clone(),
         );
 
         <span class="kw">let </span>dist_instance = DistInstance::new(
             meta_client.clone(),
             Arc::new(catalog_manager.clone()),
             datanode_clients.clone(),
+            table_metadata_manager.clone(),
         );
         <span class="kw">let </span>dist_instance = Arc::new(dist_instance);
 

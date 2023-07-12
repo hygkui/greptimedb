@@ -278,6 +278,8 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -301,6 +303,7 @@
 <span class="kw">use </span>client::{Client, Database, DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_error::prelude::ErrorExt;
+<span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::RecordBatches;
 <span class="kw">use </span>common_telemetry::logging;
@@ -543,9 +546,10 @@
 
     <span class="kw">let </span>catalog_list = Arc::new(FrontendCatalogManager::new(
         cached_meta_backend.clone(),
-        cached_meta_backend,
+        cached_meta_backend.clone(),
         partition_manager,
         datanode_clients,
+        Arc::new(TableMetadataManager::new(cached_meta_backend)),
     ));
     <span class="kw">let </span>plugins: Arc&lt;Plugins&gt; = Default::default();
     <span class="kw">let </span>state = Arc::new(QueryEngineState::new(

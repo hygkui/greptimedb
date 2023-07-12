@@ -980,6 +980,10 @@
 <a href="#980" id="980">980</a>
 <a href="#981" id="981">981</a>
 <a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1004,7 +1008,7 @@
 <span class="kw">use </span>catalog::helper::{TableGlobalKey, TableGlobalValue};
 <span class="kw">use </span>client::Database;
 <span class="kw">use </span>common_error::prelude::BoxedError;
-<span class="kw">use </span>common_meta::key::TableRouteKey;
+<span class="kw">use </span>common_meta::key::{TableMetadataManagerRef, TableRouteKey};
 <span class="kw">use </span>common_meta::rpc::store::{MoveValueRequest, PutRequest};
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::error::Result <span class="kw">as </span>QueryResult;
@@ -1054,6 +1058,8 @@
     table_name: TableName,
     table_info: TableInfoRef,
     catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
+    <span class="attr">#[allow(unused)]
+    </span>table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="attr">#[async_trait]
@@ -1224,11 +1230,13 @@
         table_name: TableName,
         table_info: TableInfoRef,
         catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
+        table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             table_name,
             table_info,
             catalog_manager,
+            table_metadata_manager,
         }
     }
 

@@ -940,6 +940,12 @@
 <a href="#940" id="940">940</a>
 <a href="#941" id="941">941</a>
 <a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1404,6 +1410,12 @@
 }
 
 <span class="kw">pub type </span>TableInfoRef = Arc&lt;TableInfo&gt;;
+
+<span class="kw">impl </span>TableInfo {
+    <span class="kw">pub fn </span>table_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableId {
+        <span class="self">self</span>.ident.table_id
+    }
+}
 
 <span class="kw">impl </span>TableInfoBuilder {
     <span class="kw">pub fn </span>new&lt;S: Into&lt;String&gt;&gt;(name: S, meta: TableMeta) -&gt; <span class="self">Self </span>{
