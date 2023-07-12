@@ -318,6 +318,10 @@
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -346,7 +350,7 @@
 <span class="kw">use </span>common_meta::DatanodeId;
 <span class="kw">use </span>common_runtime::Builder <span class="kw">as </span>RuntimeBuilder;
 <span class="kw">use </span>common_test_util::temp_dir::create_temp_dir;
-<span class="kw">use </span>datanode::datanode::{DatanodeOptions, ObjectStoreConfig};
+<span class="kw">use </span>datanode::datanode::{DatanodeOptions, ObjectStoreConfig, ProcedureConfig};
 <span class="kw">use </span>datanode::heartbeat::HeartbeatTask;
 <span class="kw">use </span>datanode::instance::Instance <span class="kw">as </span>DatanodeInstance;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
@@ -438,13 +442,17 @@
     }
 
     <span class="kw">async fn </span>build_metasrv(<span class="kw-2">&amp;</span><span class="self">self</span>, datanode_clients: Arc&lt;DatanodeClients&gt;) -&gt; MockInfo {
-        meta_srv::mocks::mock(
-            MetaSrvOptions::default(),
-            <span class="self">self</span>.kv_store.clone(),
-            <span class="prelude-val">None</span>,
-            <span class="prelude-val">Some</span>(datanode_clients),
-        )
-        .<span class="kw">await
+        <span class="kw">let </span>opt = MetaSrvOptions {
+            procedure: ProcedureConfig {
+                <span class="comment">// Due to large network delay during cross data-center.
+                // We only make max_retry_times and retry_delay large than the default in tests.
+                </span>max_retry_times: <span class="number">5</span>,
+                retry_delay: Duration::from_secs(<span class="number">1</span>),
+            },
+            ..Default::default()
+        };
+
+        meta_srv::mocks::mock(opt, <span class="self">self</span>.kv_store.clone(), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(datanode_clients)).<span class="kw">await
     </span>}
 
     <span class="kw">async fn </span>build_datanodes(

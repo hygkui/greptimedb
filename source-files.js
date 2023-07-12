@@ -14,7 +14,7 @@ var sourcesIndex = JSON.parse('{\
 "common_mem_prof":["",[],["error.rs","lib.rs"]],\
 "common_meta":["",[["heartbeat",[["handler",[],["parse_mailbox_message.rs"]]],["handler.rs","mailbox.rs","utils.rs"]],["key",[],["datanode_table.rs","table_info.rs","table_name.rs","table_region.rs","table_route.rs"]],["kv_backend",[["txn",[],["etcd.rs"]]],["memory.rs","txn.rs"]],["rpc",[],["ddl.rs","lock.rs","router.rs","store.rs","util.rs"]]],["error.rs","heartbeat.rs","ident.rs","instruction.rs","key.rs","kv_backend.rs","lib.rs","metrics.rs","peer.rs","rpc.rs","table_name.rs","util.rs"]],\
 "common_pprof":["",[],["lib.rs"]],\
-"common_procedure":["",[["local",[],["lock.rs","runner.rs"]],["store",[],["state_store.rs"]]],["error.rs","lib.rs","local.rs","procedure.rs","store.rs","watcher.rs"]],\
+"common_procedure":["",[["local",[],["lock.rs","runner.rs"]],["store",[],["state_store.rs"]]],["error.rs","lib.rs","local.rs","options.rs","procedure.rs","store.rs","watcher.rs"]],\
 "common_procedure_test":["",[],["lib.rs"]],\
 "common_query":["",[["logical_plan",[],["accumulator.rs","expr.rs","udaf.rs","udf.rs"]]],["columnar_value.rs","error.rs","function.rs","lib.rs","logical_plan.rs","physical_plan.rs","prelude.rs","signature.rs"]],\
 "common_recordbatch":["",[],["adapter.rs","error.rs","lib.rs","recordbatch.rs","util.rs"]],\

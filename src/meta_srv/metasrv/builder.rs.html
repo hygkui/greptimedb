@@ -266,6 +266,13 @@
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -428,7 +435,14 @@
         <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">1</span>, <span class="number">100</span>, kv_store.clone());
         <span class="kw">let </span>mailbox = HeartbeatMailbox::create(pushers.clone(), mailbox_sequence);
         <span class="kw">let </span>state_store = Arc::new(MetaStateStore::new(kv_store.clone()));
-        <span class="kw">let </span>procedure_manager = Arc::new(LocalManager::new(ManagerConfig::default(), state_store));
+
+        <span class="kw">let </span>manager_config = ManagerConfig {
+            max_retry_times: options.procedure.max_retry_times,
+            retry_delay: options.procedure.retry_delay,
+            ..Default::default()
+        };
+
+        <span class="kw">let </span>procedure_manager = Arc::new(LocalManager::new(manager_config, state_store));
         <span class="kw">let </span>table_id_sequence = Arc::new(Sequence::new(TABLE_ID_SEQ, <span class="number">1024</span>, <span class="number">10</span>, kv_store.clone()));
         <span class="kw">let </span>metadata_service = metadata_service
             .unwrap_or_else(|| Arc::new(DefaultMetadataService::new(kv_store.clone())));

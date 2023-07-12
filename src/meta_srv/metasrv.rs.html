@@ -315,6 +315,8 @@
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
 <a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -336,6 +338,7 @@
 
 <span class="kw">use </span>api::v1::meta::Peer;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+<span class="kw">use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>common_telemetry::{error, info, warn};
@@ -355,7 +358,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::sequence::SequenceRef;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvStoreRef, ResettableKvStoreRef};
-
 <span class="kw">pub const </span>TABLE_ID_SEQ: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table_id&quot;</span>;
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -370,6 +372,7 @@
     <span class="kw">pub </span>disable_region_failover: bool,
     <span class="kw">pub </span>http_opts: HttpOptions,
     <span class="kw">pub </span>logging: LoggingOptions,
+    <span class="kw">pub </span>procedure: ProcedureConfig,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>MetaSrvOptions {
@@ -384,6 +387,7 @@
             disable_region_failover: <span class="bool-val">false</span>,
             http_opts: HttpOptions::default(),
             logging: LoggingOptions::default(),
+            procedure: ProcedureConfig::default(),
         }
     }
 }
