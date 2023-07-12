@@ -869,6 +869,9 @@
 <a href="#869" id="869">869</a>
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1516,6 +1519,9 @@
         Statement::Copy(sql::statements::copy::Copy::CopyDatabase(stmt)) =&gt; {
             validate_param(<span class="kw-2">&amp;</span>stmt.database_name, query_ctx)<span class="question-mark">?
         </span>}
+        Statement::TruncateTable(stmt) =&gt; {
+            validate_param(stmt.table_name(), query_ctx)<span class="question-mark">?</span>;
+        }
     }
     <span class="prelude-val">Ok</span>(())
 }

@@ -258,6 +258,7 @@
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -390,6 +391,7 @@
             | Statement::CreateExternalTable(<span class="kw">_</span>)
             | Statement::Alter(<span class="kw">_</span>)
             | Statement::DropTable(<span class="kw">_</span>)
+            | Statement::TruncateTable(<span class="kw">_</span>)
             | Statement::ShowCreateTable(<span class="kw">_</span>) =&gt; <span class="self">self
                 </span>.sql_stmt_executor
                 .execute_sql(stmt, query_ctx)
