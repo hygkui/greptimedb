@@ -869,7 +869,6 @@
 <a href="#869" id="869">869</a>
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
-<a href="#872" id="872">872</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -920,7 +919,6 @@
 <span class="kw">use </span>datatypes::schema::Schema;
 <span class="kw">use </span>distributed::DistInstance;
 <span class="kw">use </span>meta_client::client::{MetaClient, MetaClientBuilder};
-<span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>partition::manager::PartitionRuleManager;
 <span class="kw">use </span>partition::route::TableRoutes;
 <span class="kw">use </span>query::parser::{PromQuery, QueryLanguageParser, QueryStatement};
@@ -1088,21 +1086,21 @@
     }
 
     <span class="kw">async fn </span>create_meta_client(opts: <span class="kw-2">&amp;</span>FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;MetaClient&gt;&gt; {
-        <span class="kw">let </span>metasrv_addr = <span class="kw-2">&amp;</span>opts
+        <span class="kw">let </span>meta_client_options = opts
             .meta_client_options
             .as_ref()
-            .context(MissingMetasrvOptsSnafu)<span class="question-mark">?
-            </span>.metasrv_addrs;
+            .context(MissingMetasrvOptsSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(
             <span class="string">&quot;Creating Frontend instance in distributed mode with Meta server addr {:?}&quot;</span>,
-            metasrv_addr
+            meta_client_options.metasrv_addrs
         );
 
-        <span class="kw">let </span>meta_config = MetaClientOptions::default();
         <span class="kw">let </span>channel_config = ChannelConfig::new()
-            .timeout(Duration::from_millis(meta_config.timeout_millis))
-            .connect_timeout(Duration::from_millis(meta_config.connect_timeout_millis))
-            .tcp_nodelay(meta_config.tcp_nodelay);
+            .timeout(Duration::from_millis(meta_client_options.timeout_millis))
+            .connect_timeout(Duration::from_millis(
+                meta_client_options.connect_timeout_millis,
+            ))
+            .tcp_nodelay(meta_client_options.tcp_nodelay);
 
         <span class="kw">let </span>channel_manager = ChannelManager::with_config(channel_config);
         channel_manager.start_channel_recycle();
@@ -1115,7 +1113,7 @@
             .channel_manager(channel_manager)
             .build();
         meta_client
-            .start(metasrv_addr)
+            .start(<span class="kw-2">&amp;</span>meta_client_options.metasrv_addrs)
             .<span class="kw">await
             </span>.context(error::StartMetaClientSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Arc::new(meta_client))
