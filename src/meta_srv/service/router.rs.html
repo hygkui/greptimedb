@@ -467,8 +467,8 @@
         <span class="kw">let </span>ctx = SelectorContext {
             datanode_lease_secs: <span class="self">self</span>.options().datanode_lease_secs,
             server_addr: <span class="self">self</span>.options().server_addr.clone(),
-            kv_store: <span class="self">self</span>.kv_store(),
-            meta_peer_client: <span class="self">self</span>.meta_peer_client(),
+            kv_store: <span class="self">self</span>.kv_store().clone(),
+            meta_peer_client: <span class="self">self</span>.meta_peer_client().clone(),
             catalog: <span class="prelude-val">Some</span>(table_name.catalog_name.clone()),
             schema: <span class="prelude-val">Some</span>(table_name.schema_name.clone()),
             table: <span class="prelude-val">Some</span>(table_name.table_name.clone()),
@@ -522,8 +522,8 @@
 <span class="kw">async fn </span>handle_create(
     req: CreateRequest,
     ctx: SelectorContext,
-    selector: SelectorRef,
-    table_id_sequence: SequenceRef,
+    selector: <span class="kw-2">&amp;</span>SelectorRef,
+    table_id_sequence: <span class="kw-2">&amp;</span>SequenceRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
     <span class="kw">let </span>CreateRequest {
         header,

@@ -265,7 +265,7 @@
     ) -&gt; GrpcResult&lt;<span class="self">Self</span>::HeartbeatStream&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>in_stream = req.into_inner();
         <span class="kw">let </span>(tx, rx) = mpsc::channel(<span class="number">128</span>);
-        <span class="kw">let </span>handler_group = <span class="self">self</span>.handler_group();
+        <span class="kw">let </span>handler_group = <span class="self">self</span>.handler_group().clone();
         <span class="kw">let </span>ctx = <span class="self">self</span>.new_ctx();
         <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>pusher_key = <span class="prelude-val">None</span>;

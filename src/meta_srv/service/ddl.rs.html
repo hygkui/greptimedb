@@ -356,8 +356,8 @@
         <span class="kw">let </span>ctx = SelectorContext {
             datanode_lease_secs: <span class="self">self</span>.options().datanode_lease_secs,
             server_addr: <span class="self">self</span>.options().server_addr.clone(),
-            kv_store: <span class="self">self</span>.kv_store(),
-            meta_peer_client: <span class="self">self</span>.meta_peer_client(),
+            kv_store: <span class="self">self</span>.kv_store().clone(),
+            meta_peer_client: <span class="self">self</span>.meta_peer_client().clone(),
             catalog: <span class="prelude-val">None</span>,
             schema: <span class="prelude-val">None</span>,
             table: <span class="prelude-val">None</span>,

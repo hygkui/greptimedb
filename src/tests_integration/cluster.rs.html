@@ -421,7 +421,7 @@
 
         build_datanode_clients(datanode_clients.clone(), <span class="kw-2">&amp;</span>datanode_instances, datanodes).<span class="kw">await</span>;
 
-        <span class="self">self</span>.wait_datanodes_alive(<span class="kw-2">&amp;</span>meta_srv.meta_srv.meta_peer_client(), datanodes)
+        <span class="self">self</span>.wait_datanodes_alive(meta_srv.meta_srv.meta_peer_client(), datanodes)
             .<span class="kw">await</span>;
 
         <span class="kw">let </span>frontend = <span class="self">self
@@ -455,7 +455,7 @@
         <span class="kw">let </span>mock =
             meta_srv::mocks::mock(opt, <span class="self">self</span>.kv_store.clone(), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(datanode_clients)).<span class="kw">await</span>;
 
-        <span class="kw">let </span>metadata_service = DefaultMetadataService::new(mock.meta_srv.kv_store());
+        <span class="kw">let </span>metadata_service = DefaultMetadataService::new(mock.meta_srv.kv_store().clone());
         metadata_service
             .create_schema(<span class="string">&quot;another_catalog&quot;</span>, <span class="string">&quot;another_schema&quot;</span>, <span class="bool-val">true</span>)
             .<span class="kw">await
