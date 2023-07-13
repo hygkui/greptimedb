@@ -582,13 +582,13 @@
     // there won&#39;t be many keys, in fact, there is usually just one.
     </span><span class="kw">for </span>tgk <span class="kw">in </span>keys {
         <span class="kw">let </span>tgv = get_table_global_value(kv_store, <span class="kw-2">&amp;</span>tgk).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">if </span>tgv.is_none() {
+        <span class="kw">let </span><span class="prelude-val">Some</span>(tgv) = tgv <span class="kw">else </span>{
             <span class="macro">warn!</span>(<span class="string">&quot;Table global value is absent: {}&quot;</span>, tgk);
             <span class="kw">continue</span>;
-        }
-        <span class="kw">let </span>tgv = tgv.unwrap();
+        };
 
         <span class="kw">let </span>trk = table_route_key(tgv.table_id(), <span class="kw-2">&amp;</span>tgk);
+
         <span class="kw">let </span>trv = get_table_route_value(kv_store, <span class="kw-2">&amp;</span>trk).<span class="kw">await</span><span class="question-mark">?</span>;
 
         tables.push((tgv, trv));

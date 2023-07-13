@@ -986,6 +986,15 @@
 <a href="#986" id="986">986</a>
 <a href="#987" id="987">987</a>
 <a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1042,6 +1051,7 @@
     enable_lock: bool,
     enable_ddl: bool,
     channel_manager: <span class="prelude-ty">Option</span>&lt;ChannelManager&gt;,
+    ddl_channel_manager: <span class="prelude-ty">Option</span>&lt;ChannelManager&gt;,
 }
 
 <span class="kw">impl </span>MetaClientBuilder {
@@ -1095,6 +1105,13 @@
         </span>}
     }
 
+    <span class="kw">pub fn </span>ddl_channel_manager(<span class="self">self</span>, channel_manager: ChannelManager) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            ddl_channel_manager: <span class="prelude-val">Some</span>(channel_manager),
+            ..<span class="self">self
+        </span>}
+    }
+
     <span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; MetaClient {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="kw">if let </span><span class="prelude-val">Some</span>(mgr) = <span class="self">self</span>.channel_manager {
             MetaClient::with_channel_manager(<span class="self">self</span>.id, mgr)
@@ -1121,6 +1138,7 @@
             client.lock = <span class="prelude-val">Some</span>(LockClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr.clone()));
         }
         <span class="kw">if </span><span class="self">self</span>.enable_ddl {
+            <span class="kw">let </span>mgr = <span class="self">self</span>.ddl_channel_manager.unwrap_or(mgr);
             client.ddl = <span class="prelude-val">Some</span>(DdlClient::new(<span class="self">self</span>.id, <span class="self">self</span>.role, mgr));
         }
 

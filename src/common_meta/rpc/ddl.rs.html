@@ -287,6 +287,80 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -305,11 +379,11 @@
 
 <span class="kw">use </span>api::v1::meta::submit_ddl_task_request::Task;
 <span class="kw">use </span>api::v1::meta::{
-    CreateTableTask <span class="kw">as </span>PbCreateTableTask, DropTableTask <span class="kw">as </span>PbDropTableTask, Partition,
-    SubmitDdlTaskRequest <span class="kw">as </span>PbSubmitDdlTaskRequest,
+    AlterTableTask <span class="kw">as </span>PbAlterTableTask, CreateTableTask <span class="kw">as </span>PbCreateTableTask,
+    DropTableTask <span class="kw">as </span>PbDropTableTask, Partition, SubmitDdlTaskRequest <span class="kw">as </span>PbSubmitDdlTaskRequest,
     SubmitDdlTaskResponse <span class="kw">as </span>PbSubmitDdlTaskResponse,
 };
-<span class="kw">use </span>api::v1::{CreateTableExpr, DropTableExpr};
+<span class="kw">use </span>api::v1::{AlterExpr, CreateTableExpr, DropTableExpr};
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -323,6 +397,7 @@
 </span><span class="kw">pub enum </span>DdlTask {
     CreateTable(CreateTableTask),
     DropTable(DropTableTask),
+    AlterTable(AlterTableTask),
 }
 
 <span class="kw">impl </span>DdlTask {
@@ -347,6 +422,10 @@
             table_id,
         })
     }
+
+    <span class="kw">pub fn </span>new_alter_table(alter_table: AlterExpr) -&gt; <span class="self">Self </span>{
+        DdlTask::AlterTable(AlterTableTask { alter_table })
+    }
 }
 
 <span class="kw">impl </span>TryFrom&lt;Task&gt; <span class="kw">for </span>DdlTask {
@@ -357,7 +436,7 @@
                 <span class="prelude-val">Ok</span>(DdlTask::CreateTable(create_table.try_into()<span class="question-mark">?</span>))
             }
             Task::DropTableTask(drop_table) =&gt; <span class="prelude-val">Ok</span>(DdlTask::DropTable(drop_table.try_into()<span class="question-mark">?</span>)),
-            <span class="kw">_ </span>=&gt; <span class="macro">todo!</span>(),
+            Task::AlterTableTask(alter_table) =&gt; <span class="prelude-val">Ok</span>(DdlTask::AlterTable(alter_table.try_into()<span class="question-mark">?</span>)),
         }
     }
 }
@@ -376,7 +455,6 @@
                 create_table: <span class="prelude-val">Some</span>(task.create_table),
                 partitions: task.partitions,
             }),
-
             DdlTask::DropTable(task) =&gt; Task::DropTableTask(PbDropTableTask {
                 drop_table: <span class="prelude-val">Some</span>(DropTableExpr {
                     catalog_name: task.catalog,
@@ -385,7 +463,11 @@
                     table_id: <span class="prelude-val">Some</span>(api::v1::TableId { id: task.table_id }),
                 }),
             }),
+            DdlTask::AlterTable(task) =&gt; Task::AlterTableTask(PbAlterTableTask {
+                alter_table: <span class="prelude-val">Some</span>(task.alter_table),
+            }),
         };
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             header: <span class="prelude-val">None</span>,
             task: <span class="prelude-val">Some</span>(task),
@@ -543,6 +625,72 @@
             .map_err(|err| serde::de::Error::custom(err.to_string()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>expr = CreateTableTask::try_from(expr)
+            .map_err(|err| serde::de::Error::custom(err.to_string()))<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(expr)
+    }
+}
+
+<span class="attr">#[derive(Debug, PartialEq)]
+</span><span class="kw">pub struct </span>AlterTableTask {
+    <span class="kw">pub </span>alter_table: AlterExpr,
+}
+
+<span class="kw">impl </span>AlterTableTask {
+    <span class="kw">pub fn </span>table_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableReference {
+        TableReference {
+            catalog: <span class="kw-2">&amp;</span><span class="self">self</span>.alter_table.catalog_name,
+            schema: <span class="kw-2">&amp;</span><span class="self">self</span>.alter_table.schema_name,
+            table: <span class="kw-2">&amp;</span><span class="self">self</span>.alter_table.table_name,
+        }
+    }
+
+    <span class="kw">pub fn </span>table_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableName {
+        <span class="kw">let </span>table = <span class="kw-2">&amp;</span><span class="self">self</span>.alter_table;
+
+        TableName {
+            catalog_name: table.catalog_name.to_string(),
+            schema_name: table.schema_name.to_string(),
+            table_name: table.table_name.to_string(),
+        }
+    }
+}
+
+<span class="kw">impl </span>TryFrom&lt;PbAlterTableTask&gt; <span class="kw">for </span>AlterTableTask {
+    <span class="kw">type </span>Error = error::Error;
+
+    <span class="kw">fn </span>try_from(pb: PbAlterTableTask) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>alter_table = pb.alter_table.context(error::InvalidProtoMsgSnafu {
+            err_msg: <span class="string">&quot;expected alter_table&quot;</span>,
+        })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(AlterTableTask { alter_table })
+    }
+}
+
+<span class="kw">impl </span>Serialize <span class="kw">for </span>AlterTableTask {
+    <span class="kw">fn </span>serialize&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: S) -&gt; result::Result&lt;S::Ok, S::Error&gt;
+    <span class="kw">where
+        </span>S: serde::Serializer,
+    {
+        <span class="kw">let </span>pb = PbAlterTableTask {
+            alter_table: <span class="prelude-val">Some</span>(<span class="self">self</span>.alter_table.clone()),
+        };
+        <span class="kw">let </span>buf = pb.encode_to_vec();
+        serializer.serialize_bytes(<span class="kw-2">&amp;</span>buf)
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>AlterTableTask {
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; result::Result&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: serde::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
+    {
+        <span class="kw">let </span>buf = Vec::&lt;u8&gt;::deserialize(deserializer)<span class="question-mark">?</span>;
+        <span class="kw">let </span>expr: PbAlterTableTask = PbAlterTableTask::decode(<span class="kw-2">&amp;*</span>buf)
+            .map_err(|err| serde::de::Error::custom(err.to_string()))<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>expr = AlterTableTask::try_from(expr)
             .map_err(|err| serde::de::Error::custom(err.to_string()))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(expr)

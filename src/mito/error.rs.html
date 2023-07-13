@@ -210,6 +210,7 @@
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -376,10 +377,11 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid schema, source: {}&quot;</span>, source))]
     </span>InvalidRawSchema { source: datatypes::error::Error },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table version changed, expect: {}, actual: {}&quot;</span>, expect, actual))]
-    </span>VersionChanged {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Stale version found, expect: {}, current: {}&quot;</span>, expect, current))]
+    </span>StaleVersion {
         expect: TableVersion,
-        actual: TableVersion,
+        current: TableVersion,
+        location: Location,
     },
 }
 
@@ -401,7 +403,7 @@
             | MissingTimestampIndex { .. }
             | TableNotFound { .. }
             | InvalidRawSchema { .. }
-            | VersionChanged { .. } =&gt; StatusCode::InvalidArguments,
+            | StaleVersion { .. } =&gt; StatusCode::InvalidArguments,
 
             TableExists { .. } =&gt; StatusCode::TableAlreadyExists,
 

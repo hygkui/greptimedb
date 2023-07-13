@@ -507,6 +507,11 @@
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
 <a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -521,7 +526,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">use </span>std::cmp::Ordering;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_procedure::error::{Error, FromJsonSnafu, ToJsonSnafu};
@@ -529,7 +535,7 @@
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>common_telemetry::metric::Timer;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::manifest::Manifest;
 <span class="kw">use </span>store_api::storage::{AlterOperation, StorageEngine};
 <span class="kw">use </span>table::engine::TableReference;
@@ -538,7 +544,7 @@
 <span class="kw">use </span>table::{Table, TableRef};
 
 <span class="kw">use </span><span class="kw">crate</span>::engine::MitoEngineInner;
-<span class="kw">use </span><span class="kw">crate</span>::error::{TableNotFoundSnafu, UpdateTableManifestSnafu, VersionChangedSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::error::{StaleVersionSnafu, TableNotFoundSnafu, UpdateTableManifestSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{TableChange, TableMetaAction, TableMetaActionList};
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::table::MitoTable;
@@ -619,7 +625,7 @@
                 table_name: table_ref.to_string(),
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>info = table.table_info();
-        data.table_version = info.ident.version;
+        data.table_version = data.request.table_version.unwrap_or(info.ident.version);
 
         <span class="prelude-val">Ok</span>(AlterMitoTable {
             data,
@@ -670,19 +676,23 @@
     <span class="doccomment">/// Prepare table info.
     </span><span class="kw">fn </span>on_prepare(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
         <span class="kw">let </span>current_info = <span class="self">self</span>.table.table_info();
-        <span class="macro">ensure!</span>(
-            current_info.ident.version == <span class="self">self</span>.data.table_version,
-            VersionChangedSnafu {
+
+        <span class="kw">match </span>current_info.ident.version.cmp(<span class="kw-2">&amp;</span><span class="self">self</span>.data.table_version) {
+            Ordering::Greater =&gt; <span class="prelude-val">Ok</span>(Status::Done),
+            Ordering::Less =&gt; <span class="prelude-val">Err</span>(StaleVersionSnafu {
                 expect: <span class="self">self</span>.data.table_version,
-                actual: current_info.ident.version,
+                current: current_info.ident.version,
             }
-        );
+            .build()
+            .into()),
+            Ordering::Equal =&gt; {
+                <span class="comment">// We don&#39;t check the table name in the table engine as it is the catalog
+                // manager&#39;s duty to ensure the table name is unused.
+                </span><span class="self">self</span>.data.state = AlterTableState::EngineAlterTable;
 
-        <span class="comment">// We don&#39;t check the table name in the table engine as it is the catalog
-        // manager&#39;s duty to ensure the table name is unused.
-        </span><span class="self">self</span>.data.state = AlterTableState::EngineAlterTable;
-
-        <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
+                <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
+            }
+        }
     }
 
     <span class="doccomment">/// Engine alters the table.

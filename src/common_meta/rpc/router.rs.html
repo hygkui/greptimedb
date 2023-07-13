@@ -701,6 +701,18 @@
 <a href="#701" id="701">701</a>
 <a href="#702" id="702">702</a>
 <a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -721,7 +733,7 @@
     CreateRequest <span class="kw">as </span>PbCreateRequest, DeleteRequest <span class="kw">as </span>PbDeleteRequest, Partition <span class="kw">as </span>PbPartition,
     Peer <span class="kw">as </span>PbPeer, Region <span class="kw">as </span>PbRegion, RegionRoute <span class="kw">as </span>PbRegionRoute,
     RouteRequest <span class="kw">as </span>PbRouteRequest, RouteResponse <span class="kw">as </span>PbRouteResponse, Table <span class="kw">as </span>PbTable,
-    TableRoute <span class="kw">as </span>PbTableRoute,
+    TableRoute <span class="kw">as </span>PbTableRoute, TableRouteValue <span class="kw">as </span>PbTableRouteValue,
 };
 <span class="kw">use </span>serde::{Deserialize, Serialize, Serializer};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -986,6 +998,18 @@
         <span class="self">self</span>.region_leaders
             .get(<span class="kw-2">&amp;</span>region_number)
             .and_then(|x| x.as_ref())
+    }
+}
+
+<span class="kw">impl </span>TryFrom&lt;PbTableRouteValue&gt; <span class="kw">for </span>TableRoute {
+    <span class="kw">type </span>Error = error::Error;
+    <span class="kw">fn </span>try_from(pb: PbTableRouteValue) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        TableRoute::try_from_raw(
+            <span class="kw-2">&amp;</span>pb.peers,
+            pb.table_route.context(error::InvalidProtoMsgSnafu {
+                err_msg: <span class="string">&quot;expected table_route&quot;</span>,
+            })<span class="question-mark">?</span>,
+        )
     }
 }
 

@@ -471,6 +471,9 @@
 <a href="#471" id="471">471</a>
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -679,6 +682,7 @@
             metasrv_addrs = [&quot;127.0.0.1:3002&quot;]
             timeout_millis = 3000
             connect_timeout_millis = 5000
+            ddl_timeout_millis= 10000
             tcp_nodelay = true
 
             [wal]
@@ -732,10 +736,12 @@
             timeout_millis,
             connect_timeout_millis,
             tcp_nodelay,
+            ddl_timeout_millis,
         } = options.meta_client_options.unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()], metasrv_addr);
         <span class="macro">assert_eq!</span>(<span class="number">5000</span>, connect_timeout_millis);
+        <span class="macro">assert_eq!</span>(<span class="number">10000</span>, ddl_timeout_millis);
         <span class="macro">assert_eq!</span>(<span class="number">3000</span>, timeout_millis);
         <span class="macro">assert!</span>(tcp_nodelay);
 

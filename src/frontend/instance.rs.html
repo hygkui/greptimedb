@@ -876,6 +876,14 @@
 <a href="#876" id="876">876</a>
 <a href="#877" id="877">877</a>
 <a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1113,8 +1121,15 @@
             ))
             .tcp_nodelay(meta_client_options.tcp_nodelay);
 
+        <span class="kw">let </span>ddl_channel_config = channel_config.clone().timeout(Duration::from_millis(
+            meta_client_options.ddl_timeout_millis,
+        ));
+
         <span class="kw">let </span>channel_manager = ChannelManager::with_config(channel_config);
         channel_manager.start_channel_recycle();
+
+        <span class="kw">let </span>ddl_channel_manager = ChannelManager::with_config(ddl_channel_config);
+        ddl_channel_manager.start_channel_recycle();
 
         <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(<span class="number">0</span>, <span class="number">0</span>, Role::Frontend)
             .enable_router()
@@ -1122,6 +1137,7 @@
             .enable_heartbeat()
             .enable_ddl()
             .channel_manager(channel_manager)
+            .ddl_channel_manager(ddl_channel_manager)
             .build();
         meta_client
             .start(<span class="kw-2">&amp;</span>meta_client_options.metasrv_addrs)
