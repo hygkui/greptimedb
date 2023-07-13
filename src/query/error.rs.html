@@ -280,6 +280,7 @@
 <a href="#280" id="280">280</a>
 <a href="#281" id="281">281</a>
 <a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -296,7 +297,8 @@
 
 </span><span class="kw">use </span>std::any::Any;
 
-<span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
+<span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>datafusion::error::DataFusionError;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;

@@ -338,10 +338,10 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>datatypes::arrow::datatypes::Schema <span class="kw">as </span>ArrowSchema;
 <span class="kw">use </span>datatypes::arrow::record_batch::RecordBatch;
 <span class="kw">use </span>datatypes::schema::{Schema, SchemaBuilder, SchemaRef};
+<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::storage::consts;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::NewRecordBatchSnafu;

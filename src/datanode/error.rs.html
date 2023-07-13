@@ -602,6 +602,9 @@
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -618,10 +621,11 @@
 
 </span><span class="kw">use </span>std::any::Any;
 
-<span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
+<span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_procedure::ProcedureId;
 <span class="kw">use </span>serde_json::error::Error <span class="kw">as </span>JsonError;
-<span class="kw">use </span>snafu::Location;
+<span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>store_api::storage::RegionNumber;
 <span class="kw">use </span>table::error::Error <span class="kw">as </span>TableError;
 
@@ -1195,6 +1199,8 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::str::FromStr;
+
+    <span class="kw">use </span>snafu::ResultExt;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 

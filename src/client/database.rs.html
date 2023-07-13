@@ -457,13 +457,13 @@
     PromRangeQuery, QueryRequest, RequestHeader,
 };
 <span class="kw">use </span>arrow_flight::{FlightData, Ticket};
-<span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
 <span class="kw">use </span>common_grpc::flight::{flight_messages_to_recordbatches, FlightDecoder, FlightMessage};
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::{logging, timer};
 <span class="kw">use </span>futures_util::{TryFutureExt, TryStreamExt};
 <span class="kw">use </span>prost::Message;
-<span class="kw">use </span>snafu::{ensure, ResultExt};
+<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     ConvertFlightDataSnafu, IllegalDatabaseResponseSnafu, IllegalFlightMessagesSnafu,

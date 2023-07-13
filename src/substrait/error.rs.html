@@ -150,6 +150,7 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -166,7 +167,8 @@
 
 </span><span class="kw">use </span>std::any::Any;
 
-<span class="kw">use </span>common_error::prelude::{BoxedError, ErrorExt, StatusCode};
+<span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
+<span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>datafusion::error::DataFusionError;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>prost::{DecodeError, EncodeError};

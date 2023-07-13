@@ -97,6 +97,7 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -114,7 +115,8 @@
 </span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::io;
 
-<span class="kw">use </span>common_error::prelude::{ErrorExt, StatusCode};
+<span class="kw">use </span>common_error::ext::ErrorExt;
+<span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>snafu::{Location, Snafu};
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;

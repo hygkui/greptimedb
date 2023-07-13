@@ -119,6 +119,7 @@
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -135,8 +136,9 @@
 
 </span><span class="kw">use </span>std::any::Any;
 
-<span class="kw">use </span>common_error::prelude::{ErrorExt, Snafu, StatusCode};
-<span class="kw">use </span>snafu::Location;
+<span class="kw">use </span>common_error::ext::ErrorExt;
+<span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>snafu::{Location, Snafu};
 
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]

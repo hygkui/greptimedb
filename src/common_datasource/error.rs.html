@@ -215,6 +215,7 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -232,9 +233,10 @@
 </span><span class="kw">use </span>std::any::Any;
 
 <span class="kw">use </span>arrow_schema::ArrowError;
-<span class="kw">use </span>common_error::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>common_error::ext::ErrorExt;
+<span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>datafusion::parquet::errors::ParquetError;
-<span class="kw">use </span>snafu::Location;
+<span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>url::ParseError;
 
 <span class="attr">#[derive(Debug, Snafu)]

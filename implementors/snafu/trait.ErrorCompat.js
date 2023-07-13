@@ -6,7 +6,7 @@
 "common_base":[["impl ErrorCompat for <a class=\"enum\" href=\"common_base/buffer/enum.Error.html\" title=\"enum common_base::buffer::Error\">Error</a>"]],
 "common_catalog":[["impl ErrorCompat for <a class=\"enum\" href=\"common_catalog/error/enum.Error.html\" title=\"enum common_catalog::error::Error\">Error</a>"]],
 "common_datasource":[["impl ErrorCompat for <a class=\"enum\" href=\"common_datasource/error/enum.Error.html\" title=\"enum common_datasource::error::Error\">Error</a>"]],
-"common_error":[["impl <a class=\"trait\" href=\"common_error/prelude/trait.ErrorCompat.html\" title=\"trait common_error::prelude::ErrorCompat\">ErrorCompat</a> for <a class=\"struct\" href=\"common_error/ext/struct.BoxedError.html\" title=\"struct common_error::ext::BoxedError\">BoxedError</a>"]],
+"common_error":[["impl ErrorCompat for <a class=\"struct\" href=\"common_error/ext/struct.BoxedError.html\" title=\"struct common_error::ext::BoxedError\">BoxedError</a>"]],
 "common_grpc":[["impl ErrorCompat for <a class=\"enum\" href=\"common_grpc/error/enum.Error.html\" title=\"enum common_grpc::error::Error\">Error</a>"]],
 "common_grpc_expr":[["impl ErrorCompat for <a class=\"enum\" href=\"common_grpc_expr/error/enum.Error.html\" title=\"enum common_grpc_expr::error::Error\">Error</a>"]],
 "common_mem_prof":[["impl ErrorCompat for <a class=\"enum\" href=\"common_mem_prof/error/enum.Error.html\" title=\"enum common_mem_prof::error::Error\">Error</a>"]],
