@@ -492,8 +492,6 @@
 <a href="#492" id="492">492</a>
 <a href="#493" id="493">493</a>
 <a href="#494" id="494">494</a>
-<a href="#495" id="495">495</a>
-<a href="#496" id="496">496</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -907,9 +905,7 @@
         .timeout(Duration::from_millis(meta_config.timeout_millis))
         .connect_timeout(Duration::from_millis(meta_config.connect_timeout_millis))
         .tcp_nodelay(meta_config.tcp_nodelay);
-
     <span class="kw">let </span>channel_manager = ChannelManager::with_config(config);
-    channel_manager.start_channel_recycle();
 
     <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(cluster_id, member_id, Role::Datanode)
         .enable_heartbeat()
