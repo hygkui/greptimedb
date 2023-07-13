@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["metadata","version"],"struct":["MitoRegion","RegionMap"],"type":["MitoRegionRef","RegionMapRef"]};
+window.SIDEBAR_ITEMS = {"mod":["version"],"struct":["MitoRegion","RegionMap"],"type":["MitoRegionRef","RegionMapRef","VersionNumber"]};
