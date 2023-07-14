@@ -995,6 +995,7 @@
 <a href="#995" id="995">995</a>
 <a href="#996" id="996">996</a>
 <a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1009,7 +1010,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>ddl;
+</span><span class="kw">mod </span>ask_leader;
+<span class="kw">mod </span>ddl;
 <span class="kw">mod </span>heartbeat;
 <span class="kw">mod </span>load_balance;
 <span class="kw">mod </span>lock;
@@ -1198,7 +1200,7 @@
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(client) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.ddl {
             client.start(urls).<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="macro">info!</span>(<span class="string">&quot;Ddl client started&quot;</span>);
+            <span class="macro">info!</span>(<span class="string">&quot;DDL client started&quot;</span>);
         }
 
         <span class="prelude-val">Ok</span>(())
