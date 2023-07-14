@@ -272,27 +272,6 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -310,38 +289,16 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>storage::metadata::{ColumnFamilyMetadata, ColumnMetadata, VersionNumber};
+<span class="kw">use </span>snafu::OptionExt;
+<span class="kw">use </span>storage::metadata::VersionNumber;
 <span class="kw">use </span>storage::sst::{FileId, FileMeta};
 <span class="kw">use </span>store_api::manifest::action::{ProtocolAction, ProtocolVersion};
 <span class="kw">use </span>store_api::manifest::ManifestVersion;
 <span class="kw">use </span>store_api::storage::{RegionId, SequenceNumber};
 
+<span class="kw">use </span><span class="kw">crate</span>::error::{RegionMetadataNotFoundSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::helper;
-
-<span class="doccomment">/// Minimal data that could be used to persist and recover [RegionMetadata](crate::metadata::RegionMetadata).
-</span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-</span><span class="kw">pub struct </span>RawRegionMetadata {
-    <span class="kw">pub </span>id: RegionId,
-    <span class="kw">pub </span>name: String,
-    <span class="kw">pub </span>columns: RawColumnsMetadata,
-    <span class="kw">pub </span>column_families: RawColumnFamiliesMetadata,
-    <span class="kw">pub </span>version: VersionNumber,
-}
-
-<span class="doccomment">/// Minimal data that could be used to persist and recover [ColumnsMetadata](crate::metadata::ColumnsMetadata).
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-</span><span class="kw">pub struct </span>RawColumnsMetadata {
-    <span class="kw">pub </span>columns: Vec&lt;ColumnMetadata&gt;,
-    <span class="kw">pub </span>row_key_end: usize,
-    <span class="kw">pub </span>timestamp_key_index: usize,
-    <span class="kw">pub </span>user_column_end: usize,
-}
-
-<span class="doccomment">/// Minimal data that could be used to persist and recover [ColumnFamiliesMetadata](crate::metadata::ColumnFamiliesMetadata).
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-</span><span class="kw">pub struct </span>RawColumnFamiliesMetadata {
-    <span class="kw">pub </span>column_families: Vec&lt;ColumnFamilyMetadata&gt;,
-}
+<span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadata;
 
 <span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>RegionChange {
@@ -350,7 +307,7 @@
     /// metadata.
     </span><span class="kw">pub </span>committed_sequence: SequenceNumber,
     <span class="doccomment">/// The metadata after changed.
-    </span><span class="kw">pub </span>metadata: RawRegionMetadata,
+    </span><span class="kw">pub </span>metadata: RegionMetadata,
 }
 
 <span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -376,17 +333,17 @@
 }
 
 <span class="doccomment">/// The region manifest data checkpoint
-</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
+</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>RegionManifestData {
     <span class="kw">pub </span>committed_sequence: SequenceNumber,
-    <span class="kw">pub </span>metadata: RawRegionMetadata,
+    <span class="kw">pub </span>metadata: RegionMetadata,
     <span class="kw">pub </span>version: <span class="prelude-ty">Option</span>&lt;RegionVersion&gt;,
 }
 
 <span class="attr">#[derive(Debug, Default)]
 </span><span class="kw">pub struct </span>RegionManifestDataBuilder {
     committed_sequence: SequenceNumber,
-    metadata: RawRegionMetadata,
+    metadata: <span class="prelude-ty">Option</span>&lt;RegionMetadata&gt;,
     version: <span class="prelude-ty">Option</span>&lt;RegionVersion&gt;,
 }
 
@@ -394,7 +351,7 @@
     <span class="kw">pub fn </span>with_checkpoint(checkpoint: <span class="prelude-ty">Option</span>&lt;RegionManifestData&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = checkpoint {
             <span class="self">Self </span>{
-                metadata: s.metadata,
+                metadata: <span class="prelude-val">Some</span>(s.metadata),
                 version: s.version,
                 committed_sequence: s.committed_sequence,
             }
@@ -404,7 +361,7 @@
     }
 
     <span class="kw">pub fn </span>apply_change(<span class="kw-2">&amp;mut </span><span class="self">self</span>, change: RegionChange) {
-        <span class="self">self</span>.metadata = change.metadata;
+        <span class="self">self</span>.metadata = <span class="prelude-val">Some</span>(change.metadata);
         <span class="self">self</span>.committed_sequence = change.committed_sequence;
     }
 
@@ -430,12 +387,13 @@
             });
         }
     }
-    <span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; RegionManifestData {
-        RegionManifestData {
-            metadata: <span class="self">self</span>.metadata,
+
+    <span class="kw">pub fn </span>try_build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;RegionManifestData&gt; {
+        <span class="prelude-val">Ok</span>(RegionManifestData {
+            metadata: <span class="self">self</span>.metadata.context(RegionMetadataNotFoundSnafu)<span class="question-mark">?</span>,
             version: <span class="self">self</span>.version,
             committed_sequence: <span class="self">self</span>.committed_sequence,
-        }
+        })
     }
 }
 
@@ -461,11 +419,11 @@
         <span class="self">self</span>.last_version
     }
 
-    <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, ()&gt; {
+    <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
         <span class="macro">todo!</span>()
     }
 
-    <span class="kw">fn </span>decode(bs: <span class="kw-2">&amp;</span>[u8], reader_version: ProtocolVersion) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ()&gt; {
+    <span class="kw">fn </span>decode(bs: <span class="kw-2">&amp;</span>[u8], reader_version: ProtocolVersion) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         helper::decode_checkpoint(bs, reader_version)
     }
 }
@@ -511,14 +469,14 @@
     }
 
     <span class="doccomment">/// Encode self into json in the form of string lines, starts with prev_version and then action json list.
-    </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, ()&gt; {
+    </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
         helper::encode_actions(<span class="self">self</span>.prev_version, <span class="kw-2">&amp;</span><span class="self">self</span>.actions)
     }
 
     <span class="kw">fn </span>decode(
         _bs: <span class="kw-2">&amp;</span>[u8],
         _reader_version: ProtocolVersion,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, <span class="prelude-ty">Option</span>&lt;ProtocolAction&gt;), ()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, <span class="prelude-ty">Option</span>&lt;ProtocolAction&gt;)&gt; {
         <span class="macro">todo!</span>()
     }
 }
@@ -534,7 +492,7 @@
         <span class="self">self</span>.last_protocol.clone()
     }
 
-    <span class="kw">async fn </span>next_action(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(ManifestVersion, RegionMetaActionList)&gt;, ()&gt; {
+    <span class="kw">async fn </span>next_action(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(ManifestVersion, RegionMetaActionList)&gt;&gt; {
         <span class="macro">todo!</span>()
     }
 }
@@ -558,7 +516,7 @@
         <span class="kw">let </span>region_edit = <span class="string">r#&quot;{&quot;region_version&quot;:0,&quot;flushed_sequence&quot;:null,&quot;files_to_add&quot;:[{&quot;region_id&quot;:4402341478400,&quot;file_name&quot;:&quot;4b220a70-2b03-4641-9687-b65d94641208.parquet&quot;,&quot;time_range&quot;:[{&quot;value&quot;:1451609210000,&quot;unit&quot;:&quot;Millisecond&quot;},{&quot;value&quot;:1451609520000,&quot;unit&quot;:&quot;Millisecond&quot;}],&quot;level&quot;:1}],&quot;files_to_remove&quot;:[{&quot;region_id&quot;:4402341478400,&quot;file_name&quot;:&quot;34b6ebb9-b8a5-4a4b-b744-56f67defad02.parquet&quot;,&quot;time_range&quot;:[{&quot;value&quot;:1451609210000,&quot;unit&quot;:&quot;Millisecond&quot;},{&quot;value&quot;:1451609520000,&quot;unit&quot;:&quot;Millisecond&quot;}],&quot;level&quot;:0}]}&quot;#</span>;
         <span class="kw">let _ </span>= serde_json::from_str::&lt;RegionEdit&gt;(region_edit).unwrap();
 
-        <span class="kw">let </span>region_change = <span class="string">r#&quot; {&quot;committed_sequence&quot;:42,&quot;metadata&quot;:{&quot;id&quot;:0,&quot;name&quot;:&quot;region-0&quot;,&quot;columns&quot;:{&quot;columns&quot;:[{&quot;cf_id&quot;:0,&quot;desc&quot;:{&quot;id&quot;:2,&quot;name&quot;:&quot;k1&quot;,&quot;data_type&quot;:{&quot;Int32&quot;:{}},&quot;is_nullable&quot;:false,&quot;is_time_index&quot;:false,&quot;default_constraint&quot;:null,&quot;comment&quot;:&quot;&quot;}},{&quot;cf_id&quot;:0,&quot;desc&quot;:{&quot;id&quot;:1,&quot;name&quot;:&quot;timestamp&quot;,&quot;data_type&quot;:{&quot;Timestamp&quot;:{&quot;Millisecond&quot;:null}},&quot;is_nullable&quot;:false,&quot;is_time_index&quot;:true,&quot;default_constraint&quot;:null,&quot;comment&quot;:&quot;&quot;}},{&quot;cf_id&quot;:1,&quot;desc&quot;:{&quot;id&quot;:3,&quot;name&quot;:&quot;v1&quot;,&quot;data_type&quot;:{&quot;Float32&quot;:{}},&quot;is_nullable&quot;:true,&quot;is_time_index&quot;:false,&quot;default_constraint&quot;:null,&quot;comment&quot;:&quot;&quot;}},{&quot;cf_id&quot;:1,&quot;desc&quot;:{&quot;id&quot;:2147483649,&quot;name&quot;:&quot;__sequence&quot;,&quot;data_type&quot;:{&quot;UInt64&quot;:{}},&quot;is_nullable&quot;:false,&quot;is_time_index&quot;:false,&quot;default_constraint&quot;:null,&quot;comment&quot;:&quot;&quot;}},{&quot;cf_id&quot;:1,&quot;desc&quot;:{&quot;id&quot;:2147483650,&quot;name&quot;:&quot;__op_type&quot;,&quot;data_type&quot;:{&quot;UInt8&quot;:{}},&quot;is_nullable&quot;:false,&quot;is_time_index&quot;:false,&quot;default_constraint&quot;:null,&quot;comment&quot;:&quot;&quot;}}],&quot;row_key_end&quot;:2,&quot;timestamp_key_index&quot;:1,&quot;enable_version_column&quot;:false,&quot;user_column_end&quot;:3},&quot;column_families&quot;:{&quot;column_families&quot;:[{&quot;name&quot;:&quot;default&quot;,&quot;cf_id&quot;:1,&quot;column_index_start&quot;:2,&quot;column_index_end&quot;:3}]},&quot;version&quot;:0}}&quot;#</span>;
+        <span class="kw">let </span>region_change = <span class="string">r#&quot; {&quot;committed_sequence&quot;:42,&quot;metadata&quot;:{&quot;column_metadatas&quot;:[{&quot;column_schema&quot;:{&quot;name&quot;:&quot;a&quot;,&quot;data_type&quot;:{&quot;Int64&quot;:{}},&quot;is_nullable&quot;:false,&quot;is_time_index&quot;:false,&quot;default_constraint&quot;:null,&quot;metadata&quot;:{}},&quot;semantic_type&quot;:&quot;Tag&quot;,&quot;column_id&quot;:1},{&quot;column_schema&quot;:{&quot;name&quot;:&quot;b&quot;,&quot;data_type&quot;:{&quot;Float64&quot;:{}},&quot;is_nullable&quot;:false,&quot;is_time_index&quot;:false,&quot;default_constraint&quot;:null,&quot;metadata&quot;:{}},&quot;semantic_type&quot;:&quot;Field&quot;,&quot;column_id&quot;:2},{&quot;column_schema&quot;:{&quot;name&quot;:&quot;c&quot;,&quot;data_type&quot;:{&quot;Timestamp&quot;:{&quot;Millisecond&quot;:null}},&quot;is_nullable&quot;:false,&quot;is_time_index&quot;:false,&quot;default_constraint&quot;:null,&quot;metadata&quot;:{}},&quot;semantic_type&quot;:&quot;Timestamp&quot;,&quot;column_id&quot;:3}],&quot;version&quot;:9,&quot;primary_key&quot;:[1],&quot;region_id&quot;:5299989648942}}&quot;#</span>;
         <span class="kw">let _ </span>= serde_json::from_str::&lt;RegionChange&gt;(region_change).unwrap();
 
         <span class="kw">let </span>region_remove = <span class="string">r#&quot;{&quot;region_id&quot;:42}&quot;#</span>;

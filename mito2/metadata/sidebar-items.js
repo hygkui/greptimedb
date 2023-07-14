@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SemanticType"],"struct":["ColumnMetadata","RegionMetadata"],"type":["RegionMetadataRef"]};
+window.SIDEBAR_ITEMS = {"enum":["SemanticType"],"struct":["ColumnMetadata","RegionMetadata","RegionMetadataBuilder","RegionMetadataWithoutSchema"],"type":["RegionMetadataRef"]};

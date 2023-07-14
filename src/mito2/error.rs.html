@@ -91,6 +91,9 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -168,6 +171,9 @@
         location: Location,
         source: std::str::Utf8Error,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find RegionMetadata. Location: {}&quot;</span>, location))]
+    </span>RegionMetadataNotFound { location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
