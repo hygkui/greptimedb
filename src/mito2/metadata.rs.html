@@ -198,6 +198,13 @@
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -251,13 +258,15 @@
     <span class="doccomment">/// Latest schema of this region
     </span><span class="attr">#[serde(skip)]
     </span>schema: SchemaRef,
-    column_metadatas: Vec&lt;ColumnMetadata&gt;,
+    <span class="doccomment">/// Columns in the region. Has the same order as columns
+    /// in [schema](RegionMetadata::schema).
+    </span>column_metadatas: Vec&lt;ColumnMetadata&gt;,
     <span class="doccomment">/// Version of metadata.
     </span>version: VersionNumber,
     <span class="doccomment">/// Maintains an ordered list of primary keys
     </span>primary_key: Vec&lt;ColumnId&gt;,
 
-    <span class="doccomment">/// Immutable and unique id
+    <span class="doccomment">/// Immutable and unique id of a region.
     </span>region_id: RegionId,
 }
 
@@ -348,16 +357,21 @@
 </span><span class="kw">pub struct </span>ColumnMetadata {
     <span class="doccomment">/// Schema of this column. Is the same as `column_schema` in [SchemaRef].
     </span>column_schema: ColumnSchema,
-    semantic_type: SemanticType,
-    column_id: ColumnId,
+    <span class="doccomment">/// Semantic type of this column (e.g. tag or timestamp).
+    </span>semantic_type: SemanticType,
+    <span class="doccomment">/// Immutable and unique id of a region.
+    </span>column_id: ColumnId,
 }
 
 <span class="doccomment">/// The semantic type of one column
 </span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 </span><span class="kw">pub enum </span>SemanticType {
-    Tag,
-    Field,
-    Timestamp,
+    <span class="doccomment">/// Tag column, also is a part of primary key.
+    </span>Tag,
+    <span class="doccomment">/// A column that isn&#39;t a time index or part of primary key.
+    </span>Field,
+    <span class="doccomment">/// Time index column.
+    </span>Timestamp,
 }
 
 <span class="attr">#[cfg(test)]

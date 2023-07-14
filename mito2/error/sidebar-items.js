@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["CompressObjectSnafu","DecompressObjectSnafu","InvalidScanIndexSnafu","OpenDalSnafu","RegionMetadataNotFoundSnafu","SerdeJsonSnafu","Utf8Snafu"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["CompressObjectSnafu","DecompressObjectSnafu","InvalidScanIndexSnafu","JoinSnafu","OpenDalSnafu","RecvSnafu","RegionMetadataNotFoundSnafu","SerdeJsonSnafu","Utf8Snafu","WorkerStoppedSnafu"],"type":["Result"]};
