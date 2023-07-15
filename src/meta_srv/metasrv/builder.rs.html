@@ -282,6 +282,20 @@
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -298,8 +312,10 @@
 
 </span><span class="kw">use </span>std::sync::atomic::AtomicBool;
 <span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>client::client_manager::DatanodeClients;
+<span class="kw">use </span>common_grpc::channel_manager::ChannelConfig;
 <span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
 
@@ -462,11 +478,23 @@
             kv_store.clone(),
         )));
 
+        <span class="kw">let </span>datanode_clients = datanode_clients.unwrap_or_else(|| {
+            <span class="kw">let </span>datanode_client_channel_config = ChannelConfig::new()
+                .timeout(Duration::from_millis(
+                    options.datanode.client_options.timeout_millis,
+                ))
+                .connect_timeout(Duration::from_millis(
+                    options.datanode.client_options.connect_timeout_millis,
+                ))
+                .tcp_nodelay(options.datanode.client_options.tcp_nodelay);
+            Arc::new(DatanodeClients::new(datanode_client_channel_config))
+        });
+
         <span class="comment">// TODO(weny): considers to modify the default config of procedure manager
         </span><span class="kw">let </span>ddl_manager = Arc::new(DdlManager::new(
             procedure_manager.clone(),
             kv_store.clone(),
-            datanode_clients.unwrap_or_else(|| Arc::new(DatanodeClients::default())),
+            datanode_clients,
             mailbox.clone(),
             options.server_addr.clone(),
             table_metadata_manager.clone(),
