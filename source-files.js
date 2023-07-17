@@ -1,6 +1,6 @@
 var sourcesIndex = JSON.parse('{\
 "api":["",[["v1",[],["column_def.rs"]]],["error.rs","helper.rs","lib.rs","v1.rs"]],\
-"catalog":["",[["information_schema",[],["columns.rs","tables.rs"]],["local",[],["manager.rs","memory.rs"]],["remote",[],["client.rs","manager.rs","mock.rs","region_alive_keeper.rs"]]],["error.rs","helper.rs","information_schema.rs","lib.rs","local.rs","metrics.rs","remote.rs","system.rs","table_source.rs","tables.rs"]],\
+"catalog":["",[["information_schema",[],["columns.rs","tables.rs"]],["local",[],["manager.rs","memory.rs"]],["remote",[],["client.rs","manager.rs","mock.rs","region_alive_keeper.rs"]]],["error.rs","information_schema.rs","lib.rs","local.rs","metrics.rs","remote.rs","system.rs","table_source.rs","tables.rs"]],\
 "client":["",[],["client.rs","client_manager.rs","database.rs","error.rs","lib.rs","load_balance.rs","metrics.rs","stream_insert.rs"]],\
 "cmd":["",[["cli",[],["cmd.rs","helper.rs","repl.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","options.rs","standalone.rs"]],\
 "common_base":["",[],["bit_vec.rs","buffer.rs","bytes.rs","lib.rs","paths.rs","readable_size.rs"]],\
@@ -12,7 +12,7 @@ var sourcesIndex = JSON.parse('{\
 "common_grpc":["",[],["channel_manager.rs","error.rs","flight.rs","lib.rs","select.rs","writer.rs"]],\
 "common_grpc_expr":["",[],["alter.rs","delete.rs","error.rs","insert.rs","lib.rs"]],\
 "common_mem_prof":["",[],["error.rs","lib.rs"]],\
-"common_meta":["",[["heartbeat",[["handler",[],["parse_mailbox_message.rs"]]],["handler.rs","mailbox.rs","utils.rs"]],["key",[],["datanode_table.rs","table_info.rs","table_name.rs","table_region.rs","table_route.rs"]],["kv_backend",[["txn",[],["etcd.rs"]]],["memory.rs","txn.rs"]],["rpc",[],["ddl.rs","lock.rs","router.rs","store.rs","util.rs"]]],["error.rs","heartbeat.rs","ident.rs","instruction.rs","key.rs","kv_backend.rs","lib.rs","metrics.rs","peer.rs","rpc.rs","table_name.rs","util.rs"]],\
+"common_meta":["",[["heartbeat",[["handler",[],["parse_mailbox_message.rs"]]],["handler.rs","mailbox.rs","utils.rs"]],["key",[],["datanode_table.rs","table_info.rs","table_name.rs","table_region.rs","table_route.rs"]],["kv_backend",[["txn",[],["etcd.rs"]]],["memory.rs","txn.rs"]],["rpc",[],["ddl.rs","lock.rs","router.rs","store.rs","util.rs"]]],["error.rs","heartbeat.rs","helper.rs","ident.rs","instruction.rs","key.rs","kv_backend.rs","lib.rs","metrics.rs","peer.rs","rpc.rs","table_name.rs","util.rs"]],\
 "common_pprof":["",[],["lib.rs"]],\
 "common_procedure":["",[["local",[],["lock.rs","runner.rs"]],["store",[],["state_store.rs"]]],["error.rs","lib.rs","local.rs","options.rs","procedure.rs","store.rs","watcher.rs"]],\
 "common_procedure_test":["",[],["lib.rs"]],\

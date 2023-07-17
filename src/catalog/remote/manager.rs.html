@@ -725,6 +725,10 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
+<span class="kw">use </span>common_meta::helper::{
+    build_catalog_prefix, build_schema_prefix, build_table_global_prefix, CatalogKey, SchemaKey,
+    TableGlobalKey, TableGlobalValue, TableRegionalKey, TableRegionalValue,
+};
 <span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
@@ -743,10 +747,6 @@
     InvalidCatalogValueSnafu, OpenTableSnafu, ParallelOpenTableSnafu, <span class="prelude-ty">Result</span>,
     TableEngineNotFoundSnafu, TableExistsSnafu, TableMetadataManagerSnafu, TableNotFoundSnafu,
     UnimplementedSnafu,
-};
-<span class="kw">use </span><span class="kw">crate</span>::helper::{
-    build_catalog_prefix, build_schema_prefix, build_table_global_prefix, CatalogKey, SchemaKey,
-    TableGlobalKey, TableGlobalValue, TableRegionalKey, TableRegionalValue,
 };
 <span class="kw">use </span><span class="kw">crate</span>::local::MemoryCatalogManager;
 <span class="kw">use </span><span class="kw">crate</span>::remote::region_alive_keeper::RegionAliveKeepers;

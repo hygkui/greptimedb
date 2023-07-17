@@ -937,7 +937,6 @@
     FlushTableExpr, InsertRequests,
 };
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>catalog::helper::{SchemaKey, SchemaValue};
 <span class="kw">use </span>catalog::{CatalogManager, RegisterTableRequest};
 <span class="kw">use </span>chrono::DateTime;
 <span class="kw">use </span>client::client_manager::DatanodeClients;
@@ -945,7 +944,7 @@
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_error::ext::BoxedError;
-<span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
+<span class="kw">use </span>common_meta::helper::{SchemaKey, SchemaValue};
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::ddl::{DdlTask, SubmitDdlTaskRequest, SubmitDdlTaskResponse};
 <span class="kw">use </span>common_meta::rpc::router::{Partition <span class="kw">as </span>MetaPartition, RouteRequest};
@@ -994,7 +993,6 @@
     meta_client: Arc&lt;MetaClient&gt;,
     catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
     datanode_clients: Arc&lt;DatanodeClients&gt;,
-    table_metadata_manager: TableMetadataManagerRef,
 }
 
 <span class="kw">impl </span>DistInstance {
@@ -1002,13 +1000,11 @@
         meta_client: Arc&lt;MetaClient&gt;,
         catalog_manager: Arc&lt;FrontendCatalogManager&gt;,
         datanode_clients: Arc&lt;DatanodeClients&gt;,
-        table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             meta_client,
             catalog_manager,
             datanode_clients,
-            table_metadata_manager,
         }
     }
 
@@ -1044,7 +1040,6 @@
             table_name.clone(),
             table_info,
             <span class="self">self</span>.catalog_manager.clone(),
-            <span class="self">self</span>.table_metadata_manager.clone(),
         ));
 
         <span class="kw">let </span>request = RegisterTableRequest {
@@ -1073,6 +1068,7 @@
                 <span class="kw-2">&amp;</span>table_name.catalog_name,
                 <span class="kw-2">&amp;</span>table_name.schema_name,
                 <span class="kw-2">&amp;</span>table_name.table_name,
+                table_id,
             )
             .<span class="kw">await</span>;
 
@@ -1106,6 +1102,7 @@
                 <span class="kw-2">&amp;</span>table_name.catalog_name,
                 <span class="kw-2">&amp;</span>table_name.schema_name,
                 <span class="kw-2">&amp;</span>table_name.table_name,
+                table_id,
             )
             .<span class="kw">await</span>;
 
@@ -1177,7 +1174,7 @@
         table_name: <span class="kw-2">&amp;</span>TableName,
         region_number: <span class="prelude-ty">Option</span>&lt;RegionNumber&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Peer&gt;&gt; {
-        <span class="kw">let _ </span>= <span class="self">self
+        <span class="kw">let </span>table = <span class="self">self
             </span>.catalog_manager
             .table(
                 <span class="kw-2">&amp;</span>table_name.catalog_name,
@@ -1189,11 +1186,13 @@
             </span>.with_context(|| TableNotFoundSnafu {
                 table_name: table_name.to_string(),
             })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_id = table.table_info().table_id();
 
         <span class="kw">let </span>route_response = <span class="self">self
             </span>.meta_client
             .route(RouteRequest {
                 table_names: <span class="macro">vec!</span>[table_name.clone()],
+                table_ids: <span class="macro">vec!</span>[table_id],
             })
             .<span class="kw">await
             </span>.context(RequestMetaSnafu)<span class="question-mark">?</span>;
@@ -1433,6 +1432,7 @@
                 <span class="kw-2">&amp;</span>table_info.catalog_name,
                 <span class="kw-2">&amp;</span>table_info.schema_name,
                 <span class="kw-2">&amp;</span>table_info.name,
+                table_info.table_id(),
             )
             .<span class="kw">await</span>;
 

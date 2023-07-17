@@ -433,6 +433,8 @@
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -597,6 +599,8 @@
                 schema: <span class="self">self</span>.schema.clone(),
                 authorization: <span class="self">self</span>.ctx.auth_header.clone(),
                 dbname: <span class="self">self</span>.dbname.clone(),
+                trace_id: <span class="prelude-val">None</span>,
+                span_id: <span class="prelude-val">None</span>,
             }),
             request: <span class="prelude-val">Some</span>(request),
         }
