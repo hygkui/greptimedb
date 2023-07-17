@@ -81,7 +81,6 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -99,6 +98,7 @@
 </span><span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>servers::heartbeat_options::HeartbeatOptions;
 <span class="kw">use </span>servers::http::HttpOptions;
 <span class="kw">use </span>servers::Mode;
 
@@ -111,8 +111,7 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>FrontendOptions {
     <span class="kw">pub </span>mode: Mode,
-    <span class="kw">pub </span>heartbeat_interval_millis: u64,
-    <span class="kw">pub </span>retry_interval_millis: u64,
+    <span class="kw">pub </span>heartbeat: HeartbeatOptions,
     <span class="kw">pub </span>http_options: <span class="prelude-ty">Option</span>&lt;HttpOptions&gt;,
     <span class="kw">pub </span>grpc_options: <span class="prelude-ty">Option</span>&lt;GrpcOptions&gt;,
     <span class="kw">pub </span>mysql_options: <span class="prelude-ty">Option</span>&lt;MysqlOptions&gt;,
@@ -129,8 +128,7 @@
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mode: Mode::Standalone,
-            heartbeat_interval_millis: <span class="number">5000</span>,
-            retry_interval_millis: <span class="number">5000</span>,
+            heartbeat: HeartbeatOptions::default(),
             http_options: <span class="prelude-val">Some</span>(HttpOptions::default()),
             grpc_options: <span class="prelude-val">Some</span>(GrpcOptions::default()),
             mysql_options: <span class="prelude-val">Some</span>(MysqlOptions::default()),
