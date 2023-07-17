@@ -165,6 +165,25 @@
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -216,13 +235,13 @@
 
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>datanode_table::{DatanodeTableManager, DatanodeTableValue};
+<span class="kw">use </span>datanode_table::{DatanodeTableKey, DatanodeTableManager, DatanodeTableValue};
 <span class="kw">use </span>lazy_static::lazy_static;
 <span class="kw">use </span>regex::Regex;
 <span class="kw">use </span>snafu::ResultExt;
-<span class="kw">use </span>table_info::{TableInfoManager, TableInfoValue};
-<span class="kw">use </span>table_name::{TableNameManager, TableNameValue};
-<span class="kw">use </span>table_region::{TableRegionManager, TableRegionValue};
+<span class="kw">use </span>table_info::{TableInfoKey, TableInfoManager, TableInfoValue};
+<span class="kw">use </span>table_name::{TableNameKey, TableNameManager, TableNameValue};
+<span class="kw">use </span>table_region::{TableRegionKey, TableRegionManager, TableRegionValue};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{InvalidTableMetadataSnafu, <span class="prelude-ty">Result</span>, SerdeJsonSnafu};
 <span class="kw">pub use </span><span class="kw">crate</span>::key::table_route::{TableRouteKey, TABLE_ROUTE_PREFIX};
@@ -292,6 +311,25 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.datanode_table_manager
     }
 }
+
+<span class="macro">macro_rules! </span>impl_table_meta_key {
+    ( $(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {
+        $(
+            <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span><span class="macro-nonterminal">$val_ty </span>{
+                <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+                    <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.as_raw_key()))
+                }
+            }
+        )*
+    }
+}
+
+<span class="macro">impl_table_meta_key!</span>(
+    TableNameKey&lt;<span class="lifetime">&#39;_</span>&gt;,
+    TableInfoKey,
+    TableRegionKey,
+    DatanodeTableKey
+);
 
 <span class="macro">macro_rules! </span>impl_table_meta_value {
     ( $(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {

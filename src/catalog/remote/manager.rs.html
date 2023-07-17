@@ -706,6 +706,23 @@
 <a href="#706" id="706">706</a>
 <a href="#707" id="707">707</a>
 <a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1165,6 +1182,23 @@
             table_info: table_ident.to_string(),
         })<span class="question-mark">?</span>;
     <span class="macro">info!</span>(<span class="string">&quot;Successfully opened table, {table_ident}&quot;</span>);
+
+    <span class="kw">if </span>!memory_catalog_manager
+        .catalog_exist(<span class="kw-2">&amp;</span>table_ident.catalog)
+        .<span class="kw">await</span><span class="question-mark">?
+    </span>{
+        memory_catalog_manager.register_catalog_sync(table_ident.catalog.clone())<span class="question-mark">?</span>;
+    }
+
+    <span class="kw">if </span>!memory_catalog_manager
+        .schema_exist(<span class="kw-2">&amp;</span>table_ident.catalog, <span class="kw-2">&amp;</span>table_ident.schema)
+        .<span class="kw">await</span><span class="question-mark">?
+    </span>{
+        memory_catalog_manager.register_schema_sync(RegisterSchemaRequest {
+            catalog: table_ident.catalog.clone(),
+            schema: table_ident.schema.clone(),
+        })<span class="question-mark">?</span>;
+    }
 
     <span class="kw">let </span>request = RegisterTableRequest {
         catalog: table_ident.catalog.clone(),

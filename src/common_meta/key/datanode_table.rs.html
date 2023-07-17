@@ -467,13 +467,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::rpc::store::{CompareAndPutRequest, MoveValueRequest, RangeRequest};
 <span class="kw">use </span><span class="kw">crate</span>::DatanodeId;
 
-<span class="kw">struct </span>DatanodeTableKey {
+<span class="kw">pub struct </span>DatanodeTableKey {
     datanode_id: DatanodeId,
     table_id: TableId,
 }
 
 <span class="kw">impl </span>DatanodeTableKey {
-    <span class="kw">fn </span>new(datanode_id: DatanodeId, table_id: TableId) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(datanode_id: DatanodeId, table_id: TableId) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             datanode_id,
             table_id,
@@ -521,7 +521,7 @@
 }
 
 <span class="kw">impl </span>DatanodeTableValue {
-    <span class="kw">fn </span>new(table_id: TableId, regions: Vec&lt;RegionNumber&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(table_id: TableId, regions: Vec&lt;RegionNumber&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             table_id,
             regions,
