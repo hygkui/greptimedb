@@ -713,9 +713,6 @@
 <a href="#713" id="713">713</a>
 <a href="#714" id="714">714</a>
 <a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a>
-<a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1075,16 +1072,13 @@
 
     <span class="kw">fn </span>lock_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LockKey {
         <span class="kw">let </span>region_ident = <span class="kw-2">&amp;</span><span class="self">self</span>.node.failed_region;
-        <span class="kw">let </span>key = <span class="macro">format!</span>(
-            <span class="string">&quot;{}/region-{}&quot;</span>,
-            common_catalog::format_full_table_name(
-                <span class="kw-2">&amp;</span>region_ident.table_ident.catalog,
-                <span class="kw-2">&amp;</span>region_ident.table_ident.schema,
-                <span class="kw-2">&amp;</span>region_ident.table_ident.table
-            ),
-            region_ident.region_number
+        <span class="kw">let </span>table_key = common_catalog::format_full_table_name(
+            <span class="kw-2">&amp;</span>region_ident.table_ident.catalog,
+            <span class="kw-2">&amp;</span>region_ident.table_ident.schema,
+            <span class="kw-2">&amp;</span>region_ident.table_ident.table,
         );
-        LockKey::single(key)
+        <span class="kw">let </span>region_key = <span class="macro">format!</span>(<span class="string">&quot;{}/region-{}&quot;</span>, table_key, region_ident.region_number);
+        LockKey::new(<span class="macro">vec!</span>[table_key, region_key])
     }
 }
 

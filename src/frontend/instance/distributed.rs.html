@@ -900,16 +900,6 @@
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
 <a href="#902" id="902">902</a>
-<a href="#903" id="903">903</a>
-<a href="#904" id="904">904</a>
-<a href="#905" id="905">905</a>
-<a href="#906" id="906">906</a>
-<a href="#907" id="907">907</a>
-<a href="#908" id="908">908</a>
-<a href="#909" id="909">909</a>
-<a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1425,16 +1415,6 @@
             .submit_ddl_task(req)
             .<span class="kw">await
             </span>.context(error::RequestMetaSnafu)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>table_info = table.table_info();
-        <span class="self">self</span>.catalog_manager
-            .invalidate_table(
-                <span class="kw-2">&amp;</span>table_info.catalog_name,
-                <span class="kw-2">&amp;</span>table_info.schema_name,
-                <span class="kw-2">&amp;</span>table_info.name,
-                table_info.table_id(),
-            )
-            .<span class="kw">await</span>;
 
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
     }
