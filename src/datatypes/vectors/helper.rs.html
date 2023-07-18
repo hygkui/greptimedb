@@ -440,6 +440,45 @@
 <a href="#440" id="440">440</a>
 <a href="#441" id="441">441</a>
 <a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -473,7 +512,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::vectors::{
     BinaryVector, BooleanVector, ConstantVector, DateTimeVector, DateVector, Float32Vector,
     Float64Vector, Int16Vector, Int32Vector, Int64Vector, Int8Vector, ListVector,
-    ListVectorBuilder, MutableVector, NullVector, StringVector, TimestampMicrosecondVector,
+    ListVectorBuilder, MutableVector, NullVector, StringVector, TimeMicrosecondVector,
+    TimeMillisecondVector, TimeNanosecondVector, TimeSecondVector, TimestampMicrosecondVector,
     TimestampMillisecondVector, TimestampNanosecondVector, TimestampSecondVector, UInt16Vector,
     UInt32Vector, UInt64Vector, UInt8Vector, Vector, VectorRef,
 };
@@ -636,16 +676,24 @@
                 <span class="comment">// Timezone is unimplemented now.
                 </span>ConstantVector::new(Arc::new(TimestampNanosecondVector::from(<span class="macro">vec!</span>[v])), length)
             }
+            ScalarValue::Time32Second(v) =&gt; {
+                ConstantVector::new(Arc::new(TimeSecondVector::from(<span class="macro">vec!</span>[v])), length)
+            }
+            ScalarValue::Time32Millisecond(v) =&gt; {
+                ConstantVector::new(Arc::new(TimeMillisecondVector::from(<span class="macro">vec!</span>[v])), length)
+            }
+            ScalarValue::Time64Microsecond(v) =&gt; {
+                ConstantVector::new(Arc::new(TimeMicrosecondVector::from(<span class="macro">vec!</span>[v])), length)
+            }
+            ScalarValue::Time64Nanosecond(v) =&gt; {
+                ConstantVector::new(Arc::new(TimeNanosecondVector::from(<span class="macro">vec!</span>[v])), length)
+            }
             ScalarValue::Decimal128(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)
             | ScalarValue::IntervalYearMonth(<span class="kw">_</span>)
             | ScalarValue::IntervalDayTime(<span class="kw">_</span>)
             | ScalarValue::IntervalMonthDayNano(<span class="kw">_</span>)
             | ScalarValue::Struct(<span class="kw">_</span>, <span class="kw">_</span>)
-            | ScalarValue::Dictionary(<span class="kw">_</span>, <span class="kw">_</span>)
-            | ScalarValue::Time32Second(<span class="kw">_</span>)
-            | ScalarValue::Time32Millisecond(<span class="kw">_</span>)
-            | ScalarValue::Time64Microsecond(<span class="kw">_</span>)
-            | ScalarValue::Time64Nanosecond(<span class="kw">_</span>) =&gt; {
+            | ScalarValue::Dictionary(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
                 <span class="kw">return </span>error::ConversionSnafu {
                     from: <span class="macro">format!</span>(<span class="string">&quot;Unsupported scalar value: {value}&quot;</span>),
                 }
@@ -703,9 +751,23 @@
                     TimestampNanosecondVector::try_from_arrow_timestamp_array(array)<span class="question-mark">?</span>,
                 ),
             },
+            ArrowDataType::Time32(unit) =&gt; <span class="kw">match </span>unit {
+                TimeUnit::Second =&gt; Arc::new(TimeSecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>),
+                TimeUnit::Millisecond =&gt; {
+                    Arc::new(TimeMillisecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
+                }
+                <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Arrow array datatype: {:?}&quot;</span>, array.as_ref().data_type()),
+            },
+            ArrowDataType::Time64(unit) =&gt; <span class="kw">match </span>unit {
+                TimeUnit::Microsecond =&gt; {
+                    Arc::new(TimeMicrosecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
+                }
+                TimeUnit::Nanosecond =&gt; {
+                    Arc::new(TimeNanosecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
+                }
+                <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Arrow array datatype: {:?}&quot;</span>, array.as_ref().data_type()),
+            },
             ArrowDataType::Float16
-            | ArrowDataType::Time32(<span class="kw">_</span>)
-            | ArrowDataType::Time64(<span class="kw">_</span>)
             | ArrowDataType::Duration(<span class="kw">_</span>)
             | ArrowDataType::Interval(<span class="kw">_</span>)
             | ArrowDataType::LargeList(<span class="kw">_</span>)
@@ -743,10 +805,12 @@
     <span class="kw">use </span>arrow::array::{
         ArrayRef, BooleanArray, Date32Array, Date64Array, Float32Array, Float64Array, Int16Array,
         Int32Array, Int64Array, Int8Array, LargeBinaryArray, ListArray, NullArray,
+        Time32MillisecondArray, Time32SecondArray, Time64MicrosecondArray, Time64NanosecondArray,
         TimestampMicrosecondArray, TimestampMillisecondArray, TimestampNanosecondArray,
         TimestampSecondArray, UInt16Array, UInt32Array, UInt64Array, UInt8Array,
     };
     <span class="kw">use </span>arrow::datatypes::{Field, Int32Type};
+    <span class="kw">use </span>common_time::time::Time;
     <span class="kw">use </span>common_time::{Date, DateTime};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -880,6 +944,20 @@
         check_try_into_vector(TimestampMillisecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
         check_try_into_vector(TimestampMicrosecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
         check_try_into_vector(TimestampNanosecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        check_try_into_vector(Time32SecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        check_try_into_vector(Time32MillisecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        check_try_into_vector(Time64MicrosecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        check_try_into_vector(Time64NanosecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_try_from_scalar_time_value() {
+        <span class="kw">let </span>vector = Helper::try_from_scalar_value(ScalarValue::Time32Second(<span class="prelude-val">Some</span>(<span class="number">42</span>)), <span class="number">3</span>).unwrap();
+        <span class="macro">assert_eq!</span>(ConcreteDataType::time_second_datatype(), vector.data_type());
+        <span class="macro">assert_eq!</span>(<span class="number">3</span>, vector.len());
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..vector.len() {
+            <span class="macro">assert_eq!</span>(Value::Time(Time::new_second(<span class="number">42</span>)), vector.get(i));
+        }
     }
 }
 </code></pre></div></section></main></body></html>

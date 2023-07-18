@@ -270,6 +270,9 @@
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -462,6 +465,8 @@
                             ),
                         })
                     }
+                    Value::Time(v) =&gt; row_writer
+                        .write_col(v.to_timezone_aware_string(query_context.time_zone()))<span class="question-mark">?</span>,
                 }
             }
             row_writer.end_row().<span class="kw">await</span><span class="question-mark">?</span>;
@@ -508,6 +513,7 @@
             <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_VARCHAR)
         }
         ConcreteDataType::Timestamp(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_TIMESTAMP),
+        ConcreteDataType::Time(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_TIME),
         ConcreteDataType::Date(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_DATE),
         ConcreteDataType::DateTime(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ColumnType::MYSQL_TYPE_DATETIME),
         <span class="kw">_ </span>=&gt; error::InternalSnafu {

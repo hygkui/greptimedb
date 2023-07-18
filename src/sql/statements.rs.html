@@ -805,6 +805,10 @@
 <a href="#805" id="805">805</a>
 <a href="#806" id="806">806</a>
 <a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1201,6 +1205,10 @@
         ConcreteDataType::DateTime(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Datetime(<span class="prelude-val">None</span>)),
         ConcreteDataType::Timestamp(ts_type) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Timestamp(
             <span class="prelude-val">Some</span>(ts_type.precision()),
+            TimezoneInfo::None,
+        )),
+        ConcreteDataType::Time(time_type) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Time(
+            <span class="prelude-val">Some</span>(time_type.precision()),
             TimezoneInfo::None,
         )),
         ConcreteDataType::Binary(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Varbinary(<span class="prelude-val">None</span>)),

@@ -207,7 +207,7 @@
         <span class="kw">let </span>json_bytes = serde_json::to_string(<span class="kw-2">&amp;</span>json_response).unwrap().into_bytes();
 
         <span class="kw">let </span>response = Response::new(PromqlResponse {
-            header: <span class="prelude-val">Some</span>(ResponseHeader {}),
+            header: <span class="prelude-val">Some</span>(ResponseHeader { status: <span class="prelude-val">None </span>}),
             body: json_bytes,
         });
         <span class="prelude-val">Ok</span>(response)
