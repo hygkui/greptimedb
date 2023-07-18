@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RegionMetaAction"],"struct":["MetaActionIteratorImpl","RegionChange","RegionCheckpoint","RegionEdit","RegionManifestData","RegionManifestDataBuilder","RegionMetaActionList","RegionRemove","RegionVersion"]};
+window.SIDEBAR_ITEMS = {"enum":["RegionMetaAction"],"static":["CALLSITE"],"struct":["RegionChange","RegionCheckpoint","RegionEdit","RegionManifest","RegionManifestBuilder","RegionMetaActionIter","RegionMetaActionList","RegionRemove","RegionVersion"]};

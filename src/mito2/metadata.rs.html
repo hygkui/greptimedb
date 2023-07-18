@@ -205,6 +205,18 @@
 <a href="#205" id="205">205</a>
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -233,6 +245,7 @@
 </span><span class="doccomment">/// Static metadata of a region.
 ///
 /// This struct implements [Serialize] and [Deserialize] traits.
+/// To build a [RegionMetadata] object, use [RegionMetadataBuilder].
 ///
 /// ```mermaid
 /// class RegionMetadata {
@@ -257,17 +270,17 @@
 </span><span class="kw">pub struct </span>RegionMetadata {
     <span class="doccomment">/// Latest schema of this region
     </span><span class="attr">#[serde(skip)]
-    </span>schema: SchemaRef,
+    </span><span class="kw">pub </span>schema: SchemaRef,
     <span class="doccomment">/// Columns in the region. Has the same order as columns
     /// in [schema](RegionMetadata::schema).
-    </span>column_metadatas: Vec&lt;ColumnMetadata&gt;,
+    </span><span class="kw">pub </span>column_metadatas: Vec&lt;ColumnMetadata&gt;,
     <span class="doccomment">/// Version of metadata.
-    </span>version: VersionNumber,
+    </span><span class="kw">pub </span>version: VersionNumber,
     <span class="doccomment">/// Maintains an ordered list of primary keys
-    </span>primary_key: Vec&lt;ColumnId&gt;,
+    </span><span class="kw">pub </span>primary_key: Vec&lt;ColumnId&gt;,
 
     <span class="doccomment">/// Immutable and unique id of a region.
-    </span>region_id: RegionId,
+    </span><span class="kw">pub </span>region_id: RegionId,
 }
 
 <span class="kw">pub type </span>RegionMetadataRef = Arc&lt;RegionMetadata&gt;;
@@ -325,6 +338,17 @@
         }
     }
 
+    <span class="doccomment">/// Create a builder from existing [RegionMetadata].
+    </span><span class="kw">pub fn </span>from_existing(existing: RegionMetadata, new_version: VersionNumber) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            schema: existing.schema,
+            column_metadatas: existing.column_metadatas,
+            version: new_version,
+            primary_key: existing.primary_key,
+            region_id: existing.region_id,
+        }
+    }
+
     <span class="doccomment">/// Add a column metadata to this region metadata.
     /// This method will check the semantic type and add it to primary keys automatically.
     </span><span class="kw">pub fn </span>add_column_metadata(<span class="kw-2">mut </span><span class="self">self</span>, column_metadata: ColumnMetadata) -&gt; <span class="self">Self </span>{
@@ -356,11 +380,11 @@
 </span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>ColumnMetadata {
     <span class="doccomment">/// Schema of this column. Is the same as `column_schema` in [SchemaRef].
-    </span>column_schema: ColumnSchema,
+    </span><span class="kw">pub </span>column_schema: ColumnSchema,
     <span class="doccomment">/// Semantic type of this column (e.g. tag or timestamp).
-    </span>semantic_type: SemanticType,
+    </span><span class="kw">pub </span>semantic_type: SemanticType,
     <span class="doccomment">/// Immutable and unique id of a region.
-    </span>column_id: ColumnId,
+    </span><span class="kw">pub </span>column_id: ColumnId,
 }
 
 <span class="doccomment">/// The semantic type of one column

@@ -119,6 +119,12 @@
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -216,6 +222,12 @@
         source: tokio::sync::oneshot::error::RecvError,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Expect initial region metadata on creating/opening a new region, location: {}&quot;</span>,
+        location
+    ))]
+    </span>InitialMetadata { location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -229,7 +241,7 @@
             CompressObject { .. } | DecompressObject { .. } | SerdeJson { .. } | Utf8 { .. } =&gt; {
                 StatusCode::Unexpected
             }
-            InvalidScanIndex { .. } =&gt; StatusCode::InvalidArguments,
+            InvalidScanIndex { .. } | InitialMetadata { .. } =&gt; StatusCode::InvalidArguments,
             RegionMetadataNotFound { .. } | Join { .. } | WorkerStopped { .. } | Recv { .. } =&gt; {
                 StatusCode::Internal
             }

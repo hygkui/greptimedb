@@ -272,6 +272,12 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -288,26 +294,44 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>snafu::OptionExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>storage::metadata::VersionNumber;
 <span class="kw">use </span>storage::sst::{FileId, FileMeta};
 <span class="kw">use </span>store_api::manifest::action::{ProtocolAction, ProtocolVersion};
 <span class="kw">use </span>store_api::manifest::ManifestVersion;
 <span class="kw">use </span>store_api::storage::{RegionId, SequenceNumber};
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{RegionMetadataNotFoundSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::manifest::helper;
+<span class="kw">use </span><span class="kw">crate</span>::error::{RegionMetadataNotFoundSnafu, <span class="prelude-ty">Result</span>, SerdeJsonSnafu, Utf8Snafu};
 <span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadata;
+
+<span class="doccomment">/// Actions that can be applied to region manifest.
+</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>RegionMetaAction {
+    <span class="doccomment">/// Set the min/max supported protocol version
+    </span>Protocol(ProtocolAction),
+    <span class="doccomment">/// Change region&#39;s metadata for request like ALTER
+    </span>Change(RegionChange),
+    <span class="doccomment">/// Edit region&#39;s state for changing options or file list.
+    </span>Edit(RegionEdit),
+    <span class="doccomment">/// Remove the region.
+    </span>Remove(RegionRemove),
+}
 
 <span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>RegionChange {
-    <span class="doccomment">/// The committed sequence of the region when this change happens. So the
-    /// data with sequence **greater than** this sequence would use the new
-    /// metadata.
-    </span><span class="kw">pub </span>committed_sequence: SequenceNumber,
     <span class="doccomment">/// The metadata after changed.
     </span><span class="kw">pub </span>metadata: RegionMetadata,
+}
+
+<span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>RegionEdit {
+    <span class="kw">pub </span>region_version: VersionNumber,
+    <span class="kw">pub </span>files_to_add: Vec&lt;FileMeta&gt;,
+    <span class="kw">pub </span>files_to_remove: Vec&lt;FileMeta&gt;,
+    <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+    <span class="kw">pub </span>flushed_sequence: <span class="prelude-ty">Option</span>&lt;SequenceNumber&gt;,
 }
 
 <span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -315,45 +339,26 @@
     <span class="kw">pub </span>region_id: RegionId,
 }
 
-<span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>RegionEdit {
-    <span class="kw">pub </span>region_version: VersionNumber,
-    <span class="kw">pub </span>flushed_sequence: <span class="prelude-ty">Option</span>&lt;SequenceNumber&gt;,
-    <span class="kw">pub </span>files_to_add: Vec&lt;FileMeta&gt;,
-    <span class="kw">pub </span>files_to_remove: Vec&lt;FileMeta&gt;,
-    <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
-}
-
-<span class="doccomment">/// The region version checkpoint
+<span class="doccomment">/// The region manifest data
 </span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>RegionVersion {
-    <span class="kw">pub </span>manifest_version: ManifestVersion,
-    <span class="kw">pub </span>flushed_sequence: <span class="prelude-ty">Option</span>&lt;SequenceNumber&gt;,
-    <span class="kw">pub </span>files: HashMap&lt;FileId, FileMeta&gt;,
-}
-
-<span class="doccomment">/// The region manifest data checkpoint
-</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>RegionManifestData {
-    <span class="kw">pub </span>committed_sequence: SequenceNumber,
+</span><span class="kw">pub struct </span>RegionManifest {
     <span class="kw">pub </span>metadata: RegionMetadata,
-    <span class="kw">pub </span>version: <span class="prelude-ty">Option</span>&lt;RegionVersion&gt;,
+    <span class="kw">pub </span>version: RegionVersion,
 }
 
 <span class="attr">#[derive(Debug, Default)]
-</span><span class="kw">pub struct </span>RegionManifestDataBuilder {
-    committed_sequence: SequenceNumber,
+</span><span class="kw">pub struct </span>RegionManifestBuilder {
     metadata: <span class="prelude-ty">Option</span>&lt;RegionMetadata&gt;,
     version: <span class="prelude-ty">Option</span>&lt;RegionVersion&gt;,
 }
 
-<span class="kw">impl </span>RegionManifestDataBuilder {
-    <span class="kw">pub fn </span>with_checkpoint(checkpoint: <span class="prelude-ty">Option</span>&lt;RegionManifestData&gt;) -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>RegionManifestBuilder {
+    <span class="doccomment">/// Start with a checkpoint
+    </span><span class="kw">pub fn </span>with_checkpoint(checkpoint: <span class="prelude-ty">Option</span>&lt;RegionManifest&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = checkpoint {
             <span class="self">Self </span>{
                 metadata: <span class="prelude-val">Some</span>(s.metadata),
-                version: s.version,
-                committed_sequence: s.committed_sequence,
+                version: <span class="prelude-val">Some</span>(s.version),
             }
         } <span class="kw">else </span>{
             Default::default()
@@ -362,13 +367,11 @@
 
     <span class="kw">pub fn </span>apply_change(<span class="kw-2">&amp;mut </span><span class="self">self</span>, change: RegionChange) {
         <span class="self">self</span>.metadata = <span class="prelude-val">Some</span>(change.metadata);
-        <span class="self">self</span>.committed_sequence = change.committed_sequence;
     }
 
     <span class="kw">pub fn </span>apply_edit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, manifest_version: ManifestVersion, edit: RegionEdit) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(version) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.version {
             version.manifest_version = manifest_version;
-            version.flushed_sequence = edit.flushed_sequence;
             <span class="kw">for </span>file <span class="kw">in </span>edit.files_to_add {
                 <span class="kw">let _ </span>= version.files.insert(file.file_id, file);
             }
@@ -378,7 +381,6 @@
         } <span class="kw">else </span>{
             <span class="self">self</span>.version = <span class="prelude-val">Some</span>(RegionVersion {
                 manifest_version,
-                flushed_sequence: edit.flushed_sequence,
                 files: edit
                     .files_to_add
                     .into_iter()
@@ -388,16 +390,32 @@
         }
     }
 
-    <span class="kw">pub fn </span>try_build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;RegionManifestData&gt; {
-        <span class="prelude-val">Ok</span>(RegionManifestData {
-            metadata: <span class="self">self</span>.metadata.context(RegionMetadataNotFoundSnafu)<span class="question-mark">?</span>,
-            version: <span class="self">self</span>.version,
-            committed_sequence: <span class="self">self</span>.committed_sequence,
-        })
+    <span class="doccomment">/// Check if the builder keeps a [RegionMetadata]
+    </span><span class="kw">pub fn </span>contains_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.metadata.is_some()
+    }
+
+    <span class="kw">pub fn </span>try_build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;RegionManifest&gt; {
+        <span class="kw">let </span>metadata = <span class="self">self</span>.metadata.context(RegionMetadataNotFoundSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>version = <span class="self">self</span>.version.unwrap_or_else(|| {
+            <span class="macro">info!</span>(
+                <span class="string">&quot;Create new default region version for region {:?}&quot;</span>,
+                metadata.region_id
+            );
+            RegionVersion::default()
+        });
+        <span class="prelude-val">Ok</span>(RegionManifest { metadata, version })
     }
 }
 
-<span class="comment">// The checkpoint of region manifest, generated by checkpoint.
+<span class="doccomment">/// The region version checkpoint
+</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
+</span><span class="kw">pub struct </span>RegionVersion {
+    <span class="kw">pub </span>manifest_version: ManifestVersion,
+    <span class="kw">pub </span>files: HashMap&lt;FileId, FileMeta&gt;,
+}
+
+<span class="comment">// The checkpoint of region manifest, generated by checkpointer.
 </span><span class="attr">#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 </span><span class="kw">pub struct </span>RegionCheckpoint {
     <span class="doccomment">/// The snasphot protocol
@@ -407,33 +425,26 @@
     <span class="comment">// The number of manifest actions that this checkpoint compacts.
     </span><span class="kw">pub </span>compacted_actions: usize,
     <span class="comment">// The checkpoint data
-    </span><span class="kw">pub </span>checkpoint: <span class="prelude-ty">Option</span>&lt;RegionManifestData&gt;,
+    </span><span class="kw">pub </span>checkpoint: <span class="prelude-ty">Option</span>&lt;RegionManifest&gt;,
 }
 
 <span class="kw">impl </span>RegionCheckpoint {
-    <span class="kw">fn </span>set_protocol(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: ProtocolAction) {
+    <span class="kw">pub fn </span>set_protocol(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: ProtocolAction) {
         <span class="self">self</span>.protocol = action;
     }
 
-    <span class="kw">fn </span>last_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ManifestVersion {
+    <span class="kw">pub fn </span>last_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ManifestVersion {
         <span class="self">self</span>.last_version
     }
 
-    <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+    <span class="kw">pub fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
         <span class="macro">todo!</span>()
     }
 
-    <span class="kw">fn </span>decode(bs: <span class="kw-2">&amp;</span>[u8], reader_version: ProtocolVersion) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        helper::decode_checkpoint(bs, reader_version)
+    <span class="kw">pub fn </span>decode(bs: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="comment">// helper::decode_checkpoint(bs, reader_version)
+        </span><span class="macro">todo!</span>()
     }
-}
-
-<span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-</span><span class="kw">pub enum </span>RegionMetaAction {
-    Protocol(ProtocolAction),
-    Change(RegionChange),
-    Remove(RegionRemove),
-    Edit(RegionEdit),
 }
 
 <span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -464,30 +475,31 @@
         </span><span class="self">self</span>.actions.insert(<span class="number">0</span>, RegionMetaAction::Protocol(action));
     }
 
-    <span class="kw">fn </span>set_prev_version(<span class="kw-2">&amp;mut </span><span class="self">self</span>, version: ManifestVersion) {
+    <span class="kw">pub fn </span>set_prev_version(<span class="kw-2">&amp;mut </span><span class="self">self</span>, version: ManifestVersion) {
         <span class="self">self</span>.prev_version = version;
     }
 
     <span class="doccomment">/// Encode self into json in the form of string lines, starts with prev_version and then action json list.
-    </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
-        helper::encode_actions(<span class="self">self</span>.prev_version, <span class="kw-2">&amp;</span><span class="self">self</span>.actions)
+    </span><span class="kw">pub fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+        <span class="kw">let </span>json = serde_json::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>).context(SerdeJsonSnafu)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(json.into_bytes())
     }
 
-    <span class="kw">fn </span>decode(
-        _bs: <span class="kw-2">&amp;</span>[u8],
-        _reader_version: ProtocolVersion,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, <span class="prelude-ty">Option</span>&lt;ProtocolAction&gt;)&gt; {
-        <span class="macro">todo!</span>()
+    <span class="kw">pub fn </span>decode(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>data = std::str::from_utf8(bytes).context(Utf8Snafu)<span class="question-mark">?</span>;
+
+        serde_json::from_str(data).context(SerdeJsonSnafu)
     }
 }
 
-<span class="kw">pub struct </span>MetaActionIteratorImpl {
+<span class="kw">pub struct </span>RegionMetaActionIter {
     <span class="comment">// log_iter: ObjectStoreLogIterator,
     </span>reader_version: ProtocolVersion,
     last_protocol: <span class="prelude-ty">Option</span>&lt;ProtocolAction&gt;,
 }
 
-<span class="kw">impl </span>MetaActionIteratorImpl {
+<span class="kw">impl </span>RegionMetaActionIter {
     <span class="kw">pub fn </span>last_protocol(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;ProtocolAction&gt; {
         <span class="self">self</span>.last_protocol.clone()
     }
