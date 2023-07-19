@@ -880,6 +880,7 @@
 <a href="#880" id="880">880</a>
 <a href="#881" id="881">881</a>
 <a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1462,6 +1463,7 @@
         query: <span class="kw-2">&amp;</span>PromQuery,
         query_ctx: QueryContextRef,
     ) -&gt; server_error::Result&lt;Output&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_HANDLE_PROMQL_ELAPSED);
         <span class="kw">let </span>interceptor = <span class="self">self
             </span>.plugins
             .get::&lt;PromQueryInterceptorRef&lt;server_error::Error&gt;&gt;();
