@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["version"],"trait":["Memtable","MemtableBuilder"],"type":["MemtableBuilderRef","MemtableId","MemtableRef"]};

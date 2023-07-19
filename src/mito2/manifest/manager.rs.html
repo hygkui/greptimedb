@@ -338,6 +338,11 @@
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
 <a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -600,27 +605,32 @@
     <span class="kw">use </span><span class="kw">crate</span>::test_util::TestEnv;
 
     <span class="kw">fn </span>basic_region_metadata() -&gt; RegionMetadata {
-        <span class="kw">let </span>builder = RegionMetadataBuilder::new(RegionId::new(<span class="number">23</span>, <span class="number">33</span>), <span class="number">0</span>);
-        <span class="kw">let </span>builder = builder.add_column_metadata(ColumnMetadata {
-            column_schema: ColumnSchema::new(
-                <span class="string">&quot;ts&quot;</span>,
-                ConcreteDataType::timestamp_millisecond_datatype(),
-                <span class="bool-val">false</span>,
-            ),
-            semantic_type: SemanticType::Timestamp,
-            column_id: <span class="number">45</span>,
-        });
-        <span class="kw">let </span>builder = builder.add_column_metadata(ColumnMetadata {
-            column_schema: ColumnSchema::new(<span class="string">&quot;pk&quot;</span>, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
-            semantic_type: SemanticType::Tag,
-            column_id: <span class="number">36</span>,
-        });
-        <span class="kw">let </span>builder = builder.add_column_metadata(ColumnMetadata {
-            column_schema: ColumnSchema::new(<span class="string">&quot;val&quot;</span>, ConcreteDataType::float64_datatype(), <span class="bool-val">false</span>),
-            semantic_type: SemanticType::Field,
-            column_id: <span class="number">251</span>,
-        });
-        builder.build()
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = RegionMetadataBuilder::new(RegionId::new(<span class="number">23</span>, <span class="number">33</span>), <span class="number">0</span>);
+        builder
+            .push_column_metadata(ColumnMetadata {
+                column_schema: ColumnSchema::new(
+                    <span class="string">&quot;ts&quot;</span>,
+                    ConcreteDataType::timestamp_millisecond_datatype(),
+                    <span class="bool-val">false</span>,
+                ),
+                semantic_type: SemanticType::Timestamp,
+                column_id: <span class="number">45</span>,
+            })
+            .push_column_metadata(ColumnMetadata {
+                column_schema: ColumnSchema::new(<span class="string">&quot;pk&quot;</span>, ConcreteDataType::string_datatype(), <span class="bool-val">false</span>),
+                semantic_type: SemanticType::Tag,
+                column_id: <span class="number">36</span>,
+            })
+            .push_column_metadata(ColumnMetadata {
+                column_schema: ColumnSchema::new(
+                    <span class="string">&quot;val&quot;</span>,
+                    ConcreteDataType::float64_datatype(),
+                    <span class="bool-val">false</span>,
+                ),
+                semantic_type: SemanticType::Field,
+                column_id: <span class="number">251</span>,
+            });
+        builder.build().unwrap()
     }
 
     <span class="attr">#[tokio::test]
@@ -657,13 +667,13 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="kw">let </span>new_metadata_builder = RegionMetadataBuilder::from_existing(metadata, <span class="number">1</span>);
-        <span class="kw">let </span>new_metadata_builder = new_metadata_builder.add_column_metadata(ColumnMetadata {
+        <span class="kw">let </span><span class="kw-2">mut </span>new_metadata_builder = RegionMetadataBuilder::from_existing(metadata, <span class="number">1</span>);
+        new_metadata_builder.push_column_metadata(ColumnMetadata {
             column_schema: ColumnSchema::new(<span class="string">&quot;val2&quot;</span>, ConcreteDataType::float64_datatype(), <span class="bool-val">false</span>),
             semantic_type: SemanticType::Field,
             column_id: <span class="number">252</span>,
         });
-        <span class="kw">let </span>new_metadata = new_metadata_builder.build();
+        <span class="kw">let </span>new_metadata = new_metadata_builder.build().unwrap();
 
         <span class="kw">let </span><span class="kw-2">mut </span>action_list =
             RegionMetaActionList::with_action(RegionMetaAction::Change(RegionChange {

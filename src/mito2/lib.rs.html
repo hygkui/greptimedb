@@ -158,6 +158,10 @@
 <a href="#158" id="158">158</a>
 <a href="#159" id="159">159</a>
 <a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -188,9 +192,13 @@
 #[allow(unused_variables)]
 </span><span class="kw">pub mod </span>manifest;
 <span class="attr">#[allow(dead_code)]
+</span><span class="kw">pub mod </span>memtable;
+<span class="attr">#[allow(dead_code)]
 </span><span class="kw">pub mod </span>metadata;
 <span class="attr">#[allow(dead_code)]
 </span><span class="kw">mod </span>region;
+<span class="attr">#[allow(dead_code)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>sst;
 <span class="attr">#[allow(dead_code)]
 </span><span class="kw">mod </span>worker;
 
@@ -268,7 +276,7 @@
 /// class Version {
 ///     -RegionMetadataRef metadata
 ///     -MemtableVersionRef memtables
-///     -LevelMetasRef ssts
+///     -SstVersionRef ssts
 ///     -SequenceNumber flushed_sequence
 ///     -ManifestVersion manifest_version
 /// }
@@ -279,7 +287,7 @@
 ///     +immutable_memtables() &amp;[MemtableRef]
 ///     +freeze_mutable(MemtableRef new_mutable) MemtableVersion
 /// }
-/// class LevelMetas {
+/// class SstVersion {
 ///     -LevelMetaVec levels
 ///     -AccessLayerRef sst_layer
 ///     -FilePurgerRef file_purger
@@ -306,8 +314,8 @@
 /// VersionControl o-- Version
 /// Version o-- RegionMetadata
 /// Version o-- MemtableVersion
-/// Version o-- LevelMetas
-/// LevelMetas o-- LevelMeta
+/// Version o-- SstVersion
+/// SstVersion o-- LevelMeta
 /// LevelMeta o-- FileHandle
 /// FileHandle o-- FileMeta
 /// class RegionMetadata
