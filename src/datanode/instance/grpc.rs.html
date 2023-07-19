@@ -851,6 +851,79 @@
 <a href="#851" id="851">851</a>
 <a href="#852" id="852">852</a>
 <a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1159,7 +1232,7 @@
     <span class="kw">use </span>api::v1::{
         alter_expr, AddColumn, AddColumns, AlterExpr, Column, ColumnDataType, ColumnDef,
         CreateDatabaseExpr, CreateTableExpr, DropTableExpr, InsertRequest, InsertRequests,
-        QueryRequest, TableId,
+        QueryRequest, RenameTable, TableId,
     };
     <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
     <span class="kw">use </span>common_error::ext::ErrorExt;
@@ -1405,6 +1478,79 @@
             .<span class="kw">await
             </span>.unwrap_err();
         <span class="macro">assert_eq!</span>(err.status_code(), StatusCode::TableColumnExists);
+    }
+
+    <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
+    </span><span class="kw">async fn </span>test_rename_table_twice() {
+        common_telemetry::init_default_ut_logging();
+        <span class="kw">let </span>instance = MockInstance::new(<span class="string">&quot;test_alter_table_twice&quot;</span>).<span class="kw">await</span>;
+        <span class="kw">let </span>instance = instance.inner();
+
+        <span class="kw">let </span>query = Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::CreateDatabase(CreateDatabaseExpr {
+                database_name: <span class="string">&quot;my_database&quot;</span>.to_string(),
+                create_if_not_exists: <span class="bool-val">true</span>,
+            })),
+        });
+        <span class="kw">let </span>output = instance.do_query(query, QueryContext::arc()).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">1</span>)));
+
+        <span class="kw">let </span>query = Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::CreateTable(CreateTableExpr {
+                catalog_name: <span class="string">&quot;greptime&quot;</span>.to_string(),
+                schema_name: <span class="string">&quot;my_database&quot;</span>.to_string(),
+                table_name: <span class="string">&quot;my_table&quot;</span>.to_string(),
+                desc: <span class="string">&quot;blabla&quot;</span>.to_string(),
+                column_defs: <span class="macro">vec!</span>[
+                    ColumnDef {
+                        name: <span class="string">&quot;a&quot;</span>.to_string(),
+                        datatype: ColumnDataType::String <span class="kw">as </span>i32,
+                        is_nullable: <span class="bool-val">true</span>,
+                        default_constraint: <span class="macro">vec!</span>[],
+                    },
+                    ColumnDef {
+                        name: <span class="string">&quot;ts&quot;</span>.to_string(),
+                        datatype: ColumnDataType::TimestampMillisecond <span class="kw">as </span>i32,
+                        is_nullable: <span class="bool-val">false</span>,
+                        default_constraint: <span class="macro">vec!</span>[],
+                    },
+                ],
+                time_index: <span class="string">&quot;ts&quot;</span>.to_string(),
+                engine: MITO_ENGINE.to_string(),
+                table_id: <span class="prelude-val">Some</span>(TableId { id: <span class="number">1025 </span>}),
+                ..Default::default()
+            })),
+        });
+        <span class="kw">let </span>output = instance
+            .do_query(query.clone(), QueryContext::arc())
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">0</span>)));
+
+        <span class="kw">let </span>query = Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::Alter(AlterExpr {
+                catalog_name: <span class="string">&quot;greptime&quot;</span>.to_string(),
+                schema_name: <span class="string">&quot;my_database&quot;</span>.to_string(),
+                table_name: <span class="string">&quot;my_table&quot;</span>.to_string(),
+                kind: <span class="prelude-val">Some</span>(alter_expr::Kind::RenameTable(RenameTable {
+                    new_table_name: <span class="string">&quot;new_my_table&quot;</span>.to_string(),
+                })),
+                table_id: <span class="prelude-val">Some</span>(TableId { id: <span class="number">1025 </span>}),
+                ..Default::default()
+            })),
+        });
+        <span class="kw">let </span>output = instance
+            .do_query(query.clone(), QueryContext::arc())
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">0</span>)));
+
+        <span class="comment">// renames it again.
+        </span><span class="kw">let </span>output = instance
+            .do_query(query.clone(), QueryContext::arc())
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">0</span>)));
     }
 
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
