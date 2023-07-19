@@ -909,6 +909,28 @@
 <a href="#909" id="909">909</a>
 <a href="#910" id="910">910</a>
 <a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -926,9 +948,11 @@
 </span><span class="kw">mod </span>admin;
 <span class="kw">pub mod </span>authorize;
 <span class="kw">pub mod </span>handler;
+<span class="kw">pub mod </span>header;
 <span class="kw">pub mod </span>influxdb;
 <span class="kw">pub mod </span>mem_prof;
 <span class="kw">pub mod </span>opentsdb;
+<span class="kw">pub mod </span>otlp;
 <span class="kw">mod </span>pprof;
 <span class="kw">pub mod </span>prom_store;
 <span class="kw">pub mod </span>script;
@@ -984,8 +1008,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::grpc::ServerGrpcQueryHandlerRef;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::sql::ServerSqlQueryHandlerRef;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::{
-    InfluxdbLineProtocolHandlerRef, OpentsdbProtocolHandlerRef, PromStoreProtocolHandlerRef,
-    ScriptHandlerRef,
+    InfluxdbLineProtocolHandlerRef, OpenTelemetryProtocolHandlerRef, OpentsdbProtocolHandlerRef,
+    PromStoreProtocolHandlerRef, ScriptHandlerRef,
 };
 <span class="kw">use </span><span class="kw">crate</span>::server::Server;
 
@@ -1030,6 +1054,7 @@
     influxdb_handler: <span class="prelude-ty">Option</span>&lt;InfluxdbLineProtocolHandlerRef&gt;,
     opentsdb_handler: <span class="prelude-ty">Option</span>&lt;OpentsdbProtocolHandlerRef&gt;,
     prom_handler: <span class="prelude-ty">Option</span>&lt;PromStoreProtocolHandlerRef&gt;,
+    otlp_handler: <span class="prelude-ty">Option</span>&lt;OpenTelemetryProtocolHandlerRef&gt;,
     script_handler: <span class="prelude-ty">Option</span>&lt;ScriptHandlerRef&gt;,
     shutdown_tx: Mutex&lt;<span class="prelude-ty">Option</span>&lt;Sender&lt;()&gt;&gt;&gt;,
     user_provider: <span class="prelude-ty">Option</span>&lt;UserProviderRef&gt;,
@@ -1310,6 +1335,7 @@
                 opentsdb_handler: <span class="prelude-val">None</span>,
                 influxdb_handler: <span class="prelude-val">None</span>,
                 prom_handler: <span class="prelude-val">None</span>,
+                otlp_handler: <span class="prelude-val">None</span>,
                 user_provider: <span class="prelude-val">None</span>,
                 script_handler: <span class="prelude-val">None</span>,
                 metrics_handler: <span class="prelude-val">None</span>,
@@ -1347,6 +1373,11 @@
 
     <span class="kw">pub fn </span>with_prom_handler(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handler: PromStoreProtocolHandlerRef) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="kw">let _ </span>= <span class="self">self</span>.inner.prom_handler.get_or_insert(handler);
+        <span class="self">self
+    </span>}
+
+    <span class="kw">pub fn </span>with_otlp_handler(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handler: OpenTelemetryProtocolHandlerRef) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="kw">let _ </span>= <span class="self">self</span>.inner.otlp_handler.get_or_insert(handler);
         <span class="self">self
     </span>}
 
@@ -1429,6 +1460,13 @@
             router = router.nest(
                 <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{HTTP_API_VERSION}/prometheus&quot;</span>),
                 <span class="self">self</span>.route_prom(prom_handler),
+            );
+        }
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(otlp_handler) = <span class="self">self</span>.otlp_handler.clone() {
+            router = router.nest(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{HTTP_API_VERSION}/otlp&quot;</span>),
+                <span class="self">self</span>.route_otlp(otlp_handler),
             );
         }
 
@@ -1556,6 +1594,12 @@
         Router::new()
             .route(<span class="string">&quot;/api/put&quot;</span>, routing::post(opentsdb::put))
             .with_state(opentsdb_handler)
+    }
+
+    <span class="kw">fn </span>route_otlp&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, otlp_handler: OpenTelemetryProtocolHandlerRef) -&gt; Router&lt;S&gt; {
+        Router::new()
+            .route(<span class="string">&quot;/v1/metrics&quot;</span>, routing::post(otlp::metrics))
+            .with_state(otlp_handler)
     }
 
     <span class="kw">fn </span>route_admin&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, grpc_handler: ServerGrpcQueryHandlerRef) -&gt; Router&lt;S&gt; {

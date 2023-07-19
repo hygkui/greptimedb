@@ -81,6 +81,8 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -103,8 +105,8 @@
 <span class="kw">use </span>servers::Mode;
 
 <span class="kw">use </span><span class="kw">crate</span>::service_config::{
-    GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, PostgresOptions, PromStoreOptions,
-    PrometheusOptions,
+    GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, OtlpOptions, PostgresOptions,
+    PromStoreOptions, PrometheusOptions,
 };
 
 <span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
@@ -120,6 +122,7 @@
     <span class="kw">pub </span>influxdb_options: <span class="prelude-ty">Option</span>&lt;InfluxdbOptions&gt;,
     <span class="kw">pub </span>prom_store_options: <span class="prelude-ty">Option</span>&lt;PromStoreOptions&gt;,
     <span class="kw">pub </span>prometheus_options: <span class="prelude-ty">Option</span>&lt;PrometheusOptions&gt;,
+    <span class="kw">pub </span>otlp_options: <span class="prelude-ty">Option</span>&lt;OtlpOptions&gt;,
     <span class="kw">pub </span>meta_client_options: <span class="prelude-ty">Option</span>&lt;MetaClientOptions&gt;,
     <span class="kw">pub </span>logging: LoggingOptions,
 }
@@ -137,6 +140,7 @@
             influxdb_options: <span class="prelude-val">Some</span>(InfluxdbOptions::default()),
             prom_store_options: <span class="prelude-val">Some</span>(PromStoreOptions::default()),
             prometheus_options: <span class="prelude-val">Some</span>(PrometheusOptions::default()),
+            otlp_options: <span class="prelude-val">Some</span>(OtlpOptions::default()),
             meta_client_options: <span class="prelude-val">None</span>,
             logging: LoggingOptions::default(),
         }
