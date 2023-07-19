@@ -386,6 +386,7 @@
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -491,13 +492,14 @@
             <span class="kw">let </span>table_info = <span class="self">self</span>.find_table_info(<span class="kw-2">&amp;</span>request.table_name).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="kw">let </span>table_meta = <span class="kw-2">&amp;</span>table_info.meta;
 
+            <span class="kw">let </span>table_id = table_info.table_id();
             <span class="kw">let </span>split = partition_manager
-                .split_insert_request(<span class="kw-2">&amp;</span>table_name, request, table_meta.schema.as_ref())
+                .split_insert_request(table_id, request, table_meta.schema.as_ref())
                 .<span class="kw">await
                 </span>.context(SplitInsertSnafu)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>table_route = partition_manager
-                .find_table_route(<span class="kw-2">&amp;</span>table_name)
+                .find_table_route(table_id)
                 .<span class="kw">await
                 </span>.with_context(|<span class="kw">_</span>| FindTableRouteSnafu {
                     table_name: table_name.to_string(),
@@ -640,23 +642,23 @@
             .table_name_manager()
             .create(<span class="kw-2">&amp;</span>key, table_id)
             .<span class="kw">await
-            </span>.unwrap()
-            .is_none());
+            </span>.is_ok());
 
         <span class="macro">assert!</span>(table_metadata_manager
             .table_info_manager()
-            .put_old(table_info)
+            .compare_and_put(table_id, <span class="prelude-val">None</span>, table_info)
             .<span class="kw">await
             </span>.is_ok());
 
-        <span class="macro">assert!</span>(table_metadata_manager
+        <span class="kw">let _ </span>= table_metadata_manager
             .table_region_manager()
-            .put_old(
-                <span class="kw-2">&amp;</span>key.into(),
+            .compare_and_put(
+                <span class="number">1</span>,
+                <span class="prelude-val">None</span>,
                 RegionDistribution::from([(<span class="number">1</span>, <span class="macro">vec!</span>[<span class="number">1</span>]), (<span class="number">2</span>, <span class="macro">vec!</span>[<span class="number">2</span>]), (<span class="number">3</span>, <span class="macro">vec!</span>[<span class="number">3</span>])]),
             )
             .<span class="kw">await
-            </span>.is_ok());
+            </span>.unwrap();
     }
 
     <span class="attr">#[tokio::test]

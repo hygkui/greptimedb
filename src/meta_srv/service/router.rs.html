@@ -130,25 +130,6 @@
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -163,18 +144,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::collections::HashMap;
-
-<span class="kw">use </span>api::v1::meta::{
+</span><span class="kw">use </span>api::v1::meta::{
     router_server, Peer, PeerDict, ResponseHeader, RouteRequest, RouteResponse, TableRoute,
     TableRouteValue,
 };
-<span class="kw">use </span>common_meta::helper::TableGlobalValue;
 <span class="kw">use </span>common_meta::key::table_info::TableInfoValue;
-<span class="kw">use </span>common_meta::table_name::TableName;
+<span class="kw">use </span>common_meta::key::table_region::RegionDistribution;
 <span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
-<span class="kw">use </span>table::metadata::RawTableInfo;
 <span class="kw">use </span>tonic::{Request, Response};
 
 <span class="kw">use </span><span class="kw">crate</span>::error;
@@ -205,10 +182,9 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create_table_global_value(
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create_region_distribution(
     table_route_value: <span class="kw-2">&amp;</span>TableRouteValue,
-    table_info: RawTableInfo,
-) -&gt; <span class="prelude-ty">Result</span>&lt;TableGlobalValue&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;RegionDistribution&gt; {
     <span class="kw">let </span>peers = <span class="kw-2">&amp;</span>table_route_value.peers;
     <span class="kw">let </span>region_routes = <span class="kw-2">&amp;</span>table_route_value
         .table_route
@@ -218,9 +194,7 @@
         })<span class="question-mark">?
         </span>.region_routes;
 
-    <span class="kw">let </span>node_id = peers[region_routes[<span class="number">0</span>].leader_peer_index <span class="kw">as </span>usize].id;
-
-    <span class="kw">let </span><span class="kw-2">mut </span>regions_id_map = HashMap::with_capacity(region_routes.len());
+    <span class="kw">let </span><span class="kw-2">mut </span>regions_id_map = RegionDistribution::new();
     <span class="kw">for </span>route <span class="kw">in </span>region_routes.iter() {
         <span class="kw">let </span>node_id = peers[route.leader_peer_index <span class="kw">as </span>usize].id;
         <span class="kw">let </span>region_id = route
@@ -235,27 +209,15 @@
             .or_insert_with(Vec::new)
             .push(region_id);
     }
-
-    <span class="prelude-val">Ok</span>(TableGlobalValue {
-        node_id,
-        regions_id_map,
-        table_info,
-    })
+    <span class="prelude-val">Ok</span>(regions_id_map)
 }
 
 <span class="kw">async fn </span>handle_route(req: RouteRequest, ctx: Context) -&gt; <span class="prelude-ty">Result</span>&lt;RouteResponse&gt; {
-    <span class="kw">let </span>RouteRequest {
-        header,
-        table_names,
-        table_ids: <span class="kw">_</span>,
-    } = req;
+    <span class="kw">let </span>RouteRequest { header, table_ids } = req;
     <span class="kw">let </span>cluster_id = header.as_ref().map_or(<span class="number">0</span>, |h| h.cluster_id);
 
-    <span class="kw">let </span>table_names = table_names
-        .into_iter()
-        .map(Into::into)
-        .collect::&lt;Vec&lt;TableName&gt;&gt;();
-    <span class="kw">let </span>tables = fetch_tables(<span class="kw-2">&amp;</span>ctx, table_names).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>table_ids = table_ids.iter().map(|x| x.id).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+    <span class="kw">let </span>tables = fetch_tables(<span class="kw-2">&amp;</span>ctx, table_ids).<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="kw">let </span>(peers, table_routes) = fill_table_routes(tables)<span class="question-mark">?</span>;
 

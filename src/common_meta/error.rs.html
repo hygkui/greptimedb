@@ -133,6 +133,24 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -194,8 +212,23 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid protobuf message, err: {}&quot;</span>, err_msg))]
     </span>InvalidProtoMsg { err_msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Concurrent modify regions placement: {err_msg}&quot;</span>))]
-    </span>ConcurrentModifyRegionsPlacement { err_msg: String, location: Location },
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected: {err_msg}&quot;</span>))]
+    </span>Unexpected { err_msg: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table already exists, table_id: {}&quot;</span>, table_id))]
+    </span>TableAlreadyExists {
+        table_id: TableId,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table does not exist, table_name: {}&quot;</span>, table_name))]
+    </span>TableNotExist {
+        table_name: String,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to rename table, reason: {}&quot;</span>, reason))]
+    </span>RenameTable { reason: String, location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid table metadata, err: {}&quot;</span>, err_msg))]
     </span>InvalidTableMetadata { err_msg: String, location: Location },
@@ -247,12 +280,15 @@
             | RouteInfoCorrupted { .. }
             | InvalidProtoMsg { .. }
             | InvalidTableMetadata { .. }
-            | MoveRegion { .. } =&gt; StatusCode::Unexpected,
+            | MoveRegion { .. }
+            | Unexpected { .. } =&gt; StatusCode::Unexpected,
 
             SendMessage { .. }
             | GetKvCache { .. }
             | CacheNotGet { .. }
-            | ConcurrentModifyRegionsPlacement { .. } =&gt; StatusCode::Internal,
+            | TableAlreadyExists { .. }
+            | TableNotExist { .. }
+            | RenameTable { .. } =&gt; StatusCode::Internal,
 
             EncodeJson { .. } | DecodeJson { .. } | PayloadNotExist { .. } =&gt; {
                 StatusCode::Unexpected

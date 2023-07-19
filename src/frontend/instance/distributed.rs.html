@@ -900,6 +900,14 @@
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
 <a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -927,7 +935,7 @@
     FlushTableExpr, InsertRequests,
 };
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>catalog::{CatalogManager, RegisterTableRequest};
+<span class="kw">use </span>catalog::{CatalogManager, DeregisterTableRequest, RegisterTableRequest};
 <span class="kw">use </span>chrono::DateTime;
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::Database;
@@ -1078,10 +1086,19 @@
             </span>.with_context(|| TableNotFoundSnafu {
                 table_name: table_name.to_string(),
             })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>table_id = table.table_info().ident.table_id;
+        <span class="kw">let </span>table_id = table.table_info().table_id();
 
         <span class="self">self</span>.drop_table_procedure(<span class="kw-2">&amp;</span>table_name, table_id).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>request = DeregisterTableRequest {
+            catalog: table_name.catalog_name.clone(),
+            schema: table_name.schema_name.clone(),
+            table_name: table_name.table_name.clone(),
+        };
+        <span class="self">self</span>.catalog_manager
+            .deregister_table(request)
+            .<span class="kw">await
+            </span>.context(CatalogSnafu)<span class="question-mark">?</span>;
 
         <span class="comment">// Since the table information dropped on meta does not go through KvBackend, so we
         // manually invalidate the cache here.
@@ -1181,7 +1198,6 @@
         <span class="kw">let </span>route_response = <span class="self">self
             </span>.meta_client
             .route(RouteRequest {
-                table_names: <span class="macro">vec!</span>[table_name.clone()],
                 table_ids: <span class="macro">vec!</span>[table_id],
             })
             .<span class="kw">await
@@ -1285,7 +1301,7 @@
         <span class="kw">let </span>partitions = <span class="self">self
             </span>.catalog_manager
             .partition_manager()
-            .find_table_partitions(<span class="kw-2">&amp;</span>table_name)
+            .find_table_partitions(table.table_info().table_id())
             .<span class="kw">await
             </span>.context(error::FindTablePartitionRuleSnafu {
                 table_name: <span class="kw-2">&amp;</span>table_name.table_name,

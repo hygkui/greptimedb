@@ -287,12 +287,6 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -383,7 +377,7 @@
         <span class="kw">let </span>tables = <span class="self">self
             </span>.table_metadata_manager
             .table_name_manager()
-            .tables_old(catalog, schema)
+            .tables(catalog, schema)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
@@ -415,16 +409,16 @@
         <span class="kw">let </span>table_id = <span class="self">self
             </span>.table_metadata_manager
             .table_name_manager()
-            .get_old(<span class="kw-2">&amp;</span>key)
+            .get(key)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.map(|x| x.table_id());
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(_table_id) = table_id {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table_id) = table_id {
             <span class="kw">let </span>table_info_value = <span class="self">self
                 </span>.table_metadata_manager
                 .table_info_manager()
-                .get_old(<span class="kw-2">&amp;</span>key.into())
+                .get(table_id)
                 .<span class="kw">await
                 </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
                 </span>.map(|x| <span class="macro">format!</span>(<span class="string">&quot;{x:?}&quot;</span>))
@@ -432,11 +426,11 @@
             result.insert(<span class="string">&quot;table_info_value&quot;</span>, table_info_value);
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(_table_id) = table_id {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table_id) = table_id {
             <span class="kw">let </span>table_region_value = <span class="self">self
                 </span>.table_metadata_manager
                 .table_region_manager()
-                .get_old(<span class="kw-2">&amp;</span>key.into())
+                .get(table_id)
                 .<span class="kw">await
                 </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
                 </span>.map(|x| <span class="macro">format!</span>(<span class="string">&quot;{x:?}&quot;</span>))
@@ -501,10 +495,9 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::sync::Arc;
 
-    <span class="kw">use </span>common_meta::helper::{
-        build_catalog_prefix, build_schema_prefix, build_table_global_prefix, CatalogKey,
-        SchemaKey, TableGlobalKey,
-    };
+    <span class="kw">use </span>common_meta::helper::{build_catalog_prefix, build_schema_prefix, CatalogKey, SchemaKey};
+    <span class="kw">use </span>common_meta::key::table_name::TableNameKey;
+    <span class="kw">use </span>common_meta::key::TableMetaKey;
     <span class="kw">use </span>common_meta::rpc::store::PutRequest;
 
     <span class="kw">use </span><span class="kw">crate</span>::service::admin::meta::get_keys_by_prefix;
@@ -542,19 +535,11 @@
             .<span class="kw">await
             </span>.is_ok());
 
-        <span class="kw">let </span>table1 = TableGlobalKey {
-            catalog_name: catalog_name.to_string(),
-            schema_name: schema_name.to_string(),
-            table_name: table_name.to_string(),
-        };
-        <span class="kw">let </span>table2 = TableGlobalKey {
-            catalog_name: catalog_name.to_string(),
-            schema_name: schema_name.to_string(),
-            table_name: <span class="string">&quot;test_table1&quot;</span>.to_string(),
-        };
+        <span class="kw">let </span>table1 = TableNameKey::new(catalog_name, schema_name, table_name);
+        <span class="kw">let </span>table2 = TableNameKey::new(catalog_name, schema_name, <span class="string">&quot;test_table1&quot;</span>);
         <span class="macro">assert!</span>(in_mem
             .put(PutRequest {
-                key: table1.to_string().as_bytes().to_vec(),
+                key: table1.as_raw_key(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
                 prev_kv: <span class="bool-val">false</span>,
             })
@@ -562,7 +547,7 @@
             </span>.is_ok());
         <span class="macro">assert!</span>(in_mem
             .put(PutRequest {
-                key: table2.to_string().as_bytes().to_vec(),
+                key: table2.as_raw_key(),
                 value: <span class="string">&quot;&quot;</span>.as_bytes().to_vec(),
                 prev_kv: <span class="bool-val">false</span>,
             })
@@ -576,7 +561,10 @@
             .<span class="kw">await
             </span>.unwrap();
         <span class="kw">let </span>table_key = get_keys_by_prefix(
-            build_table_global_prefix(table1.catalog_name, table1.schema_name),
+            <span class="macro">format!</span>(
+                <span class="string">&quot;{}/&quot;</span>,
+                TableNameKey::prefix_to_table(table1.catalog, table1.schema)
+            ),
             <span class="kw-2">&amp;</span>in_mem,
         )
         .<span class="kw">await

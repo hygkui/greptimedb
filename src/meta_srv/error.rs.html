@@ -1009,8 +1009,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Expected to retry later, reason: {}&quot;</span>, reason))]
     </span>RetryLater { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Combine error: {}&quot;</span>, err_msg))]
-    </span>Combine { err_msg: String, location: Location },
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to update table metadata, err_msg: {}&quot;</span>, err_msg))]
+    </span>UpdateTableMetadata { err_msg: String, location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert table route, source: {}&quot;</span>, source))]
     </span>TableRouteConversion {
@@ -1089,7 +1089,7 @@
             | Error::MailboxReceiver { .. }
             | Error::RetryLater { .. }
             | Error::StartGrpc { .. }
-            | Error::Combine { .. }
+            | Error::UpdateTableMetadata { .. }
             | Error::NoEnoughAvailableDatanode { .. }
             | Error::ConvertGrpcExpr { .. }
             | Error::Join { .. } =&gt; StatusCode::Internal,

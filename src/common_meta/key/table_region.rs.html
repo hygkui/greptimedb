@@ -269,15 +269,6 @@
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -295,17 +286,15 @@
 </span><span class="kw">use </span>std::collections::BTreeMap;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>snafu::ensure;
 <span class="kw">use </span>store_api::storage::RegionNumber;
 <span class="kw">use </span>table::metadata::TableId;
 
 <span class="kw">use </span><span class="kw">super</span>::TABLE_REGION_KEY_PREFIX;
-<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidCatalogValueSnafu, InvalidTableMetadataSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::helper::{TableGlobalKey, TableGlobalValue};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="prelude-ty">Result</span>, UnexpectedSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::key::{to_removed_key, TableMetaKey};
 <span class="kw">use </span><span class="kw">crate</span>::kv_backend::KvBackendRef;
-<span class="kw">use </span><span class="kw">crate</span>::rpc::store::{CompareAndPutRequest, MoveValueRequest, PutRequest};
-<span class="kw">use </span><span class="kw">crate</span>::table_name::TableName;
+<span class="kw">use </span><span class="kw">crate</span>::rpc::store::{CompareAndPutRequest, MoveValueRequest};
 <span class="kw">use </span><span class="kw">crate</span>::DatanodeId;
 
 <span class="kw">pub type </span>RegionDistribution = BTreeMap&lt;DatanodeId, Vec&lt;RegionNumber&gt;&gt;;
@@ -360,66 +349,30 @@
             .transpose()
     }
 
-    <span class="comment">// TODO(LFC): Remove this method when table metadata refactor is done.
-    </span><span class="kw">pub async fn </span>get_old(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: <span class="kw-2">&amp;</span>TableName) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRegionValue&gt;&gt; {
-        <span class="kw">let </span>key = TableGlobalKey {
-            catalog_name: table_name.catalog_name.clone(),
-            schema_name: table_name.schema_name.clone(),
-            table_name: table_name.table_name.clone(),
-        }
-        .to_string();
-        <span class="kw">let </span>raw_key = key.as_bytes();
-
-        <span class="self">self</span>.kv_backend
-            .get(raw_key)
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.map(|kv| TableGlobalValue::from_bytes(kv.value()))
-            .transpose()
-            .map(|v| {
-                v.map(|v| TableRegionValue {
-                    region_distribution: v.regions_id_map.into_iter().collect(),
-                    version: <span class="number">0</span>,
-                })
-            })
-            .context(InvalidCatalogValueSnafu)
-    }
-
-    <span class="comment">// TODO(LFC): Remove this method when table metadata refactor is done.
-    </span><span class="kw">pub async fn </span>put_old(
+    <span class="doccomment">/// Create TableRegion key and value. If the key already exists, check if the value is the same.
+    </span><span class="kw">pub async fn </span>create(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        table_name: <span class="kw-2">&amp;</span>TableName,
-        region_distribution: RegionDistribution,
+        table_id: TableId,
+        region_distribution: <span class="kw-2">&amp;</span>RegionDistribution,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>key = TableGlobalKey {
-            catalog_name: table_name.catalog_name.clone(),
-            schema_name: table_name.schema_name.clone(),
-            table_name: table_name.table_name.clone(),
+        <span class="kw">let </span>result = <span class="self">self
+            </span>.compare_and_put(table_id, <span class="prelude-val">None</span>, region_distribution.clone())
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(curr) = result {
+            <span class="kw">let </span><span class="prelude-val">Some</span>(curr) = curr <span class="kw">else </span>{
+                <span class="kw">return </span>UnexpectedSnafu {
+                    err_msg: <span class="macro">format!</span>(<span class="string">&quot;compare_and_put expect None but failed with current value None, table_id: {table_id}, region_distribution: {region_distribution:?}&quot;</span>),
+                }.fail()
+            };
+            <span class="macro">ensure!</span>(
+                <span class="kw-2">&amp;</span>curr.region_distribution == region_distribution,
+                UnexpectedSnafu {
+                    err_msg: <span class="macro">format!</span>(
+                        <span class="string">&quot;TableRegionValue for table {table_id} is updated before it is created!&quot;
+                    </span>)
+                }
+            )
         }
-        .to_string();
-        <span class="kw">let </span>raw_key = key.as_bytes();
-
-        <span class="kw">let </span>table_info = <span class="self">self
-            </span>.kv_backend
-            .get(raw_key)
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.map(|kv| TableGlobalValue::from_bytes(kv.value()))
-            .transpose()
-            .context(InvalidCatalogValueSnafu)<span class="question-mark">?
-            </span>.map(|v| v.table_info)
-            .with_context(|| InvalidTableMetadataSnafu {
-                err_msg: <span class="macro">format!</span>(<span class="string">&quot;table global value for {table_name} is empty&quot;</span>),
-            })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>raw_value = TableGlobalValue {
-            node_id: <span class="number">0</span>,
-            regions_id_map: region_distribution.into_iter().collect(),
-            table_info,
-        }
-        .as_bytes()
-        .context(InvalidCatalogValueSnafu)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>req = PutRequest::new().with_key(raw_key).with_value(raw_value);
-        <span class="self">self</span>.kv_backend.put(req).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -435,7 +388,7 @@
         table_id: TableId,
         expect: <span class="prelude-ty">Option</span>&lt;TableRegionValue&gt;,
         region_distribution: RegionDistribution,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;std::result::Result&lt;(), <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;std::result::Result&lt;(), <span class="prelude-ty">Option</span>&lt;TableRegionValue&gt;&gt;&gt; {
         <span class="kw">let </span>key = TableRegionKey::new(table_id);
         <span class="kw">let </span>raw_key = key.as_raw_key();
 
@@ -459,16 +412,22 @@
         <span class="prelude-val">Ok</span>(<span class="kw">if </span>resp.success {
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(resp.prev_kv.map(|x| x.value))
+            <span class="prelude-val">Err</span>(resp
+                .prev_kv
+                .map(|x| TableRegionValue::try_from_raw_value(x.value))
+                .transpose()<span class="question-mark">?</span>)
         })
     }
 
-    <span class="kw">pub async fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">pub async fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableRegionValue&gt;&gt; {
         <span class="kw">let </span>key = TableRegionKey::new(table_id).as_raw_key();
         <span class="kw">let </span>remove_key = to_removed_key(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>key));
         <span class="kw">let </span>req = MoveValueRequest::new(key, remove_key.as_bytes());
-        <span class="self">self</span>.kv_backend.move_value(req).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
+
+        <span class="kw">let </span>resp = <span class="self">self</span>.kv_backend.move_value(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        resp.<span class="number">0
+            </span>.map(|x| TableRegionValue::try_from_raw_value(x.value))
+            .transpose()
     }
 }
 
@@ -487,25 +446,25 @@
 
         <span class="kw">let </span>region_distribution =
             RegionDistribution::from([(<span class="number">1</span>, <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]), (<span class="number">2</span>, <span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>])]);
+        <span class="kw">let </span>new_region_distribution =
+            RegionDistribution::from([(<span class="number">1</span>, <span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]), (<span class="number">2</span>, <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])]);
+
         <span class="kw">let </span>result = manager
             .compare_and_put(<span class="number">1</span>, <span class="prelude-val">None</span>, region_distribution.clone())
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert!</span>(result.is_ok());
 
-        <span class="kw">let </span>new_region_distribution =
-            RegionDistribution::from([(<span class="number">1</span>, <span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]), (<span class="number">2</span>, <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])]);
         <span class="kw">let </span>curr = manager
             .compare_and_put(<span class="number">1</span>, <span class="prelude-val">None</span>, new_region_distribution.clone())
             .<span class="kw">await
             </span>.unwrap()
             .unwrap_err()
             .unwrap();
-        <span class="kw">let </span>curr = TableRegionValue::try_from_raw_value(curr).unwrap();
         <span class="macro">assert_eq!</span>(
             curr,
             TableRegionValue {
-                region_distribution,
+                region_distribution: region_distribution.clone(),
                 version: <span class="number">0
             </span>}
         );
@@ -516,6 +475,13 @@
             </span>.unwrap()
             .is_ok());
 
+        <span class="macro">assert!</span>(manager.create(<span class="number">99</span>, <span class="kw-2">&amp;</span>region_distribution).<span class="kw">await</span>.is_ok());
+        <span class="macro">assert!</span>(manager.create(<span class="number">99</span>, <span class="kw-2">&amp;</span>region_distribution).<span class="kw">await</span>.is_ok());
+
+        <span class="kw">let </span>result = manager.create(<span class="number">99</span>, <span class="kw-2">&amp;</span>new_region_distribution).<span class="kw">await</span>;
+        <span class="kw">let </span>err_msg = result.unwrap_err().to_string();
+        <span class="macro">assert!</span>(err_msg.contains(<span class="string">&quot;TableRegionValue for table 99 is updated before it is created!&quot;</span>));
+
         <span class="kw">let </span>value = manager.get(<span class="number">1</span>).<span class="kw">await</span>.unwrap().unwrap();
         <span class="macro">assert_eq!</span>(
             value,
@@ -524,9 +490,25 @@
                 version: <span class="number">1
             </span>}
         );
+        <span class="kw">let </span>value = manager.get(<span class="number">99</span>).<span class="kw">await</span>.unwrap().unwrap();
+        <span class="macro">assert_eq!</span>(
+            value,
+            TableRegionValue {
+                region_distribution,
+                version: <span class="number">0
+            </span>}
+        );
         <span class="macro">assert!</span>(manager.get(<span class="number">2</span>).<span class="kw">await</span>.unwrap().is_none());
 
-        <span class="macro">assert!</span>(manager.remove(<span class="number">1</span>).<span class="kw">await</span>.is_ok());
+        <span class="kw">let </span>value = manager.remove(<span class="number">1</span>).<span class="kw">await</span>.unwrap().unwrap();
+        <span class="macro">assert_eq!</span>(
+            value,
+            TableRegionValue {
+                region_distribution: new_region_distribution.clone(),
+                version: <span class="number">1
+            </span>}
+        );
+        <span class="macro">assert!</span>(manager.remove(<span class="number">123</span>).<span class="kw">await</span>.unwrap().is_none());
 
         <span class="kw">let </span>kv = backend
             .get(<span class="string">b&quot;__removed-__table_region/1&quot;</span>)

@@ -233,6 +233,8 @@
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
 <a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -348,6 +350,7 @@
         .with_query_planner(Arc::new(DfQueryPlanner::new(
             partition_manager,
             datanode_clients,
+            catalog_list.clone(),
         )))
         .with_optimizer_rules(optimizer.rules)
         .with_physical_optimizer_rules(physical_optimizers);
@@ -456,12 +459,13 @@
     <span class="kw">fn </span>new(
         partition_manager: <span class="prelude-ty">Option</span>&lt;Arc&lt;PartitionRuleManager&gt;&gt;,
         datanode_clients: <span class="prelude-ty">Option</span>&lt;Arc&lt;DatanodeClients&gt;&gt;,
+        catalog_manager: CatalogManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>planners: Vec&lt;Arc&lt;<span class="kw">dyn </span>ExtensionPlanner + Send + Sync&gt;&gt; =
             <span class="macro">vec!</span>[Arc::new(PromExtensionPlanner)];
         <span class="kw">if let </span><span class="prelude-val">Some</span>(partition_manager) = partition_manager
          &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(datanode_clients) = datanode_clients {
-            planners.push(Arc::new(DistExtensionPlanner::new(partition_manager, datanode_clients)));
+            planners.push(Arc::new(DistExtensionPlanner::new(partition_manager, datanode_clients, catalog_manager)));
         }
         <span class="self">Self </span>{
             physical_planner: DefaultPhysicalPlanner::with_extension_planners(planners),

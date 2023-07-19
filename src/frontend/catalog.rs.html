@@ -434,23 +434,6 @@
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
-<a href="#450" id="450">450</a>
-<a href="#451" id="451">451</a>
-<a href="#452" id="452">452</a>
-<a href="#453" id="453">453</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -483,9 +466,7 @@
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME};
 <span class="kw">use </span>common_error::ext::BoxedError;
-<span class="kw">use </span>common_meta::helper::{
-    build_catalog_prefix, build_schema_prefix, CatalogKey, SchemaKey, TableGlobalKey,
-};
+<span class="kw">use </span>common_meta::helper::{build_catalog_prefix, build_schema_prefix, CatalogKey, SchemaKey};
 <span class="kw">use </span>common_meta::key::table_info::TableInfoKey;
 <span class="kw">use </span>common_meta::key::table_name::TableNameKey;
 <span class="kw">use </span>common_meta::key::table_region::TableRegionKey;
@@ -573,17 +554,6 @@
         table: <span class="kw-2">&amp;</span>str,
         table_id: TableId,
     ) {
-        <span class="kw">let </span>tg_key = TableGlobalKey {
-            catalog_name: catalog.into(),
-            schema_name: schema.into(),
-            table_name: table.into(),
-        }
-        .to_string();
-
-        <span class="kw">let </span>tg_key = tg_key.as_bytes();
-
-        <span class="self">self</span>.backend_cache_invalidator.invalidate_key(tg_key).<span class="kw">await</span>;
-
         <span class="kw">let </span>key = TableNameKey::new(catalog, schema, table);
         <span class="self">self</span>.backend_cache_invalidator
             .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())
@@ -613,7 +583,7 @@
 
         <span class="self">self</span>.partition_manager
             .table_routes()
-            .invalidate_table_route(<span class="kw-2">&amp;</span>TableName::new(catalog, schema, table))
+            .invalidate_table_route(table_id)
             .<span class="kw">await</span>;
     }
 }
@@ -796,10 +766,9 @@
         <span class="kw">let </span><span class="kw-2">mut </span>tables = <span class="self">self
             </span>.table_metadata_manager
             .table_name_manager()
-            .tables_old(catalog, schema)
+            .tables(catalog, schema)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
-
         <span class="kw">if </span>catalog == DEFAULT_CATALOG_NAME &amp;&amp; schema == DEFAULT_SCHEMA_NAME {
             tables.push(<span class="string">&quot;numbers&quot;</span>.to_string());
         }
@@ -812,13 +781,11 @@
             catalog_name: catalog.to_string(),
         }
         .to_string();
-
-        <span class="prelude-val">Ok</span>(<span class="self">self
-            </span>.backend
+        <span class="self">self</span>.backend
             .get(key.as_bytes())
             .<span class="kw">await
-            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
-            </span>.is_some())
+            </span>.context(TableMetadataManagerSnafu)
+            .map(|x| x.is_some())
     }
 
     <span class="kw">async fn </span>schema_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
@@ -827,7 +794,6 @@
             schema_name: schema.to_string(),
         }
         .to_string();
-
         <span class="prelude-val">Ok</span>(<span class="self">self
             </span>.backend()
             .get(schema_key.as_bytes())
@@ -840,7 +806,7 @@
         <span class="kw">let </span>key = TableNameKey::new(catalog, schema, table);
         <span class="self">self</span>.table_metadata_manager
             .table_name_manager()
-            .get_old(<span class="kw-2">&amp;</span>key)
+            .get(key)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)
             .map(|x| x.is_some())
@@ -876,19 +842,19 @@
         <span class="kw">let </span>key = TableNameKey::new(catalog, schema, table_name);
         <span class="kw">let </span><span class="prelude-val">Some</span>(table_name_value) = <span class="self">self</span>.table_metadata_manager
             .table_name_manager()
-            .get_old(<span class="kw-2">&amp;</span>key)
+            .get(key)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) };
-        <span class="kw">let </span>_table_id = table_name_value.table_id();
+        <span class="kw">let </span>table_id = table_name_value.table_id();
 
-        <span class="kw">let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.table_metadata_manager
+        <span class="kw">let </span><span class="prelude-val">Some</span>(table_info_value) = <span class="self">self</span>.table_metadata_manager
             .table_info_manager()
-            .get_old(<span class="kw-2">&amp;</span>key.into())
+            .get(table_id)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">? </span><span class="kw">else </span>{ <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) };
-
         <span class="kw">let </span>table_info = Arc::new(
-            v.table_info
+            table_info_value
+                .table_info
                 .try_into()
                 .context(catalog_err::InvalidTableInfoInCatalogSnafu)<span class="question-mark">?</span>,
         );

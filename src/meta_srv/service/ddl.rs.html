@@ -294,12 +294,6 @@
 <a href="#294" id="294">294</a>
 <a href="#295" id="295">295</a>
 <a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -319,7 +313,6 @@
     Table, TableId, TableRoute,
 };
 <span class="kw">use </span>common_grpc_expr::alter_expr_to_request;
-<span class="kw">use </span>common_meta::helper::TableGlobalKey;
 <span class="kw">use </span>common_meta::key::TableRouteKey;
 <span class="kw">use </span>common_meta::rpc::ddl::{AlterTableTask, CreateTableTask, DdlTask, DropTableTask};
 <span class="kw">use </span>common_meta::rpc::router;
@@ -332,10 +325,10 @@
 <span class="kw">use </span><span class="kw">super</span>::store::kv::KvStoreRef;
 <span class="kw">use </span><span class="kw">super</span>::GrpcResult;
 <span class="kw">use </span><span class="kw">crate</span>::ddl::DdlManagerRef;
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>, TableMetadataManagerSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{MetaSrv, SelectorContext, SelectorRef};
 <span class="kw">use </span><span class="kw">crate</span>::sequence::SequenceRef;
-<span class="kw">use </span><span class="kw">crate</span>::table_routes::{get_table_global_value, get_table_route_value};
+<span class="kw">use </span><span class="kw">crate</span>::table_routes::get_table_route_value;
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>ddl_task_server::DdlTask <span class="kw">for </span>MetaSrv {
@@ -386,7 +379,6 @@
                 handle_alter_table_task(
                     header.cluster_id,
                     alter_table_task,
-                    <span class="self">self</span>.kv_store().clone(),
                     <span class="self">self</span>.ddl_manager().clone(),
                 )
                 .<span class="kw">await</span><span class="question-mark">?
@@ -550,7 +542,6 @@
 <span class="kw">async fn </span>handle_alter_table_task(
     cluster_id: u64,
     <span class="kw-2">mut </span>alter_table_task: AlterTableTask,
-    kv_store: KvStoreRef,
     ddl_manager: DdlManagerRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;SubmitDdlTaskResponse&gt; {
     <span class="kw">let </span>table_id = alter_table_task
@@ -568,19 +559,16 @@
 
     <span class="kw">let </span>table_ref = alter_table_task.table_ref();
 
-    <span class="kw">let </span>table_global_key = TableGlobalKey {
-        catalog_name: table_ref.catalog.to_string(),
-        schema_name: table_ref.schema.to_string(),
-        table_name: table_ref.table.to_string(),
-    };
-
-    <span class="kw">let </span>table_global_value = get_table_global_value(<span class="kw-2">&amp;</span>kv_store, <span class="kw-2">&amp;</span>table_global_key)
-        .<span class="kw">await</span><span class="question-mark">?
+    <span class="kw">let </span>table_info_value = ddl_manager
+        .table_metadata_manager
+        .table_info_manager()
+        .get(table_id)
+        .<span class="kw">await
+        </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
         </span>.with_context(|| error::TableNotFoundSnafu {
             name: table_ref.to_string(),
         })<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>table_info = table_global_value.table_info;
+    <span class="kw">let </span>table_info = table_info_value.table_info;
 
     <span class="comment">// Sets alter_table&#39;s table_version
     </span>alter_table_task.alter_table.table_version = table_info.ident.version;

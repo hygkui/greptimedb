@@ -260,16 +260,6 @@
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -291,7 +281,6 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
-<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_meta::ClusterId;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>snafu::ResultExt;
@@ -324,15 +313,11 @@
         }
     }
 
-    <span class="kw">async fn </span>find_table_ident(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        table_id: TableId,
-        table_name: <span class="kw-2">&amp;</span>TableName,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableIdent&gt;&gt; {
+    <span class="kw">async fn </span>find_table_ident(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableIdent&gt;&gt; {
         <span class="kw">let </span>value = <span class="self">self
             </span>.table_metadata_manager
             .table_info_manager()
-            .get_old(table_name)
+            .get(table_id)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(value.map(|x| {
@@ -394,20 +379,15 @@
         stat.region_stats.iter().for_each(|x| {
             <span class="kw">let </span>region_id: RegionId = x.id.into();
             <span class="kw">let </span>table_id = region_id.table_id();
-            <span class="kw">let </span>table_name = TableName::new(
-                x.catalog.to_string(),
-                x.schema.to_string(),
-                x.table.to_string(),
-            );
             datanode_regions
-                .entry((table_id, table_name))
+                .entry(table_id)
                 .or_insert_with(Vec::new)
                 .push(RegionId::from(x.id).region_number());
         });
 
         <span class="kw">let </span><span class="kw-2">mut </span>region_leases = Vec::with_capacity(datanode_regions.len());
-        <span class="kw">for </span>((table_id, table_name), local_regions) <span class="kw">in </span>datanode_regions {
-            <span class="kw">let </span><span class="prelude-val">Some</span>(table_ident) = <span class="self">self</span>.find_table_ident(table_id, <span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
+        <span class="kw">for </span>(table_id, local_regions) <span class="kw">in </span>datanode_regions {
+            <span class="kw">let </span><span class="prelude-val">Some</span>(table_ident) = <span class="self">self</span>.find_table_ident(table_id).<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
                 <span class="macro">warn!</span>(<span class="string">&quot;Reject region lease request from Datanode {datanode_id} for table id {table_id}. \
                        Reason: table not found.&quot;</span>);
                 <span class="kw">continue</span>;
@@ -416,20 +396,20 @@
             <span class="kw">let </span><span class="prelude-val">Some</span>(table_region_value) = <span class="self">self
                 </span>.table_metadata_manager
                 .table_region_manager()
-                .get_old(<span class="kw-2">&amp;</span>table_name)
+                .get(table_id)
                 .<span class="kw">await
                 </span>.context(TableMetadataManagerSnafu)<span class="question-mark">? </span><span class="kw">else </span>{
-                <span class="macro">warn!</span>(<span class="string">&quot;Reject region lease request from Datanode {datanode_id} for table id {table_id}. \
-                       Reason: table region value not found.&quot;</span>);
-                <span class="kw">continue</span>;
-            };
+                    <span class="macro">warn!</span>(<span class="string">&quot;Reject region lease request from Datanode {datanode_id} for table id {table_id}. \
+                           Reason: table region value not found.&quot;</span>);
+                    <span class="kw">continue</span>;
+                };
             <span class="kw">let </span><span class="prelude-val">Some</span>(global_regions) = table_region_value
                 .region_distribution
                 .get(<span class="kw-2">&amp;</span>datanode_id) <span class="kw">else </span>{
-                <span class="macro">warn!</span>(<span class="string">&quot;Reject region lease request from Datanode {datanode_id} for table id {table_id}. \
-                       Reason: not expected to place the region on it.&quot;</span>);
-                <span class="kw">continue</span>;
-            };
+                    <span class="macro">warn!</span>(<span class="string">&quot;Reject region lease request from Datanode {datanode_id} for table id {table_id}. \
+                           Reason: not expected to place the region on it.&quot;</span>);
+                    <span class="kw">continue</span>;
+                };
 
             <span class="comment">// Filter out the designated regions from table info value for the given table on the given Datanode.
             </span><span class="kw">let </span>designated_regions = local_regions

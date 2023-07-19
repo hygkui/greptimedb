@@ -870,6 +870,7 @@
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
 <a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -897,8 +898,7 @@
         CreateDatabaseExpr, CreateTableExpr, DdlRequest, DeleteRequest, DropTableExpr,
         FlushTableExpr, InsertRequest, InsertRequests, QueryRequest,
     };
-    <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MITO_ENGINE};
-    <span class="kw">use </span>common_meta::table_name::TableName;
+    <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
     <span class="kw">use </span>common_query::Output;
     <span class="kw">use </span>common_recordbatch::RecordBatches;
     <span class="kw">use </span>frontend::instance::Instance;
@@ -1210,11 +1210,7 @@ CREATE TABLE {table_name} (
         <span class="kw">let </span>table_region_value = instance
             .table_metadata_manager()
             .table_region_manager()
-            .get_old(<span class="kw-2">&amp;</span>TableName::new(
-                DEFAULT_CATALOG_NAME,
-                DEFAULT_SCHEMA_NAME,
-                table_name,
-            ))
+            .get(table_id)
             .<span class="kw">await
             </span>.unwrap()
             .unwrap();
@@ -1478,17 +1474,23 @@ CREATE TABLE {table_name} (
         table_name: <span class="kw-2">&amp;</span>str,
         expected_distribution: HashMap&lt;u32, <span class="kw-2">&amp;</span>str&gt;,
     ) {
-        <span class="kw">let </span>table_region_value = instance
-            .table_metadata_manager()
-            .table_region_manager()
-            .get_old(<span class="kw-2">&amp;</span>TableName::new(
-                DEFAULT_CATALOG_NAME,
-                DEFAULT_SCHEMA_NAME,
-                table_name,
-            ))
+        <span class="kw">let </span>table = instance
+            .frontend()
+            .catalog_manager()
+            .table(<span class="string">&quot;greptime&quot;</span>, <span class="string">&quot;public&quot;</span>, table_name)
             .<span class="kw">await
             </span>.unwrap()
             .unwrap();
+        <span class="kw">let </span>table = table.as_any().downcast_ref::&lt;DistTable&gt;().unwrap();
+        <span class="kw">let </span>table_id = table.table_info().ident.table_id;
+        <span class="kw">let </span>table_region_value = instance
+            .table_metadata_manager()
+            .table_region_manager()
+            .get(table_id)
+            .<span class="kw">await
+            </span>.unwrap()
+            .unwrap();
+
         <span class="kw">let </span>region_to_dn_map = table_region_value
             .region_distribution
             .iter()
