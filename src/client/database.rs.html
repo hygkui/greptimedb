@@ -425,6 +425,14 @@
 <a href="#425" id="425">425</a>
 <a href="#426" id="426">426</a>
 <a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -446,7 +454,7 @@
 <span class="kw">use </span>api::v1::{
     AlterExpr, AuthHeader, CompactTableExpr, CreateTableExpr, DdlRequest, DeleteRequest,
     DropTableExpr, FlushTableExpr, GreptimeRequest, InsertRequests, PromRangeQuery, QueryRequest,
-    RequestHeader,
+    RequestHeader, TruncateTableExpr,
 };
 <span class="kw">use </span>arrow_flight::{FlightData, Ticket};
 <span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
@@ -657,6 +665,14 @@
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_COMPACT_TABLE);
         <span class="self">self</span>.do_get(Request::Ddl(DdlRequest {
             expr: <span class="prelude-val">Some</span>(DdlExpr::CompactTable(expr)),
+        }))
+        .<span class="kw">await
+    </span>}
+
+    <span class="kw">pub async fn </span>truncate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: TruncateTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_TRUNCATE_TABLE);
+        <span class="self">self</span>.do_get(Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::TruncateTable(expr)),
         }))
         .<span class="kw">await
     </span>}
