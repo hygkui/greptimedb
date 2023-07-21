@@ -146,6 +146,10 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -160,12 +164,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>cmd;
+</span><span class="kw">mod </span>bench;
+<span class="kw">mod </span>cmd;
 <span class="kw">mod </span>helper;
 <span class="kw">mod </span>repl;
 <span class="kw">mod </span>upgrade;
 
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>bench::BenchTableMetadataCommand;
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">pub use </span>repl::Repl;
@@ -224,6 +230,7 @@
 </span><span class="kw">enum </span>SubCommand {
     Attach(AttachCommand),
     Upgrade(UpgradeCommand),
+    Bench(BenchTableMetadataCommand),
 }
 
 <span class="kw">impl </span>SubCommand {
@@ -231,6 +238,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             SubCommand::Attach(cmd) =&gt; cmd.build().<span class="kw">await</span>,
             SubCommand::Upgrade(cmd) =&gt; cmd.build().<span class="kw">await</span>,
+            SubCommand::Bench(cmd) =&gt; cmd.build().<span class="kw">await</span>,
         }
     }
 }

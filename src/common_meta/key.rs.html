@@ -313,7 +313,7 @@
 }
 
 <span class="macro">macro_rules! </span>impl_table_meta_key {
-    ( $(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {
+    ($(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {
         $(
             <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span><span class="macro-nonterminal">$val_ty </span>{
                 <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
@@ -332,7 +332,7 @@
 );
 
 <span class="macro">macro_rules! </span>impl_table_meta_value {
-    ( $(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {
+    ($(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {
         $(
             <span class="kw">impl </span><span class="macro-nonterminal">$val_ty </span>{
                 <span class="kw">pub fn </span>try_from_raw_value(raw_value: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {

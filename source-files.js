@@ -2,7 +2,7 @@ var sourcesIndex = JSON.parse('{\
 "api":["",[["v1",[],["column_def.rs"]]],["error.rs","helper.rs","lib.rs","v1.rs"]],\
 "catalog":["",[["information_schema",[],["columns.rs","tables.rs"]],["local",[],["manager.rs","memory.rs"]],["remote",[],["client.rs","manager.rs","mock.rs","region_alive_keeper.rs"]]],["error.rs","information_schema.rs","lib.rs","local.rs","metrics.rs","remote.rs","system.rs","table_source.rs","tables.rs"]],\
 "client":["",[],["client.rs","client_manager.rs","database.rs","error.rs","lib.rs","load_balance.rs","metrics.rs","stream_insert.rs"]],\
-"cmd":["",[["cli",[],["cmd.rs","helper.rs","repl.rs","upgrade.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","options.rs","standalone.rs"]],\
+"cmd":["",[["cli",[["bench",[],["datanode_table.rs","table_info.rs","table_name.rs","table_region.rs"]]],["bench.rs","cmd.rs","helper.rs","repl.rs","upgrade.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","options.rs","standalone.rs"]],\
 "common_base":["",[],["bit_vec.rs","buffer.rs","bytes.rs","lib.rs","paths.rs","readable_size.rs"]],\
 "common_catalog":["",[],["consts.rs","error.rs","lib.rs"]],\
 "common_datasource":["",[["file_format",[],["csv.rs","json.rs","orc.rs","parquet.rs"]],["object_store",[],["fs.rs","s3.rs"]]],["buffered_writer.rs","compression.rs","error.rs","file_format.rs","lib.rs","lister.rs","object_store.rs","share_buffer.rs","util.rs"]],\
