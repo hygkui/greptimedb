@@ -139,6 +139,12 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -161,6 +167,7 @@
 <span class="kw">use </span>store_api::storage::{ColumnId, CompactionStrategy, RegionId};
 <span class="kw">use </span>tokio::sync::oneshot::{<span class="self">self</span>, Receiver, Sender};
 
+<span class="kw">use </span><span class="kw">crate</span>::config::DEFAULT_WRITE_BUFFER_SIZE;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::metadata::ColumnMetadata;
 
@@ -177,11 +184,23 @@
     </span><span class="kw">pub </span>compaction_strategy: CompactionStrategy,
 }
 
+<span class="kw">impl </span>Default <span class="kw">for </span>RegionOptions {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        RegionOptions {
+            write_buffer_size: <span class="prelude-val">Some</span>(DEFAULT_WRITE_BUFFER_SIZE),
+            ttl: <span class="prelude-val">None</span>,
+            compaction_strategy: CompactionStrategy::LeveledTimeWindow,
+        }
+    }
+}
+
 <span class="doccomment">/// Create region request.
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>CreateRequest {
     <span class="doccomment">/// Region to create.
     </span><span class="kw">pub </span>region_id: RegionId,
+    <span class="doccomment">/// Data directory of the region.
+    </span><span class="kw">pub </span>region_dir: String,
     <span class="doccomment">/// Columns in this region.
     </span><span class="kw">pub </span>column_metadatas: Vec&lt;ColumnMetadata&gt;,
     <span class="doccomment">/// Columns in the primary key.
@@ -190,13 +209,6 @@
     </span><span class="kw">pub </span>create_if_not_exists: bool,
     <span class="doccomment">/// Options of the created region.
     </span><span class="kw">pub </span>options: RegionOptions,
-}
-
-<span class="kw">impl </span>CreateRequest {
-    <span class="doccomment">/// Validate the request.
-    </span><span class="kw">fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">unimplemented!</span>()
-    }
 }
 
 <span class="doccomment">/// Open region request.

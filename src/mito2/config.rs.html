@@ -63,6 +63,21 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -79,19 +94,32 @@
 
 </span><span class="doccomment">//! Configurations.
 
-</span><span class="kw">use </span>common_telemetry::logging;
+</span><span class="kw">use </span>common_base::readable_size::ReadableSize;
+<span class="kw">use </span>common_datasource::compression::CompressionType;
+<span class="kw">use </span>common_telemetry::logging;
 
-<span class="kw">const </span>DEFAULT_NUM_WORKERS: usize = <span class="number">1</span>;
+<span class="doccomment">/// Default region worker num.
+</span><span class="kw">const </span>DEFAULT_NUM_WORKERS: usize = <span class="number">1</span>;
+<span class="doccomment">/// Default region write buffer size.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_WRITE_BUFFER_SIZE: ReadableSize = ReadableSize::mb(<span class="number">32</span>);
 
 <span class="doccomment">/// Configuration for [MitoEngine](crate::engine::MitoEngine).
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>MitoConfig {
-    <span class="doccomment">/// Number of region workers.
+    <span class="comment">// Worker configs:
+    </span><span class="doccomment">/// Number of region workers (default 1).
     </span><span class="kw">pub </span>num_workers: usize,
-    <span class="doccomment">/// Request channel size of each worker.
+    <span class="doccomment">/// Request channel size of each worker (default 128).
     </span><span class="kw">pub </span>worker_channel_size: usize,
-    <span class="doccomment">/// Max batch size for a worker to handle requests.
+    <span class="doccomment">/// Max batch size for a worker to handle requests (default 64).
     </span><span class="kw">pub </span>worker_request_batch_size: usize,
+
+    <span class="comment">// Manifest configs:
+    </span><span class="doccomment">/// Number of meta action updated to trigger a new checkpoint
+    /// for the manifest (default 10).
+    </span><span class="kw">pub </span>manifest_checkpoint_interval: u64,
+    <span class="doccomment">/// Manifest compression type (default uncompressed).
+    </span><span class="kw">pub </span>manifest_compress_type: CompressionType,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>MitoConfig {
@@ -100,6 +128,8 @@
             num_workers: DEFAULT_NUM_WORKERS,
             worker_channel_size: <span class="number">128</span>,
             worker_request_batch_size: <span class="number">64</span>,
+            manifest_checkpoint_interval: <span class="number">10</span>,
+            manifest_compress_type: CompressionType::Uncompressed,
         }
     }
 }

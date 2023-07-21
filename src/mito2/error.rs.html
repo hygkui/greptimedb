@@ -137,6 +137,15 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -158,6 +167,7 @@
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>store_api::manifest::ManifestVersion;
+<span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::worker::WorkerId;
 
@@ -249,6 +259,12 @@
         source: datatypes::error::Error,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Region {} already exists, location: {}&quot;</span>, region_id, location))]
+    </span>RegionExists {
+        region_id: RegionId,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -259,9 +275,11 @@
 
         <span class="kw">match </span><span class="self">self </span>{
             OpenDal { .. } =&gt; StatusCode::StorageUnavailable,
-            CompressObject { .. } | DecompressObject { .. } | SerdeJson { .. } | Utf8 { .. } =&gt; {
-                StatusCode::Unexpected
-            }
+            CompressObject { .. }
+            | DecompressObject { .. }
+            | SerdeJson { .. }
+            | Utf8 { .. }
+            | RegionExists { .. } =&gt; StatusCode::Unexpected,
             InvalidScanIndex { .. }
             | InitialMetadata { .. }
             | InvalidMeta { .. }

@@ -57,11 +57,11 @@
     <span class="kw">pub </span>manifest_dir: String,
     <span class="kw">pub </span>object_store: ObjectStore,
     <span class="kw">pub </span>compress_type: CompressionType,
-    <span class="doccomment">/// Interval of version ([ManifestVersion](store_api::manifest::ManifestVersion)) between two checkpoints
-    /// `None` means disable checkpoint.
-    </span><span class="kw">pub </span>checkpoint_interval: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    <span class="doccomment">/// Interval of version ([ManifestVersion](store_api::manifest::ManifestVersion)) between two checkpoints.
+    </span><span class="kw">pub </span>checkpoint_interval: u64,
     <span class="doccomment">/// Initial [RegionMetadata](crate::metadata::RegionMetadata) of this region.
     /// Only need to set when create a new region, otherwise it will be ignored.
+    </span><span class="comment">// TODO(yingwen): Could we pass RegionMetadataRef?
     </span><span class="kw">pub </span>initial_metadata: <span class="prelude-ty">Option</span>&lt;RegionMetadata&gt;,
 }
 </code></pre></div></section></main></body></html>

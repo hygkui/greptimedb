@@ -66,12 +66,6 @@
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -88,16 +82,16 @@
 
 </span><span class="doccomment">//! Mito region.
 
-</span><span class="kw">mod </span>version;
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>opener;
+<span class="kw">mod </span>version;
 
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::{Arc, RwLock};
 
 <span class="kw">use </span>store_api::storage::RegionId;
 
-<span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
-<span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadataRef;
-<span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionBuilder, VersionControl, VersionControlRef};
+<span class="kw">use </span><span class="kw">crate</span>::manifest::manager::RegionManifestManager;
+<span class="kw">use </span><span class="kw">crate</span>::region::version::VersionControlRef;
 
 <span class="doccomment">/// Type to store region version.
 </span><span class="kw">pub type </span>VersionNumber = u32;
@@ -105,7 +99,16 @@
 <span class="doccomment">/// Metadata and runtime status of a region.
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>MitoRegion {
-    version_control: VersionControlRef,
+    <span class="doccomment">/// Id of this region.
+    ///
+    /// Accessing region id from the version control is inconvenient so
+    /// we also store it here.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) region_id: RegionId,
+
+    <span class="doccomment">/// Version controller for this region.
+    </span>version_control: VersionControlRef,
+    <span class="doccomment">/// Manager to maintain manifest for this region.
+    </span>manifest_manager: RegionManifestManager,
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>MitoRegionRef = Arc&lt;MitoRegion&gt;;
@@ -116,34 +119,19 @@
     regions: RwLock&lt;HashMap&lt;RegionId, MitoRegionRef&gt;&gt;,
 }
 
+<span class="kw">impl </span>RegionMap {
+    <span class="doccomment">/// Returns true if the region exists.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; bool {
+        <span class="kw">let </span>regions = <span class="self">self</span>.regions.read().unwrap();
+        regions.contains_key(<span class="kw-2">&amp;</span>region_id)
+    }
+
+    <span class="doccomment">/// Inserts a new region into the map.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>insert_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region: MitoRegionRef) {
+        <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="self">self</span>.regions.write().unwrap();
+        regions.insert(region.region_id, region);
+    }
+}
+
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>RegionMapRef = Arc&lt;RegionMap&gt;;
-
-<span class="doccomment">/// [MitoRegion] builder.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RegionBuilder {
-    metadata: RegionMetadataRef,
-    memtable_builder: MemtableBuilderRef,
-}
-
-<span class="kw">impl </span>RegionBuilder {
-    <span class="doccomment">/// Returns a new builder.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
-        metadata: RegionMetadataRef,
-        memtable_builder: MemtableBuilderRef,
-    ) -&gt; RegionBuilder {
-        RegionBuilder {
-            metadata,
-            memtable_builder,
-        }
-    }
-
-    <span class="doccomment">/// Builds a new region.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>build(<span class="self">self</span>) -&gt; MitoRegion {
-        <span class="kw">let </span>mutable = <span class="self">self</span>.memtable_builder.build(<span class="kw-2">&amp;</span><span class="self">self</span>.metadata);
-
-        <span class="kw">let </span>version = VersionBuilder::new(<span class="self">self</span>.metadata, mutable).build();
-        <span class="kw">let </span>version_control = Arc::new(VersionControl::new(version));
-
-        MitoRegion { version_control }
-    }
-}
 </code></pre></div></section></main></body></html>

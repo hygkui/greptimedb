@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["version"],"struct":["MitoRegion","RegionBuilder","RegionMap"],"type":["MitoRegionRef","RegionMapRef","VersionNumber"]};
+window.SIDEBAR_ITEMS = {"mod":["opener","version"],"struct":["MitoRegion","RegionMap"],"type":["MitoRegionRef","RegionMapRef","VersionNumber"]};

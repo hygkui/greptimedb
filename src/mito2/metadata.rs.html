@@ -536,6 +536,63 @@
 <a href="#536" id="536">536</a>
 <a href="#537" id="537">537</a>
 <a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -564,6 +621,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{InvalidMetaSnafu, InvalidSchemaSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::region::VersionNumber;
+
+<span class="doccomment">/// Initial version number of a new region.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>INIT_REGION_VERSION: VersionNumber = <span class="number">0</span>;
 
 <span class="attr">#[cfg_attr(doc, aquamarine::aquamarine)]
 </span><span class="doccomment">/// Static metadata of a region.
@@ -595,7 +655,10 @@
     <span class="doccomment">/// Latest schema constructed from [column_metadatas](RegionMetadata::column_metadatas).
     </span><span class="attr">#[serde(skip)]
     </span><span class="kw">pub </span>schema: SchemaRef,
-    <span class="doccomment">/// Id of the time index column.
+
+    <span class="comment">// We don&#39;t pub `time_index` and `id_to_index` and always construct them via [SkippedFields]
+    // so we can assumes they are valid.
+    </span><span class="doccomment">/// Id of the time index column.
     </span><span class="attr">#[serde(skip)]
     </span>time_index: ColumnId,
     <span class="doccomment">/// Map column id to column&#39;s index in [column_metadatas](RegionMetadata::column_metadatas).
@@ -691,6 +754,22 @@
 }
 
 <span class="kw">impl </span>RegionMetadata {
+    <span class="doccomment">/// Find column by id.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>column_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, column_id: ColumnId) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ColumnMetadata&gt; {
+        <span class="self">self</span>.id_to_index
+            .get(<span class="kw-2">&amp;</span>column_id)
+            .map(|index| <span class="kw-2">&amp;</span><span class="self">self</span>.column_metadatas[<span class="kw-2">*</span>index])
+    }
+
+    <span class="doccomment">/// Returns the time index column
+    ///
+    /// # Panics
+    /// Panics if the time index column id is invalid.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>time_index_column(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ColumnMetadata {
+        <span class="kw">let </span>index = <span class="self">self</span>.id_to_index[<span class="kw-2">&amp;</span><span class="self">self</span>.time_index];
+        <span class="kw-2">&amp;</span><span class="self">self</span>.column_metadatas[index]
+    }
+
     <span class="doccomment">/// Checks whether the metadata is valid.
     </span><span class="kw">fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// Id to name.
@@ -723,6 +802,17 @@
             num_time_index == <span class="number">1</span>,
             InvalidMetaSnafu {
                 reason: <span class="macro">format!</span>(<span class="string">&quot;expect only one time index, found {}&quot;</span>, num_time_index),
+            }
+        );
+
+        <span class="comment">// Checks the time index column is not nullable.
+        </span><span class="macro">ensure!</span>(
+            !<span class="self">self</span>.time_index_column().column_schema.is_nullable(),
+            InvalidMetaSnafu {
+                reason: <span class="macro">format!</span>(
+                    <span class="string">&quot;time index column {} must be NOT NULL&quot;</span>,
+                    <span class="self">self</span>.time_index_column().column_schema.name
+                ),
             }
         );
 
@@ -901,6 +991,17 @@
     }
 
     <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_region_metadata() {
+        <span class="kw">let </span>region_metadata = build_test_region_metadata();
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;c&quot;</span>, region_metadata.time_index_column().column_schema.name);
+        <span class="macro">assert_eq!</span>(
+            <span class="string">&quot;a&quot;</span>,
+            region_metadata.column_by_id(<span class="number">1</span>).unwrap().column_schema.name
+        );
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, region_metadata.column_by_id(<span class="number">10</span>));
+    }
+
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_region_metadata_serde() {
         <span class="kw">let </span>region_metadata = build_test_region_metadata();
         <span class="kw">let </span>serialized = serde_json::to_string(<span class="kw-2">&amp;</span>region_metadata).unwrap();
@@ -922,8 +1023,7 @@
         <span class="kw">let </span>err = builder.build().unwrap_err();
         <span class="macro">assert!</span>(
             err.to_string().contains(<span class="string">&quot;ts is not timestamp compatible&quot;</span>),
-            <span class="string">&quot;unexpected err: {}&quot;</span>,
-            err
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }
 
@@ -934,8 +1034,7 @@
         <span class="comment">// A region must have a time index.
         </span><span class="macro">assert!</span>(
             err.to_string().contains(<span class="string">&quot;time index not found&quot;</span>),
-            <span class="string">&quot;unexpected err: {}&quot;</span>,
-            err
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }
 
@@ -961,8 +1060,7 @@
         <span class="macro">assert!</span>(
             err.to_string()
                 .contains(<span class="string">&quot;column a and b have the same column id&quot;</span>),
-            <span class="string">&quot;unexpected err: {}&quot;</span>,
-            err
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }
 
@@ -991,8 +1089,7 @@
         <span class="kw">let </span>err = builder.build().unwrap_err();
         <span class="macro">assert!</span>(
             err.to_string().contains(<span class="string">&quot;expect only one time index&quot;</span>),
-            <span class="string">&quot;unexpected err: {}&quot;</span>,
-            err
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }
 
@@ -1018,8 +1115,7 @@
         <span class="kw">let </span>err = builder.build().unwrap_err();
         <span class="macro">assert!</span>(
             err.to_string().contains(<span class="string">&quot;unknown column id 3&quot;</span>),
-            <span class="string">&quot;unexpected err: {}&quot;</span>,
-            err
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }
 
@@ -1046,8 +1142,7 @@
         <span class="macro">assert!</span>(
             err.to_string()
                 .contains(<span class="string">&quot;duplicate column a in primary key&quot;</span>),
-            <span class="string">&quot;unexpected err: {}&quot;</span>,
-            err
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }
 
@@ -1069,8 +1164,27 @@
         <span class="macro">assert!</span>(
             err.to_string()
                 .contains(<span class="string">&quot;column ts is already a time index column&quot;</span>),
-            <span class="string">&quot;unexpected err: {}&quot;</span>,
-            err
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
+        );
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_nullable_time_index() {
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = create_builder();
+        builder.push_column_metadata(ColumnMetadata {
+            column_schema: ColumnSchema::new(
+                <span class="string">&quot;ts&quot;</span>,
+                ConcreteDataType::timestamp_millisecond_datatype(),
+                <span class="bool-val">true</span>,
+            ),
+            semantic_type: SemanticType::Timestamp,
+            column_id: <span class="number">1</span>,
+        });
+        <span class="kw">let </span>err = builder.build().unwrap_err();
+        <span class="macro">assert!</span>(
+            err.to_string()
+                .contains(<span class="string">&quot;time index column ts must be NOT NULL&quot;</span>),
+            <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }
 }

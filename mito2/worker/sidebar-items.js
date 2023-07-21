@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["value_to_index"],"mod":["handle_create","handle_open","request"],"static":["CALLSITE"],"struct":["RegionWorker","RegionWorkerLoop","WorkerConfig","WorkerGroup"],"type":["RequestBuffer","WorkerId"]};
+window.SIDEBAR_ITEMS = {"fn":["value_to_index"],"mod":["handle_create","handle_open","request"],"static":["CALLSITE"],"struct":["RegionWorker","RegionWorkerLoop","WorkerGroup"],"type":["RequestBuffer","WorkerId"]};

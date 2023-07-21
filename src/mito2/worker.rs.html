@@ -407,6 +407,8 @@
 <a href="#407" id="407">407</a>
 <a href="#408" id="408">408</a>
 <a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -444,6 +446,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{JoinSnafu, <span class="prelude-ty">Result</span>, WorkerStoppedSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::memtable::{DefaultMemtableBuilder, MemtableBuilderRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::{RegionMap, RegionMapRef};
 <span class="kw">use </span><span class="kw">crate</span>::worker::request::{RegionRequest, RequestBody, WorkerRequest};
 
@@ -496,20 +499,18 @@
     ///
     /// The number of workers should be power of two.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start&lt;S: LogStore&gt;(
-        config: <span class="kw-2">&amp;</span>MitoConfig,
+        config: MitoConfig,
         log_store: Arc&lt;S&gt;,
         object_store: ObjectStore,
     ) -&gt; WorkerGroup {
         <span class="macro">assert!</span>(config.num_workers.is_power_of_two());
+        <span class="kw">let </span>config = Arc::new(config);
 
         <span class="kw">let </span>workers = (<span class="number">0</span>..config.num_workers)
             .map(|id| {
                 RegionWorker::start(
-                    WorkerConfig {
-                        id: id <span class="kw">as </span>WorkerId,
-                        channel_size: config.worker_channel_size,
-                        request_batch_size: config.worker_request_batch_size,
-                    },
+                    id <span class="kw">as </span>WorkerId,
+                    config.clone(),
                     log_store.clone(),
                     object_store.clone(),
                 )
@@ -535,6 +536,11 @@
             .<span class="kw">await
     </span>}
 
+    <span class="doccomment">/// Returns true if the specific region exists.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; bool {
+        <span class="self">self</span>.worker(region_id).is_region_exists(region_id)
+    }
+
     <span class="doccomment">/// Get worker for specific `region_id`.
     </span><span class="kw">fn </span>worker(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="kw-2">&amp;</span>RegionWorker {
         <span class="kw">let </span><span class="kw-2">mut </span>hasher = DefaultHasher::new();
@@ -548,17 +554,6 @@
 
 <span class="kw">fn </span>value_to_index(value: usize, num_workers: usize) -&gt; usize {
     value &amp; (num_workers - <span class="number">1</span>)
-}
-
-<span class="doccomment">/// Config for region worker.
-</span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">struct </span>WorkerConfig {
-    <span class="doccomment">/// Id of the worker
-    </span>id: WorkerId,
-    <span class="doccomment">/// Capacity of the request channel.
-    </span>channel_size: usize,
-    <span class="doccomment">/// Batch size to process request.
-    </span>request_batch_size: usize,
 }
 
 <span class="doccomment">/// Worker to write and alter regions bound to it.
@@ -579,29 +574,31 @@
 <span class="kw">impl </span>RegionWorker {
     <span class="doccomment">/// Start a region worker and its background thread.
     </span><span class="kw">fn </span>start&lt;S: LogStore&gt;(
-        config: WorkerConfig,
+        id: WorkerId,
+        config: Arc&lt;MitoConfig&gt;,
         log_store: Arc&lt;S&gt;,
         object_store: ObjectStore,
     ) -&gt; RegionWorker {
         <span class="kw">let </span>regions = Arc::new(RegionMap::default());
-        <span class="kw">let </span>(sender, receiver) = mpsc::channel(config.channel_size);
+        <span class="kw">let </span>(sender, receiver) = mpsc::channel(config.worker_channel_size);
 
         <span class="kw">let </span>running = Arc::new(AtomicBool::new(<span class="bool-val">true</span>));
         <span class="kw">let </span><span class="kw-2">mut </span>worker_thread = RegionWorkerLoop {
-            id: config.id,
+            id,
+            config,
             regions: regions.clone(),
             receiver,
             log_store,
             object_store,
             running: running.clone(),
-            request_batch_size: config.request_batch_size,
+            memtable_builder: Arc::new(DefaultMemtableBuilder::default()),
         };
         <span class="kw">let </span>handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             worker_thread.run().<span class="kw">await</span>;
         });
 
         RegionWorker {
-            id: config.id,
+            id,
             regions,
             sender,
             handle: Mutex::new(<span class="prelude-val">Some</span>(handle)),
@@ -658,6 +655,11 @@
     </span><span class="kw">fn </span>set_running(<span class="kw-2">&amp;</span><span class="self">self</span>, value: bool) {
         <span class="self">self</span>.running.store(value, Ordering::Relaxed)
     }
+
+    <span class="doccomment">/// Returns true if the worker contains specific region.
+    </span><span class="kw">fn </span>is_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; bool {
+        <span class="self">self</span>.regions.is_region_exists(region_id)
+    }
 }
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>RegionWorker {
@@ -675,6 +677,8 @@
 </span><span class="kw">struct </span>RegionWorkerLoop&lt;S&gt; {
     <span class="comment">// Id of the worker.
     </span>id: WorkerId,
+    <span class="doccomment">/// Engine config.
+    </span>config: Arc&lt;MitoConfig&gt;,
     <span class="doccomment">/// Regions bound to the worker.
     </span>regions: RegionMapRef,
     <span class="doccomment">/// Request receiver.
@@ -685,8 +689,8 @@
     </span>object_store: ObjectStore,
     <span class="doccomment">/// Whether the worker thread is still running.
     </span>running: Arc&lt;AtomicBool&gt;,
-    <span class="doccomment">/// Batch size to fetch requests from channel.
-    </span>request_batch_size: usize,
+    <span class="doccomment">/// Memtable builder for each region.
+    </span>memtable_builder: MemtableBuilderRef,
 }
 
 <span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
@@ -695,7 +699,7 @@
         <span class="macro">logging::info!</span>(<span class="string">&quot;Start region worker thread {}&quot;</span>, <span class="self">self</span>.id);
 
         <span class="comment">// Buffer to retrieve requests from receiver.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>buffer = RequestBuffer::with_capacity(<span class="self">self</span>.request_batch_size);
+        </span><span class="kw">let </span><span class="kw-2">mut </span>buffer = RequestBuffer::with_capacity(<span class="self">self</span>.config.worker_request_batch_size);
 
         <span class="kw">while </span><span class="self">self</span>.running.load(Ordering::Relaxed) {
             <span class="comment">// Clear the buffer before handling next batch of requests.
@@ -807,7 +811,7 @@
     </span><span class="kw">async fn </span>test_worker_group_start_stop() {
         <span class="kw">let </span>env = TestEnv::new(<span class="string">&quot;group-stop&quot;</span>);
         <span class="kw">let </span>group = env
-            .create_worker_group(<span class="kw-2">&amp;</span>MitoConfig {
+            .create_worker_group(MitoConfig {
                 num_workers: <span class="number">4</span>,
                 ..Default::default()
             })

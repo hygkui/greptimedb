@@ -96,6 +96,8 @@
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -166,9 +168,11 @@
     </span>ssts: SstVersionRef,
     <span class="doccomment">/// Inclusive max sequence of flushed data.
     </span>flushed_sequence: SequenceNumber,
-    <span class="doccomment">/// Current version of region manifest.
+    <span class="comment">// TODO(yingwen): Remove this.
+    </span><span class="doccomment">/// Current version of region manifest.
     </span>manifest_version: ManifestVersion,
-}
+    <span class="comment">// TODO(yingwen): RegionOptions.
+</span>}
 
 <span class="doccomment">/// Version builder.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>VersionBuilder {

@@ -97,9 +97,6 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -114,11 +111,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::sync::Arc;
+</span><span class="doccomment">//! Mito region engine.
+
+</span><span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests;
+
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
+<span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{RecvSnafu, <span class="prelude-ty">Result</span>};
@@ -155,6 +158,11 @@
     </span><span class="kw">pub async fn </span>create_region(<span class="kw-2">&amp;</span><span class="self">self</span>, request: CreateRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.inner.create_region(request).<span class="kw">await
     </span>}
+
+    <span class="doccomment">/// Returns true if the specific region exists.
+    </span><span class="kw">pub fn </span>is_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; bool {
+        <span class="self">self</span>.inner.workers.is_region_exists(region_id)
+    }
 }
 
 <span class="doccomment">/// Inner struct of [MitoEngine].
@@ -171,7 +179,7 @@
         object_store: ObjectStore,
     ) -&gt; EngineInner {
         EngineInner {
-            workers: WorkerGroup::start(<span class="kw-2">&amp;</span>config, log_store, object_store),
+            workers: WorkerGroup::start(config, log_store, object_store),
         }
     }
 
@@ -187,19 +195,5 @@
 
         receiver.<span class="kw">await</span>.context(RecvSnafu)<span class="question-mark">?
     </span>}
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>tests {
-    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::test_util::TestEnv;
-
-    <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_engine_new_stop() {
-        <span class="kw">let </span>env = TestEnv::new(<span class="string">&quot;engine-stop&quot;</span>);
-        <span class="kw">let </span>engine = env.create_engine(MitoConfig::default()).<span class="kw">await</span>;
-
-        engine.stop().<span class="kw">await</span>.unwrap();
-    }
 }
 </code></pre></div></section></main></body></html>
