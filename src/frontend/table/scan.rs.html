@@ -173,7 +173,7 @@
 
         <span class="kw">let </span>result = <span class="self">self
             </span>.db
-            .logical_plan(substrait_plan.to_vec())
+            .logical_plan(substrait_plan.to_vec(), <span class="prelude-val">None</span>)
             .<span class="kw">await
             </span>.context(error::RequestDatanodeSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>Output::RecordBatches(record_batches) = result <span class="kw">else </span>{ <span class="macro">unreachable!</span>() };

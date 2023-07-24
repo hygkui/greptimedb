@@ -83,6 +83,8 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -113,6 +115,7 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>FrontendOptions {
     <span class="kw">pub </span>mode: Mode,
+    <span class="kw">pub </span>node_id: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>heartbeat: HeartbeatOptions,
     <span class="kw">pub </span>http_options: <span class="prelude-ty">Option</span>&lt;HttpOptions&gt;,
     <span class="kw">pub </span>grpc_options: <span class="prelude-ty">Option</span>&lt;GrpcOptions&gt;,
@@ -131,6 +134,7 @@
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mode: Mode::Standalone,
+            node_id: <span class="prelude-val">None</span>,
             heartbeat: HeartbeatOptions::default(),
             http_options: <span class="prelude-val">Some</span>(HttpOptions::default()),
             grpc_options: <span class="prelude-val">Some</span>(GrpcOptions::default()),

@@ -237,6 +237,9 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -371,18 +374,19 @@
         }
     }
 
-    <span class="kw">pub fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
+    <span class="kw">pub fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, context: Arc&lt;TaskContext&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
         <span class="kw">let </span>substrait_plan = <span class="self">self</span>.substrait_plan.to_vec();
         <span class="kw">let </span>peers = <span class="self">self</span>.peers.clone();
         <span class="kw">let </span>clients = <span class="self">self</span>.clients.clone();
         <span class="kw">let </span>table = <span class="self">self</span>.table.clone();
+        <span class="kw">let </span>trace_id = context.task_id().and_then(|id| id.parse().ok());
 
         <span class="kw">let </span>stream = <span class="macro">try_stream! </span>{
             <span class="kw">for </span>peer <span class="kw">in </span>peers {
                 <span class="kw">let </span>client = clients.get_client(<span class="kw-2">&amp;</span>peer).<span class="kw">await</span>;
                 <span class="kw">let </span>database = Database::new(<span class="kw-2">&amp;</span>table.catalog_name, <span class="kw-2">&amp;</span>table.schema_name, client);
                 <span class="kw">let </span>output: Output = database
-                    .logical_plan(substrait_plan.clone())
+                    .logical_plan(substrait_plan.clone(), trace_id)
                     .<span class="kw">await
                     </span>.context(RemoteRequestSnafu)
                     .map_err(BoxedError::new)
@@ -459,9 +463,11 @@
     <span class="kw">fn </span>execute(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         _partition: usize,
-        _context: Arc&lt;TaskContext&gt;,
+        context: Arc&lt;TaskContext&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;DfSendableRecordBatchStream&gt; {
-        <span class="prelude-val">Ok</span>(Box::pin(DfRecordBatchStreamAdapter::new(<span class="self">self</span>.to_stream()<span class="question-mark">?</span>)))
+        <span class="prelude-val">Ok</span>(Box::pin(DfRecordBatchStreamAdapter::new(
+            <span class="self">self</span>.to_stream(context)<span class="question-mark">?</span>,
+        )))
     }
 
     <span class="kw">fn </span>statistics(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Statistics {
