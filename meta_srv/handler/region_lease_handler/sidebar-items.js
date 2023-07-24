@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["REGION_LEASE_SECONDS"],"static":["CALLSITE"],"struct":["RegionLeaseHandler"]};
+window.SIDEBAR_ITEMS = {"constant":["REGION_LEASE_SECONDS"],"struct":["RegionLeaseHandler"]};

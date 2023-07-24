@@ -694,7 +694,6 @@
 <a href="#694" id="694">694</a>
 <a href="#695" id="695">695</a>
 <a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -742,6 +741,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::lock::DistLockRef;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{SelectorContext, SelectorRef};
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
+<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::ResettableKvStoreRef;
 
 <span class="kw">const </span>OPEN_REGION_MESSAGE_TIMEOUT: Duration = Duration::from_secs(<span class="number">30</span>);
 <span class="kw">const </span>CLOSE_REGION_MESSAGE_TIMEOUT: Duration = Duration::from_secs(<span class="number">2</span>);
@@ -765,6 +765,7 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RegionFailoverManager {
+    in_memory: ResettableKvStoreRef,
     mailbox: MailboxRef,
     procedure_manager: ProcedureManagerRef,
     selector: SelectorRef,
@@ -787,6 +788,7 @@
 
 <span class="kw">impl </span>RegionFailoverManager {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
+        in_memory: ResettableKvStoreRef,
         mailbox: MailboxRef,
         procedure_manager: ProcedureManagerRef,
         selector: SelectorRef,
@@ -795,6 +797,7 @@
         table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
+            in_memory,
             mailbox,
             procedure_manager,
             selector,
@@ -807,6 +810,7 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionFailoverContext {
         RegionFailoverContext {
+            in_memory: <span class="self">self</span>.in_memory.clone(),
             mailbox: <span class="self">self</span>.mailbox.clone(),
             selector: <span class="self">self</span>.selector.clone(),
             selector_ctx: <span class="self">self</span>.selector_ctx.clone(),
@@ -830,10 +834,6 @@
             })
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_region_failover_running(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>RegionFailoverKey) -&gt; bool {
-        <span class="self">self</span>.running_procedures.read().unwrap().contains(key)
-    }
-
     <span class="kw">fn </span>insert_running_procedures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         failed_region: <span class="kw-2">&amp;</span>RegionIdent,
@@ -848,11 +848,6 @@
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
-    }
-
-    <span class="attr">#[cfg(test)]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>running_procedures(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Arc&lt;RwLock&lt;HashSet&lt;RegionFailoverKey&gt;&gt;&gt; {
-        <span class="self">self</span>.running_procedures.clone()
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>do_region_failover(<span class="kw-2">&amp;</span><span class="self">self</span>, failed_region: <span class="kw-2">&amp;</span>RegionIdent) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -921,6 +916,7 @@
 <span class="doccomment">/// The &quot;Context&quot; of region failover procedure state machine.
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>RegionFailoverContext {
+    <span class="kw">pub </span>in_memory: ResettableKvStoreRef,
     <span class="kw">pub </span>mailbox: MailboxRef,
     <span class="kw">pub </span>selector: SelectorRef,
     <span class="kw">pub </span>selector_ctx: SelectorContext,
@@ -1160,6 +1156,7 @@
         </span>}
 
         <span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; TestingEnv {
+            <span class="kw">let </span>in_memory = Arc::new(MemStore::new());
             <span class="kw">let </span>kv_store: KvStoreRef = Arc::new(MemStore::new());
             <span class="kw">let </span>meta_peer_client = MetaPeerClientBuilder::default()
                 .election(<span class="prelude-val">None</span>)
@@ -1224,6 +1221,7 @@
 
             TestingEnv {
                 context: RegionFailoverContext {
+                    in_memory,
                     mailbox,
                     selector,
                     selector_ctx,
