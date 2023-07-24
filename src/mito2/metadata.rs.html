@@ -593,6 +593,13 @@
 <a href="#593" id="593">593</a>
 <a href="#594" id="594">594</a>
 <a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -619,7 +626,7 @@
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::storage::{ColumnId, RegionId};
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidMetaSnafu, InvalidSchemaSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidMetaSnafu, InvalidSchemaSnafu, <span class="prelude-ty">Result</span>, SerdeJsonSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::region::VersionNumber;
 
 <span class="doccomment">/// Initial version number of a new region.
@@ -706,6 +713,13 @@
             primary_key: without_schema.primary_key,
             region_id: without_schema.region_id,
         })
+    }
+}
+
+<span class="kw">impl </span>RegionMetadata {
+    <span class="doccomment">/// Encode the metadata to a JSON string.
+    </span><span class="kw">pub fn </span>to_json(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
+        serde_json::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>).context(SerdeJsonSnafu)
     }
 }
 

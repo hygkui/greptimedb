@@ -183,6 +183,19 @@
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -205,6 +218,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_time::Timestamp;
+<span class="kw">use </span>object_store::util::join_path;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{ResultExt, Snafu};
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -237,7 +251,7 @@
 
     <span class="doccomment">/// Append `.parquet` to file id to make a complete file name
     </span><span class="kw">pub fn </span>as_parquet(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>.hyphenated(), <span class="string">&quot;.parquet&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="self">self</span>, <span class="string">&quot;.parquet&quot;</span>)
     }
 }
 
@@ -291,6 +305,18 @@
             .field(<span class="string">&quot;compacting&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.compacting)
             .field(<span class="string">&quot;deleted&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.deleted)
             .finish()
+    }
+}
+
+<span class="kw">impl </span>FileHandle {
+    <span class="doccomment">/// Returns the file id.
+    </span><span class="kw">pub fn </span>file_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FileId {
+        <span class="self">self</span>.inner.meta.file_id
+    }
+
+    <span class="doccomment">/// Returns the complete file path of the file.
+    </span><span class="kw">pub fn </span>file_path(<span class="kw-2">&amp;</span><span class="self">self</span>, file_dir: <span class="kw-2">&amp;</span>str) -&gt; String {
+        join_path(file_dir, <span class="kw-2">&amp;</span><span class="self">self</span>.file_id().as_parquet())
     }
 }
 
