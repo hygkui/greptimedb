@@ -163,6 +163,43 @@
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -185,7 +222,10 @@
 <span class="kw">use </span>common_meta::key::table_name::{TableNameKey, TableNameValue};
 <span class="kw">use </span>common_meta::key::table_region::{RegionDistribution, TableRegionKey, TableRegionValue};
 <span class="kw">use </span>common_meta::key::TableMetaKey;
-<span class="kw">use </span>common_meta::rpc::store::{BatchPutRequest, PutRequest, RangeRequest};
+<span class="kw">use </span>common_meta::rpc::store::{
+    BatchDeleteRequest, BatchPutRequest, PutRequest, RangeRequest, RangeResponse,
+};
+<span class="kw">use </span>common_meta::util::get_prefix_end_key;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>etcd_client::Client;
 <span class="kw">use </span>meta_srv::service::store::etcd::EtcdStore;
@@ -226,24 +266,58 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>Tool <span class="kw">for </span>MigrateTableMetadata {
     <span class="kw">async fn </span>do_work(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>req = RangeRequest::new().with_prefix(<span class="string">b&quot;__tg&quot;</span>.to_vec());
-        <span class="kw">let </span>resp = <span class="self">self</span>.etcd_store.range(req).<span class="kw">await</span>.unwrap();
-        <span class="kw">for </span>kv <span class="kw">in </span>resp.kvs {
-            <span class="kw">let </span>key = String::from_utf8_lossy(kv.key());
-            <span class="kw">let </span>value = TableGlobalValue::from_bytes(kv.value())
-                .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">&quot;table global value is corrupted: {e}, key: {key}&quot;</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>key = <span class="string">b&quot;__tg&quot;</span>.to_vec();
+        <span class="kw">let </span>range_end = get_prefix_end_key(<span class="kw-2">&amp;</span>key);
 
-            <span class="self">self</span>.create_table_name_key(<span class="kw-2">&amp;</span>value).<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>processed_keys = <span class="number">0</span>;
+        <span class="kw">loop </span>{
+            <span class="macro">info!</span>(<span class="string">&quot;Start scanning key from: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>key));
 
-            <span class="self">self</span>.create_datanode_table_keys(<span class="kw-2">&amp;</span>value).<span class="kw">await</span>;
+            <span class="kw">let </span>req = RangeRequest::new()
+                .with_range(key, range_end.clone())
+                .with_limit(<span class="number">1000</span>);
+            <span class="kw">let </span>resp = <span class="self">self</span>.etcd_store.range(req).<span class="kw">await</span>.unwrap();
+            <span class="kw">for </span>kv <span class="kw">in </span>resp.kvs.iter() {
+                <span class="kw">let </span>key = String::from_utf8_lossy(kv.key());
+                <span class="kw">let </span>value = TableGlobalValue::from_bytes(kv.value())
+                    .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">&quot;table global value is corrupted: {e}, key: {key}&quot;</span>));
 
-            <span class="self">self</span>.split_table_global_value(<span class="kw-2">&amp;</span>key, value).<span class="kw">await</span>;
+                <span class="self">self</span>.create_table_name_key(<span class="kw-2">&amp;</span>value).<span class="kw">await</span>;
+
+                <span class="self">self</span>.create_datanode_table_keys(<span class="kw-2">&amp;</span>value).<span class="kw">await</span>;
+
+                <span class="self">self</span>.split_table_global_value(<span class="kw-2">&amp;</span>key, value).<span class="kw">await</span>;
+            }
+
+            <span class="self">self</span>.delete_migrated_keys(<span class="kw-2">&amp;</span>resp).<span class="kw">await</span>;
+
+            processed_keys += resp.kvs.len();
+
+            <span class="kw">if </span>resp.more {
+                key = get_prefix_end_key(resp.kvs.last().unwrap().key());
+            } <span class="kw">else </span>{
+                <span class="kw">break</span>;
+            }
         }
+        <span class="macro">info!</span>(<span class="string">&quot;Total migrated TableGlobalKeys: {processed_keys}&quot;</span>);
         <span class="prelude-val">Ok</span>(())
     }
 }
 
 <span class="kw">impl </span>MigrateTableMetadata {
+    <span class="kw">async fn </span>delete_migrated_keys(<span class="kw-2">&amp;</span><span class="self">self</span>, resp: <span class="kw-2">&amp;</span>RangeResponse) {
+        <span class="macro">info!</span>(<span class="string">&quot;Deleting {} TableGlobalKeys&quot;</span>, resp.kvs.len());
+        <span class="kw">let </span>req = BatchDeleteRequest {
+            keys: resp.kvs.iter().map(|kv| kv.key().to_vec()).collect(),
+            prev_kv: <span class="bool-val">false</span>,
+        };
+        <span class="kw">if </span><span class="self">self</span>.dryrun {
+            <span class="macro">info!</span>(<span class="string">&quot;Dryrun: do nothing&quot;</span>);
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.etcd_store.batch_delete(req).<span class="kw">await</span>.unwrap();
+        }
+    }
+
     <span class="kw">async fn </span>split_table_global_value(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>str, value: TableGlobalValue) {
         <span class="kw">let </span>table_id = value.table_id();
         <span class="kw">let </span>region_distribution: RegionDistribution = value.regions_id_map.into_iter().collect();
