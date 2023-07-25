@@ -551,7 +551,7 @@
 <span class="kw">use </span>rustpython_vm <span class="kw">as </span>vm;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>serde::Deserialize;
-<span class="kw">use </span>session::context::QueryContext;
+<span class="kw">use </span>session::context::{QueryContext, QueryContextBuilder};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>vm::convert::ToPyObject;
 <span class="kw">use </span>vm::{pyclass <span class="kw">as </span>rspyclass, PyObjectRef, PyPayload, PyResult, VirtualMachine};
@@ -898,7 +898,7 @@
                 <span class="kw">let </span>res = handle.block_on(<span class="kw">async </span>{
                     <span class="kw">let </span>plan = engine
                         .planner()
-                        .plan(stmt, Default::default())
+                        .plan(stmt, QueryContextBuilder::default().build())
                         .<span class="kw">await
                         </span>.map_err(|e| e.to_string())<span class="question-mark">?</span>;
                     <span class="kw">let </span>res = engine

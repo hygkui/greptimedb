@@ -188,7 +188,7 @@
     <span class="kw">async fn </span>test_otlp(instance: <span class="kw-2">&amp;</span>Arc&lt;Instance&gt;) {
         <span class="kw">let </span>req = build_request();
         <span class="kw">let </span>db = <span class="string">&quot;otlp&quot;</span>;
-        <span class="kw">let </span>ctx = Arc::new(QueryContext::with(DEFAULT_CATALOG_NAME, db));
+        <span class="kw">let </span>ctx = QueryContext::with(DEFAULT_CATALOG_NAME, db);
 
         <span class="macro">assert!</span>(SqlQueryHandler::do_query(
             instance.as_ref(),

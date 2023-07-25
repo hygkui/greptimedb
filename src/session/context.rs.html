@@ -237,81 +237,6 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -333,26 +258,22 @@
 <span class="kw">use </span>arc_swap::ArcSwap;
 <span class="kw">use </span>common_catalog::build_db_string;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
-<span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>common_time::TimeZone;
+<span class="kw">use </span>derive_builder::Builder;
 <span class="kw">use </span>sql::dialect::{Dialect, GreptimeDbDialect, MySqlDialect, PostgreSqlDialect};
 
 <span class="kw">pub type </span>QueryContextRef = Arc&lt;QueryContext&gt;;
 <span class="kw">pub type </span>ConnInfoRef = Arc&lt;ConnInfo&gt;;
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Debug, Builder)]
+#[builder(pattern = <span class="string">&quot;owned&quot;</span>)]
+#[builder(build_fn(skip))]
 </span><span class="kw">pub struct </span>QueryContext {
-    current_catalog: ArcSwap&lt;String&gt;,
-    current_schema: ArcSwap&lt;String&gt;,
+    current_catalog: String,
+    current_schema: String,
     time_zone: ArcSwap&lt;<span class="prelude-ty">Option</span>&lt;TimeZone&gt;&gt;,
     sql_dialect: Box&lt;<span class="kw">dyn </span>Dialect + Send + Sync&gt;,
     trace_id: u64,
-}
-
-<span class="kw">impl </span>Default <span class="kw">for </span>QueryContext {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new()
-    }
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>QueryContext {
@@ -367,64 +288,31 @@
 }
 
 <span class="kw">impl </span>QueryContext {
-    <span class="kw">pub fn </span>arc() -&gt; QueryContextRef {
-        Arc::new(QueryContext::new())
+    <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;testing&quot;</span>))]
+    </span><span class="kw">pub fn </span>arc() -&gt; QueryContextRef {
+        QueryContextBuilder::default().build()
     }
 
-    <span class="kw">pub fn </span>to_arc(<span class="self">self</span>) -&gt; QueryContextRef {
-        Arc::new(<span class="self">self</span>)
-    }
-
-    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            current_catalog: ArcSwap::new(Arc::new(DEFAULT_CATALOG_NAME.to_string())),
-            current_schema: ArcSwap::new(Arc::new(DEFAULT_SCHEMA_NAME.to_string())),
-            time_zone: ArcSwap::new(Arc::new(<span class="prelude-val">None</span>)),
-            sql_dialect: Box::new(GreptimeDbDialect {}),
-            trace_id: common_telemetry::gen_trace_id(),
-        }
-    }
-
-    <span class="kw">pub fn </span>with(catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
-        QueryContextBuilder::new()
-            .catalog(catalog.to_string())
-            .schema(schema.to_string())
+    <span class="kw">pub fn </span>with(catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; QueryContextRef {
+        QueryContextBuilder::default()
+            .current_catalog(catalog.to_string())
+            .current_schema(schema.to_string())
             .build()
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>current_schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="self">self</span>.current_schema.load().as_ref().clone()
+        <span class="self">self</span>.current_schema.clone()
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>current_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="self">self</span>.current_catalog.load().as_ref().clone()
+        <span class="self">self</span>.current_catalog.clone()
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>sql_dialect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Dialect + Send + Sync) {
         <span class="kw-2">&amp;*</span><span class="self">self</span>.sql_dialect
-    }
-
-    <span class="kw">pub fn </span>set_current_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, schema: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>last = <span class="self">self</span>.current_schema.swap(Arc::new(schema.to_string()));
-        <span class="kw">if </span>schema != last.as_str() {
-            <span class="macro">debug!</span>(
-                <span class="string">&quot;set new session default schema: {:?}, swap old: {:?}&quot;</span>,
-                schema, last
-            )
-        }
-    }
-
-    <span class="kw">pub fn </span>set_current_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>last = <span class="self">self</span>.current_catalog.swap(Arc::new(catalog.to_string()));
-        <span class="kw">if </span>catalog != last.as_str() {
-            <span class="macro">debug!</span>(
-                <span class="string">&quot;set new session default catalog: {:?}, swap old: {:?}&quot;</span>,
-                catalog, last
-            )
-        }
     }
 
     <span class="kw">pub fn </span>get_db_string(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
@@ -449,63 +337,29 @@
     }
 }
 
-<span class="attr">#[derive(Default)]
-</span><span class="kw">pub struct </span>QueryContextBuilder {
-    catalog: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    time_zone: <span class="prelude-ty">Option</span>&lt;TimeZone&gt;,
-    sql_dialect: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Dialect + Send + Sync&gt;&gt;,
-    trace_id: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-}
-
 <span class="kw">impl </span>QueryContextBuilder {
-    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::default()
+    <span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; QueryContextRef {
+        Arc::new(QueryContext {
+            current_catalog: <span class="self">self
+                </span>.current_catalog
+                .unwrap_or_else(|| DEFAULT_CATALOG_NAME.to_string()),
+            current_schema: <span class="self">self
+                </span>.current_schema
+                .unwrap_or_else(|| DEFAULT_SCHEMA_NAME.to_string()),
+            time_zone: <span class="self">self
+                </span>.time_zone
+                .unwrap_or_else(|| ArcSwap::new(Arc::new(<span class="prelude-val">None</span>))),
+            sql_dialect: <span class="self">self
+                </span>.sql_dialect
+                .unwrap_or_else(|| Box::new(GreptimeDbDialect {})),
+            trace_id: <span class="self">self</span>.trace_id.unwrap_or_else(common_telemetry::gen_trace_id),
+        })
     }
-
-    <span class="kw">pub fn </span>catalog(<span class="kw-2">mut </span><span class="self">self</span>, catalog: String) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.catalog = <span class="prelude-val">Some</span>(catalog);
-        <span class="self">self
-    </span>}
-
-    <span class="kw">pub fn </span>schema(<span class="kw-2">mut </span><span class="self">self</span>, schema: String) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.schema = <span class="prelude-val">Some</span>(schema);
-        <span class="self">self
-    </span>}
-
-    <span class="kw">pub fn </span>time_zone(<span class="kw-2">mut </span><span class="self">self</span>, tz: TimeZone) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.time_zone = <span class="prelude-val">Some</span>(tz);
-        <span class="self">self
-    </span>}
-
-    <span class="kw">pub fn </span>sql_dialect(<span class="kw-2">mut </span><span class="self">self</span>, sql_dialect: Box&lt;<span class="kw">dyn </span>Dialect + Send + Sync&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.sql_dialect = <span class="prelude-val">Some</span>(sql_dialect);
-        <span class="self">self
-    </span>}
-
-    <span class="kw">pub fn </span>trace_id(<span class="kw-2">mut </span><span class="self">self</span>, trace_id: u64) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.trace_id = <span class="prelude-val">Some</span>(trace_id);
-        <span class="self">self
-    </span>}
 
     <span class="kw">pub fn </span>try_trace_id(<span class="kw-2">mut </span><span class="self">self</span>, trace_id: <span class="prelude-ty">Option</span>&lt;u64&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.trace_id = trace_id;
         <span class="self">self
     </span>}
-
-    <span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; QueryContext {
-        QueryContext {
-            current_catalog: ArcSwap::new(Arc::new(
-                <span class="self">self</span>.catalog.unwrap_or(DEFAULT_CATALOG_NAME.to_string()),
-            )),
-            current_schema: ArcSwap::new(Arc::new(
-                <span class="self">self</span>.schema.unwrap_or(DEFAULT_SCHEMA_NAME.to_string()),
-            )),
-            time_zone: ArcSwap::new(Arc::new(<span class="self">self</span>.time_zone)),
-            sql_dialect: <span class="self">self</span>.sql_dialect.unwrap_or(Box::new(GreptimeDbDialect {})),
-            trace_id: <span class="self">self</span>.trace_id.unwrap_or(common_telemetry::gen_trace_id()),
-        }
-    }
 }
 
 <span class="kw">pub const </span>DEFAULT_USERNAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;greptime&quot;</span>;
@@ -541,8 +395,8 @@
     <span class="kw">pub </span>channel: Channel,
 }
 
-<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>ConnInfo {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
+<span class="kw">impl </span>Display <span class="kw">for </span>ConnInfo {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter) -&gt; std::fmt::Result {
         <span class="macro">write!</span>(
             f,
             <span class="string">&quot;{}[{}]&quot;</span>,
@@ -579,8 +433,8 @@
     }
 }
 
-<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Channel {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
+<span class="kw">impl </span>Display <span class="kw">for </span>Channel {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter) -&gt; std::fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
             Channel::Mysql =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;mysql&quot;</span>),
             Channel::Postgres =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;postgres&quot;</span>),
@@ -590,6 +444,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
+    <span class="kw">use </span>common_catalog::consts::DEFAULT_CATALOG_NAME;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::context::{Channel, UserInfo};
     <span class="kw">use </span><span class="kw">crate</span>::Session;
@@ -613,16 +469,10 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_context_db_string() {
-        <span class="kw">let </span>context = QueryContext::new();
-
-        context.set_current_catalog(<span class="string">&quot;a0b1c2d3&quot;</span>);
-        context.set_current_schema(<span class="string">&quot;test&quot;</span>);
-
+        <span class="kw">let </span>context = QueryContext::with(<span class="string">&quot;a0b1c2d3&quot;</span>, <span class="string">&quot;test&quot;</span>);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;a0b1c2d3-test&quot;</span>, context.get_db_string());
 
-        context.set_current_catalog(DEFAULT_CATALOG_NAME);
-        context.set_current_schema(<span class="string">&quot;test&quot;</span>);
-
+        <span class="kw">let </span>context = QueryContext::with(DEFAULT_CATALOG_NAME, <span class="string">&quot;test&quot;</span>);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;test&quot;</span>, context.get_db_string());
     }
 }

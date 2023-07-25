@@ -764,7 +764,7 @@
             }
         }
 
-        <span class="kw">let </span>query_ctx = Arc::new(QueryContext::new());
+        <span class="kw">let </span>query_ctx = QueryContext::arc();
 
         <span class="kw">let </span>standalone = tests::create_standalone_instance(<span class="string">&quot;test_db_hook&quot;</span>).<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>instance = standalone.instance;

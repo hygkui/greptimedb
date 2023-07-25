@@ -128,8 +128,6 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -144,9 +142,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::sync::Arc;
-
-<span class="kw">use </span>api::prom_store::remote::{ReadRequest, WriteRequest};
+</span><span class="kw">use </span>api::prom_store::remote::{ReadRequest, WriteRequest};
 <span class="kw">use </span>axum::extract::{Query, RawBody, State};
 <span class="kw">use </span>axum::http::{header, StatusCode};
 <span class="kw">use </span>axum::response::IntoResponse;
@@ -194,7 +190,7 @@
     );
     <span class="kw">let </span>ctx = <span class="kw">if let </span><span class="prelude-val">Some</span>(db) = params.db {
         <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_client_database_name(<span class="kw-2">&amp;</span>db);
-        Arc::new(QueryContext::with(catalog, schema))
+        QueryContext::with(catalog, schema)
     } <span class="kw">else </span>{
         QueryContext::arc()
     };
@@ -234,7 +230,7 @@
     );
     <span class="kw">let </span>ctx = <span class="kw">if let </span><span class="prelude-val">Some</span>(db) = params.db {
         <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_client_database_name(<span class="kw-2">&amp;</span>db);
-        Arc::new(QueryContext::with(catalog, schema))
+        QueryContext::with(catalog, schema)
     } <span class="kw">else </span>{
         QueryContext::arc()
     };

@@ -225,20 +225,6 @@
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -347,20 +333,6 @@
                     Keyword::ALTER =&gt; <span class="self">self</span>.parse_alter(),
 
                     Keyword::DROP =&gt; <span class="self">self</span>.parse_drop(),
-
-                    Keyword::USE =&gt; {
-                        <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
-
-                        <span class="kw">let </span>database_name =
-                            <span class="self">self</span>.parser
-                                .parse_identifier()
-                                .context(error::UnexpectedSnafu {
-                                    sql: <span class="self">self</span>.sql,
-                                    expected: <span class="string">&quot;a database name&quot;</span>,
-                                    actual: <span class="self">self</span>.peek_token_as_string(),
-                                })<span class="question-mark">?</span>;
-                        <span class="prelude-val">Ok</span>(Statement::Use(database_name.value))
-                    }
 
                     Keyword::COPY =&gt; <span class="self">self</span>.parse_copy(),
 

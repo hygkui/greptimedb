@@ -1382,7 +1382,7 @@
 
     <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
-    <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, Arc::new(query_ctx)).<span class="kw">await</span>;
+    <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, query_ctx).<span class="kw">await</span>;
     <span class="kw">let </span>(metric_name, result_type) = <span class="kw">match </span>retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query) {
         <span class="prelude-val">Ok</span>((metric_name, result_type)) =&gt; (metric_name.unwrap_or_default(), result_type),
         <span class="prelude-val">Err</span>(err) =&gt; {
@@ -1421,7 +1421,7 @@
 
     <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
-    <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, Arc::new(query_ctx)).<span class="kw">await</span>;
+    <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, query_ctx).<span class="kw">await</span>;
     <span class="kw">let </span>metric_name = <span class="kw">match </span>retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query) {
         <span class="prelude-val">Err</span>(err) =&gt; {
             <span class="kw">return </span>PrometheusJsonResponse::error(err.status_code().to_string(), err.to_string())
@@ -1501,7 +1501,7 @@
 
     <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
     <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(db);
-    <span class="kw">let </span>query_ctx = Arc::new(QueryContext::with(catalog, schema));
+    <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span><span class="kw-2">mut </span>labels = HashSet::new();
     <span class="kw">let _ </span>= labels.insert(METRIC_NAME.to_string());
@@ -1728,7 +1728,7 @@
     <span class="kw">let </span>end = params.end.unwrap_or_else(current_time_rfc3339);
     <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
     <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(db);
-    <span class="kw">let </span>query_ctx = Arc::new(QueryContext::with(catalog, schema));
+    <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span><span class="kw-2">mut </span>label_values = HashSet::new();
 
@@ -1850,7 +1850,7 @@
 
     <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
     <span class="kw">let </span>(catalog, schema) = <span class="kw">super</span>::parse_catalog_and_schema_from_client_database_name(db);
-    <span class="kw">let </span>query_ctx = Arc::new(QueryContext::with(catalog, schema));
+    <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span><span class="kw-2">mut </span>series = Vec::new();
     <span class="kw">for </span>query <span class="kw">in </span>queries {

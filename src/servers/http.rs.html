@@ -1023,7 +1023,7 @@
         <span class="kw">let </span>(catalog, schema) = <span class="kw">super</span>::parse_catalog_and_schema_from_client_database_name(db);
 
         <span class="kw">match </span>query_handler.is_valid_schema(catalog, schema).<span class="kw">await </span>{
-            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; <span class="prelude-val">Ok</span>(Arc::new(QueryContext::with(catalog, schema))),
+            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; <span class="prelude-val">Ok</span>(QueryContext::with(catalog, schema)),
             <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="prelude-val">Err</span>(JsonResponse::with_error(
                 <span class="macro">format!</span>(<span class="string">&quot;Database not found: {db}&quot;</span>),
                 StatusCode::DatabaseNotFound,

@@ -250,7 +250,6 @@
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -266,7 +265,6 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>axum::extract::{Query, RawBody, State};
 <span class="kw">use </span>axum::http::StatusCode <span class="kw">as </span>HttpStatusCode;
@@ -344,7 +342,7 @@
         .unwrap_or(DEFAULT_SCHEMA_NAME);
 
     <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_client_database_name(db);
-    <span class="kw">let </span>ctx = Arc::new(QueryContext::with(catalog, schema));
+    <span class="kw">let </span>ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span>data_points = parse_data_points(body).<span class="kw">await</span><span class="question-mark">?</span>;
 

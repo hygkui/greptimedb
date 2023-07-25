@@ -215,7 +215,6 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -386,12 +385,11 @@
         })
         .unwrap_or((DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME));
 
-    QueryContextBuilder::new()
-        .catalog(catalog.to_string())
-        .schema(schema.to_string())
+    QueryContextBuilder::default()
+        .current_catalog(catalog.to_string())
+        .current_schema(schema.to_string())
         .try_trace_id(header.and_then(|h: <span class="kw-2">&amp;</span>RequestHeader| h.trace_id))
         .build()
-        .to_arc()
 }
 
 <span class="doccomment">/// Histogram timer for handling gRPC request.

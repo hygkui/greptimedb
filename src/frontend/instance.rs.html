@@ -878,11 +878,6 @@
 <a href="#878" id="878">878</a>
 <a href="#879" id="879">879</a>
 <a href="#880" id="880">880</a>
-<a href="#881" id="881">881</a>
-<a href="#882" id="882">882</a>
-<a href="#883" id="883">883</a>
-<a href="#884" id="884">884</a>
-<a href="#885" id="885">885</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1508,7 +1503,7 @@
         <span class="comment">// These are executed by query engine, and will be checked there.
         </span>Statement::Query(<span class="kw">_</span>) | Statement::Explain(<span class="kw">_</span>) | Statement::Tql(<span class="kw">_</span>) | Statement::Delete(<span class="kw">_</span>) =&gt; {}
         <span class="comment">// database ops won&#39;t be checked
-        </span>Statement::CreateDatabase(<span class="kw">_</span>) | Statement::ShowDatabases(<span class="kw">_</span>) | Statement::Use(<span class="kw">_</span>) =&gt; {}
+        </span>Statement::CreateDatabase(<span class="kw">_</span>) | Statement::ShowDatabases(<span class="kw">_</span>) =&gt; {}
         <span class="comment">// show create table and alter are not supported yet
         </span>Statement::ShowCreateTable(<span class="kw">_</span>) | Statement::CreateExternalTable(<span class="kw">_</span>) | Statement::Alter(<span class="kw">_</span>) =&gt; {
         }
@@ -1662,7 +1657,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_exec_validation() {
-        <span class="kw">let </span>query_ctx = Arc::new(QueryContext::new());
+        <span class="kw">let </span>query_ctx = QueryContext::arc();
         <span class="kw">let </span>plugins = Plugins::new();
         plugins.insert(QueryOptions {
             disallow_cross_schema_query: <span class="bool-val">true</span>,
@@ -1692,11 +1687,6 @@
             <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt, <span class="kw-2">&amp;</span>query_ctx);
             re.unwrap();
         }
-
-        <span class="kw">let </span>sql = <span class="string">&quot;USE randomschema&quot;</span>;
-        <span class="kw">let </span>stmts = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
-        <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmts[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx);
-        re.unwrap();
 
         <span class="kw">fn </span>replace_test(template_sql: <span class="kw-2">&amp;</span>str, plugins: Arc&lt;Plugins&gt;, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef) {
             <span class="comment">// test right

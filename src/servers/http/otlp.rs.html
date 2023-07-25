@@ -70,8 +70,6 @@
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -86,9 +84,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::sync::Arc;
-
-<span class="kw">use </span>axum::extract::{RawBody, State};
+</span><span class="kw">use </span>axum::extract::{RawBody, State};
 <span class="kw">use </span>axum::http::header;
 <span class="kw">use </span>axum::response::IntoResponse;
 <span class="kw">use </span>axum::TypedHeader;
@@ -114,7 +110,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;OtlpResponse&gt; {
     <span class="kw">let </span>ctx = <span class="kw">if let </span><span class="prelude-val">Some</span>(db) = db.value() {
         <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_client_database_name(db);
-        Arc::new(QueryContext::with(catalog, schema))
+        QueryContext::with(catalog, schema)
     } <span class="kw">else </span>{
         QueryContext::arc()
     };

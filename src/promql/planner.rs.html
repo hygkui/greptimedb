@@ -3423,7 +3423,7 @@
             })
             .<span class="kw">await
             </span>.is_ok());
-        DfTableSourceProvider::new(catalog_list, <span class="bool-val">false</span>, <span class="kw-2">&amp;</span>QueryContext::new())
+        DfTableSourceProvider::new(catalog_list, <span class="bool-val">false</span>, QueryContext::arc().as_ref())
     }
 
     <span class="comment">// {
