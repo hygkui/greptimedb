@@ -593,7 +593,7 @@
             running: running.clone(),
             memtable_builder: Arc::new(DefaultMemtableBuilder::default()),
         };
-        <span class="kw">let </span>handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
+        <span class="kw">let </span>handle = common_runtime::spawn_write(<span class="kw">async move </span>{
             worker_thread.run().<span class="kw">await</span>;
         });
 
