@@ -12,7 +12,7 @@
 "common_mem_prof":[["impl ErrorCompat for <a class=\"enum\" href=\"common_mem_prof/error/enum.Error.html\" title=\"enum common_mem_prof::error::Error\">Error</a>"]],
 "common_meta":[["impl ErrorCompat for <a class=\"enum\" href=\"common_meta/error/enum.Error.html\" title=\"enum common_meta::error::Error\">Error</a>"]],
 "common_pprof":[["impl ErrorCompat for <a class=\"enum\" href=\"common_pprof/enum.Error.html\" title=\"enum common_pprof::Error\">Error</a>"]],
-"common_procedure":[["impl ErrorCompat for <a class=\"struct\" href=\"common_procedure/procedure/struct.ParseIdError.html\" title=\"struct common_procedure::procedure::ParseIdError\">ParseIdError</a>"],["impl ErrorCompat for <a class=\"enum\" href=\"common_procedure/error/enum.Error.html\" title=\"enum common_procedure::error::Error\">Error</a>"]],
+"common_procedure":[["impl ErrorCompat for <a class=\"enum\" href=\"common_procedure/error/enum.Error.html\" title=\"enum common_procedure::error::Error\">Error</a>"],["impl ErrorCompat for <a class=\"struct\" href=\"common_procedure/procedure/struct.ParseIdError.html\" title=\"struct common_procedure::procedure::ParseIdError\">ParseIdError</a>"]],
 "common_query":[["impl ErrorCompat for <a class=\"enum\" href=\"common_query/error/enum.Error.html\" title=\"enum common_query::error::Error\">Error</a>"]],
 "common_recordbatch":[["impl ErrorCompat for <a class=\"enum\" href=\"common_recordbatch/error/enum.Error.html\" title=\"enum common_recordbatch::error::Error\">Error</a>"]],
 "common_runtime":[["impl ErrorCompat for <a class=\"enum\" href=\"common_runtime/error/enum.Error.html\" title=\"enum common_runtime::error::Error\">Error</a>"]],
