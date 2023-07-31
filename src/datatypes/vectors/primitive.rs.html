@@ -665,6 +665,53 @@
 <a href="#665" id="665">665</a>
 <a href="#666" id="666">666</a>
 <a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -695,7 +742,7 @@
 <span class="kw">use </span>snafu::OptionExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::data_type::ConcreteDataType;
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, CastTypeSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::scalars::{Scalar, ScalarRef, ScalarVector, ScalarVectorBuilder};
 <span class="kw">use </span><span class="kw">crate</span>::serialize::Serializable;
 <span class="kw">use </span><span class="kw">crate</span>::types::{
@@ -771,8 +818,14 @@
                     .with_timezone_opt(<span class="prelude-val">None</span>::&lt;String&gt;)
                     .to_data(),
             },
-            <span class="kw">_ </span>=&gt; {
-                <span class="macro">unreachable!</span>()
+            arrow_type =&gt; {
+                <span class="kw">return </span>CastTypeSnafu {
+                    msg: <span class="macro">format!</span>(
+                        <span class="string">&quot;Failed to cast arrow array {:?} to timestamp vector&quot;</span>,
+                        arrow_type,
+                    ),
+                }
+                .fail()<span class="question-mark">?</span>;
             }
         };
         <span class="kw">let </span>concrete_array = PrimitiveArray::&lt;T::ArrowPrimitive&gt;::from(array_data);
@@ -809,8 +862,11 @@
                     .to_data(),
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             },
-            <span class="kw">_ </span>=&gt; {
-                <span class="macro">unreachable!</span>()
+            arrow_type =&gt; {
+                <span class="kw">return </span>CastTypeSnafu {
+                    msg: <span class="macro">format!</span>(<span class="string">&quot;Failed to cast arrow array {:?} to time vector&quot;</span>, arrow_type,),
+                }
+                .fail()<span class="question-mark">?</span>;
             }
         };
         <span class="kw">let </span>concrete_array = PrimitiveArray::&lt;T::ArrowPrimitive&gt;::from(array_data);
@@ -1161,6 +1217,8 @@
     <span class="kw">use </span><span class="kw">crate</span>::types::Int64Type;
     <span class="kw">use </span><span class="kw">crate</span>::vectors::{
         TimeMicrosecondVector, TimeMillisecondVector, TimeNanosecondVector, TimeSecondVector,
+        TimestampMicrosecondVector, TimestampMillisecondVector, TimestampNanosecondVector,
+        TimestampSecondVector,
     };
 
     <span class="kw">fn </span>check_vec(v: Int32Vector) {
@@ -1330,6 +1388,42 @@
         <span class="kw">let </span>array: ArrayRef = Arc::new(Time64NanosecondArray::from(<span class="macro">vec!</span>[<span class="number">1i64</span>, <span class="number">2</span>, <span class="number">3</span>]));
         <span class="kw">let </span>vector = TimeNanosecondVector::try_from_arrow_time_array(array).unwrap();
         <span class="macro">assert_eq!</span>(TimeNanosecondVector::from_values(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]), vector);
+
+        <span class="comment">// Test convert error
+        </span><span class="kw">let </span>array: ArrayRef = Arc::new(Int32Array::from(<span class="macro">vec!</span>[<span class="number">1i32</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        <span class="macro">assert!</span>(TimeSecondVector::try_from_arrow_time_array(array).is_err());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_try_from_arrow_timestamp_array() {
+        <span class="kw">let </span>array: ArrayRef = Arc::new(TimestampSecondArray::from(<span class="macro">vec!</span>[<span class="number">1i64</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        <span class="kw">let </span>vector = TimestampSecondVector::try_from_arrow_timestamp_array(array).unwrap();
+        <span class="macro">assert_eq!</span>(TimestampSecondVector::from_values(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]), vector);
+
+        <span class="kw">let </span>array: ArrayRef = Arc::new(TimestampMillisecondArray::from(<span class="macro">vec!</span>[<span class="number">1i64</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        <span class="kw">let </span>vector = TimestampMillisecondVector::try_from_arrow_timestamp_array(array).unwrap();
+        <span class="macro">assert_eq!</span>(
+            TimestampMillisecondVector::from_values(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]),
+            vector
+        );
+
+        <span class="kw">let </span>array: ArrayRef = Arc::new(TimestampMicrosecondArray::from(<span class="macro">vec!</span>[<span class="number">1i64</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        <span class="kw">let </span>vector = TimestampMicrosecondVector::try_from_arrow_timestamp_array(array).unwrap();
+        <span class="macro">assert_eq!</span>(
+            TimestampMicrosecondVector::from_values(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]),
+            vector
+        );
+
+        <span class="kw">let </span>array: ArrayRef = Arc::new(TimestampNanosecondArray::from(<span class="macro">vec!</span>[<span class="number">1i64</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        <span class="kw">let </span>vector = TimestampNanosecondVector::try_from_arrow_timestamp_array(array).unwrap();
+        <span class="macro">assert_eq!</span>(
+            TimestampNanosecondVector::from_values(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]),
+            vector
+        );
+
+        <span class="comment">// Test convert error
+        </span><span class="kw">let </span>array: ArrayRef = Arc::new(Int32Array::from(<span class="macro">vec!</span>[<span class="number">1i32</span>, <span class="number">2</span>, <span class="number">3</span>]));
+        <span class="macro">assert!</span>(TimestampSecondVector::try_from_arrow_timestamp_array(array).is_err());
     }
 }
 </code></pre></div></section></main></body></html>
