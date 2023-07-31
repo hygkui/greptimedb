@@ -1807,6 +1807,70 @@
 <a href="#1807" id="1807">1807</a>
 <a href="#1808" id="1808">1808</a>
 <a href="#1809" id="1809">1809</a>
+<a href="#1810" id="1810">1810</a>
+<a href="#1811" id="1811">1811</a>
+<a href="#1812" id="1812">1812</a>
+<a href="#1813" id="1813">1813</a>
+<a href="#1814" id="1814">1814</a>
+<a href="#1815" id="1815">1815</a>
+<a href="#1816" id="1816">1816</a>
+<a href="#1817" id="1817">1817</a>
+<a href="#1818" id="1818">1818</a>
+<a href="#1819" id="1819">1819</a>
+<a href="#1820" id="1820">1820</a>
+<a href="#1821" id="1821">1821</a>
+<a href="#1822" id="1822">1822</a>
+<a href="#1823" id="1823">1823</a>
+<a href="#1824" id="1824">1824</a>
+<a href="#1825" id="1825">1825</a>
+<a href="#1826" id="1826">1826</a>
+<a href="#1827" id="1827">1827</a>
+<a href="#1828" id="1828">1828</a>
+<a href="#1829" id="1829">1829</a>
+<a href="#1830" id="1830">1830</a>
+<a href="#1831" id="1831">1831</a>
+<a href="#1832" id="1832">1832</a>
+<a href="#1833" id="1833">1833</a>
+<a href="#1834" id="1834">1834</a>
+<a href="#1835" id="1835">1835</a>
+<a href="#1836" id="1836">1836</a>
+<a href="#1837" id="1837">1837</a>
+<a href="#1838" id="1838">1838</a>
+<a href="#1839" id="1839">1839</a>
+<a href="#1840" id="1840">1840</a>
+<a href="#1841" id="1841">1841</a>
+<a href="#1842" id="1842">1842</a>
+<a href="#1843" id="1843">1843</a>
+<a href="#1844" id="1844">1844</a>
+<a href="#1845" id="1845">1845</a>
+<a href="#1846" id="1846">1846</a>
+<a href="#1847" id="1847">1847</a>
+<a href="#1848" id="1848">1848</a>
+<a href="#1849" id="1849">1849</a>
+<a href="#1850" id="1850">1850</a>
+<a href="#1851" id="1851">1851</a>
+<a href="#1852" id="1852">1852</a>
+<a href="#1853" id="1853">1853</a>
+<a href="#1854" id="1854">1854</a>
+<a href="#1855" id="1855">1855</a>
+<a href="#1856" id="1856">1856</a>
+<a href="#1857" id="1857">1857</a>
+<a href="#1858" id="1858">1858</a>
+<a href="#1859" id="1859">1859</a>
+<a href="#1860" id="1860">1860</a>
+<a href="#1861" id="1861">1861</a>
+<a href="#1862" id="1862">1862</a>
+<a href="#1863" id="1863">1863</a>
+<a href="#1864" id="1864">1864</a>
+<a href="#1865" id="1865">1865</a>
+<a href="#1866" id="1866">1866</a>
+<a href="#1867" id="1867">1867</a>
+<a href="#1868" id="1868">1868</a>
+<a href="#1869" id="1869">1869</a>
+<a href="#1870" id="1870">1870</a>
+<a href="#1871" id="1871">1871</a>
+<a href="#1872" id="1872">1872</a>
+<a href="#1873" id="1873">1873</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1831,8 +1895,10 @@
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>common_time::date::Date;
 <span class="kw">use </span>common_time::datetime::DateTime;
+<span class="kw">use </span>common_time::interval::IntervalUnit;
 <span class="kw">use </span>common_time::time::Time;
 <span class="kw">use </span>common_time::timestamp::{TimeUnit, Timestamp};
+<span class="kw">use </span>common_time::Interval;
 <span class="kw">use </span>datafusion_common::ScalarValue;
 <span class="kw">pub use </span>ordered_float::OrderedFloat;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -1842,7 +1908,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::type_id::LogicalTypeId;
-<span class="kw">use </span><span class="kw">crate</span>::types::ListType;
+<span class="kw">use </span><span class="kw">crate</span>::types::{IntervalType, ListType};
 <span class="kw">use </span><span class="kw">crate</span>::vectors::ListVector;
 
 <span class="kw">pub type </span>OrderedF32 = OrderedFloat&lt;f32&gt;;
@@ -1877,6 +1943,7 @@
     DateTime(DateTime),
     Timestamp(Timestamp),
     Time(Time),
+    Interval(Interval),
 
     List(ListValue),
 }
@@ -1909,6 +1976,7 @@
             Value::DateTime(v) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{v}&quot;</span>),
             Value::Timestamp(v) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, v.to_iso8601_string()),
             Value::Time(t) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, t.to_iso8601_string()),
+            Value::Interval(v) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, v.to_iso8601_string()),
             Value::List(v) =&gt; {
                 <span class="kw">let </span>default = Box::&lt;Vec&lt;Value&gt;&gt;::default();
                 <span class="kw">let </span>items = v.items().as_ref().unwrap_or(<span class="kw-2">&amp;</span>default);
@@ -1948,6 +2016,7 @@
             Value::DateTime(<span class="kw">_</span>) =&gt; ConcreteDataType::datetime_datatype(),
             Value::Time(t) =&gt; ConcreteDataType::time_datatype(<span class="kw-2">*</span>t.unit()),
             Value::Timestamp(v) =&gt; ConcreteDataType::timestamp_datatype(v.unit()),
+            Value::Interval(v) =&gt; ConcreteDataType::interval_datatype(v.unit()),
             Value::List(list) =&gt; ConcreteDataType::list_datatype(list.datatype().clone()),
         }
     }
@@ -1991,6 +2060,7 @@
             Value::List(v) =&gt; ValueRef::List(ListValueRef::Ref { val: v }),
             Value::Timestamp(v) =&gt; ValueRef::Timestamp(<span class="kw-2">*</span>v),
             Value::Time(v) =&gt; ValueRef::Time(<span class="kw-2">*</span>v),
+            Value::Interval(v) =&gt; ValueRef::Interval(<span class="kw-2">*</span>v),
         }
     }
 
@@ -2044,6 +2114,11 @@
                 TimeUnit::Microsecond =&gt; LogicalTypeId::TimeMicrosecond,
                 TimeUnit::Nanosecond =&gt; LogicalTypeId::TimeNanosecond,
             },
+            Value::Interval(v) =&gt; <span class="kw">match </span>v.unit() {
+                IntervalUnit::YearMonth =&gt; LogicalTypeId::IntervalYearMonth,
+                IntervalUnit::DayTime =&gt; LogicalTypeId::IntervalDayTime,
+                IntervalUnit::MonthDayNano =&gt; LogicalTypeId::IntervalMonthDayNano,
+            },
         }
     }
 
@@ -2085,6 +2160,11 @@
             </span>}
             Value::Timestamp(t) =&gt; timestamp_to_scalar_value(t.unit(), <span class="prelude-val">Some</span>(t.value())),
             Value::Time(t) =&gt; time_to_scalar_value(<span class="kw-2">*</span>t.unit(), <span class="prelude-val">Some</span>(t.value()))<span class="question-mark">?</span>,
+            Value::Interval(v) =&gt; <span class="kw">match </span>v.unit() {
+                IntervalUnit::YearMonth =&gt; ScalarValue::IntervalYearMonth(<span class="prelude-val">Some</span>(v.to_i32())),
+                IntervalUnit::DayTime =&gt; ScalarValue::IntervalDayTime(<span class="prelude-val">Some</span>(v.to_i64())),
+                IntervalUnit::MonthDayNano =&gt; ScalarValue::IntervalMonthDayNano(<span class="prelude-val">Some</span>(v.to_i128())),
+            },
         };
 
         <span class="prelude-val">Ok</span>(scalar_value)
@@ -2110,6 +2190,11 @@
         ConcreteDataType::Date(<span class="kw">_</span>) =&gt; ScalarValue::Date32(<span class="prelude-val">None</span>),
         ConcreteDataType::DateTime(<span class="kw">_</span>) =&gt; ScalarValue::Date64(<span class="prelude-val">None</span>),
         ConcreteDataType::Timestamp(t) =&gt; timestamp_to_scalar_value(t.unit(), <span class="prelude-val">None</span>),
+        ConcreteDataType::Interval(v) =&gt; <span class="kw">match </span>v {
+            IntervalType::YearMonth(<span class="kw">_</span>) =&gt; ScalarValue::IntervalYearMonth(<span class="prelude-val">None</span>),
+            IntervalType::DayTime(<span class="kw">_</span>) =&gt; ScalarValue::IntervalDayTime(<span class="prelude-val">None</span>),
+            IntervalType::MonthDayNano(<span class="kw">_</span>) =&gt; ScalarValue::IntervalMonthDayNano(<span class="prelude-val">None</span>),
+        },
         ConcreteDataType::List(<span class="kw">_</span>) =&gt; {
             ScalarValue::List(<span class="prelude-val">None</span>, Arc::new(new_item_field(output_type.as_arrow_type())))
         }
@@ -2170,6 +2255,16 @@
     }
 }
 
+<span class="doccomment">/// Convert [ScalarValue] to [Interval].
+</span><span class="kw">pub fn </span>scalar_value_to_interval(scalar: <span class="kw-2">&amp;</span>ScalarValue) -&gt; <span class="prelude-ty">Option</span>&lt;Interval&gt; {
+    <span class="kw">match </span>scalar {
+        ScalarValue::IntervalYearMonth(v) =&gt; v.map(Interval::from_i32),
+        ScalarValue::IntervalDayTime(v) =&gt; v.map(Interval::from_i64),
+        ScalarValue::IntervalMonthDayNano(v) =&gt; v.map(Interval::from_i128),
+        <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+    }
+}
+
 <span class="macro">macro_rules! </span>impl_ord_for_value_like {
     (<span class="macro-nonterminal">$Type</span>: ident, <span class="macro-nonterminal">$left</span>: ident, <span class="macro-nonterminal">$right</span>: ident) =&gt; {
         <span class="kw">if </span><span class="macro-nonterminal">$left</span>.is_null() &amp;&amp; !<span class="macro-nonterminal">$right</span>.is_null() {
@@ -2196,6 +2291,7 @@
                 (<span class="macro-nonterminal">$Type::DateTime</span>(v1), <span class="macro-nonterminal">$Type::DateTime</span>(v2)) =&gt; v1.cmp(v2),
                 (<span class="macro-nonterminal">$Type::Timestamp</span>(v1), <span class="macro-nonterminal">$Type::Timestamp</span>(v2)) =&gt; v1.cmp(v2),
                 (<span class="macro-nonterminal">$Type::Time</span>(v1), <span class="macro-nonterminal">$Type::Time</span>(v2)) =&gt; v1.cmp(v2),
+                (<span class="macro-nonterminal">$Type::Interval</span>(v1), <span class="macro-nonterminal">$Type::Interval</span>(v2)) =&gt; v1.cmp(v2),
                 (<span class="macro-nonterminal">$Type::List</span>(v1), <span class="macro-nonterminal">$Type::List</span>(v2)) =&gt; v1.cmp(v2),
                 <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(
                     <span class="string">&quot;Cannot compare different values {:?} and {:?}&quot;</span>,
@@ -2253,6 +2349,7 @@
 <span class="macro">impl_value_from!</span>(Date, Date);
 <span class="macro">impl_value_from!</span>(DateTime, DateTime);
 <span class="macro">impl_value_from!</span>(Timestamp, Timestamp);
+<span class="macro">impl_value_from!</span>(Interval, Interval);
 
 <span class="kw">impl </span>From&lt;String&gt; <span class="kw">for </span>Value {
     <span class="kw">fn </span>from(string: String) -&gt; Value {
@@ -2302,6 +2399,7 @@
             Value::List(v) =&gt; serde_json::to_value(v)<span class="question-mark">?</span>,
             Value::Timestamp(v) =&gt; serde_json::to_value(v.value())<span class="question-mark">?</span>,
             Value::Time(v) =&gt; serde_json::to_value(v.value())<span class="question-mark">?</span>,
+            Value::Interval(v) =&gt; serde_json::to_value(v.to_i128())<span class="question-mark">?</span>,
         };
 
         <span class="prelude-val">Ok</span>(json_value)
@@ -2452,10 +2550,16 @@
                 .map(|x| Value::Time(Time::new(x, TimeUnit::Nanosecond)))
                 .unwrap_or(Value::Null),
 
+            ScalarValue::IntervalYearMonth(t) =&gt; t
+                .map(|x| Value::Interval(Interval::from_i32(x)))
+                .unwrap_or(Value::Null),
+            ScalarValue::IntervalDayTime(t) =&gt; t
+                .map(|x| Value::Interval(Interval::from_i64(x)))
+                .unwrap_or(Value::Null),
+            ScalarValue::IntervalMonthDayNano(t) =&gt; t
+                .map(|x| Value::Interval(Interval::from_i128(x)))
+                .unwrap_or(Value::Null),
             ScalarValue::Decimal128(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)
-            | ScalarValue::IntervalYearMonth(<span class="kw">_</span>)
-            | ScalarValue::IntervalDayTime(<span class="kw">_</span>)
-            | ScalarValue::IntervalMonthDayNano(<span class="kw">_</span>)
             | ScalarValue::Struct(<span class="kw">_</span>, <span class="kw">_</span>)
             | ScalarValue::Dictionary(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
                 <span class="kw">return </span>error::UnsupportedArrowTypeSnafu {
@@ -2495,6 +2599,7 @@
     DateTime(DateTime),
     Timestamp(Timestamp),
     Time(Time),
+    Interval(Interval),
 
     <span class="comment">// Compound types:
     </span>List(ListValueRef&lt;<span class="lifetime">&#39;a</span>&gt;),
@@ -2558,6 +2663,11 @@
         <span class="macro">impl_as_for_value_ref!</span>(<span class="self">self</span>, Time)
     }
 
+    <span class="doccomment">/// Cast itself to [Interval].
+    </span><span class="kw">pub fn </span>as_interval(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Interval&gt;&gt; {
+        <span class="macro">impl_as_for_value_ref!</span>(<span class="self">self</span>, Interval)
+    }
+
     <span class="doccomment">/// Cast itself to [ListValueRef].
     </span><span class="kw">pub fn </span>as_list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ListValueRef&gt;&gt; {
         <span class="macro">impl_as_for_value_ref!</span>(<span class="self">self</span>, List)
@@ -2610,6 +2720,7 @@
 <span class="macro">impl_value_ref_from!</span>(DateTime, DateTime);
 <span class="macro">impl_value_ref_from!</span>(Timestamp, Timestamp);
 <span class="macro">impl_value_ref_from!</span>(Time, Time);
+<span class="macro">impl_value_ref_from!</span>(Interval, Interval);
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt; <span class="kw">for </span>ValueRef&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">fn </span>from(string: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str) -&gt; ValueRef&lt;<span class="lifetime">&#39;a</span>&gt; {
@@ -2872,6 +2983,18 @@
                 .try_into()
                 .unwrap()
         );
+        <span class="macro">assert_eq!</span>(
+            Value::Null,
+            ScalarValue::IntervalMonthDayNano(<span class="prelude-val">None</span>).try_into().unwrap()
+        );
+        <span class="macro">assert_eq!</span>(
+            Value::Interval(Interval::from_month_day_nano(<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>)),
+            ScalarValue::IntervalMonthDayNano(<span class="prelude-val">Some</span>(
+                Interval::from_month_day_nano(<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>).to_i128()
+            ))
+            .try_into()
+            .unwrap()
+        );
 
         <span class="macro">assert_eq!</span>(
             Value::Time(Time::new(<span class="number">1</span>, TimeUnit::Second)),
@@ -3057,6 +3180,10 @@
             <span class="kw-2">&amp;</span>ConcreteDataType::time_nanosecond_datatype(),
             <span class="kw-2">&amp;</span>Value::Time(Time::new_nanosecond(<span class="number">1</span>)),
         );
+        check_type_and_value(
+            <span class="kw-2">&amp;</span>ConcreteDataType::interval_month_day_nano_datatype(),
+            <span class="kw-2">&amp;</span>Value::Interval(Interval::from_month_day_nano(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>)),
+        );
     }
 
     <span class="attr">#[test]
@@ -3214,6 +3341,7 @@
         <span class="macro">check_as_value_ref!</span>(Float64, OrderedF64::from(<span class="number">16.0</span>));
         <span class="macro">check_as_value_ref!</span>(Timestamp, Timestamp::new_millisecond(<span class="number">1</span>));
         <span class="macro">check_as_value_ref!</span>(Time, Time::new_millisecond(<span class="number">1</span>));
+        <span class="macro">check_as_value_ref!</span>(Interval, Interval::from_month_day_nano(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
 
         <span class="macro">assert_eq!</span>(
             ValueRef::String(<span class="string">&quot;hello&quot;</span>),

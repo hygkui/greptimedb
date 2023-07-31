@@ -327,6 +327,11 @@
 <a href="#327" id="327">327</a>
 <a href="#328" id="328">328</a>
 <a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -361,6 +366,7 @@
 <span class="kw">mod </span>datetime;
 <span class="kw">mod </span>eq;
 <span class="kw">mod </span>helper;
+<span class="kw">mod </span>interval;
 <span class="kw">mod </span>list;
 <span class="kw">mod </span>null;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>operations;
@@ -376,6 +382,10 @@
 <span class="kw">pub use </span>date::{DateVector, DateVectorBuilder};
 <span class="kw">pub use </span>datetime::{DateTimeVector, DateTimeVectorBuilder};
 <span class="kw">pub use </span>helper::Helper;
+<span class="kw">pub use </span>interval::{
+    IntervalDayTimeVector, IntervalDayTimeVectorBuilder, IntervalMonthDayNanoVector,
+    IntervalMonthDayNanoVectorBuilder, IntervalYearMonthVector, IntervalYearMonthVectorBuilder,
+};
 <span class="kw">pub use </span>list::{ListIter, ListVector, ListVectorBuilder};
 <span class="kw">pub use </span>null::{NullVector, NullVectorBuilder};
 <span class="kw">pub use </span>primitive::{

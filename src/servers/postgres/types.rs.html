@@ -724,6 +724,9 @@
 <a href="#724" id="724">724</a>
 <a href="#725" id="725">725</a>
 <a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -823,12 +826,14 @@
                 })))
             }
         }
-        Value::List(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(PgWireError::ApiError(Box::new(Error::Internal {
-            err_msg: <span class="macro">format!</span>(
-                <span class="string">&quot;cannot write value {:?} in postgres protocol: unimplemented&quot;</span>,
-                <span class="kw-2">&amp;</span>value
-            ),
-        }))),
+        Value::Interval(<span class="kw">_</span>) | Value::List(<span class="kw">_</span>) =&gt; {
+            <span class="prelude-val">Err</span>(PgWireError::ApiError(Box::new(Error::Internal {
+                err_msg: <span class="macro">format!</span>(
+                    <span class="string">&quot;cannot write value {:?} in postgres protocol: unimplemented&quot;</span>,
+                    <span class="kw-2">&amp;</span>value
+                ),
+            })))
+        }
     }
 }
 
@@ -848,6 +853,7 @@
         <span class="kw-2">&amp;</span>ConcreteDataType::DateTime(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::TIMESTAMP),
         <span class="kw-2">&amp;</span>ConcreteDataType::Timestamp(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::TIMESTAMP),
         <span class="kw-2">&amp;</span>ConcreteDataType::Time(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::TIME),
+        <span class="kw-2">&amp;</span>ConcreteDataType::Interval(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::INTERVAL),
         <span class="kw-2">&amp;</span>ConcreteDataType::List(<span class="kw">_</span>) | <span class="kw-2">&amp;</span>ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; error::InternalSnafu {
             err_msg: <span class="macro">format!</span>(<span class="string">&quot;not implemented for column datatype {origin:?}&quot;</span>),
         }

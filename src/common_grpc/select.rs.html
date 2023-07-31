@@ -350,7 +350,7 @@
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(vals);
                 },
             )+
-            ConcreteDataType::Null(<span class="kw">_</span>) | ConcreteDataType::List(<span class="kw">_</span>) | ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Should not send {:?} in gRPC&quot;</span>, <span class="macro-nonterminal">$data_type</span>),
+            ConcreteDataType::Null(<span class="kw">_</span>) | ConcreteDataType::List(<span class="kw">_</span>) | ConcreteDataType::Dictionary(<span class="kw">_</span>)| ConcreteDataType::Interval(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Should not send {:?} in gRPC&quot;</span>, <span class="macro-nonterminal">$data_type</span>),
         }
     }};
 }

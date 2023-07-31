@@ -633,6 +633,7 @@
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -746,7 +747,8 @@
                 TimeType::Microsecond(<span class="kw">_</span>) =&gt; ColumnDataType::TimeMicrosecond,
                 TimeType::Nanosecond(<span class="kw">_</span>) =&gt; ColumnDataType::TimeNanosecond,
             },
-            ConcreteDataType::Null(<span class="kw">_</span>)
+            ConcreteDataType::Interval(<span class="kw">_</span>)
+            | ConcreteDataType::Null(<span class="kw">_</span>)
             | ConcreteDataType::List(<span class="kw">_</span>)
             | ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; {
                 <span class="kw">return </span>error::IntoColumnDataTypeSnafu { from: datatype }.fail()
@@ -890,7 +892,7 @@
             TimeUnit::Microsecond =&gt; values.time_microsecond_values.push(val.value()),
             TimeUnit::Nanosecond =&gt; values.time_nanosecond_values.push(val.value()),
         },
-        Value::List(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+        Value::Interval(<span class="kw">_</span>) | Value::List(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
     });
     column.null_mask = null_mask.into_vec();
 }
