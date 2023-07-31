@@ -287,6 +287,9 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -379,7 +382,10 @@
             .table_name_manager()
             .tables(catalog, schema)
             .<span class="kw">await
-            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.into_iter()
+            .map(|(k, <span class="kw">_</span>)| k)
+            .collect();
 
         to_http_response(tables)
     }

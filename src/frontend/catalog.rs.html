@@ -434,6 +434,9 @@
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -768,7 +771,10 @@
             .table_name_manager()
             .tables(catalog, schema)
             .<span class="kw">await
-            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.into_iter()
+            .map(|(k, <span class="kw">_</span>)| k)
+            .collect::&lt;Vec&lt;String&gt;&gt;();
         <span class="kw">if </span>catalog == DEFAULT_CATALOG_NAME &amp;&amp; schema == DEFAULT_SCHEMA_NAME {
             tables.push(<span class="string">&quot;numbers&quot;</span>.to_string());
         }

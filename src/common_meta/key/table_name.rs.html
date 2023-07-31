@@ -387,6 +387,20 @@
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
 <a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -637,16 +651,23 @@
             .transpose()
     }
 
-    <span class="kw">pub async fn </span>tables(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;String&gt;&gt; {
+    <span class="kw">pub async fn </span>tables(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        catalog: <span class="kw-2">&amp;</span>str,
+        schema: <span class="kw-2">&amp;</span>str,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(String, TableNameValue)&gt;&gt; {
         <span class="kw">let </span>key = TableNameKey::prefix_to_table(catalog, schema).into_bytes();
         <span class="kw">let </span>req = RangeRequest::new().with_prefix(key);
         <span class="kw">let </span>resp = <span class="self">self</span>.kv_backend.range(req).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>table_names = resp
-            .kvs
-            .into_iter()
-            .map(|kv| TableNameKey::strip_table_name(kv.key()))
-            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(table_names)
+
+        <span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(resp.kvs.len());
+        <span class="kw">for </span>kv <span class="kw">in </span>resp.kvs {
+            res.push((
+                TableNameKey::strip_table_name(kv.key())<span class="question-mark">?</span>,
+                TableNameValue::try_from_raw_value(kv.value)<span class="question-mark">?</span>,
+            ))
+        }
+        <span class="prelude-val">Ok</span>(res)
     }
 
     <span class="kw">pub async fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, key: TableNameKey&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -723,7 +744,14 @@
 
         <span class="kw">let </span>tables = manager.tables(<span class="string">&quot;my_catalog&quot;</span>, <span class="string">&quot;my_schema&quot;</span>).<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(tables.len(), <span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(tables, <span class="macro">vec!</span>[<span class="string">&quot;table_1_new&quot;</span>, <span class="string">&quot;table_2&quot;</span>, <span class="string">&quot;table_3&quot;</span>]);
+        <span class="macro">assert_eq!</span>(
+            tables,
+            <span class="macro">vec!</span>[
+                (<span class="string">&quot;table_1_new&quot;</span>.to_string(), TableNameValue::new(<span class="number">1</span>)),
+                (<span class="string">&quot;table_2&quot;</span>.to_string(), TableNameValue::new(<span class="number">2</span>)),
+                (<span class="string">&quot;table_3&quot;</span>.to_string(), TableNameValue::new(<span class="number">3</span>))
+            ]
+        )
     }
 
     <span class="attr">#[test]
