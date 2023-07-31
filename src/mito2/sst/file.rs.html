@@ -196,6 +196,20 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -214,7 +228,7 @@
 
 </span><span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::str::FromStr;
-<span class="kw">use </span>std::sync::atomic::AtomicBool;
+<span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_time::Timestamp;
@@ -223,6 +237,8 @@
 <span class="kw">use </span>snafu::{ResultExt, Snafu};
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>uuid::Uuid;
+
+<span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::{FilePurgerRef, PurgeRequest};
 
 <span class="doccomment">/// Type to store SST level.
 </span><span class="kw">pub type </span>Level = u8;
@@ -297,8 +313,8 @@
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>FileHandle {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         f.debug_struct(<span class="string">&quot;FileHandle&quot;</span>)
-            .field(<span class="string">&quot;file_id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.meta.file_id)
             .field(<span class="string">&quot;region_id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.meta.region_id)
+            .field(<span class="string">&quot;file_id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.meta.file_id)
             .field(<span class="string">&quot;time_range&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.meta.time_range)
             .field(<span class="string">&quot;size&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.meta.file_size)
             .field(<span class="string">&quot;level&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner.meta.level)
@@ -327,6 +343,18 @@
     meta: FileMeta,
     compacting: AtomicBool,
     deleted: AtomicBool,
+    file_purger: FilePurgerRef,
+}
+
+<span class="kw">impl </span>Drop <span class="kw">for </span>FileHandleInner {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if </span><span class="self">self</span>.deleted.load(Ordering::Relaxed) {
+            <span class="self">self</span>.file_purger.send_request(PurgeRequest {
+                region_id: <span class="self">self</span>.meta.region_id,
+                file_id: <span class="self">self</span>.meta.file_id,
+            });
+        }
+    }
 }
 
 <span class="attr">#[cfg(test)]
