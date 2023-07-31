@@ -6,18 +6,18 @@
 ) -&gt; <a class="type" href="../../error/type.Result.html" title="type common_meta::error::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="struct.DatanodeTableValue.html" title="struct common_meta::key::datanode_table::DatanodeTableValue">DatanodeTableValue</a>&gt;&gt;</h4></section><details class="toggle method-toggle" open><summary><section id="method.create" class="method"><a class="srclink rightside" href="../../../src/common_meta/key/datanode_table.rs.html#109-140">source</a><h4 class="code-header">pub async fn <a href="#method.create" class="fn">create</a>(
     &amp;self,
     datanode_id: <a class="type" href="../../type.DatanodeId.html" title="type common_meta::DatanodeId">DatanodeId</a>,
-    table_id: TableId,
+    table_id: <a class="type" href="../../../table/metadata/type.TableId.html" title="type table::metadata::TableId">TableId</a>,
     regions: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;RegionNumber&gt;
 ) -&gt; <a class="type" href="../../error/type.Result.html" title="type common_meta::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>&gt;</h4></section></summary><div class="docblock"><p>Create DatanodeTable key and value. If the key already exists, check if the value is the same.</p>
 </div></details><section id="method.remove" class="method"><a class="srclink rightside" href="../../../src/common_meta/key/datanode_table.rs.html#142-148">source</a><h4 class="code-header">pub async fn <a href="#method.remove" class="fn">remove</a>(
     &amp;self,
     datanode_id: <a class="type" href="../../type.DatanodeId.html" title="type common_meta::DatanodeId">DatanodeId</a>,
-    table_id: TableId
+    table_id: <a class="type" href="../../../table/metadata/type.TableId.html" title="type table::metadata::TableId">TableId</a>
 ) -&gt; <a class="type" href="../../error/type.Result.html" title="type common_meta::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>&gt;</h4></section><section id="method.move_region" class="method"><a class="srclink rightside" href="../../../src/common_meta/key/datanode_table.rs.html#150-252">source</a><h4 class="code-header">pub async fn <a href="#method.move_region" class="fn">move_region</a>(
     &amp;self,
     from_datanode: <a class="type" href="../../type.DatanodeId.html" title="type common_meta::DatanodeId">DatanodeId</a>,
     to_datanode: <a class="type" href="../../type.DatanodeId.html" title="type common_meta::DatanodeId">DatanodeId</a>,
-    table_id: TableId,
+    table_id: <a class="type" href="../../../table/metadata/type.TableId.html" title="type table::metadata::TableId">TableId</a>,
     region: RegionNumber
 ) -&gt; <a class="type" href="../../error/type.Result.html" title="type common_meta::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>&gt;</h4></section><section id="method.tables" class="method"><a class="srclink rightside" href="../../../src/common_meta/key/datanode_table.rs.html#254-264">source</a><h4 class="code-header">pub async fn <a href="#method.tables" class="fn">tables</a>(
     &amp;self,

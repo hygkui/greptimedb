@@ -456,7 +456,7 @@
                 query_engine.optimize(<span class="kw-2">&amp;</span>plan).context(PlanStatementSnafu)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>plan = DFLogicalSubstraitConvertor {}
-                .encode(plan)
+                .encode(<span class="kw-2">&amp;</span>plan)
                 .context(SubstraitEncodeLogicalPlanSnafu)<span class="question-mark">?</span>;
 
             <span class="self">self</span>.database.logical_plan(plan.to_vec(), <span class="prelude-val">None</span>).<span class="kw">await

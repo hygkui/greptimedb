@@ -337,12 +337,12 @@
             } <span class="kw">else </span>{
                 <span class="comment">// TODO(ruihang): generate different execution plans for different variant merge operation
                 </span><span class="kw">let </span>input_plan = merge_scan.input();
+                <span class="kw">let </span>input_physical_plan = planner
+                    .create_physical_plan(input_plan, session_state)
+                    .<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let </span><span class="prelude-val">Some</span>(table_name) = <span class="self">self</span>.get_table_name(input_plan)<span class="question-mark">? </span><span class="kw">else </span>{
                     <span class="comment">// no relation found in input plan, going to execute them locally 
-                    </span><span class="kw">return </span>planner
-                        .create_physical_plan(input_plan, session_state)
-                        .<span class="kw">await
-                        </span>.map(<span class="prelude-val">Some</span>);
+                    </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(input_physical_plan));
                 };
 
                 <span class="kw">if </span>table_name.schema_name == INFORMATION_SCHEMA_NAME {
@@ -352,10 +352,10 @@
                         </span>.map(<span class="prelude-val">Some</span>);
                 }
 
-                <span class="kw">let </span>input_schema = input_plan.schema().clone();
+                <span class="kw">let </span>input_schema = input_physical_plan.schema().clone();
                 <span class="kw">let </span>input_plan = <span class="self">self</span>.set_table_name(<span class="kw-2">&amp;</span>table_name, input_plan.clone())<span class="question-mark">?</span>;
                 <span class="kw">let </span>substrait_plan: Bytes = DFLogicalSubstraitConvertor
-                    .encode(input_plan.clone())
+                    .encode(<span class="kw-2">&amp;</span>input_plan)
                     .context(error::EncodeSubstraitLogicalPlanSnafu)<span class="question-mark">?
                     </span>.into();
                 <span class="kw">let </span>peers = <span class="self">self</span>.get_peers(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span>;
@@ -365,7 +365,7 @@
                             table_name,
                             peers,
                             substrait_plan,
-                            Arc::new(input_schema.as_ref().into()),
+                            input_schema,
                             <span class="self">self</span>.clients.clone(),
                         );
 
