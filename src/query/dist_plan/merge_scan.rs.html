@@ -252,6 +252,8 @@
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -284,7 +286,7 @@
 <span class="kw">use </span>common_recordbatch::{
     DfSendableRecordBatchStream, RecordBatch, RecordBatchStreamAdaptor, SendableRecordBatchStream,
 };
-<span class="kw">use </span>datafusion::physical_plan::{DisplayFormatType, ExecutionPlan, Partitioning};
+<span class="kw">use </span>datafusion::physical_plan::{DisplayAs, DisplayFormatType, ExecutionPlan, Partitioning};
 <span class="kw">use </span>datafusion_common::{DataFusionError, <span class="prelude-ty">Result</span>, Statistics};
 <span class="kw">use </span>datafusion_expr::{Extension, LogicalPlan, UserDefinedLogicalNodeCore};
 <span class="kw">use </span>datafusion_physical_expr::PhysicalSortExpr;
@@ -497,7 +499,9 @@
     <span class="kw">fn </span>statistics(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Statistics {
         Statistics::default()
     }
+}
 
+<span class="kw">impl </span>DisplayAs <span class="kw">for </span>MergeScanExec {
     <span class="kw">fn </span>fmt_as(<span class="kw-2">&amp;</span><span class="self">self</span>, _t: DisplayFormatType, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
         <span class="macro">write!</span>(f, <span class="string">&quot;MergeScanExec: peers=[&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>peer <span class="kw">in </span><span class="self">self</span>.peers.iter() {

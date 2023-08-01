@@ -260,7 +260,7 @@
 <span class="kw">use </span>common_function::scalars::aggregate::AggregateFunctionMetaRef;
 <span class="kw">use </span>common_query::physical_plan::SessionContext;
 <span class="kw">use </span>common_query::prelude::ScalarUdf;
-<span class="kw">use </span>datafusion::catalog::catalog::MemoryCatalogList;
+<span class="kw">use </span>datafusion::catalog::MemoryCatalogList;
 <span class="kw">use </span>datafusion::dataframe::DataFrame;
 <span class="kw">use </span>datafusion::error::Result <span class="kw">as </span>DfResult;
 <span class="kw">use </span>datafusion::execution::context::{QueryPlanner, SessionConfig, SessionState};
@@ -269,8 +269,8 @@
 <span class="kw">use </span>datafusion::physical_optimizer::repartition::Repartition;
 <span class="kw">use </span>datafusion::physical_optimizer::sort_enforcement::EnforceSorting;
 <span class="kw">use </span>datafusion::physical_optimizer::PhysicalOptimizerRule;
-<span class="kw">use </span>datafusion::physical_plan::planner::{DefaultPhysicalPlanner, ExtensionPlanner};
-<span class="kw">use </span>datafusion::physical_plan::{ExecutionPlan, PhysicalPlanner};
+<span class="kw">use </span>datafusion::physical_plan::ExecutionPlan;
+<span class="kw">use </span>datafusion::physical_planner::{DefaultPhysicalPlanner, ExtensionPlanner, PhysicalPlanner};
 <span class="kw">use </span>datafusion_expr::LogicalPlan <span class="kw">as </span>DfLogicalPlan;
 <span class="kw">use </span>datafusion_optimizer::analyzer::Analyzer;
 <span class="kw">use </span>datafusion_optimizer::optimizer::Optimizer;

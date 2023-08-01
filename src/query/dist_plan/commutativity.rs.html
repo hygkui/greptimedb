@@ -149,7 +149,6 @@
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -270,7 +269,6 @@
             | Expr::Exists(<span class="kw">_</span>) =&gt; Commutativity::Commutative,
 
             Expr::Like(<span class="kw">_</span>)
-            | Expr::ILike(<span class="kw">_</span>)
             | Expr::SimilarTo(<span class="kw">_</span>)
             | Expr::IsUnknown(<span class="kw">_</span>)
             | Expr::IsNotUnknown(<span class="kw">_</span>)
@@ -288,7 +286,7 @@
             | Expr::ScalarSubquery(<span class="kw">_</span>)
             | Expr::Wildcard =&gt; Commutativity::Unimplemented,
 
-            Expr::Alias(<span class="kw">_</span>, <span class="kw">_</span>)
+            Expr::Alias(<span class="kw">_</span>)
             | Expr::QualifiedWildcard { .. }
             | Expr::GroupingSet(<span class="kw">_</span>)
             | Expr::Placeholder(<span class="kw">_</span>)

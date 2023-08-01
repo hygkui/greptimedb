@@ -252,8 +252,8 @@
 <span class="kw">use </span>arrow_schema::{ArrowError, Schema, SchemaRef};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>datafusion::arrow::record_batch::RecordBatch <span class="kw">as </span>DfRecordBatch;
+<span class="kw">use </span>datafusion::datasource::physical_plan::{FileMeta, FileOpenFuture, FileOpener};
 <span class="kw">use </span>datafusion::error::{DataFusionError, <span class="prelude-ty">Result </span><span class="kw">as </span>DfResult};
-<span class="kw">use </span>datafusion::physical_plan::file_format::{FileMeta, FileOpenFuture, FileOpener};
 <span class="kw">use </span>datafusion::physical_plan::RecordBatchStream;
 <span class="kw">use </span>futures::{Stream, StreamExt, TryStreamExt};
 <span class="kw">use </span>object_store::ObjectStore;

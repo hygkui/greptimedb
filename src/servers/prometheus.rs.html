@@ -932,8 +932,6 @@
 <a href="#932" id="932">932</a>
 <a href="#933" id="933">933</a>
 <a href="#934" id="934">934</a>
-<a href="#935" id="935">935</a>
-<a href="#936" id="936">936</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1688,14 +1686,12 @@
         PromqlExpr::NumberLiteral(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(String::new()),
         PromqlExpr::StringLiteral(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(String::new()),
         PromqlExpr::Extension(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
-        PromqlExpr::VectorSelector(VectorSelector { matchers, .. }) =&gt; {
-            matchers.find_matchers(METRIC_NAME).pop().cloned()
+        PromqlExpr::VectorSelector(VectorSelector { name, matchers, .. }) =&gt; {
+            name.clone().or(matchers.find_matcher(METRIC_NAME))
         }
-        PromqlExpr::MatrixSelector(MatrixSelector {
-            vector_selector, ..
-        }) =&gt; {
-            <span class="kw">let </span>VectorSelector { matchers, .. } = vector_selector;
-            matchers.find_matchers(METRIC_NAME).pop().cloned()
+        PromqlExpr::MatrixSelector(MatrixSelector { vs, .. }) =&gt; {
+            <span class="kw">let </span>VectorSelector { name, matchers, .. } = vs;
+            name.clone().or(matchers.find_matcher(METRIC_NAME))
         }
         PromqlExpr::Call(Call { args, .. }) =&gt; {
             args.args.iter().find_map(|e| promql_expr_to_metric_name(e))

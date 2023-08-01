@@ -288,10 +288,10 @@
 <span class="kw">use </span>datafusion::common::ToDFSchema;
 <span class="kw">use </span>datafusion::datasource::listing::PartitionedFile;
 <span class="kw">use </span>datafusion::datasource::object_store::ObjectStoreUrl;
+<span class="kw">use </span>datafusion::datasource::physical_plan::{FileOpener, FileScanConfig, FileStream, ParquetExec};
 <span class="kw">use </span>datafusion::optimizer::utils::conjunction;
 <span class="kw">use </span>datafusion::physical_expr::create_physical_expr;
 <span class="kw">use </span>datafusion::physical_expr::execution_props::ExecutionProps;
-<span class="kw">use </span>datafusion::physical_plan::file_format::{FileOpener, FileScanConfig, FileStream, ParquetExec};
 <span class="kw">use </span>datafusion::physical_plan::metrics::ExecutionPlanMetricsSet;
 <span class="kw">use </span>datafusion::prelude::SessionContext;
 <span class="kw">use </span>datatypes::arrow::datatypes::Schema <span class="kw">as </span>ArrowSchema;
@@ -375,7 +375,7 @@
             projection: projection.cloned(),
             limit,
             table_partition_cols: <span class="macro">vec!</span>[],
-            output_ordering: <span class="prelude-val">None</span>,
+            output_ordering: <span class="macro">vec!</span>[],
             infinite_source: <span class="bool-val">false</span>,
         },
         <span class="number">0</span>, <span class="comment">// partition: hard-code
@@ -447,7 +447,7 @@
         projection: projection.cloned(),
         limit: <span class="kw-2">*</span>limit,
         table_partition_cols: <span class="macro">vec!</span>[],
-        output_ordering: <span class="prelude-val">None</span>,
+        output_ordering: <span class="macro">vec!</span>[],
         infinite_source: <span class="bool-val">false</span>,
     };
 
