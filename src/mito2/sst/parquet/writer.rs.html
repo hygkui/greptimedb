@@ -118,7 +118,7 @@
 
 </span><span class="doccomment">//! Parquet writer.
 
-</span><span class="kw">use </span>common_telemetry::logging;
+</span><span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>parquet::basic::{Compression, Encoding, ZstdLevel};
 <span class="kw">use </span>parquet::file::metadata::KeyValue;
@@ -184,7 +184,7 @@
         </span><span class="kw">let </span>stats = <span class="self">self</span>.source.stats();
 
         <span class="kw">if </span>stats.num_rows == <span class="number">0 </span>{
-            <span class="macro">logging::debug!</span>(
+            <span class="macro">debug!</span>(
                 <span class="string">&quot;No data written, try to stop the writer: {}&quot;</span>,
                 <span class="self">self</span>.file_path
             );

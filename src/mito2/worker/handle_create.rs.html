@@ -67,6 +67,9 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -85,7 +88,7 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>common_telemetry::logging;
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>snafu::ensure;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{RegionExistsSnafu, <span class="prelude-ty">Result</span>};
@@ -119,18 +122,21 @@
 
         <span class="comment">// Create a MitoRegion from the RegionMetadata.
         </span><span class="kw">let </span>region = RegionOpener::new(
-            metadata,
+            request.region_id,
             <span class="self">self</span>.memtable_builder.clone(),
             <span class="self">self</span>.object_store.clone(),
         )
+        .metadata(metadata)
         .region_dir(<span class="kw-2">&amp;</span>request.region_dir)
         .create(<span class="kw-2">&amp;</span><span class="self">self</span>.config)
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// TODO(yingwen): Custom the Debug format for the metadata and also print it.
-        </span><span class="macro">logging::info!</span>(<span class="string">&quot;A new region created, region_id: {}&quot;</span>, region.region_id);
+        </span><span class="macro">info!</span>(<span class="string">&quot;A new region created, region_id: {}&quot;</span>, region.region_id);
 
-        <span class="comment">// Insert the MitoRegion into the RegionMap.
+        <span class="comment">// TODO(yingwen): Metrics.
+
+        // Insert the MitoRegion into the RegionMap.
         </span><span class="self">self</span>.regions.insert_region(Arc::new(region));
 
         <span class="prelude-val">Ok</span>(())

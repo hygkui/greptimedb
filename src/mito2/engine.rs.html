@@ -97,6 +97,26 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -126,7 +146,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{RecvSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">pub use </span><span class="kw">crate</span>::worker::request::CreateRequest;
-<span class="kw">use </span><span class="kw">crate</span>::worker::request::{RegionRequest, RequestBody};
+<span class="kw">use </span><span class="kw">crate</span>::worker::request::{CloseRequest, OpenRequest, RegionRequest, RequestBody};
 <span class="kw">use </span><span class="kw">crate</span>::worker::WorkerGroup;
 
 <span class="doccomment">/// Region engine implementation for timeseries data.
@@ -155,8 +175,28 @@
     </span>}
 
     <span class="doccomment">/// Creates a new region.
-    </span><span class="kw">pub async fn </span>create_region(<span class="kw-2">&amp;</span><span class="self">self</span>, request: CreateRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.inner.create_region(request).<span class="kw">await
+    </span><span class="kw">pub async fn </span>create_region(<span class="kw-2">&amp;</span><span class="self">self</span>, create_request: CreateRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.inner
+            .handle_request_body(RequestBody::Create(create_request))
+            .<span class="kw">await
+    </span>}
+
+    <span class="doccomment">/// Opens an existing region.
+    ///
+    /// Returns error if the region does not exist.
+    </span><span class="kw">pub async fn </span>open_region(<span class="kw-2">&amp;</span><span class="self">self</span>, open_request: OpenRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.inner
+            .handle_request_body(RequestBody::Open(open_request))
+            .<span class="kw">await
+    </span>}
+
+    <span class="doccomment">/// Closes a region.
+    ///
+    /// Does nothing if the region is already closed.
+    </span><span class="kw">pub async fn </span>close_region(<span class="kw-2">&amp;</span><span class="self">self</span>, close_request: CloseRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.inner
+            .handle_request_body(RequestBody::Close(close_request))
+            .<span class="kw">await
     </span>}
 
     <span class="doccomment">/// Returns true if the specific region exists.
@@ -188,9 +228,9 @@
         <span class="self">self</span>.workers.stop().<span class="kw">await
     </span>}
 
-    <span class="doccomment">/// Creates a new region.
-    </span><span class="kw">async fn </span>create_region(<span class="kw-2">&amp;</span><span class="self">self</span>, create_request: CreateRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(request, receiver) = RegionRequest::from_body(RequestBody::Create(create_request));
+    <span class="doccomment">/// Handles [RequestBody] and return its executed result.
+    </span><span class="kw">async fn </span>handle_request_body(<span class="kw-2">&amp;</span><span class="self">self</span>, body: RequestBody) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>(request, receiver) = RegionRequest::from_body(body);
         <span class="self">self</span>.workers.submit_to_worker(request).<span class="kw">await</span><span class="question-mark">?</span>;
 
         receiver.<span class="kw">await</span>.context(RecvSnafu)<span class="question-mark">?
