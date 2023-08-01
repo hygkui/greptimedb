@@ -889,14 +889,14 @@
 </span><span class="kw">mod </span>test {
     <span class="kw">use </span>std::collections::HashMap;
 
-    <span class="kw">use </span>api::v1::column::{SemanticType, Values};
+    <span class="kw">use </span>api::v1::column::Values;
     <span class="kw">use </span>api::v1::ddl_request::Expr <span class="kw">as </span>DdlExpr;
     <span class="kw">use </span>api::v1::greptime_request::Request;
     <span class="kw">use </span>api::v1::query_request::Query;
     <span class="kw">use </span>api::v1::{
         alter_expr, AddColumn, AddColumns, AlterExpr, Column, ColumnDataType, ColumnDef,
         CreateDatabaseExpr, CreateTableExpr, DdlRequest, DeleteRequest, DropTableExpr,
-        FlushTableExpr, InsertRequest, InsertRequests, QueryRequest,
+        FlushTableExpr, InsertRequest, InsertRequests, QueryRequest, SemanticType,
     };
     <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
     <span class="kw">use </span>common_query::Output;

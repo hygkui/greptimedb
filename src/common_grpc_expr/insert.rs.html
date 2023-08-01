@@ -1112,10 +1112,10 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
-<span class="kw">use </span>api::v1::column::{SemanticType, Values};
+<span class="kw">use </span>api::v1::column::Values;
 <span class="kw">use </span>api::v1::{
     AddColumn, AddColumns, Column, ColumnDataType, ColumnDef, CreateTableExpr,
-    InsertRequest <span class="kw">as </span>GrpcInsertRequest,
+    InsertRequest <span class="kw">as </span>GrpcInsertRequest, SemanticType,
 };
 <span class="kw">use </span>common_base::BitVec;
 <span class="kw">use </span>common_time::time::Time;
@@ -1671,8 +1671,8 @@
     <span class="kw">use </span>std::{assert_eq, vec};
 
     <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
-    <span class="kw">use </span>api::v1::column::{<span class="self">self</span>, SemanticType, Values};
-    <span class="kw">use </span>api::v1::{Column, ColumnDataType};
+    <span class="kw">use </span>api::v1::column::Values;
+    <span class="kw">use </span>api::v1::{Column, ColumnDataType, SemanticType};
     <span class="kw">use </span>common_base::BitVec;
     <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
     <span class="kw">use </span>common_time::timestamp::{TimeUnit, Timestamp};
@@ -2124,7 +2124,7 @@
     <span class="kw">fn </span>mock_insert_batch() -&gt; (Vec&lt;Column&gt;, u32) {
         <span class="kw">let </span>row_count = <span class="number">2</span>;
 
-        <span class="kw">let </span>host_vals = column::Values {
+        <span class="kw">let </span>host_vals = Values {
             string_values: <span class="macro">vec!</span>[<span class="string">&quot;host1&quot;</span>.to_string(), <span class="string">&quot;host2&quot;</span>.to_string()],
             ..Default::default()
         };
@@ -2136,7 +2136,7 @@
             datatype: ColumnDataType::String <span class="kw">as </span>i32,
         };
 
-        <span class="kw">let </span>cpu_vals = column::Values {
+        <span class="kw">let </span>cpu_vals = Values {
             f64_values: <span class="macro">vec!</span>[<span class="number">0.31</span>],
             ..Default::default()
         };
@@ -2148,7 +2148,7 @@
             datatype: ColumnDataType::Float64 <span class="kw">as </span>i32,
         };
 
-        <span class="kw">let </span>mem_vals = column::Values {
+        <span class="kw">let </span>mem_vals = Values {
             f64_values: <span class="macro">vec!</span>[<span class="number">0.1</span>],
             ..Default::default()
         };
@@ -2160,7 +2160,7 @@
             datatype: ColumnDataType::Float64 <span class="kw">as </span>i32,
         };
 
-        <span class="kw">let </span>time_vals = column::Values {
+        <span class="kw">let </span>time_vals = Values {
             time_millisecond_values: <span class="macro">vec!</span>[<span class="number">100</span>, <span class="number">101</span>],
             ..Default::default()
         };
@@ -2172,7 +2172,7 @@
             datatype: ColumnDataType::TimeMillisecond <span class="kw">as </span>i32,
         };
 
-        <span class="kw">let </span>ts_vals = column::Values {
+        <span class="kw">let </span>ts_vals = Values {
             ts_millisecond_values: <span class="macro">vec!</span>[<span class="number">100</span>, <span class="number">101</span>],
             ..Default::default()
         };
