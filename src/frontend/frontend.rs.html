@@ -85,6 +85,8 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -107,8 +109,8 @@
 <span class="kw">use </span>servers::Mode;
 
 <span class="kw">use </span><span class="kw">crate</span>::service_config::{
-    GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, OtlpOptions, PostgresOptions,
-    PromStoreOptions, PrometheusOptions,
+    DatanodeOptions, GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, OtlpOptions,
+    PostgresOptions, PromStoreOptions, PrometheusOptions,
 };
 
 <span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
@@ -128,6 +130,7 @@
     <span class="kw">pub </span>otlp_options: <span class="prelude-ty">Option</span>&lt;OtlpOptions&gt;,
     <span class="kw">pub </span>meta_client_options: <span class="prelude-ty">Option</span>&lt;MetaClientOptions&gt;,
     <span class="kw">pub </span>logging: LoggingOptions,
+    <span class="kw">pub </span>datanode: DatanodeOptions,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>FrontendOptions {
@@ -147,6 +150,7 @@
             otlp_options: <span class="prelude-val">Some</span>(OtlpOptions::default()),
             meta_client_options: <span class="prelude-val">None</span>,
             logging: LoggingOptions::default(),
+            datanode: DatanodeOptions::default(),
         }
     }
 }
