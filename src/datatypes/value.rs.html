@@ -1921,7 +1921,7 @@
 <span class="doccomment">/// Value holds a single arbitrary value of any [DataType](crate::data_type::DataType).
 ///
 /// Comparison between values with different types (expect Null) is not allowed.
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Value {
     Null,
 
@@ -2412,7 +2412,7 @@
 
 <span class="comment">// TODO(yingwen): Consider removing the `datatype` field from `ListValue`.
 </span><span class="doccomment">/// List value.
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, Hash, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>ListValue {
     <span class="doccomment">/// List of nested Values (boxed to reduce size_of(Value))
     </span><span class="attr">#[allow(clippy::box_collection)]
