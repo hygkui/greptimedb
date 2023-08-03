@@ -598,8 +598,6 @@
 <a href="#598" id="598">598</a>
 <a href="#599" id="599">599</a>
 <a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -721,53 +719,7 @@
     </span><span class="kw">pub fn </span>to_json(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
         serde_json::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>).context(SerdeJsonSnafu)
     }
-}
 
-<span class="doccomment">/// Fields skipped in serialization.
-</span><span class="kw">struct </span>SkippedFields {
-    <span class="doccomment">/// Last schema.
-    </span>schema: SchemaRef,
-    <span class="doccomment">/// Id of the time index column.
-    </span>time_index: ColumnId,
-    <span class="doccomment">/// Map column id to column&#39;s index in [column_metadatas](RegionMetadata::column_metadatas).
-    </span>id_to_index: HashMap&lt;ColumnId, usize&gt;,
-}
-
-<span class="kw">impl </span>SkippedFields {
-    <span class="doccomment">/// Constructs skipped fields from `column_metadatas`.
-    </span><span class="kw">fn </span>new(column_metadatas: <span class="kw-2">&amp;</span>[ColumnMetadata]) -&gt; <span class="prelude-ty">Result</span>&lt;SkippedFields&gt; {
-        <span class="kw">let </span>column_schemas = column_metadatas
-            .iter()
-            .map(|column_metadata| column_metadata.column_schema.clone())
-            .collect();
-        <span class="kw">let </span>schema = Arc::new(Schema::try_new(column_schemas).context(InvalidSchemaSnafu)<span class="question-mark">?</span>);
-        <span class="kw">let </span>time_index = column_metadatas
-            .iter()
-            .find_map(|col| {
-                <span class="kw">if </span>col.semantic_type == SemanticType::Timestamp {
-                    <span class="prelude-val">Some</span>(col.column_id)
-                } <span class="kw">else </span>{
-                    <span class="prelude-val">None
-                </span>}
-            })
-            .context(InvalidMetaSnafu {
-                reason: <span class="string">&quot;time index not found&quot;</span>,
-            })<span class="question-mark">?</span>;
-        <span class="kw">let </span>id_to_index = column_metadatas
-            .iter()
-            .enumerate()
-            .map(|(idx, col)| (col.column_id, idx))
-            .collect();
-
-        <span class="prelude-val">Ok</span>(SkippedFields {
-            schema,
-            time_index,
-            id_to_index,
-        })
-    }
-}
-
-<span class="kw">impl </span>RegionMetadata {
     <span class="doccomment">/// Find column by id.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>column_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, column_id: ColumnId) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ColumnMetadata&gt; {
         <span class="self">self</span>.id_to_index
@@ -966,6 +918,50 @@
     </span>Field,
     <span class="doccomment">/// Time index column.
     </span>Timestamp,
+}
+
+<span class="doccomment">/// Fields skipped in serialization.
+</span><span class="kw">struct </span>SkippedFields {
+    <span class="doccomment">/// Last schema.
+    </span>schema: SchemaRef,
+    <span class="doccomment">/// Id of the time index column.
+    </span>time_index: ColumnId,
+    <span class="doccomment">/// Map column id to column&#39;s index in [column_metadatas](RegionMetadata::column_metadatas).
+    </span>id_to_index: HashMap&lt;ColumnId, usize&gt;,
+}
+
+<span class="kw">impl </span>SkippedFields {
+    <span class="doccomment">/// Constructs skipped fields from `column_metadatas`.
+    </span><span class="kw">fn </span>new(column_metadatas: <span class="kw-2">&amp;</span>[ColumnMetadata]) -&gt; <span class="prelude-ty">Result</span>&lt;SkippedFields&gt; {
+        <span class="kw">let </span>column_schemas = column_metadatas
+            .iter()
+            .map(|column_metadata| column_metadata.column_schema.clone())
+            .collect();
+        <span class="kw">let </span>schema = Arc::new(Schema::try_new(column_schemas).context(InvalidSchemaSnafu)<span class="question-mark">?</span>);
+        <span class="kw">let </span>time_index = column_metadatas
+            .iter()
+            .find_map(|col| {
+                <span class="kw">if </span>col.semantic_type == SemanticType::Timestamp {
+                    <span class="prelude-val">Some</span>(col.column_id)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>}
+            })
+            .context(InvalidMetaSnafu {
+                reason: <span class="string">&quot;time index not found&quot;</span>,
+            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>id_to_index = column_metadatas
+            .iter()
+            .enumerate()
+            .map(|(idx, col)| (col.column_id, idx))
+            .collect();
+
+        <span class="prelude-val">Ok</span>(SkippedFields {
+            schema,
+            time_index,
+            id_to_index,
+        })
+    }
 }
 
 <span class="attr">#[cfg(test)]
