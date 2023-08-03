@@ -1055,6 +1055,12 @@
 <a href="#1055" id="1055">1055</a>
 <a href="#1056" id="1056">1056</a>
 <a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1284,7 +1290,8 @@
     /// - `2022-09-20 14:16:43.012345` (local timezone, without T)
     </span><span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
         <span class="comment">// RFC3339 timestamp (with a T)
-        </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(ts) = DateTime::parse_from_rfc3339(s) {
+        </span><span class="kw">let </span>s = s.trim();
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>(ts) = DateTime::parse_from_rfc3339(s) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(Timestamp::new(ts.timestamp_nanos(), TimeUnit::Nanosecond));
         }
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(ts) = DateTime::parse_from_str(s, <span class="string">&quot;%Y-%m-%d %H:%M:%S%.f%:z&quot;</span>) {
@@ -2009,6 +2016,11 @@
         <span class="macro">assert_eq!</span>(
             Timestamp::new(<span class="number">0</span>, TimeUnit::Second),
             Timestamp::from_str(<span class="string">&quot;1970-01-01 08:00:00&quot;</span>).unwrap()
+        );
+
+        <span class="macro">assert_eq!</span>(
+            Timestamp::new(<span class="number">0</span>, TimeUnit::Second),
+            Timestamp::from_str(<span class="string">&quot;      1970-01-01        08:00:00    &quot;</span>).unwrap()
         );
     }
 
