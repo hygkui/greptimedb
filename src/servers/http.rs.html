@@ -931,6 +931,13 @@
 <a href="#931" id="931">931</a>
 <a href="#932" id="932">932</a>
 <a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -975,6 +982,8 @@
 <span class="kw">use </span>axum::response::{Html, IntoResponse, Json};
 <span class="kw">use </span>axum::{routing, BoxError, Extension, Router};
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
+<span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+<span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_query::Output;
@@ -1019,23 +1028,28 @@
     query_handler: ServerSqlQueryHandlerRef,
     db: <span class="prelude-ty">Option</span>&lt;String&gt;,
 ) -&gt; std::result::Result&lt;Arc&lt;QueryContext&gt;, JsonResponse&gt; {
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(db) = <span class="kw-2">&amp;</span>db {
-        <span class="kw">let </span>(catalog, schema) = <span class="kw">super</span>::parse_catalog_and_schema_from_client_database_name(db);
+    <span class="kw">let </span>(catalog, schema) = <span class="kw">if let </span><span class="prelude-val">Some</span>(db) = <span class="kw-2">&amp;</span>db {
+        <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_db_string(db);
 
         <span class="kw">match </span>query_handler.is_valid_schema(catalog, schema).<span class="kw">await </span>{
-            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; <span class="prelude-val">Ok</span>(QueryContext::with(catalog, schema)),
-            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="prelude-val">Err</span>(JsonResponse::with_error(
-                <span class="macro">format!</span>(<span class="string">&quot;Database not found: {db}&quot;</span>),
-                StatusCode::DatabaseNotFound,
-            )),
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(JsonResponse::with_error(
-                <span class="macro">format!</span>(<span class="string">&quot;Error checking database: {db}, {e}&quot;</span>),
-                StatusCode::Internal,
-            )),
+            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; (catalog, schema),
+            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(JsonResponse::with_error(
+                    <span class="macro">format!</span>(<span class="string">&quot;Database not found: {db}&quot;</span>),
+                    StatusCode::DatabaseNotFound,
+                ))
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(JsonResponse::with_error(
+                    <span class="macro">format!</span>(<span class="string">&quot;Error checking database: {db}, {e}&quot;</span>),
+                    StatusCode::Internal,
+                ))
+            }
         }
     } <span class="kw">else </span>{
-        <span class="prelude-val">Ok</span>(QueryContext::arc())
-    }
+        (DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME)
+    };
+    <span class="prelude-val">Ok</span>(QueryContext::with(catalog, schema))
 }
 
 <span class="kw">pub const </span>HTTP_API_VERSION: <span class="kw-2">&amp;</span>str = <span class="string">&quot;v1&quot;</span>;

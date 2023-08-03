@@ -1171,13 +1171,13 @@
             name: <span class="string">&quot;DdlRequest.expr&quot;</span>,
         })<span class="question-mark">?</span>;
         <span class="kw">match </span>expr {
-            DdlExpr::CreateTable(expr) =&gt; <span class="self">self</span>.handle_create(expr).<span class="kw">await</span>,
-            DdlExpr::Alter(expr) =&gt; <span class="self">self</span>.handle_alter(expr).<span class="kw">await</span>,
+            DdlExpr::CreateTable(expr) =&gt; <span class="self">self</span>.handle_create(expr, query_ctx).<span class="kw">await</span>,
+            DdlExpr::Alter(expr) =&gt; <span class="self">self</span>.handle_alter(expr, query_ctx).<span class="kw">await</span>,
             DdlExpr::CreateDatabase(expr) =&gt; <span class="self">self</span>.handle_create_database(expr, query_ctx).<span class="kw">await</span>,
-            DdlExpr::DropTable(expr) =&gt; <span class="self">self</span>.handle_drop_table(expr).<span class="kw">await</span>,
-            DdlExpr::FlushTable(expr) =&gt; <span class="self">self</span>.handle_flush_table(expr).<span class="kw">await</span>,
-            DdlExpr::CompactTable(expr) =&gt; <span class="self">self</span>.handle_compact_table(expr).<span class="kw">await</span>,
-            DdlExpr::TruncateTable(expr) =&gt; <span class="self">self</span>.handle_truncate_table(expr).<span class="kw">await</span>,
+            DdlExpr::DropTable(expr) =&gt; <span class="self">self</span>.handle_drop_table(expr, query_ctx).<span class="kw">await</span>,
+            DdlExpr::FlushTable(expr) =&gt; <span class="self">self</span>.handle_flush_table(expr, query_ctx).<span class="kw">await</span>,
+            DdlExpr::CompactTable(expr) =&gt; <span class="self">self</span>.handle_compact_table(expr, query_ctx).<span class="kw">await</span>,
+            DdlExpr::TruncateTable(expr) =&gt; <span class="self">self</span>.handle_truncate_table(expr, query_ctx).<span class="kw">await</span>,
         }
     }
 }

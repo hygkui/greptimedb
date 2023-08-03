@@ -484,6 +484,7 @@
 <a href="#484" id="484">484</a>
 <a href="#485" id="485">485</a>
 <a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -505,6 +506,7 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{NaiveDate, NaiveDateTime};
+<span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::{error, info, logging, timer, warn};
@@ -837,7 +839,7 @@
     }
 
     <span class="kw">async fn </span>on_init&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>, database: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, w: InitWriter&lt;<span class="lifetime">&#39;a</span>, W&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(database);
+        <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_db_string(database);
 
         <span class="kw">if </span>!<span class="self">self</span>.query_handler.is_valid_schema(catalog, schema).<span class="kw">await</span><span class="question-mark">? </span>{
             <span class="kw">return </span>w

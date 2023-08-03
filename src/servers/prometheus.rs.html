@@ -970,13 +970,6 @@
 <a href="#970" id="970">970</a>
 <a href="#971" id="971">971</a>
 <a href="#972" id="972">972</a>
-<a href="#973" id="973">973</a>
-<a href="#974" id="974">974</a>
-<a href="#975" id="975">975</a>
-<a href="#976" id="976">976</a>
-<a href="#977" id="977">977</a>
-<a href="#978" id="978">978</a>
-<a href="#979" id="979">979</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1002,6 +995,7 @@
 <span class="kw">use </span>axum::{middleware, routing, Form, Json, Router};
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>common_catalog::consts::DEFAULT_SCHEMA_NAME;
+<span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_query::Output;
@@ -1423,10 +1417,7 @@
         step: <span class="string">&quot;1s&quot;</span>.to_string(),
     };
 
-    <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
-    <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(db);
-
-    <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
+    <span class="kw">let </span>query_ctx = QueryContext::with_db_name(params.db.as_ref());
 
     <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, query_ctx).<span class="kw">await</span>;
     <span class="kw">let </span>(metric_name, result_type) = <span class="kw">match </span>retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query) {
@@ -1462,10 +1453,7 @@
         step: params.step.or(form_params.step).unwrap_or_default(),
     };
 
-    <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
-    <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(db);
-
-    <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
+    <span class="kw">let </span>query_ctx = QueryContext::with_db_name(params.db.as_ref());
 
     <span class="kw">let </span>result = handler.do_query(<span class="kw-2">&amp;</span>prom_query, query_ctx).<span class="kw">await</span>;
     <span class="kw">let </span>metric_name = <span class="kw">match </span>retrieve_metric_name_and_result_type(<span class="kw-2">&amp;</span>prom_query.query) {
@@ -1530,7 +1518,7 @@
     <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::METRIC_HTTP_PROMQL_LABEL_QUERY_ELAPSED);
 
     <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
-    <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(db);
+    <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_db_string(db);
     <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span><span class="kw-2">mut </span>queries = params.matches.<span class="number">0</span>;
@@ -1794,7 +1782,7 @@
     <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::METRIC_HTTP_PROMQL_LABEL_VALUE_QUERY_ELAPSED);
 
     <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
-    <span class="kw">let </span>(catalog, schema) = <span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name(db);
+    <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_db_string(db);
 
     <span class="kw">if </span>label_name == METRIC_NAME_LABEL {
         <span class="kw">let </span><span class="kw-2">mut </span>table_names = <span class="kw">match </span>handler.catalog_manager().table_names(catalog, schema).<span class="kw">await </span>{
@@ -1934,9 +1922,7 @@
         .or(form_params.end)
         .unwrap_or_else(current_time_rfc3339);
 
-    <span class="kw">let </span>db = <span class="kw-2">&amp;</span>params.db.unwrap_or(DEFAULT_SCHEMA_NAME.to_string());
-    <span class="kw">let </span>(catalog, schema) = <span class="kw">super</span>::parse_catalog_and_schema_from_client_database_name(db);
-    <span class="kw">let </span>query_ctx = QueryContext::with(catalog, schema);
+    <span class="kw">let </span>query_ctx = QueryContext::with_db_name(params.db.as_ref());
 
     <span class="kw">let </span><span class="kw-2">mut </span>series = Vec::new();
     <span class="kw">for </span>query <span class="kw">in </span>queries {

@@ -549,7 +549,7 @@
 <span class="kw">use </span>object_store::{util, ObjectStore};
 <span class="kw">use </span>query::query_engine::{QueryEngineFactory, QueryEngineRef};
 <span class="kw">use </span>servers::Mode;
-<span class="kw">use </span>session::context::QueryContext;
+<span class="kw">use </span>session::context::QueryContextBuilder;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>storage::compaction::{CompactionHandler, CompactionSchedulerRef};
 <span class="kw">use </span>storage::config::EngineConfig <span class="kw">as </span>StorageEngineConfig;
@@ -884,14 +884,14 @@
                 })
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>flush_result = futures::future::try_join_all(
-            flush_requests
-                .into_iter()
-                .map(|request| <span class="self">self</span>.sql_handler.execute(request, QueryContext::arc())),
-        )
-        .<span class="kw">await
-        </span>.map_err(BoxedError::new)
-        .context(ShutdownInstanceSnafu);
+        <span class="kw">let </span>flush_result =
+            futures::future::try_join_all(flush_requests.into_iter().map(|request| {
+                <span class="self">self</span>.sql_handler
+                    .execute(request, QueryContextBuilder::default().build())
+            }))
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(ShutdownInstanceSnafu);
         <span class="macro">info!</span>(<span class="string">&quot;Flushed all tables result: {}&quot;</span>, flush_result.is_ok());
         <span class="kw">let _ </span>= flush_result<span class="question-mark">?</span>;
 

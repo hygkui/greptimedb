@@ -154,13 +154,13 @@
 <span class="kw">use </span>axum::http::StatusCode;
 <span class="kw">use </span>axum::response::IntoResponse;
 <span class="kw">use </span>common_catalog::consts::DEFAULT_SCHEMA_NAME;
+<span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
 <span class="kw">use </span>common_grpc::writer::Precision;
 <span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>session::context::QueryContext;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="prelude-ty">Result</span>, TimePrecisionSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::influxdb::InfluxdbRequest;
-<span class="kw">use </span><span class="kw">crate</span>::parse_catalog_and_schema_from_client_database_name;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::InfluxdbLineProtocolHandlerRef;
 
 <span class="comment">// https://docs.influxdata.com/influxdb/v1.8/tools/api/#ping-http-endpoint
@@ -222,7 +222,7 @@
         <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, db.to_string())]
     );
 
-    <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_client_database_name(db);
+    <span class="kw">let </span>(catalog, schema) = parse_catalog_and_schema_from_db_string(db);
     <span class="kw">let </span>ctx = QueryContext::with(catalog, schema);
 
     <span class="kw">let </span>request = InfluxdbRequest { precision, lines };
