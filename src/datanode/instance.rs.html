@@ -588,7 +588,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) catalog_manager: CatalogManagerRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) table_id_provider: <span class="prelude-ty">Option</span>&lt;TableIdProviderRef&gt;,
     procedure_manager: ProcedureManagerRef,
-    greptimedb_telemerty_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
+    greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
 }
 
 <span class="kw">pub type </span>InstanceRef = Arc&lt;Instance&gt;;
@@ -810,7 +810,7 @@
             catalog_manager: catalog_manager.clone(),
             table_id_provider,
             procedure_manager,
-            greptimedb_telemerty_task: get_greptimedb_telemetry_task(<span class="kw-2">&amp;</span>opts.mode).<span class="kw">await</span>,
+            greptimedb_telemetry_task: get_greptimedb_telemetry_task(<span class="kw-2">&amp;</span>opts.mode).<span class="kw">await</span>,
         });
 
         <span class="kw">let </span>heartbeat_task = Instance::build_heartbeat_task(
@@ -840,7 +840,7 @@
             .start()
             .context(StartProcedureManagerSnafu)<span class="question-mark">?</span>;
         <span class="kw">let _ </span>= <span class="self">self
-            </span>.greptimedb_telemerty_task
+            </span>.greptimedb_telemetry_task
             .start(common_runtime::bg_runtime())
             .map_err(|e| {
                 <span class="macro">debug!</span>(<span class="string">&quot;Failed to start greptimedb telemetry task: {}&quot;</span>, e);

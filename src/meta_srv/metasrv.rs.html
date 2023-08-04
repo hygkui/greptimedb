@@ -550,7 +550,7 @@
     mailbox: MailboxRef,
     ddl_manager: DdlManagerRef,
     table_metadata_manager: TableMetadataManagerRef,
-    greptimedb_telemerty_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
+    greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
     pubsub: <span class="prelude-ty">Option</span>&lt;(PublishRef, SubscribeManagerRef)&gt;,
 }
 
@@ -573,7 +573,7 @@
             <span class="kw">let </span>leader_cached_kv_store = <span class="self">self</span>.leader_cached_kv_store.clone();
             <span class="kw">let </span>subscribe_manager = <span class="self">self</span>.subscribe_manager().cloned();
             <span class="kw">let </span><span class="kw-2">mut </span>rx = election.subscribe_leader_change();
-            <span class="kw">let </span>task_handler = <span class="self">self</span>.greptimedb_telemerty_task.clone();
+            <span class="kw">let </span>task_handler = <span class="self">self</span>.greptimedb_telemetry_task.clone();
             <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">loop </span>{
                     <span class="kw">match </span>rx.recv().<span class="kw">await </span>{
