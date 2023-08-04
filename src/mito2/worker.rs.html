@@ -419,13 +419,6 @@
 <a href="#419" id="419">419</a>
 <a href="#420" id="420">420</a>
 <a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -445,6 +438,7 @@
 </span><span class="kw">mod </span>handle_close;
 <span class="kw">mod </span>handle_create;
 <span class="kw">mod </span>handle_open;
+<span class="kw">mod </span>handle_write;
 
 <span class="kw">use </span>std::collections::hash_map::DefaultHasher;
 <span class="kw">use </span>std::hash::{Hash, Hasher};
@@ -465,7 +459,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{JoinSnafu, <span class="prelude-ty">Result</span>, WorkerStoppedSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{DefaultMemtableBuilder, MemtableBuilderRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::{RegionMap, RegionMapRef};
-<span class="kw">use </span><span class="kw">crate</span>::request::{RegionRequest, RequestBody, WorkerRequest};
+<span class="kw">use </span><span class="kw">crate</span>::request::{RegionRequest, RequestBody, SenderWriteRequest, WorkerRequest};
 
 <span class="doccomment">/// Identifier for a worker.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>WorkerId = u32;
@@ -750,15 +744,18 @@
     ///
     /// `buffer` should be empty.
     </span><span class="kw">async fn </span>handle_requests(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>RequestBuffer) {
-        <span class="kw">let </span><span class="kw-2">mut </span>dml_requests = Vec::with_capacity(buffer.len());
+        <span class="kw">let </span><span class="kw-2">mut </span>write_requests = Vec::with_capacity(buffer.len());
         <span class="kw">let </span><span class="kw-2">mut </span>ddl_requests = Vec::with_capacity(buffer.len());
         <span class="kw">for </span>worker_req <span class="kw">in </span>buffer.drain(..) {
             <span class="kw">match </span>worker_req {
                 WorkerRequest::Region(req) =&gt; {
-                    <span class="kw">if </span>req.body.is_ddl() {
-                        ddl_requests.push(req);
+                    <span class="kw">if </span>req.body.is_write() {
+                        write_requests.push(SenderWriteRequest {
+                            sender: req.sender,
+                            request: req.body.into_write_request(),
+                        });
                     } <span class="kw">else </span>{
-                        dml_requests.push(req);
+                        ddl_requests.push(req);
                     }
                 }
                 <span class="comment">// We receive a stop signal, but we still want to process remaining
@@ -770,22 +767,11 @@
             }
         }
 
-        <span class="comment">// Handles all dml requests first. So we can alter regions without
-        // considering existing dml requests.
-        </span><span class="self">self</span>.handle_dml_requests(dml_requests).<span class="kw">await</span>;
+        <span class="comment">// Handles all write requests first. So we can alter regions without
+        // considering existing write requests.
+        </span><span class="self">self</span>.handle_write_requests(write_requests).<span class="kw">await</span>;
 
         <span class="self">self</span>.handle_ddl_requests(ddl_requests).<span class="kw">await</span>;
-    }
-
-    <span class="doccomment">/// Takes and handles all dml requests.
-    </span><span class="kw">async fn </span>handle_dml_requests(<span class="kw-2">&amp;mut </span><span class="self">self</span>, write_requests: Vec&lt;RegionRequest&gt;) {
-        <span class="kw">if </span>write_requests.is_empty() {
-            <span class="kw">return</span>;
-        }
-
-        <span class="comment">// Create a write context that holds meta and sequence.
-
-        </span><span class="macro">unimplemented!</span>()
     }
 
     <span class="doccomment">/// Takes and handles all ddl requests.
