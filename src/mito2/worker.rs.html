@@ -419,6 +419,7 @@
 <a href="#419" id="419">419</a>
 <a href="#420" id="420">420</a>
 <a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -460,6 +461,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{DefaultMemtableBuilder, MemtableBuilderRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::{RegionMap, RegionMapRef};
 <span class="kw">use </span><span class="kw">crate</span>::request::{RegionRequest, RequestBody, SenderWriteRequest, WorkerRequest};
+<span class="kw">use </span><span class="kw">crate</span>::wal::Wal;
 
 <span class="doccomment">/// Identifier for a worker.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>WorkerId = u32;
@@ -600,7 +602,7 @@
             config,
             regions: regions.clone(),
             receiver,
-            log_store,
+            wal: Wal::new(log_store),
             object_store,
             running: running.clone(),
             memtable_builder: Arc::new(DefaultMemtableBuilder::default()),
@@ -695,8 +697,8 @@
     </span>regions: RegionMapRef,
     <span class="doccomment">/// Request receiver.
     </span>receiver: Receiver&lt;WorkerRequest&gt;,
-    <span class="comment">// TODO(yingwen): Replaced by Wal.
-    </span>log_store: Arc&lt;S&gt;,
+    <span class="doccomment">/// WAL of the engine.
+    </span>wal: Wal&lt;S&gt;,
     <span class="doccomment">/// Object store for manifest and SSTs.
     </span>object_store: ObjectStore,
     <span class="doccomment">/// Whether the worker thread is still running.
