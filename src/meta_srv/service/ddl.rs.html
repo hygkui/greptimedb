@@ -349,6 +349,11 @@
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -375,14 +380,15 @@
 <span class="kw">use </span>common_meta::rpc::router;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_telemetry::{info, warn};
-<span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>store_api::storage::MAX_REGION_SEQ;
 <span class="kw">use </span>table::metadata::RawTableInfo;
 <span class="kw">use </span>tonic::{Request, Response};
 
 <span class="kw">use </span><span class="kw">super</span>::store::kv::KvStoreRef;
 <span class="kw">use </span><span class="kw">super</span>::GrpcResult;
 <span class="kw">use </span><span class="kw">crate</span>::ddl::DdlManagerRef;
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>, TableMetadataManagerSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>, TableMetadataManagerSnafu, TooManyPartitionsSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{MetaSrv, SelectorContext, SelectorRef};
 <span class="kw">use </span><span class="kw">crate</span>::sequence::SequenceRef;
 <span class="kw">use </span><span class="kw">crate</span>::table_routes::get_table_route_value;
@@ -543,6 +549,10 @@
         ..Default::default()
     };
 
+    <span class="macro">ensure!</span>(
+        partitions.len() &lt;= MAX_REGION_SEQ <span class="kw">as </span>usize,
+        TooManyPartitionsSnafu
+    );
     <span class="kw">let </span>region_routes = partitions
         .into_iter()
         .enumerate()

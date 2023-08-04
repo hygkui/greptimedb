@@ -596,6 +596,10 @@
 <a href="#596" id="596">596</a>
 <a href="#597" id="597">597</a>
 <a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1067,6 +1071,9 @@
         source: SendError&lt;Message&gt;,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Too many partitions, location: {}&quot;</span>, location))]
+    </span>TooManyPartitions { location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1123,7 +1130,8 @@
             | Error::ParseNum { .. }
             | Error::UnsupportedSelectorType { .. }
             | Error::InvalidArguments { .. }
-            | Error::InvalidHeartbeatRequest { .. } =&gt; StatusCode::InvalidArguments,
+            | Error::InvalidHeartbeatRequest { .. }
+            | Error::TooManyPartitions { .. } =&gt; StatusCode::InvalidArguments,
             Error::LeaseKeyFromUtf8 { .. }
             | Error::LeaseValueFromUtf8 { .. }
             | Error::StatKeyFromUtf8 { .. }
