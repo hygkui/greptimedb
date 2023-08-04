@@ -910,14 +910,14 @@
 }
 
 <span class="doccomment">/// The semantic type of one column
-</span><span class="attr">#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 </span><span class="kw">pub enum </span>SemanticType {
     <span class="doccomment">/// Tag column, also is a part of primary key.
-    </span>Tag = <span class="number">0</span>,
+    </span>Tag,
     <span class="doccomment">/// A column that isn&#39;t a time index or part of primary key.
-    </span>Field = <span class="number">1</span>,
+    </span>Field,
     <span class="doccomment">/// Time index column.
-    </span>Timestamp = <span class="number">2</span>,
+    </span>Timestamp,
 }
 
 <span class="doccomment">/// Fields skipped in serialization.

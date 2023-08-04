@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["send_result"],"struct":["RegionWriteCtx"]};
