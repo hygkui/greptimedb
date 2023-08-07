@@ -140,6 +140,33 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -167,6 +194,7 @@
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::ScanRequest;
+<span class="kw">use </span>table::data_source::DataSource;
 <span class="kw">use </span>table::error::{SchemaConversionSnafu, TablesRecordBatchSnafu};
 <span class="kw">use </span>table::metadata::TableType;
 <span class="kw">use </span>table::{<span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
@@ -174,6 +202,7 @@
 <span class="kw">use </span><span class="self">self</span>::columns::InformationSchemaColumns;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::information_schema::tables::InformationSchemaTables;
+<span class="kw">use </span><span class="kw">crate</span>::table_factory::TableFactory;
 <span class="kw">use </span><span class="kw">crate</span>::CatalogManager;
 
 <span class="kw">const </span>TABLES: <span class="kw-2">&amp;</span>str = <span class="string">&quot;tables&quot;</span>;
@@ -210,6 +239,25 @@
         };
 
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(InformationTable::new(stream_builder))))
+    }
+
+    <span class="kw">pub fn </span>table_factory(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;TableFactory&gt;&gt; {
+        <span class="kw">let </span>stream_builder = <span class="kw">match </span>name.to_ascii_lowercase().as_ref() {
+            TABLES =&gt; Arc::new(InformationSchemaTables::new(
+                <span class="self">self</span>.catalog_name.clone(),
+                <span class="self">self</span>.catalog_manager.clone(),
+            )) <span class="kw">as _</span>,
+            COLUMNS =&gt; Arc::new(InformationSchemaColumns::new(
+                <span class="self">self</span>.catalog_name.clone(),
+                <span class="self">self</span>.catalog_manager.clone(),
+            )) <span class="kw">as _</span>,
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+            }
+        };
+        <span class="kw">let </span>data_source = Arc::new(InformationTable::new(stream_builder));
+
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(<span class="kw">move </span>|| data_source.clone())))
     }
 }
 
@@ -250,6 +298,12 @@
     }
 
     <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {
+        <span class="self">self</span>.get_stream(request)
+    }
+}
+
+<span class="kw">impl </span>DataSource <span class="kw">for </span>InformationTable {
+    <span class="kw">fn </span>get_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {
         <span class="kw">let </span>projection = request.projection;
         <span class="kw">let </span>projected_schema = <span class="kw">if let </span><span class="prelude-val">Some</span>(projection) = <span class="kw-2">&amp;</span>projection {
             Arc::new(
