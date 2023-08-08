@@ -755,6 +755,12 @@
 <a href="#755" id="755">755</a>
 <a href="#756" id="756">756</a>
 <a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -782,6 +788,7 @@
 <span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatches};
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>datafusion::prelude::{col, lit, regexp_match, Expr};
+<span class="kw">use </span>datafusion_common::ScalarValue;
 <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, Value};
 <span class="kw">use </span>openmetrics_parser::{MetricsExposition, PrometheusType, PrometheusValue};
 <span class="kw">use </span>query::dataframe::DataFrame;
@@ -829,8 +836,9 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>conditions = Vec::with_capacity(label_matches.len() + <span class="number">1</span>);
 
-    conditions.push(col(TIMESTAMP_COLUMN_NAME).gt_eq(lit(start_timestamp_ms)));
-    conditions.push(col(TIMESTAMP_COLUMN_NAME).lt_eq(lit(end_timestamp_ms)));
+    conditions
+        .push(col(TIMESTAMP_COLUMN_NAME).gt_eq(lit_timestamp_millisecond(start_timestamp_ms)));
+    conditions.push(col(TIMESTAMP_COLUMN_NAME).lt_eq(lit_timestamp_millisecond(end_timestamp_ms)));
 
     <span class="kw">for </span>m <span class="kw">in </span>label_matches {
         <span class="kw">let </span>name = <span class="kw-2">&amp;</span>m.name;
@@ -876,6 +884,10 @@
 <span class="attr">#[inline]
 </span><span class="kw">fn </span>new_label(name: String, value: String) -&gt; Label {
     Label { name, value }
+}
+
+<span class="kw">fn </span>lit_timestamp_millisecond(ts: i64) -&gt; Expr {
+    Expr::Literal(ScalarValue::TimestampMillisecond(<span class="prelude-val">Some</span>(ts), <span class="prelude-val">None</span>))
 }
 
 <span class="comment">// A timeseries id
@@ -1283,7 +1295,7 @@
         <span class="kw">let </span>plan = query_to_plan(DataFrame::DataFusion(dataframe), <span class="kw-2">&amp;</span>q).unwrap();
         <span class="kw">let </span>display_string = <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, plan.display_indent());
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Filter: ?table?.greptime_timestamp &gt;= Int64(1000) AND ?table?.greptime_timestamp &lt;= Int64(2000)\n  TableScan: ?table?&quot;</span>, display_string);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;Filter: ?table?.greptime_timestamp &gt;= TimestampMillisecond(1000, None) AND ?table?.greptime_timestamp &lt;= TimestampMillisecond(2000, None)\n  TableScan: ?table?&quot;</span>, display_string);
 
         <span class="kw">let </span>q = Query {
             start_timestamp_ms: <span class="number">1000</span>,
@@ -1312,7 +1324,7 @@
         <span class="kw">let </span>plan = query_to_plan(DataFrame::DataFusion(dataframe), <span class="kw-2">&amp;</span>q).unwrap();
         <span class="kw">let </span>display_string = <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, plan.display_indent());
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Filter: ?table?.greptime_timestamp &gt;= Int64(1000) AND ?table?.greptime_timestamp &lt;= Int64(2000) AND regexp_match(?table?.job, Utf8(\&quot;*prom*\&quot;)) IS NOT NULL AND ?table?.instance != Utf8(\&quot;localhost\&quot;)\n  TableScan: ?table?&quot;</span>, display_string);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;Filter: ?table?.greptime_timestamp &gt;= TimestampMillisecond(1000, None) AND ?table?.greptime_timestamp &lt;= TimestampMillisecond(2000, None) AND regexp_match(?table?.job, Utf8(\&quot;*prom*\&quot;)) IS NOT NULL AND ?table?.instance != Utf8(\&quot;localhost\&quot;)\n  TableScan: ?table?&quot;</span>, display_string);
     }
 
     <span class="attr">#[test]

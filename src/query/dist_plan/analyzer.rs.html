@@ -378,13 +378,6 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
-<a href="#381" id="381">381</a>
-<a href="#382" id="382">382</a>
-<a href="#383" id="383">383</a>
-<a href="#384" id="384">384</a>
-<a href="#385" id="385">385</a>
-<a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -428,16 +421,13 @@
         plan: LogicalPlan,
         _config: <span class="kw-2">&amp;</span>ConfigOptions,
     ) -&gt; datafusion_common::Result&lt;LogicalPlan&gt; {
-        <span class="comment">// (1) add merge scan
-        </span><span class="kw">let </span>plan = plan.transform(<span class="kw-2">&amp;</span><span class="self">Self</span>::add_merge_scan)<span class="question-mark">?</span>;
-
-        <span class="comment">// (2) transform up merge scan
+        <span class="comment">// (1) transform up merge scan
         </span><span class="kw">let </span><span class="kw-2">mut </span>visitor = CommutativeVisitor::new();
         <span class="kw">let _ </span>= plan.visit(<span class="kw-2">&amp;mut </span>visitor)<span class="question-mark">?</span>;
         <span class="kw">let </span>state = ExpandState::new();
         <span class="kw">let </span>plan = plan.transform_down(<span class="kw-2">&amp;</span>|plan| <span class="self">Self</span>::expand(plan, <span class="kw-2">&amp;</span>visitor, <span class="kw-2">&amp;</span>state))<span class="question-mark">?</span>;
 
-        <span class="comment">// (3) remove placeholder merge scan
+        <span class="comment">// (2) remove placeholder merge scan
         </span><span class="kw">let </span>plan = plan.transform(<span class="kw-2">&amp;</span><span class="self">Self</span>::remove_placeholder_merge_scan)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(plan)
@@ -446,6 +436,7 @@
 
 <span class="kw">impl </span>DistPlannerAnalyzer {
     <span class="doccomment">/// Add [MergeScanLogicalPlan] before the table scan
+    </span><span class="attr">#[allow(dead_code)]
     </span><span class="kw">fn </span>add_merge_scan(plan: LogicalPlan) -&gt; datafusion_common::Result&lt;Transformed&lt;LogicalPlan&gt;&gt; {
         <span class="prelude-val">Ok</span>(<span class="kw">match </span>plan {
             LogicalPlan::TableScan(table_scan) =&gt; {
@@ -713,8 +704,7 @@
         <span class="kw">let </span>result = DistPlannerAnalyzer {}.analyze(plan, <span class="kw-2">&amp;</span>config).unwrap();
         <span class="kw">let </span>expected = String::from(
             <span class="string">&quot;Aggregate: groupBy=[[]], aggr=[[AVG(t.number)]]\
-            \n  MergeScan [is_placeholder=false]\
-            \n    TableScan: t&quot;</span>,
+            \n  MergeScan [is_placeholder=false]&quot;</span>,
         );
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
     }
@@ -740,9 +730,7 @@
         <span class="kw">let </span>expected = String::from(
             <span class="string">&quot;Sort: t.number ASC NULLS LAST\
             \n  Distinct:\
-            \n    MergeScan [is_placeholder=false]\
-            \n      Distinct:\
-            \n        TableScan: t&quot;</span>,
+            \n    MergeScan [is_placeholder=false]&quot;</span>,
         );
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
     }
@@ -765,9 +753,7 @@
         <span class="kw">let </span>result = DistPlannerAnalyzer {}.analyze(plan, <span class="kw-2">&amp;</span>config).unwrap();
         <span class="kw">let </span>expected = String::from(
             <span class="string">&quot;Limit: skip=0, fetch=1\
-            \n  MergeScan [is_placeholder=false]\
-            \n    Limit: skip=0, fetch=1\
-            \n      TableScan: t&quot;</span>,
+            \n  MergeScan [is_placeholder=false]&quot;</span>,
         );
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
     }

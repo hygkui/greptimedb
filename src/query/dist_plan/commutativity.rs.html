@@ -222,7 +222,7 @@
             LogicalPlan::Extension(extension) =&gt; {
                 <span class="self">Self</span>::check_extension_plan(extension.node.as_ref() <span class="kw">as _</span>)
             }
-            LogicalPlan::Distinct(<span class="kw">_</span>) =&gt; Commutativity::PartialCommutative,
+            LogicalPlan::Distinct(<span class="kw">_</span>) =&gt; Commutativity::Unimplemented,
             LogicalPlan::Unnest(<span class="kw">_</span>) =&gt; Commutativity::Commutative,
             LogicalPlan::Statement(<span class="kw">_</span>) =&gt; Commutativity::Unsupported,
             LogicalPlan::Values(<span class="kw">_</span>) =&gt; Commutativity::Unsupported,
