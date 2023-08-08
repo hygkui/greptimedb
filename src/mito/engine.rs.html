@@ -749,6 +749,21 @@
 <a href="#749" id="749">749</a>
 <a href="#750" id="750">750</a>
 <a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -798,6 +813,7 @@
 };
 <span class="kw">use </span>table::{error <span class="kw">as </span>table_error, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
 
+<span class="kw">use </span><span class="self">self</span>::procedure::TruncateMitoTable;
 <span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
 <span class="kw">use </span><span class="kw">crate</span>::engine::procedure::{AlterMitoTable, CreateMitoTable, DropMitoTable, TableCreator};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
@@ -984,6 +1000,19 @@
     ) -&gt; TableResult&lt;BoxedProcedure&gt; {
         <span class="kw">let </span>procedure = Box::new(
             DropMitoTable::new(request, <span class="self">self</span>.inner.clone())
+                .map_err(BoxedError::new)
+                .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>,
+        );
+        <span class="prelude-val">Ok</span>(procedure)
+    }
+
+    <span class="kw">fn </span>truncate_table_procedure(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        _ctx: <span class="kw-2">&amp;</span>EngineContext,
+        request: TruncateTableRequest,
+    ) -&gt; TableResult&lt;BoxedProcedure&gt; {
+        <span class="kw">let </span>procedure = Box::new(
+            TruncateMitoTable::new(request, <span class="self">self</span>.inner.clone())
                 .map_err(BoxedError::new)
                 .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>,
         );
@@ -1482,6 +1511,7 @@
                 .<span class="kw">await
                 </span>.map_err(BoxedError::new)
                 .context(table_error::TableOperationSnafu)<span class="question-mark">?</span>;
+
             <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)

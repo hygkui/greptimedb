@@ -53,6 +53,13 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -73,6 +80,7 @@
 <span class="kw">mod </span>create;
 <span class="kw">mod </span>drop;
 <span class="kw">pub mod </span>error;
+<span class="kw">mod </span>truncate;
 
 <span class="kw">pub use </span>alter::AlterTableProcedure;
 <span class="kw">use </span>catalog::CatalogManagerRef;
@@ -80,6 +88,7 @@
 <span class="kw">pub use </span>create::CreateTableProcedure;
 <span class="kw">pub use </span>drop::DropTableProcedure;
 <span class="kw">use </span>table::engine::{TableEngineProcedureRef, TableEngineRef};
+<span class="kw">pub use </span>truncate::TruncateTableProcedure;
 
 <span class="doccomment">/// Register all procedure loaders to the procedure manager.
 ///
@@ -103,7 +112,12 @@
         engine_procedure.clone(),
         procedure_manager,
     );
-    DropTableProcedure::register_loader(catalog_manager, engine_procedure, procedure_manager);
+    DropTableProcedure::register_loader(
+        catalog_manager.clone(),
+        engine_procedure.clone(),
+        procedure_manager,
+    );
+    TruncateTableProcedure::register_loader(catalog_manager, engine_procedure, procedure_manager)
 }
 
 <span class="attr">#[cfg(test)]
