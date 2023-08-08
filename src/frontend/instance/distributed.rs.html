@@ -1429,7 +1429,7 @@
         <span class="kw">let </span>catalog = query_ctx.current_catalog();
         <span class="kw">if </span><span class="self">self
             </span>.catalog_manager
-            .schema_exist(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>expr.database_name)
+            .schema_exist(catalog, <span class="kw-2">&amp;</span>expr.database_name)
             .<span class="kw">await
             </span>.context(CatalogSnafu)<span class="question-mark">?
         </span>{
@@ -1444,7 +1444,7 @@
         }
 
         <span class="kw">let </span>key = SchemaKey {
-            catalog_name: catalog.clone(),
+            catalog_name: catalog.to_owned(),
             schema_name: expr.database_name.clone(),
         };
         <span class="kw">let </span>value = SchemaValue {};
@@ -1474,7 +1474,7 @@
         //
         // TODO(fys): when the meta invalidation cache mechanism is established, remove it.
         </span><span class="self">self</span>.catalog_manager()
-            .invalidate_schema(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>expr.database_name)
+            .invalidate_schema(catalog, <span class="kw-2">&amp;</span>expr.database_name)
             .<span class="kw">await</span>;
 
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">1</span>))
@@ -1601,8 +1601,8 @@
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>inserter = DistInserter::new(
-            ctx.current_catalog(),
-            ctx.current_schema(),
+            ctx.current_catalog().to_owned(),
+            ctx.current_schema().to_owned(),
             <span class="self">self</span>.catalog_manager.clone(),
         );
         <span class="kw">let </span>affected_rows = inserter.grpc_insert(requests).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1614,8 +1614,8 @@
         request: DeleteRequest,
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>catalog = <span class="kw-2">&amp;</span>ctx.current_catalog();
-        <span class="kw">let </span>schema = <span class="kw-2">&amp;</span>ctx.current_schema();
+        <span class="kw">let </span>catalog = ctx.current_catalog();
+        <span class="kw">let </span>schema = ctx.current_schema();
         <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>request.table_name;
         <span class="kw">let </span>table_ref = TableReference::full(catalog, schema, table_name);
 

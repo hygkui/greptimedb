@@ -335,13 +335,13 @@
     }
 
     <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>current_schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="self">self</span>.current_schema.clone()
+    </span><span class="kw">pub fn </span>current_schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.current_schema
     }
 
     <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>current_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="self">self</span>.current_catalog.clone()
+    </span><span class="kw">pub fn </span>current_catalog(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.current_catalog
     }
 
     <span class="attr">#[inline]
@@ -352,7 +352,7 @@
     <span class="kw">pub fn </span>get_db_string(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         <span class="kw">let </span>catalog = <span class="self">self</span>.current_catalog();
         <span class="kw">let </span>schema = <span class="self">self</span>.current_schema();
-        build_db_string(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>schema)
+        build_db_string(catalog, schema)
     }
 
     <span class="attr">#[inline]

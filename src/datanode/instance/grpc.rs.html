@@ -1055,8 +1055,8 @@
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>catalog_list = new_dummy_catalog_list(
-            <span class="kw-2">&amp;</span>ctx.current_catalog(),
-            <span class="kw-2">&amp;</span>ctx.current_schema(),
+            ctx.current_catalog(),
+            ctx.current_schema(),
             <span class="self">self</span>.catalog_manager.clone(),
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1065,8 +1065,8 @@
             .decode(
                 plan_bytes.as_slice(),
                 Arc::new(catalog_list) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;,
-                <span class="kw-2">&amp;</span>ctx.current_catalog(),
-                <span class="kw-2">&amp;</span>ctx.current_schema(),
+                ctx.current_catalog(),
+                ctx.current_schema(),
             )
             .<span class="kw">await
             </span>.context(DecodeLogicalPlanSnafu)<span class="question-mark">?</span>;
@@ -1121,8 +1121,8 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>results = future::try_join_all(requests.inserts.into_iter().map(|insert| {
             <span class="kw">let </span>catalog_manager = <span class="self">self</span>.catalog_manager.clone();
-            <span class="kw">let </span>catalog = ctx.current_catalog();
-            <span class="kw">let </span>schema = ctx.current_schema();
+            <span class="kw">let </span>catalog = ctx.current_catalog().to_owned();
+            <span class="kw">let </span>schema = ctx.current_schema().to_owned();
 
             common_runtime::spawn_write(<span class="kw">async move </span>{
                 <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>insert.table_name.clone();
@@ -1153,8 +1153,8 @@
     }
 
     <span class="kw">async fn </span>handle_delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest, ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>catalog = <span class="kw-2">&amp;</span>ctx.current_catalog();
-        <span class="kw">let </span>schema = <span class="kw-2">&amp;</span>ctx.current_schema();
+        <span class="kw">let </span>catalog = ctx.current_catalog();
+        <span class="kw">let </span>schema = ctx.current_schema();
         <span class="kw">let </span>table_name = <span class="kw-2">&amp;</span>request.table_name.clone();
         <span class="kw">let </span>table_ref = TableReference::full(catalog, schema, table_name);
 

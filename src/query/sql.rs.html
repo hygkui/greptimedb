@@ -546,7 +546,7 @@
     query_ctx: QueryContextRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>databases = catalog_manager
-        .schema_names(<span class="kw-2">&amp;</span>query_ctx.current_catalog())
+        .schema_names(query_ctx.current_catalog())
         .<span class="kw">await
         </span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
 
@@ -590,11 +590,11 @@
     <span class="kw">let </span>schema = <span class="kw">if let </span><span class="prelude-val">Some</span>(database) = stmt.database {
         database
     } <span class="kw">else </span>{
-        query_ctx.current_schema()
+        query_ctx.current_schema().to_owned()
     };
     <span class="comment">// TODO(sunng87): move this function into query_ctx
     </span><span class="kw">let </span><span class="kw-2">mut </span>tables = catalog_manager
-        .table_names(<span class="kw-2">&amp;</span>query_ctx.current_catalog(), <span class="kw-2">&amp;</span>schema)
+        .table_names(query_ctx.current_catalog(), <span class="kw-2">&amp;</span>schema)
         .<span class="kw">await
         </span>.context(error::CatalogSnafu)<span class="question-mark">?</span>;
 

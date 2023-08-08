@@ -332,7 +332,7 @@
             <span class="kw">let </span>table_name = prom_store::table_name(query)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>output = <span class="self">self
-                </span>.handle_remote_query(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>catalog_name, <span class="kw-2">&amp;</span>schema_name, <span class="kw-2">&amp;</span>table_name, query)
+                </span>.handle_remote_query(<span class="kw-2">&amp;</span>ctx, catalog_name, schema_name, <span class="kw-2">&amp;</span>table_name, query)
                 .<span class="kw">await
                 </span>.map_err(BoxedError::new)
                 .with_context(|<span class="kw">_</span>| error::ExecuteQuerySnafu {

@@ -816,9 +816,9 @@
             }
         );
 
-        <span class="kw">let </span>default_catalog = query_ctx.current_catalog();
-        <span class="kw">let </span>default_schema = query_ctx.current_schema();
-        <span class="kw">let </span>table_name = dml.table_name.resolve(<span class="kw-2">&amp;</span>default_catalog, <span class="kw-2">&amp;</span>default_schema);
+        <span class="kw">let </span>default_catalog = <span class="kw-2">&amp;</span>query_ctx.current_catalog().to_owned();
+        <span class="kw">let </span>default_schema = <span class="kw-2">&amp;</span>query_ctx.current_schema().to_owned();
+        <span class="kw">let </span>table_name = dml.table_name.resolve(default_catalog, default_schema);
         <span class="kw">let </span>table = <span class="self">self</span>.find_table(<span class="kw-2">&amp;</span>table_name).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>output = <span class="self">self

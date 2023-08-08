@@ -741,7 +741,7 @@
         <span class="prelude-val">Some</span>(select_function(<span class="string">&quot;version()&quot;</span>, <span class="kw-2">&amp;</span>get_version()))
     } <span class="kw">else if </span>SELECT_DATABASE_PATTERN.is_match(query) {
         <span class="kw">let </span>schema = query_ctx.current_schema();
-        <span class="prelude-val">Some</span>(select_function(<span class="string">&quot;database()&quot;</span>, <span class="kw-2">&amp;</span>schema))
+        <span class="prelude-val">Some</span>(select_function(<span class="string">&quot;database()&quot;</span>, schema))
     } <span class="kw">else if </span>SELECT_TIME_DIFF_FUNC_PATTERN.is_match(query) {
         <span class="prelude-val">Some</span>(select_function(
             <span class="string">&quot;TIMEDIFF(NOW(), UTC_TIMESTAMP())&quot;</span>,
