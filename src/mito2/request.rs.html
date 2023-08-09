@@ -357,6 +357,11 @@
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -485,6 +490,11 @@
         // - checks whether each column match the schema in Rows.
         // - checks rows don&#39;t have duplicate columns.
         </span><span class="macro">unimplemented!</span>()
+    }
+
+    <span class="doccomment">/// Get column index by name.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>column_index_by_name(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="self">self</span>.name_to_index.get(name).copied()
     }
 
     <span class="doccomment">/// Checks schema of rows.
