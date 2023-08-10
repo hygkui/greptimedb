@@ -292,6 +292,14 @@
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -307,6 +315,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::any::Any;
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
 <span class="kw">use </span>common_error::status_code::StatusCode;
@@ -528,6 +537,12 @@
         location
     ))]
     </span>TimeIndexNotFound { table: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to add duration &#39;{:?}&#39; to SystemTime, overflowed&quot;</span>, duration))]
+    </span>AddSystemTimeOverflow {
+        duration: Duration,
+        location: Location,
+    },
 }
 
 <span class="kw">impl </span>ErrorExt <span class="kw">for </span>Error {
@@ -547,7 +562,8 @@
             | ParseFloat { .. }
             | MissingRequiredField { .. }
             | BuildRegex { .. }
-            | ConvertSchema { .. } =&gt; StatusCode::InvalidArguments,
+            | ConvertSchema { .. }
+            | AddSystemTimeOverflow { .. } =&gt; StatusCode::InvalidArguments,
 
             BuildBackend { .. } | ListObjects { .. } =&gt; StatusCode::StorageUnavailable,
             EncodeSubstraitLogicalPlan { source, .. } =&gt; source.status_code(),
