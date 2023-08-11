@@ -713,7 +713,7 @@
         </span><span class="kw">let </span>(catalog_manager, table_id_provider, region_alive_keepers) = <span class="kw">match </span>opts.mode {
             Mode::Standalone =&gt; {
                 <span class="kw">if </span>opts.enable_memory_catalog {
-                    <span class="kw">let </span>catalog = Arc::new(catalog::local::MemoryCatalogManager::default());
+                    <span class="kw">let </span>catalog = catalog::local::MemoryCatalogManager::with_default_setup();
                     <span class="kw">let </span>table = NumbersTable::new(MIN_USER_TABLE_ID);
 
                     <span class="kw">let _ </span>= catalog
