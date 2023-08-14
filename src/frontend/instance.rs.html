@@ -913,6 +913,9 @@
 <a href="#913" id="913">913</a>
 <a href="#914" id="914">914</a>
 <a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -959,7 +962,7 @@
 <span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::logging::{debug, info};
-<span class="kw">use </span>common_telemetry::timer;
+<span class="kw">use </span>common_telemetry::{error, timer};
 <span class="kw">use </span>datanode::instance::sql::table_idents_to_full_name;
 <span class="kw">use </span>datanode::instance::InstanceRef <span class="kw">as </span>DnInstanceRef;
 <span class="kw">use </span>datatypes::schema::Schema;
@@ -1439,6 +1442,9 @@
                             results.push(output_result);
                         }
                         <span class="prelude-val">Err</span>(e) =&gt; {
+                            <span class="kw">let </span>redacted = sql::util::redact_sql_secrets(query.as_ref());
+                            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to execute query: {redacted}&quot;</span>);
+
                             results.push(<span class="prelude-val">Err</span>(e));
                             <span class="kw">break</span>;
                         }
