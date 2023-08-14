@@ -504,6 +504,7 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::{Duration, Instant};
 
+<span class="kw">use </span>::auth::{Identity, Password, UserProviderRef};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{NaiveDate, NaiveDateTime};
 <span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
@@ -528,7 +529,6 @@
 <span class="kw">use </span>sql::statements::statement::Statement;
 <span class="kw">use </span>tokio::io::AsyncWrite;
 
-<span class="kw">use </span><span class="kw">crate</span>::auth::{Identity, Password, UserProviderRef};
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, InvalidPrepareStatementSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::mysql::helper::{
     <span class="self">self</span>, format_placeholder, replace_placeholders, transform_placeholders,
@@ -684,7 +684,7 @@
                 }
             };
         }
-        <span class="kw">let </span>user_info = user_info.unwrap_or_default();
+        <span class="kw">let </span>user_info = user_info.unwrap_or_else(|| auth::userinfo_by_name(<span class="prelude-val">None</span>));
 
         <span class="self">self</span>.session.set_user_info(user_info);
 
