@@ -600,6 +600,10 @@
 <a href="#600" id="600">600</a>
 <a href="#601" id="601">601</a>
 <a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -708,7 +712,11 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Empty key is not allowed&quot;</span>))]
     </span>EmptyKey { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute via Etcd, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to execute via Etcd, source: {}, location: {}&quot;</span>,
+        source,
+        location
+    ))]
     </span>EtcdFailed {
         source: etcd_client::Error,
         location: Location,
