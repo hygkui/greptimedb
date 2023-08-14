@@ -226,6 +226,10 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -281,7 +285,9 @@
 <span class="kw">pub mod </span>table_info;
 <span class="kw">pub mod </span>table_name;
 <span class="kw">pub mod </span>table_region;
-<span class="kw">mod </span>table_route;
+<span class="comment">// TODO(weny): removes it.
+</span><span class="attr">#[allow(unused)]
+</span><span class="kw">pub mod </span>table_route;
 
 <span class="kw">use </span>std::sync::Arc;
 
@@ -295,6 +301,7 @@
 
 <span class="kw">use </span><span class="self">self</span>::catalog_name::{CatalogManager, CatalogNameValue};
 <span class="kw">use </span><span class="self">self</span>::schema_name::{SchemaManager, SchemaNameValue};
+<span class="kw">use </span><span class="self">self</span>::table_route::TableRouteValue;
 <span class="kw">use </span><span class="kw">crate</span>::error::{InvalidTableMetadataSnafu, <span class="prelude-ty">Result</span>, SerdeJsonSnafu};
 <span class="kw">pub use </span><span class="kw">crate</span>::key::table_route::{TableRouteKey, TABLE_ROUTE_PREFIX};
 <span class="kw">use </span><span class="kw">crate</span>::kv_backend::KvBackendRef;
@@ -440,7 +447,8 @@
     TableNameValue,
     TableInfoValue,
     TableRegionValue,
-    DatanodeTableValue
+    DatanodeTableValue,
+    TableRouteValue
 }
 
 <span class="attr">#[cfg(test)]
