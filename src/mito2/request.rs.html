@@ -691,27 +691,6 @@
 <a href="#691" id="691">691</a>
 <a href="#692" id="692">692</a>
 <a href="#693" id="693">693</a>
-<a href="#694" id="694">694</a>
-<a href="#695" id="695">695</a>
-<a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
-<a href="#698" id="698">698</a>
-<a href="#699" id="699">699</a>
-<a href="#700" id="700">700</a>
-<a href="#701" id="701">701</a>
-<a href="#702" id="702">702</a>
-<a href="#703" id="703">703</a>
-<a href="#704" id="704">704</a>
-<a href="#705" id="705">705</a>
-<a href="#706" id="706">706</a>
-<a href="#707" id="707">707</a>
-<a href="#708" id="708">708</a>
-<a href="#709" id="709">709</a>
-<a href="#710" id="710">710</a>
-<a href="#711" id="711">711</a>
-<a href="#712" id="712">712</a>
-<a href="#713" id="713">713</a>
-<a href="#714" id="714">714</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -738,12 +717,14 @@
 <span class="kw">use </span>api::v1::{ColumnDataType, ColumnSchema, OpType, Rows, Value};
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>store_api::metadata::ColumnMetadata;
+<span class="kw">use </span>store_api::region_request::RegionRequest;
 <span class="kw">use </span>store_api::storage::{ColumnId, CompactionStrategy, RegionId};
 <span class="kw">use </span>tokio::sync::oneshot::{<span class="self">self</span>, Receiver, Sender};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::DEFAULT_WRITE_BUFFER_SIZE;
 <span class="kw">use </span><span class="kw">crate</span>::error::{CreateDefaultSnafu, FillDefaultSnafu, InvalidRequestSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::metadata::{ColumnMetadata, RegionMetadata};
+<span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadata;
 
 <span class="doccomment">/// Options that affect the entire region.
 ///
@@ -1064,7 +1045,7 @@
 <span class="doccomment">/// Request sent to a worker
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>WorkerRequest {
     <span class="doccomment">/// Region request.
-    </span>Region(RegionRequest),
+    </span>Region(RegionTask),
 
     <span class="doccomment">/// Notify a worker to stop.
     </span>Stop,
@@ -1072,70 +1053,47 @@
 
 <span class="doccomment">/// Request to modify a region.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RegionRequest {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RegionTask {
     <span class="doccomment">/// Sender to send result.
     ///
     /// Now the result is a `Result&lt;()&gt;`, but we could replace the empty tuple
     /// with an enum if we need to carry more information.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) sender: <span class="prelude-ty">Option</span>&lt;Sender&lt;<span class="prelude-ty">Result</span>&lt;()&gt;&gt;&gt;,
     <span class="doccomment">/// Request body.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) body: RequestBody,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) request: RegionRequest,
+    <span class="doccomment">/// Region identifier.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) region_id: RegionId,
 }
 
-<span class="kw">impl </span>RegionRequest {
-    <span class="doccomment">/// Creates a [RegionRequest] and a receiver from `body`.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_body(body: RequestBody) -&gt; (RegionRequest, Receiver&lt;<span class="prelude-ty">Result</span>&lt;()&gt;&gt;) {
+<span class="kw">impl </span>RegionTask {
+    <span class="doccomment">/// Creates a [RegionTask] and a receiver from [RegionRequest].
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_request(
+        region_id: RegionId,
+        request: RegionRequest,
+    ) -&gt; (RegionTask, Receiver&lt;<span class="prelude-ty">Result</span>&lt;()&gt;&gt;) {
         <span class="kw">let </span>(sender, receiver) = oneshot::channel();
         (
-            RegionRequest {
+            RegionTask {
                 sender: <span class="prelude-val">Some</span>(sender),
-                body,
+                request,
+                region_id,
             },
             receiver,
         )
     }
 }
 
-<span class="doccomment">/// Body to carry actual region request.
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>RequestBody {
-    <span class="doccomment">/// Write to a region.
-    </span>Write(WriteRequest),
+<span class="doccomment">/// Mito Region Engine&#39;s request validator
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RequestValidator;
 
-    <span class="comment">// DDL:
-    </span><span class="doccomment">/// Creates a new region.
-    </span>Create(CreateRequest),
-    <span class="doccomment">/// Opens an existing region.
-    </span>Open(OpenRequest),
-    <span class="doccomment">/// Closes a region.
-    </span>Close(CloseRequest),
-}
-
-<span class="kw">impl </span>RequestBody {
-    <span class="doccomment">/// Region id of this request.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>region_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionId {
-        <span class="kw">match </span><span class="self">self </span>{
-            RequestBody::Write(req) =&gt; req.region_id,
-            RequestBody::Create(req) =&gt; req.region_id,
-            RequestBody::Open(req) =&gt; req.region_id,
-            RequestBody::Close(req) =&gt; req.region_id,
-        }
-    }
-
-    <span class="doccomment">/// Returns whether the request is a write request.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_write(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="macro">matches!</span>(<span class="self">self</span>, RequestBody::Write(<span class="kw">_</span>))
-    }
-
-    <span class="doccomment">/// Converts the request into a [WriteRequest].
-    ///
-    /// # Panics
-    /// Panics if it isn&#39;t a [WriteRequest].
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>into_write_request(<span class="self">self</span>) -&gt; WriteRequest {
-        <span class="kw">match </span><span class="self">self </span>{
-            RequestBody::Write(req) =&gt; req,
-            other =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expect write request, found {other:?}&quot;</span>),
-        }
+<span class="kw">impl </span>RequestValidator {
+    <span class="doccomment">/// Validate the [WriteRequest].
+    </span><span class="kw">pub fn </span>write_request(_write_request: <span class="kw-2">&amp;</span>WriteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="comment">// - checks whether the request is too large.
+        // - checks whether each row in rows has the same schema.
+        // - checks whether each column match the schema in Rows.
+        // - checks rows don&#39;t have duplicate columns.
+        </span><span class="macro">unimplemented!</span>()
     }
 }
 

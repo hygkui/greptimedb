@@ -538,6 +538,7 @@
 <a href="#538" id="538">538</a>
 <a href="#539" id="539">539</a>
 <a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -991,11 +992,12 @@
     <span class="kw">use </span>common_datasource::compression::CompressionType;
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
     <span class="kw">use </span>datatypes::schema::ColumnSchema;
+    <span class="kw">use </span>store_api::metadata::ColumnMetadata;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::manifest::action::RegionChange;
     <span class="kw">use </span><span class="kw">crate</span>::manifest::tests::utils::basic_region_metadata;
-    <span class="kw">use </span><span class="kw">crate</span>::metadata::{ColumnMetadata, RegionMetadataBuilder};
+    <span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadataBuilder;
     <span class="kw">use </span><span class="kw">crate</span>::test_util::TestEnv;
 
     <span class="attr">#[tokio::test]
