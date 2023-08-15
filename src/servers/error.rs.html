@@ -707,7 +707,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get user info, source: {}&quot;</span>, source))]
     </span>Auth {
         location: Location,
-        source: auth::Error,
+        source: auth::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Not found http or grpc authorization header&quot;</span>))]
@@ -958,7 +958,7 @@
         | StatusCode::UserPasswordMismatch
         | StatusCode::AuthHeaderNotFound
         | StatusCode::InvalidAuthHeader =&gt; Code::Unauthenticated,
-        StatusCode::AccessDenied =&gt; Code::PermissionDenied,
+        StatusCode::AccessDenied | StatusCode::PermissionDenied =&gt; Code::PermissionDenied,
     }
 }
 
