@@ -192,7 +192,7 @@
                     </span>}
                 }
             }
-            Request::Ddl(<span class="kw">_</span>) | Request::Delete(<span class="kw">_</span>) =&gt; {
+            Request::Ddl(<span class="kw">_</span>) | Request::Deletes(<span class="kw">_</span>) =&gt; {
                 GrpcQueryHandler::do_query(<span class="self">self</span>.grpc_query_handler.as_ref(), request, ctx.clone())
                     .<span class="kw">await</span><span class="question-mark">?
             </span>}

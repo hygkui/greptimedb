@@ -483,7 +483,7 @@
 <span class="kw">use </span>api::v1::greptime_request::Request;
 <span class="kw">use </span>api::v1::query_request::Query;
 <span class="kw">use </span>api::v1::{
-    AlterExpr, AuthHeader, CompactTableExpr, CreateTableExpr, DdlRequest, DeleteRequest,
+    AlterExpr, AuthHeader, CompactTableExpr, CreateTableExpr, DdlRequest, DeleteRequests,
     DropTableExpr, FlushTableExpr, GreptimeRequest, InsertRequests, PromRangeQuery, QueryRequest,
     RequestHeader, TruncateTableExpr,
 };
@@ -598,9 +598,9 @@
         <span class="prelude-val">Ok</span>(stream_inserter)
     }
 
-    <span class="kw">pub async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+    <span class="kw">pub async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequests) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_DELETE);
-        <span class="self">self</span>.handle(Request::Delete(request)).<span class="kw">await
+        <span class="self">self</span>.handle(Request::Deletes(request)).<span class="kw">await
     </span>}
 
     <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
