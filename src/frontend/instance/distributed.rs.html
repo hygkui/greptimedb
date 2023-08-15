@@ -1924,7 +1924,7 @@ PARTITION BY RANGE COLUMNS (b) (
   PARTITION r2 VALUES LESS THAN (MAXVALUE),
 )
 ENGINE=mito&quot;</span>,
-                <span class="string">r#&quot;[{&quot;column_list&quot;:&quot;b&quot;,&quot;value_list&quot;:&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;hz\&quot;}}&quot;},{&quot;column_list&quot;:&quot;b&quot;,&quot;value_list&quot;:&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;sh\&quot;}}&quot;},{&quot;column_list&quot;:&quot;b&quot;,&quot;value_list&quot;:&quot;\&quot;MaxValue\&quot;&quot;}]&quot;#</span>,
+                <span class="string">r#&quot;[{&quot;column_list&quot;:[&quot;b&quot;],&quot;value_list&quot;:[&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;hz\&quot;}}&quot;]},{&quot;column_list&quot;:[&quot;b&quot;],&quot;value_list&quot;:[&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;sh\&quot;}}&quot;]},{&quot;column_list&quot;:[&quot;b&quot;],&quot;value_list&quot;:[&quot;\&quot;MaxValue\&quot;&quot;]}]&quot;#</span>,
             ),
             (
                 <span class="string">r&quot;
@@ -1935,7 +1935,7 @@ PARTITION BY RANGE COLUMNS (b, a) (
   PARTITION r2 VALUES LESS THAN (MAXVALUE, MAXVALUE),
 )
 ENGINE=mito&quot;</span>,
-                <span class="string">r#&quot;[{&quot;column_list&quot;:&quot;b,a&quot;,&quot;value_list&quot;:&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;hz\&quot;}},{\&quot;Value\&quot;:{\&quot;Int32\&quot;:10}}&quot;},{&quot;column_list&quot;:&quot;b,a&quot;,&quot;value_list&quot;:&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;sh\&quot;}},{\&quot;Value\&quot;:{\&quot;Int32\&quot;:20}}&quot;},{&quot;column_list&quot;:&quot;b,a&quot;,&quot;value_list&quot;:&quot;\&quot;MaxValue\&quot;,\&quot;MaxValue\&quot;&quot;}]&quot;#</span>,
+                <span class="string">r#&quot;[{&quot;column_list&quot;:[&quot;b&quot;,&quot;a&quot;],&quot;value_list&quot;:[&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;hz\&quot;}}&quot;,&quot;{\&quot;Value\&quot;:{\&quot;Int32\&quot;:10}}&quot;]},{&quot;column_list&quot;:[&quot;b&quot;,&quot;a&quot;],&quot;value_list&quot;:[&quot;{\&quot;Value\&quot;:{\&quot;String\&quot;:\&quot;sh\&quot;}}&quot;,&quot;{\&quot;Value\&quot;:{\&quot;Int32\&quot;:20}}&quot;]},{&quot;column_list&quot;:[&quot;b&quot;,&quot;a&quot;],&quot;value_list&quot;:[&quot;\&quot;MaxValue\&quot;&quot;,&quot;\&quot;MaxValue\&quot;&quot;]}]&quot;#</span>,
             ),
         ];
         <span class="kw">for </span>(sql, expected) <span class="kw">in </span>cases {
