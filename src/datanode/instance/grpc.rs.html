@@ -1264,7 +1264,7 @@
                 <span class="self">self</span>.handle_query(query, ctx).<span class="kw">await
             </span>}
             Request::Ddl(request) =&gt; <span class="self">self</span>.handle_ddl(request, ctx).<span class="kw">await</span>,
-            Request::RowInserts(<span class="kw">_</span>) | Request::RowDelete(<span class="kw">_</span>) =&gt; UnsupportedGrpcRequestSnafu {
+            Request::RowInserts(<span class="kw">_</span>) | Request::RowDeletes(<span class="kw">_</span>) =&gt; UnsupportedGrpcRequestSnafu {
                 kind: <span class="string">&quot;row insert/delete&quot;</span>,
             }
             .fail(),
