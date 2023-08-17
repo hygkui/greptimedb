@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["DataSource"],"type":["DataSourceRef","TableFactory"]};
+window.SIDEBAR_ITEMS = {"trait":["DataSource"],"type":["DataSourceRef"]};

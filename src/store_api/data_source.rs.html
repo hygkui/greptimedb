@@ -27,8 +27,6 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
-<a href="#30" id="30">30</a>
-<a href="#31" id="31">31</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -57,7 +55,5 @@
     </span><span class="kw">fn </span>get_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream, BoxedError&gt;;
 }
 
-<span class="kw">pub type </span>DataSourceRef = Arc&lt;<span class="kw">dyn </span>DataSource&gt;;
-
-<span class="kw">pub type </span>TableFactory = Arc&lt;<span class="kw">dyn </span>Fn() -&gt; DataSourceRef&gt;;
+<span class="kw">pub type </span>DataSourceRef = Arc&lt;<span class="kw">dyn </span>DataSource + Send + Sync&gt;;
 </code></pre></div></section></main></body></html>
