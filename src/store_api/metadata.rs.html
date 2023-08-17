@@ -710,6 +710,38 @@
 <a href="#710" id="710">710</a>
 <a href="#711" id="711">711</a>
 <a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -735,6 +767,7 @@
 <span class="kw">use </span>api::v1::SemanticType;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>datatypes::arrow::datatypes::FieldRef;
 <span class="kw">use </span>datatypes::prelude::DataType;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, Schema, SchemaRef};
 <span class="kw">use </span>serde::de::Error;
@@ -836,6 +869,11 @@
 }
 
 <span class="kw">impl </span>RegionMetadata {
+    <span class="doccomment">/// Decode the metadata from a JSON str.
+    </span><span class="kw">pub fn </span>from_json(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        serde_json::from_str(s).context(SerdeJsonSnafu)
+    }
+
     <span class="doccomment">/// Encode the metadata to a JSON string.
     </span><span class="kw">pub fn </span>to_json(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
         serde_json::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>).context(SerdeJsonSnafu)
@@ -848,6 +886,11 @@
             .map(|index| <span class="kw-2">&amp;</span><span class="self">self</span>.column_metadatas[<span class="kw-2">*</span>index])
     }
 
+    <span class="doccomment">/// Find column index by id.
+    </span><span class="kw">pub fn </span>column_index_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, column_id: ColumnId) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="self">self</span>.id_to_index.get(<span class="kw-2">&amp;</span>column_id).copied()
+    }
+
     <span class="doccomment">/// Returns the time index column
     ///
     /// # Panics
@@ -855,6 +898,26 @@
     </span><span class="kw">pub fn </span>time_index_column(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ColumnMetadata {
         <span class="kw">let </span>index = <span class="self">self</span>.id_to_index[<span class="kw-2">&amp;</span><span class="self">self</span>.time_index];
         <span class="kw-2">&amp;</span><span class="self">self</span>.column_metadatas[index]
+    }
+
+    <span class="doccomment">/// Returns the arrow field of the time index column.
+    </span><span class="kw">pub fn </span>time_index_field(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FieldRef {
+        <span class="kw">let </span>index = <span class="self">self</span>.id_to_index[<span class="kw-2">&amp;</span><span class="self">self</span>.time_index];
+        <span class="self">self</span>.schema.arrow_schema().fields[index].clone()
+    }
+
+    <span class="doccomment">/// Finds a column by name.
+    </span><span class="kw">pub fn </span>column_by_name(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ColumnMetadata&gt; {
+        <span class="self">self</span>.schema
+            .column_index_by_name(name)
+            .map(|index| <span class="kw-2">&amp;</span><span class="self">self</span>.column_metadatas[index])
+    }
+
+    <span class="doccomment">/// Returns all field columns.
+    </span><span class="kw">pub fn </span>field_columns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>ColumnMetadata&gt; {
+        <span class="self">self</span>.column_metadatas
+            .iter()
+            .filter(|column| column.semantic_type == SemanticType::Field)
     }
 
     <span class="doccomment">/// Checks whether the metadata is valid.
@@ -976,7 +1039,8 @@
 
     <span class="doccomment">/// Checks whether it is a valid column.
     </span><span class="kw">fn </span>validate_column_metadata(column_metadata: <span class="kw-2">&amp;</span>ColumnMetadata) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if </span>column_metadata.semantic_type == SemanticType::Timestamp {
+        <span class="comment">// TODO(yingwen): Ensure column name is not internal columns.
+        </span><span class="kw">if </span>column_metadata.semantic_type == SemanticType::Timestamp {
             <span class="macro">ensure!</span>(
                 column_metadata
                     .column_schema
