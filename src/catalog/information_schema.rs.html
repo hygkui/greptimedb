@@ -257,6 +257,10 @@
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -288,8 +292,8 @@
 <span class="kw">use </span>datatypes::schema::SchemaRef;
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>store_api::data_source::{DataSource, TableFactory};
 <span class="kw">use </span>store_api::storage::{ScanRequest, TableId};
-<span class="kw">use </span>table::data_source::DataSource;
 <span class="kw">use </span>table::error::{SchemaConversionSnafu, TablesRecordBatchSnafu};
 <span class="kw">use </span>table::metadata::{TableIdent, TableInfoBuilder, TableMetaBuilder, TableType};
 <span class="kw">use </span>table::{<span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
@@ -297,7 +301,6 @@
 <span class="kw">use </span><span class="self">self</span>::columns::InformationSchemaColumns;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::information_schema::tables::InformationSchemaTables;
-<span class="kw">use </span><span class="kw">crate</span>::table_factory::TableFactory;
 <span class="kw">use </span><span class="kw">crate</span>::CatalogManager;
 
 <span class="kw">pub const </span>TABLES: <span class="kw-2">&amp;</span>str = <span class="string">&quot;tables&quot;</span>;
@@ -478,18 +481,22 @@
     }
 
     <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {
-        <span class="self">self</span>.get_stream(request)
+        <span class="self">self</span>.get_stream(request).context(TablesRecordBatchSnafu)
     }
 }
 
 <span class="kw">impl </span>DataSource <span class="kw">for </span>InformationTable {
-    <span class="kw">fn </span>get_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {
+    <span class="kw">fn </span>get_stream(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        request: ScanRequest,
+    ) -&gt; std::result::Result&lt;SendableRecordBatchStream, BoxedError&gt; {
         <span class="kw">let </span>projection = request.projection;
         <span class="kw">let </span>projected_schema = <span class="kw">if let </span><span class="prelude-val">Some</span>(projection) = <span class="kw-2">&amp;</span>projection {
             Arc::new(
                 <span class="self">self</span>.schema()
                     .try_project(projection)
-                    .context(SchemaConversionSnafu)<span class="question-mark">?</span>,
+                    .context(SchemaConversionSnafu)
+                    .map_err(BoxedError::new)<span class="question-mark">?</span>,
             )
         } <span class="kw">else </span>{
             <span class="self">self</span>.schema()
@@ -498,7 +505,8 @@
             </span>.stream_builder
             .to_stream()
             .map_err(BoxedError::new)
-            .context(TablesRecordBatchSnafu)<span class="question-mark">?
+            .context(TablesRecordBatchSnafu)
+            .map_err(BoxedError::new)<span class="question-mark">?
             </span>.map(<span class="kw">move </span>|batch| {
                 batch.and_then(|batch| {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(projection) = <span class="kw-2">&amp;</span>projection {

@@ -344,6 +344,8 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -421,7 +423,8 @@
     }
 }
 
-<span class="doccomment">/// Greptime SendableRecordBatchStream -&gt; DataFusion RecordBatchStream
+<span class="doccomment">/// Greptime SendableRecordBatchStream -&gt; DataFusion RecordBatchStream.
+/// The reverse one is [RecordBatchStreamAdapter].
 </span><span class="kw">pub struct </span>DfRecordBatchStreamAdapter {
     stream: SendableRecordBatchStream,
 }
@@ -458,7 +461,8 @@
     }
 }
 
-<span class="doccomment">/// DataFusion [SendableRecordBatchStream](DfSendableRecordBatchStream) -&gt; Greptime [RecordBatchStream]
+<span class="doccomment">/// DataFusion [SendableRecordBatchStream](DfSendableRecordBatchStream) -&gt; Greptime [RecordBatchStream].
+/// The reverse one is [DfRecordBatchStreamAdapter]
 </span><span class="kw">pub struct </span>RecordBatchStreamAdapter {
     schema: SchemaRef,
     stream: DfSendableRecordBatchStream,
