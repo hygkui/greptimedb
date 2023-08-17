@@ -903,6 +903,7 @@
 <a href="#903" id="903">903</a>
 <a href="#904" id="904">904</a>
 <a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -931,6 +932,7 @@
         DropTableExpr, FlushTableExpr, InsertRequest, InsertRequests, QueryRequest, SemanticType,
     };
     <span class="kw">use </span>common_catalog::consts::MITO_ENGINE;
+    <span class="kw">use </span>common_meta::rpc::router::region_distribution;
     <span class="kw">use </span>common_query::Output;
     <span class="kw">use </span>common_recordbatch::RecordBatches;
     <span class="kw">use </span>frontend::instance::Instance;
@@ -1239,16 +1241,16 @@ CREATE TABLE {table_name} (
         <span class="kw">let </span>table = table.as_any().downcast_ref::&lt;DistTable&gt;().unwrap();
         <span class="kw">let </span>table_id = table.table_info().table_id();
 
-        <span class="kw">let </span>table_region_value = instance
+        <span class="kw">let </span>table_route_value = instance
             .table_metadata_manager()
-            .table_region_manager()
+            .table_route_manager()
             .get(table_id)
             .<span class="kw">await
             </span>.unwrap()
             .unwrap();
 
-        <span class="kw">let </span>region_to_dn_map = table_region_value
-            .region_distribution
+        <span class="kw">let </span>region_to_dn_map = region_distribution(<span class="kw-2">&amp;</span>table_route_value.region_routes)
+            .unwrap()
             .iter()
             .map(|(k, v)| (v[<span class="number">0</span>], <span class="kw-2">*</span>k))
             .collect::&lt;HashMap&lt;u32, u64&gt;&gt;();
@@ -1533,16 +1535,16 @@ CREATE TABLE {table_name} (
             .unwrap();
         <span class="kw">let </span>table = table.as_any().downcast_ref::&lt;DistTable&gt;().unwrap();
         <span class="kw">let </span>table_id = table.table_info().ident.table_id;
-        <span class="kw">let </span>table_region_value = instance
+        <span class="kw">let </span>table_route_value = instance
             .table_metadata_manager()
-            .table_region_manager()
+            .table_route_manager()
             .get(table_id)
             .<span class="kw">await
             </span>.unwrap()
             .unwrap();
 
-        <span class="kw">let </span>region_to_dn_map = table_region_value
-            .region_distribution
+        <span class="kw">let </span>region_to_dn_map = region_distribution(<span class="kw-2">&amp;</span>table_route_value.region_routes)
+            .unwrap()
             .iter()
             .map(|(k, v)| (v[<span class="number">0</span>], <span class="kw-2">*</span>k))
             .collect::&lt;HashMap&lt;u32, u64&gt;&gt;();
