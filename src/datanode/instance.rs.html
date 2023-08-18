@@ -510,7 +510,6 @@
 <a href="#510" id="510">510</a>
 <a href="#511" id="511">511</a>
 <a href="#512" id="512">512</a>
-<a href="#513" id="513">513</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -569,7 +568,6 @@
 <span class="kw">use </span>table::requests::FlushTableRequest;
 <span class="kw">use </span>table::table::numbers::NumbersTable;
 <span class="kw">use </span>table::table::TableIdProviderRef;
-<span class="kw">use </span>table::Table;
 
 <span class="kw">use </span><span class="kw">crate</span>::datanode::{DatanodeOptions, ObjectStoreConfig, ProcedureConfig, WalConfig};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
@@ -725,13 +723,13 @@
             Mode::Standalone =&gt; {
                 <span class="kw">if </span>opts.enable_memory_catalog {
                     <span class="kw">let </span>catalog = catalog::local::MemoryCatalogManager::with_default_setup();
-                    <span class="kw">let </span>table = NumbersTable::new(MIN_USER_TABLE_ID);
+                    <span class="kw">let </span>table = NumbersTable::table(MIN_USER_TABLE_ID);
 
                     <span class="kw">let _ </span>= catalog
                         .register_table(RegisterTableRequest {
                             table_id: MIN_USER_TABLE_ID,
                             table_name: table.table_info().name.to_string(),
-                            table: Arc::new(table),
+                            table,
                             catalog: DEFAULT_CATALOG_NAME.to_string(),
                             schema: DEFAULT_SCHEMA_NAME.to_string(),
                         })

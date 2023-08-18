@@ -181,8 +181,6 @@
 <a href="#181" id="181">181</a>
 <a href="#182" id="182">182</a>
 <a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -213,7 +211,7 @@
 <span class="kw">use </span>store_api::storage::{ScanRequest, TableId};
 <span class="kw">use </span>table::error::{SchemaConversionSnafu, TablesRecordBatchSnafu};
 <span class="kw">use </span>table::metadata::{
-    FilterPushDownType, TableIdent, TableInfoBuilder, TableInfoRef, TableMetaBuilder, TableType,
+    FilterPushDownType, TableInfoBuilder, TableInfoRef, TableMetaBuilder, TableType,
 };
 <span class="kw">use </span>table::thin_table::{ThinTable, ThinTableAdapter};
 <span class="kw">use </span>table::TableRef;
@@ -258,9 +256,10 @@
             <span class="kw">let </span>schema = table.schema();
             <span class="kw">let </span>table_info = <span class="self">Self</span>::table_info(<span class="self">self</span>.catalog_name.clone(), <span class="kw-2">&amp;</span>table);
             <span class="kw">let </span>table_type = table.table_type();
-            <span class="kw">let </span>data_source = Arc::new(InformationTableDataSource::new(table));
             <span class="kw">let </span>filter_pushdown = FilterPushDownType::Unsupported;
             <span class="kw">let </span>thin_table = ThinTable::new(schema, table_info, table_type, filter_pushdown);
+
+            <span class="kw">let </span>data_source = Arc::new(InformationTableDataSource::new(table));
             Arc::new(ThinTableAdapter::new(thin_table, data_source)) <span class="kw">as _
         </span>})
     }
@@ -287,10 +286,7 @@
             .build()
             .unwrap();
         <span class="kw">let </span>table_info = TableInfoBuilder::default()
-            .ident(TableIdent {
-                table_id: table.table_id(),
-                version: <span class="number">0</span>,
-            })
+            .table_id(table.table_id())
             .name(table.table_name().to_owned())
             .catalog_name(catalog_name)
             .schema_name(INFORMATION_SCHEMA_NAME.to_owned())
@@ -326,6 +322,16 @@
     <span class="kw">fn </span>new(table: InformationTableRef) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ table }
     }
+
+    <span class="kw">fn </span>try_project(<span class="kw-2">&amp;</span><span class="self">self</span>, projection: <span class="kw-2">&amp;</span>[usize]) -&gt; std::result::Result&lt;SchemaRef, BoxedError&gt; {
+        <span class="kw">let </span>schema = <span class="self">self
+            </span>.table
+            .schema()
+            .try_project(projection)
+            .context(SchemaConversionSnafu)
+            .map_err(BoxedError::new)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Arc::new(schema))
+    }
 }
 
 <span class="kw">impl </span>DataSource <span class="kw">for </span>InformationTableDataSource {
@@ -334,32 +340,22 @@
         request: ScanRequest,
     ) -&gt; std::result::Result&lt;SendableRecordBatchStream, BoxedError&gt; {
         <span class="kw">let </span>projection = request.projection;
-        <span class="kw">let </span>projected_schema = <span class="kw">if let </span><span class="prelude-val">Some</span>(projection) = <span class="kw-2">&amp;</span>projection {
-            Arc::new(
-                <span class="self">self</span>.table
-                    .schema()
-                    .try_project(projection)
-                    .context(SchemaConversionSnafu)
-                    .map_err(BoxedError::new)<span class="question-mark">?</span>,
-            )
-        } <span class="kw">else </span>{
-            <span class="self">self</span>.table.schema()
+        <span class="kw">let </span>projected_schema = <span class="kw">match </span><span class="kw-2">&amp;</span>projection {
+            <span class="prelude-val">Some</span>(projection) =&gt; <span class="self">self</span>.try_project(projection)<span class="question-mark">?</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.table.schema(),
         };
+
         <span class="kw">let </span>stream = <span class="self">self
             </span>.table
             .to_stream()
             .map_err(BoxedError::new)
             .context(TablesRecordBatchSnafu)
             .map_err(BoxedError::new)<span class="question-mark">?
-            </span>.map(<span class="kw">move </span>|batch| {
-                batch.and_then(|batch: common_recordbatch::RecordBatch| {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(projection) = <span class="kw-2">&amp;</span>projection {
-                        batch.try_project(projection)
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">Ok</span>(batch)
-                    }
-                })
+            </span>.map(<span class="kw">move </span>|batch| <span class="kw">match </span><span class="kw-2">&amp;</span>projection {
+                <span class="prelude-val">Some</span>(p) =&gt; batch.and_then(|b| b.try_project(p)),
+                <span class="prelude-val">None </span>=&gt; batch,
             });
+
         <span class="kw">let </span>stream = RecordBatchStreamAdaptor {
             schema: projected_schema,
             stream: Box::pin(stream),
