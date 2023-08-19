@@ -663,6 +663,34 @@
 <a href="#663" id="663">663</a>
 <a href="#664" id="664">664</a>
 <a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1143,6 +1171,31 @@
         location: Location,
     },
 
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Invalid insert row len, table: {}, expected: {}, actual: {}&quot;</span>,
+        table_name,
+        expected,
+        actual
+    ))]
+    </span>InvalidInsertRowLen {
+        table_name: String,
+        expected: usize,
+        actual: usize,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Column datatype error, source: {}&quot;</span>, source))]
+    </span>ColumnDataType {
+        location: Location,
+        source: api::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create vector, source: {}&quot;</span>, source))]
+    </span>CreateVector {
+        location: Location,
+        source: datatypes::error::Error,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected, violated: {}&quot;</span>, violated))]
     </span>Unexpected {
         violated: String,
@@ -1222,6 +1275,7 @@
             TableEngineNotFound { source, .. } | EngineProcedureNotFound { source, .. } =&gt; {
                 source.status_code()
             }
+            CreateVector { source, .. } =&gt; source.status_code(),
             TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             ColumnNotFound { .. } =&gt; StatusCode::TableColumnNotFound,
 
@@ -1248,7 +1302,9 @@
             | MissingMetasrvOpts { .. }
             | ColumnNoneDefaultValue { .. }
             | MissingWalDirConfig { .. }
-            | PrepareImmutableTable { .. } =&gt; StatusCode::InvalidArguments,
+            | PrepareImmutableTable { .. }
+            | InvalidInsertRowLen { .. }
+            | ColumnDataType { .. } =&gt; StatusCode::InvalidArguments,
 
             EncodeJson { .. } | DecodeJson { .. } | PayloadNotExist { .. } | Unexpected { .. } =&gt; {
                 StatusCode::Unexpected
