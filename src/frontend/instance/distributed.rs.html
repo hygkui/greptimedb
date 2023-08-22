@@ -966,6 +966,7 @@
 <a href="#966" id="966">966</a>
 <a href="#967" id="967">967</a>
 <a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1089,6 +1090,7 @@
         <span class="macro">info!</span>(<span class="string">&quot;Successfully created distributed table &#39;{table_name}&#39; with table id {table_id}&quot;</span>);
 
         table_info.ident.table_id = table_id;
+
         <span class="kw">let </span>table_info = Arc::new(table_info.try_into().context(error::CreateTableInfoSnafu)<span class="question-mark">?</span>);
 
         create_table.table_id = <span class="prelude-val">Some</span>(api::v1::TableId { id: table_id });
