@@ -671,36 +671,6 @@
 <a href="#671" id="671">671</a>
 <a href="#672" id="672">672</a>
 <a href="#673" id="673">673</a>
-<a href="#674" id="674">674</a>
-<a href="#675" id="675">675</a>
-<a href="#676" id="676">676</a>
-<a href="#677" id="677">677</a>
-<a href="#678" id="678">678</a>
-<a href="#679" id="679">679</a>
-<a href="#680" id="680">680</a>
-<a href="#681" id="681">681</a>
-<a href="#682" id="682">682</a>
-<a href="#683" id="683">683</a>
-<a href="#684" id="684">684</a>
-<a href="#685" id="685">685</a>
-<a href="#686" id="686">686</a>
-<a href="#687" id="687">687</a>
-<a href="#688" id="688">688</a>
-<a href="#689" id="689">689</a>
-<a href="#690" id="690">690</a>
-<a href="#691" id="691">691</a>
-<a href="#692" id="692">692</a>
-<a href="#693" id="693">693</a>
-<a href="#694" id="694">694</a>
-<a href="#695" id="695">695</a>
-<a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
-<a href="#698" id="698">698</a>
-<a href="#699" id="699">699</a>
-<a href="#700" id="700">700</a>
-<a href="#701" id="701">701</a>
-<a href="#702" id="702">702</a>
-<a href="#703" id="703">703</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -716,7 +686,6 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::any::Any;
-<span class="kw">use </span>std::pin::Pin;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -726,30 +695,24 @@
 <span class="kw">use </span>common_query::error::Result <span class="kw">as </span>QueryResult;
 <span class="kw">use </span>common_query::logical_plan::Expr;
 <span class="kw">use </span>common_query::physical_plan::{PhysicalPlan, PhysicalPlanRef};
+<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::adapter::AsyncRecordBatchStreamAdapter;
 <span class="kw">use </span>common_recordbatch::error::{
-    InitRecordbatchStreamSnafu, PollStreamSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>RecordBatchResult,
+    ExternalSnafu <span class="kw">as </span>RecordBatchExternalSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>RecordBatchResult,
 };
-<span class="kw">use </span>common_recordbatch::{
-    RecordBatch, RecordBatchStreamAdaptor, RecordBatches, SendableRecordBatchStream,
-};
+<span class="kw">use </span>common_recordbatch::{RecordBatchStreamAdaptor, SendableRecordBatchStream};
 <span class="kw">use </span>datafusion::execution::context::TaskContext;
-<span class="kw">use </span>datafusion::physical_plan::{
-    Partitioning, SendableRecordBatchStream <span class="kw">as </span>DfSendableRecordBatchStream,
-};
-<span class="kw">use </span>datafusion_common::DataFusionError;
+<span class="kw">use </span>datafusion::physical_plan::Partitioning;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, Schema, SchemaRef};
-<span class="kw">use </span>futures_util::{Stream, StreamExt};
+<span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>store_api::storage::ScanRequest;
 <span class="kw">use </span>table::error::TableOperationSnafu;
 <span class="kw">use </span>table::metadata::{FilterPushDownType, TableInfoRef, TableType};
 <span class="kw">use </span>table::requests::{DeleteRequest, InsertRequest};
 <span class="kw">use </span>table::Table;
-<span class="kw">use </span>tokio::sync::RwLock;
 
 <span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::instance::distributed::deleter::DistDeleter;
 <span class="kw">use </span><span class="kw">crate</span>::instance::distributed::inserter::DistInserter;
 <span class="kw">use </span><span class="kw">crate</span>::table::scan::{DatanodeInstance, TableScanPlan};
@@ -835,35 +798,26 @@
                 projection: request.projection.clone(),
                 filters: request.filters.clone(),
                 limit: request.limit,
-                batches: Arc::new(RwLock::new(<span class="prelude-val">None</span>)),
             }));
         }
 
-        <span class="kw">let </span>schema = project_schema(<span class="self">self</span>.schema(), request.projection.as_ref());
-        <span class="kw">let </span>schema_to_move = schema.clone();
-        <span class="kw">let </span>stream: Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = RecordBatchResult&lt;RecordBatch&gt;&gt; + Send&gt;&gt; = Box::pin(
-            <span class="macro">async_stream::try_stream! </span>{
-                <span class="kw">for </span>partition_exec <span class="kw">in </span>partition_execs {
-                    partition_exec
-                        .maybe_init()
-                        .<span class="kw">await
-                        </span>.map_err(|e| DataFusionError::External(Box::new(e)))
-                        .context(InitRecordbatchStreamSnafu)<span class="question-mark">?</span>;
-                    <span class="kw">let </span><span class="kw-2">mut </span>stream = partition_exec.as_stream().<span class="kw">await</span>.context(InitRecordbatchStreamSnafu)<span class="question-mark">?</span>;
-
-                    <span class="kw">while let </span><span class="prelude-val">Some</span>(batch) = stream.next().<span class="kw">await</span>{
-                        <span class="kw">yield </span>RecordBatch::try_from_df_record_batch(schema_to_move.clone(),batch.context(PollStreamSnafu)<span class="question-mark">?</span>)<span class="question-mark">?
-                    </span>}
+        <span class="kw">let </span>stream = Box::pin(<span class="macro">async_stream::stream!</span>({
+            <span class="kw">for </span>partition_exec <span class="kw">in </span>partition_execs {
+                <span class="kw">let </span><span class="kw-2">mut </span>stream = partition_exec.scan_to_stream().<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">while let </span><span class="prelude-val">Some</span>(record_batch) = stream.next().<span class="kw">await </span>{
+                    <span class="kw">yield </span>record_batch;
                 }
-            },
-        );
-        <span class="kw">let </span>record_batch_stream = RecordBatchStreamAdaptor {
+            }
+        }));
+
+        <span class="kw">let </span>schema = project_schema(<span class="self">self</span>.schema(), request.projection.as_ref());
+        <span class="kw">let </span>stream = RecordBatchStreamAdaptor {
             schema,
             stream,
             output_ordering: <span class="prelude-val">None</span>,
         };
 
-        <span class="prelude-val">Ok</span>(Box::pin(record_batch_stream))
+        <span class="prelude-val">Ok</span>(Box::pin(stream))
     }
 
     <span class="kw">fn </span>supports_filters_pushdown(
@@ -948,12 +902,7 @@
         _context: Arc&lt;TaskContext&gt;,
     ) -&gt; QueryResult&lt;SendableRecordBatchStream&gt; {
         <span class="kw">let </span>exec = <span class="self">self</span>.partition_execs[partition].clone();
-        <span class="kw">let </span>stream = Box::pin(<span class="kw">async move </span>{
-            exec.maybe_init()
-                .<span class="kw">await
-                </span>.map_err(|e| DataFusionError::External(Box::new(e)))<span class="question-mark">?</span>;
-            exec.as_stream().<span class="kw">await
-        </span>});
+        <span class="kw">let </span>stream = Box::pin(<span class="kw">async move </span>{ exec.scan_to_stream().<span class="kw">await </span>});
         <span class="kw">let </span>stream = AsyncRecordBatchStreamAdapter::new(<span class="self">self</span>.schema(), stream);
         <span class="prelude-val">Ok</span>(Box::pin(stream))
     }
@@ -966,38 +915,29 @@
     projection: <span class="prelude-ty">Option</span>&lt;Vec&lt;usize&gt;&gt;,
     filters: Vec&lt;Expr&gt;,
     limit: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-    batches: Arc&lt;RwLock&lt;<span class="prelude-ty">Option</span>&lt;RecordBatches&gt;&gt;&gt;,
 }
 
 <span class="kw">impl </span>PartitionExec {
-    <span class="kw">async fn </span>maybe_init(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if </span><span class="self">self</span>.batches.read().<span class="kw">await</span>.is_some() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-        }
-
-        <span class="kw">let </span><span class="kw-2">mut </span>batches = <span class="self">self</span>.batches.write().<span class="kw">await</span>;
-        <span class="kw">if </span>batches.is_some() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-        }
-
+    <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RecordBatchResult&lt;SendableRecordBatchStream&gt; {
         <span class="kw">let </span>plan: TableScanPlan = TableScanPlan {
             table_name: <span class="self">self</span>.table_name.clone(),
             projection: <span class="self">self</span>.projection.clone(),
             filters: <span class="self">self</span>.filters.clone(),
             limit: <span class="self">self</span>.limit,
         };
-        <span class="kw">let </span>result = <span class="self">self</span>.datanode_instance.grpc_table_scan(plan).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let _ </span>= batches.insert(result);
-        <span class="prelude-val">Ok</span>(())
-    }
 
-    <span class="doccomment">/// Notice: the record batch will be consumed.
-    </span><span class="kw">async fn </span>as_stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::result::Result&lt;DfSendableRecordBatchStream, DataFusionError&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>batches = <span class="self">self</span>.batches.write().<span class="kw">await</span>;
-        <span class="prelude-val">Ok</span>(batches
-            .take()
-            .expect(<span class="string">&quot;should have been initialized in \&quot;maybe_init\&quot;&quot;</span>)
-            .into_df_stream())
+        <span class="kw">let </span>output = <span class="self">self
+            </span>.datanode_instance
+            .grpc_table_scan(plan)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
+            .context(RecordBatchExternalSnafu)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>Output::Stream(stream) = output <span class="kw">else </span>{
+            <span class="macro">unreachable!</span>()
+        };
+
+        <span class="prelude-val">Ok</span>(stream)
     }
 }
 
