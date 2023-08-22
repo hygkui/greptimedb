@@ -475,6 +475,15 @@
 <a href="#475" id="475">475</a>
 <a href="#476" id="476">476</a>
 <a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -548,7 +557,9 @@
 <span class="kw">fn </span>parse_str_expr(args: <span class="kw-2">&amp;</span>[Expr], i: usize) -&gt; DFResult&lt;<span class="kw-2">&amp;</span>str&gt; {
     <span class="kw">match </span>args.get(i) {
         <span class="prelude-val">Some</span>(Expr::Literal(ScalarValue::Utf8(<span class="prelude-val">Some</span>(str)))) =&gt; <span class="prelude-val">Ok</span>(str.as_str()),
-        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(DataFusionError::Plan(<span class="string">&quot;Illegal str expr in range_fn&quot;</span>.into())),
+        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(DataFusionError::Plan(
+            <span class="string">&quot;Illegal argument in range select query&quot;</span>.into(),
+        )),
     }
 }
 
@@ -556,8 +567,18 @@
     <span class="kw">let </span><span class="kw-2">mut </span>outs = Vec::with_capacity(len);
     <span class="kw">for </span>i <span class="kw">in </span>start..start + len {
         outs.push(<span class="kw">match </span><span class="kw-2">&amp;</span>args.get(i) {
-            <span class="prelude-val">Some</span>(Expr::Column(<span class="kw">_</span>)) | <span class="prelude-val">Some</span>(Expr::BinaryExpr(<span class="kw">_</span>)) =&gt; args[i].clone(),
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DataFusionError::Plan(<span class="string">&quot;Illegal expr in range_fn&quot;</span>.into())),
+            <span class="prelude-val">Some</span>(
+                Expr::Column(<span class="kw">_</span>)
+                | Expr::Literal(<span class="kw">_</span>)
+                | Expr::BinaryExpr(<span class="kw">_</span>)
+                | Expr::ScalarFunction(<span class="kw">_</span>)
+                | Expr::ScalarUDF(<span class="kw">_</span>),
+            ) =&gt; args[i].clone(),
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(DataFusionError::Plan(
+                    <span class="string">&quot;Illegal expr argument in range select query&quot;</span>.into(),
+                ))
+            }
         });
     }
     <span class="prelude-val">Ok</span>(outs)
@@ -753,10 +774,7 @@
                             table: table_ref.to_string(),
                         })<span class="question-mark">?</span>;
                 <span class="comment">// assert time_index&#39;s datatype is timestamp
-                </span><span class="kw">if let </span>ConcreteDataType::Timestamp(datatypes::types::TimestampType::Millisecond(
-                    <span class="kw">_</span>,
-                )) = time_index_column.data_type
-                {
+                </span><span class="kw">if let </span>ConcreteDataType::Timestamp(<span class="kw">_</span>) = time_index_column.data_type {
                     default_by = table
                         .table_info()
                         .meta
