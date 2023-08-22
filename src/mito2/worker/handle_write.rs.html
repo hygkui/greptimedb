@@ -366,7 +366,7 @@
     <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = request.check_schema(metadata) {
         <span class="kw">if </span>e.is_fill_default() {
             <span class="comment">// TODO(yingwen): Add metrics for this case.
-            // We need to fill default value again. The write request may be a request
+            // We need to fill default value. The write request may be a request
             // sent before changing the schema.
             </span>request.fill_missing_columns(metadata)<span class="question-mark">?</span>;
         } <span class="kw">else </span>{

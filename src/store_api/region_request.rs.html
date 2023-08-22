@@ -94,6 +94,9 @@
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -117,7 +120,7 @@
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>RegionRequest {
-    Write(RegionWriteRequest),
+    Put(RegionPutRequest),
     Delete(RegionDeleteRequest),
     Create(RegionCreateRequest),
     Drop(RegionDropRequest),
@@ -128,10 +131,10 @@
     Compact(RegionCompactRequest),
 }
 
-<span class="doccomment">/// Request to write a region.
+<span class="doccomment">/// Request to put data into a region.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>RegionWriteRequest {
-    <span class="doccomment">/// Rows to write.
+</span><span class="kw">pub struct </span>RegionPutRequest {
+    <span class="doccomment">/// Rows to put.
     </span><span class="kw">pub </span>rows: Rows,
 }
 
@@ -140,9 +143,12 @@
     <span class="kw">pub </span>request: ScanRequest,
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// Request to delete data from a region.
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>RegionDeleteRequest {
-    <span class="doccomment">/// Rows to write.
+    <span class="doccomment">/// Keys to rows to delete.
+    ///
+    /// Each row only contains primary key columns and a time index column.
     </span><span class="kw">pub </span>rows: Rows,
 }
 

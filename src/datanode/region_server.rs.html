@@ -391,7 +391,7 @@
             RegionRequest::Create(create) =&gt; RegionChange::Register(create.engine.clone()),
             RegionRequest::Open(open) =&gt; RegionChange::Register(open.engine.clone()),
             RegionRequest::Close(<span class="kw">_</span>) | RegionRequest::Drop(<span class="kw">_</span>) =&gt; RegionChange::Deregisters,
-            RegionRequest::Write(<span class="kw">_</span>)
+            RegionRequest::Put(<span class="kw">_</span>)
             | RegionRequest::Delete(<span class="kw">_</span>)
             | RegionRequest::Alter(<span class="kw">_</span>)
             | RegionRequest::Flush(<span class="kw">_</span>)

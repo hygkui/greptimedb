@@ -688,8 +688,6 @@
 <a href="#688" id="688">688</a>
 <a href="#689" id="689">689</a>
 <a href="#690" id="690">690</a>
-<a href="#691" id="691">691</a>
-<a href="#692" id="692">692</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -717,8 +715,11 @@
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>store_api::metadata::{ColumnMetadata, RegionMetadata};
-<span class="kw">use </span>store_api::region_request::RegionRequest;
-<span class="kw">use </span>store_api::storage::{ColumnId, CompactionStrategy, RegionId};
+<span class="kw">use </span>store_api::region_request::{
+    RegionAlterRequest, RegionCloseRequest, RegionCompactRequest, RegionCreateRequest,
+    RegionDropRequest, RegionFlushRequest, RegionOpenRequest, RegionRequest,
+};
+<span class="kw">use </span>store_api::storage::{CompactionStrategy, RegionId};
 <span class="kw">use </span>tokio::sync::oneshot::{<span class="self">self</span>, Receiver, Sender};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::DEFAULT_WRITE_BUFFER_SIZE;
@@ -745,41 +746,6 @@
             compaction_strategy: CompactionStrategy::LeveledTimeWindow,
         }
     }
-}
-
-<span class="doccomment">/// Create region request.
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>CreateRequest {
-    <span class="doccomment">/// Region to create.
-    </span><span class="kw">pub </span>region_id: RegionId,
-    <span class="doccomment">/// Data directory of the region.
-    </span><span class="kw">pub </span>region_dir: String,
-    <span class="doccomment">/// Columns in this region.
-    </span><span class="kw">pub </span>column_metadatas: Vec&lt;ColumnMetadata&gt;,
-    <span class="doccomment">/// Columns in the primary key.
-    </span><span class="kw">pub </span>primary_key: Vec&lt;ColumnId&gt;,
-    <span class="doccomment">/// Create region if not exists.
-    </span><span class="kw">pub </span>create_if_not_exists: bool,
-    <span class="doccomment">/// Options of the created region.
-    </span><span class="kw">pub </span>options: RegionOptions,
-}
-
-<span class="doccomment">/// Open region request.
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>OpenRequest {
-    <span class="doccomment">/// Region to open.
-    </span><span class="kw">pub </span>region_id: RegionId,
-    <span class="doccomment">/// Data directory of the region.
-    </span><span class="kw">pub </span>region_dir: String,
-    <span class="doccomment">/// Options of the created region.
-    </span><span class="kw">pub </span>options: RegionOptions,
-}
-
-<span class="doccomment">/// Close region request.
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>CloseRequest {
-    <span class="doccomment">/// Region to close.
-    </span><span class="kw">pub </span>region_id: RegionId,
 }
 
 <span class="doccomment">/// Request to write a region.
@@ -852,7 +818,8 @@
         <span class="self">self</span>.name_to_index.get(name).copied()
     }
 
-    <span class="doccomment">/// Checks schema of rows is compatible with schema of the region.
+    <span class="comment">// TODO(yingwen): Check delete schema.
+    </span><span class="doccomment">/// Checks schema of rows is compatible with schema of the region.
     ///
     /// If column with default value is missing, it returns a special [FillDefault](crate::error::Error::FillDefault)
     /// error.
@@ -1058,22 +1025,22 @@
     /// with an enum if we need to carry more information.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) sender: <span class="prelude-ty">Option</span>&lt;Sender&lt;<span class="prelude-ty">Result</span>&lt;()&gt;&gt;&gt;,
     <span class="doccomment">/// Request body.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) request: RegionRequest,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) body: RequestBody,
     <span class="doccomment">/// Region identifier.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) region_id: RegionId,
 }
 
 <span class="kw">impl </span>RegionTask {
-    <span class="doccomment">/// Creates a [RegionTask] and a receiver from [RegionRequest].
+    <span class="doccomment">/// Creates a [RegionTask] and a receiver from request body.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_request(
         region_id: RegionId,
-        request: RegionRequest,
+        body: RequestBody,
     ) -&gt; (RegionTask, Receiver&lt;<span class="prelude-ty">Result</span>&lt;()&gt;&gt;) {
         <span class="kw">let </span>(sender, receiver) = oneshot::channel();
         (
             RegionTask {
                 sender: <span class="prelude-val">Some</span>(sender),
-                request,
+                body,
                 region_id,
             },
             receiver,
@@ -1081,17 +1048,46 @@
     }
 }
 
-<span class="doccomment">/// Mito Region Engine&#39;s request validator
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RequestValidator;
+<span class="doccomment">/// Request body of a region task.
+///
+/// It validates requests outside of workers.
+</span><span class="attr">#[derive(Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>RequestBody {
+    Write(WriteRequest),
+    Create(RegionCreateRequest),
+    Drop(RegionDropRequest),
+    Open(RegionOpenRequest),
+    Close(RegionCloseRequest),
+    Alter(RegionAlterRequest),
+    Flush(RegionFlushRequest),
+    Compact(RegionCompactRequest),
+}
 
-<span class="kw">impl </span>RequestValidator {
-    <span class="doccomment">/// Validate the [WriteRequest].
-    </span><span class="kw">pub fn </span>write_request(_write_request: <span class="kw-2">&amp;</span>WriteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="comment">// - checks whether the request is too large.
-        // - checks whether each row in rows has the same schema.
-        // - checks whether each column match the schema in Rows.
-        // - checks rows don&#39;t have duplicate columns.
-        </span><span class="macro">unimplemented!</span>()
+<span class="kw">impl </span>RequestBody {
+    <span class="doccomment">/// Convert request body from [RegionRequest].
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_from_region_request(
+        region_id: RegionId,
+        value: RegionRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;RequestBody&gt; {
+        <span class="kw">let </span>body = <span class="kw">match </span>value {
+            RegionRequest::Put(v) =&gt; {
+                <span class="kw">let </span>write_request = WriteRequest::new(region_id, OpType::Put, v.rows)<span class="question-mark">?</span>;
+                RequestBody::Write(write_request)
+            }
+            RegionRequest::Delete(v) =&gt; {
+                <span class="kw">let </span>write_request = WriteRequest::new(region_id, OpType::Delete, v.rows)<span class="question-mark">?</span>;
+                RequestBody::Write(write_request)
+            }
+            RegionRequest::Create(v) =&gt; RequestBody::Create(v),
+            RegionRequest::Drop(v) =&gt; RequestBody::Drop(v),
+            RegionRequest::Open(v) =&gt; RequestBody::Open(v),
+            RegionRequest::Close(v) =&gt; RequestBody::Close(v),
+            RegionRequest::Alter(v) =&gt; RequestBody::Alter(v),
+            RegionRequest::Flush(v) =&gt; RequestBody::Flush(v),
+            RegionRequest::Compact(v) =&gt; RequestBody::Compact(v),
+        };
+
+        <span class="prelude-val">Ok</span>(body)
     }
 }
 

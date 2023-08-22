@@ -436,8 +436,6 @@
 <a href="#436" id="436">436</a>
 <a href="#437" id="437">437</a>
 <a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -470,7 +468,6 @@
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
-<span class="kw">use </span>store_api::region_request::RegionRequest;
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::sync::mpsc::{Receiver, Sender};
 <span class="kw">use </span>tokio::sync::{mpsc, Mutex};
@@ -479,7 +476,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{JoinSnafu, <span class="prelude-ty">Result</span>, WorkerStoppedSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{DefaultMemtableBuilder, MemtableBuilderRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::{MitoRegionRef, RegionMap, RegionMapRef};
-<span class="kw">use </span><span class="kw">crate</span>::request::{RegionTask, WorkerRequest};
+<span class="kw">use </span><span class="kw">crate</span>::request::{RegionTask, RequestBody, SenderWriteRequest, WorkerRequest};
 <span class="kw">use </span><span class="kw">crate</span>::wal::Wal;
 
 <span class="doccomment">/// Identifier for a worker.
@@ -775,17 +772,17 @@
     ///
     /// `buffer` should be empty.
     </span><span class="kw">async fn </span>handle_requests(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span>RequestBuffer) {
-        <span class="kw">let </span>write_requests = Vec::with_capacity(buffer.len());
+        <span class="kw">let </span><span class="kw-2">mut </span>write_requests = Vec::with_capacity(buffer.len());
         <span class="kw">let </span><span class="kw-2">mut </span>ddl_requests = Vec::with_capacity(buffer.len());
         <span class="kw">for </span>worker_req <span class="kw">in </span>buffer.drain(..) {
             <span class="kw">match </span>worker_req {
                 WorkerRequest::Region(task) =&gt; {
-                    <span class="kw">if </span><span class="macro">matches!</span>(task.request, RegionRequest::Write(<span class="kw">_</span>)) {
-                        <span class="comment">// write_requests.push(SenderWriteRequest {
-                        //     sender: task.sender,
-                        //     request: task.request.into_write_request(),
-                        // });
-                    </span>} <span class="kw">else </span>{
+                    <span class="kw">if let </span>RequestBody::Write(write_request) = task.body {
+                        write_requests.push(SenderWriteRequest {
+                            sender: task.sender,
+                            request: write_request,
+                        });
+                    } <span class="kw">else </span>{
                         ddl_requests.push(task);
                     }
                 }
@@ -814,16 +811,15 @@
         }
 
         <span class="kw">for </span>task <span class="kw">in </span>ddl_tasks {
-            <span class="kw">let </span>res: std::result::Result&lt;(), <span class="kw">crate</span>::error::Error&gt; = <span class="kw">match </span>task.request {
-                RegionRequest::Create(req) =&gt; <span class="self">self</span>.handle_create_request(task.region_id, req).<span class="kw">await</span>,
-                RegionRequest::Open(req) =&gt; <span class="self">self</span>.handle_open_request(task.region_id, req).<span class="kw">await</span>,
-                RegionRequest::Close(<span class="kw">_</span>) =&gt; <span class="self">self</span>.handle_close_request(task.region_id).<span class="kw">await</span>,
-                RegionRequest::Write(<span class="kw">_</span>)
-                | RegionRequest::Delete(<span class="kw">_</span>)
-                | RegionRequest::Drop(<span class="kw">_</span>)
-                | RegionRequest::Alter(<span class="kw">_</span>)
-                | RegionRequest::Flush(<span class="kw">_</span>)
-                | RegionRequest::Compact(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+            <span class="kw">let </span>res: std::result::Result&lt;(), <span class="kw">crate</span>::error::Error&gt; = <span class="kw">match </span>task.body {
+                RequestBody::Create(req) =&gt; <span class="self">self</span>.handle_create_request(task.region_id, req).<span class="kw">await</span>,
+                RequestBody::Open(req) =&gt; <span class="self">self</span>.handle_open_request(task.region_id, req).<span class="kw">await</span>,
+                RequestBody::Close(<span class="kw">_</span>) =&gt; <span class="self">self</span>.handle_close_request(task.region_id).<span class="kw">await</span>,
+                RequestBody::Write(<span class="kw">_</span>)
+                | RequestBody::Drop(<span class="kw">_</span>)
+                | RequestBody::Alter(<span class="kw">_</span>)
+                | RequestBody::Flush(<span class="kw">_</span>)
+                | RequestBody::Compact(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
             };
 
             <span class="kw">if let </span><span class="prelude-val">Some</span>(sender) = task.sender {
