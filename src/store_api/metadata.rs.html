@@ -742,6 +742,13 @@
 <a href="#742" id="742">742</a>
 <a href="#743" id="743">743</a>
 <a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -911,6 +918,13 @@
         <span class="self">self</span>.schema
             .column_index_by_name(name)
             .map(|index| <span class="kw-2">&amp;</span><span class="self">self</span>.column_metadatas[index])
+    }
+
+    <span class="kw">pub fn </span>primary_key_columns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>ColumnMetadata&gt; {
+        <span class="comment">// safety: RegionMetadata::validate ensures every primary key exists.
+        </span><span class="self">self</span>.primary_key
+            .iter()
+            .map(|id| <span class="self">self</span>.column_by_id(<span class="kw-2">*</span>id).unwrap())
     }
 
     <span class="doccomment">/// Returns all field columns.
