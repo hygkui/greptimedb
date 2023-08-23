@@ -378,6 +378,11 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -539,7 +544,8 @@
     }
 }
 
-<span class="kw">struct </span>CommutativeVisitor {
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">struct </span>CommutativeVisitor {
     next_stage: Vec&lt;LogicalPlan&gt;,
     <span class="comment">// hash of the stop node
     </span>stop_node: <span class="prelude-ty">Option</span>&lt;u64&gt;,
@@ -705,7 +711,7 @@
         <span class="kw">let </span>result = DistPlannerAnalyzer {}.analyze(plan, <span class="kw-2">&amp;</span>config).unwrap();
         <span class="kw">let </span>expected = [
             <span class="string">&quot;Aggregate: groupBy=[[]], aggr=[[AVG(t.number)]]&quot;</span>,
-            <span class="string">&quot;  TableScan: t&quot;</span>,
+            <span class="string">&quot;  MergeScan [is_placeholder=false]&quot;</span>,
         ]
         .join(<span class="string">&quot;\n&quot;</span>);
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
@@ -732,7 +738,7 @@
         <span class="kw">let </span>expected = [
             <span class="string">&quot;Sort: t.number ASC NULLS LAST&quot;</span>,
             <span class="string">&quot;  Distinct:&quot;</span>,
-            <span class="string">&quot;    TableScan: t&quot;</span>,
+            <span class="string">&quot;    MergeScan [is_placeholder=false]&quot;</span>,
         ]
         .join(<span class="string">&quot;\n&quot;</span>);
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
@@ -754,7 +760,11 @@
 
         <span class="kw">let </span>config = ConfigOptions::default();
         <span class="kw">let </span>result = DistPlannerAnalyzer {}.analyze(plan, <span class="kw-2">&amp;</span>config).unwrap();
-        <span class="kw">let </span>expected = [<span class="string">&quot;Limit: skip=0, fetch=1&quot;</span>, <span class="string">&quot;  TableScan: t&quot;</span>].join(<span class="string">&quot;\n&quot;</span>);
+        <span class="kw">let </span>expected = [
+            <span class="string">&quot;Limit: skip=0, fetch=1&quot;</span>,
+            <span class="string">&quot;  MergeScan [is_placeholder=false]&quot;</span>,
+        ]
+        .join(<span class="string">&quot;\n&quot;</span>);
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
     }
 }
