@@ -729,41 +729,6 @@
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
 <a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
-<a href="#743" id="743">743</a>
-<a href="#744" id="744">744</a>
-<a href="#745" id="745">745</a>
-<a href="#746" id="746">746</a>
-<a href="#747" id="747">747</a>
-<a href="#748" id="748">748</a>
-<a href="#749" id="749">749</a>
-<a href="#750" id="750">750</a>
-<a href="#751" id="751">751</a>
-<a href="#752" id="752">752</a>
-<a href="#753" id="753">753</a>
-<a href="#754" id="754">754</a>
-<a href="#755" id="755">755</a>
-<a href="#756" id="756">756</a>
-<a href="#757" id="757">757</a>
-<a href="#758" id="758">758</a>
-<a href="#759" id="759">759</a>
-<a href="#760" id="760">760</a>
-<a href="#761" id="761">761</a>
-<a href="#762" id="762">762</a>
-<a href="#763" id="763">763</a>
-<a href="#764" id="764">764</a>
-<a href="#765" id="765">765</a>
-<a href="#766" id="766">766</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -784,21 +749,15 @@
 <span class="kw">use </span>std::sync::{Arc, RwLock};
 
 <span class="kw">use </span>api::v1::OpType;
-<span class="kw">use </span>datatypes::arrow;
-<span class="kw">use </span>datatypes::arrow::row::RowConverter;
 <span class="kw">use </span>datatypes::data_type::DataType;
 <span class="kw">use </span>datatypes::prelude::{MutableVector, ScalarVectorBuilder, Vector, VectorRef};
 <span class="kw">use </span>datatypes::value::ValueRef;
-<span class="kw">use </span>datatypes::vectors::{
-    Helper, UInt64Vector, UInt64VectorBuilder, UInt8Vector, UInt8VectorBuilder,
-};
+<span class="kw">use </span>datatypes::vectors::{UInt64Vector, UInt64VectorBuilder, UInt8Vector, UInt8VectorBuilder};
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::storage::ScanRequest;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{
-    CompactValuesSnafu, ConvertVectorSnafu, PrimaryKeyLengthMismatchSnafu, <span class="prelude-ty">Result</span>, SortValuesSnafu,
-};
+<span class="kw">use </span><span class="kw">crate</span>::error::{CompactValuesSnafu, PrimaryKeyLengthMismatchSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{BoxedBatchIterator, KeyValues, Memtable, MemtableId};
 <span class="kw">use </span><span class="kw">crate</span>::read::{Batch, BatchBuilder, BatchColumn};
 <span class="kw">use </span><span class="kw">crate</span>::row_converter::{McmpRowCodec, RowCodec, SortField};
@@ -1111,46 +1070,8 @@
 }
 
 <span class="kw">impl </span>Values {
-    <span class="doccomment">/// Sorts values in place by `timestamp, sequence, op_type`.
-    </span><span class="kw">fn </span>sort_in_place(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>arrays = Vec::with_capacity(<span class="number">3 </span>+ <span class="self">self</span>.fields.len());
-        arrays.push(<span class="self">self</span>.timestamp.to_arrow_array());
-        arrays.push(<span class="self">self</span>.sequence.to_arrow_array());
-        arrays.push(<span class="self">self</span>.op_type.to_arrow_array());
-        arrays.extend(<span class="self">self</span>.fields.iter().map(|f| f.to_arrow_array()));
-
-        <span class="comment">// only sort by timestamp and sequence.
-        </span><span class="kw">let </span>fields = arrays
-            .iter()
-            .take(<span class="number">2</span>)
-            .map(|v| arrow::row::SortField::new(v.data_type().clone()))
-            .collect();
-
-        <span class="kw">let </span><span class="kw-2">mut </span>converter = RowConverter::new(fields).context(SortValuesSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span>rows = converter
-            .convert_columns(<span class="kw-2">&amp;</span>arrays[<span class="number">0</span>..<span class="number">2</span>])
-            .context(SortValuesSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>sort_pairs = rows.iter().enumerate().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        sort_pairs.sort_unstable_by(|(<span class="kw">_</span>, a), (<span class="kw">_</span>, b)| a.cmp(b));
-        <span class="kw">let </span>indices =
-            arrow::array::UInt32Array::from_iter_values(sort_pairs.iter().map(|(i, <span class="kw">_</span>)| <span class="kw-2">*</span>i <span class="kw">as </span>u32));
-
-        <span class="kw">let </span>res = arrays
-            .into_iter()
-            .map(|arr| arrow::compute::take(<span class="kw-2">&amp;</span>arr, <span class="kw-2">&amp;</span>indices, <span class="prelude-val">None</span>))
-            .collect::&lt;arrow::error::Result&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()
-            .context(SortValuesSnafu)<span class="question-mark">?</span>;
-
-        <span class="self">self</span>.timestamp = Helper::try_into_vector(<span class="kw-2">&amp;</span>res[<span class="number">0</span>]).context(ConvertVectorSnafu)<span class="question-mark">?</span>;
-        <span class="self">self</span>.sequence =
-            Arc::new(UInt64Vector::try_from_arrow_array(<span class="kw-2">&amp;</span>res[<span class="number">1</span>]).context(ConvertVectorSnafu)<span class="question-mark">?</span>);
-        <span class="self">self</span>.op_type =
-            Arc::new(UInt8Vector::try_from_arrow_array(<span class="kw-2">&amp;</span>res[<span class="number">2</span>]).context(ConvertVectorSnafu)<span class="question-mark">?</span>);
-        <span class="self">self</span>.fields = Helper::try_into_vectors(<span class="kw-2">&amp;</span>res[<span class="number">3</span>..]).context(ConvertVectorSnafu)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Converts [Values] to `Batch`.
+    <span class="doccomment">/// Converts [Values] to `Batch`, sorts the batch according to `timestamp, sequence` desc and
+    /// keeps only the latest row for the same timestamp.
     </span><span class="kw">pub fn </span>to_batch(<span class="kw-2">&amp;</span><span class="self">self</span>, primary_key: <span class="kw-2">&amp;</span>[u8], metadata: <span class="kw-2">&amp;</span>RegionMetadataRef) -&gt; <span class="prelude-ty">Result</span>&lt;Batch&gt; {
         <span class="kw">let </span>builder = BatchBuilder::with_required_columns(
             primary_key.to_vec(),
@@ -1168,7 +1089,9 @@
             })
             .collect();
 
-        builder.with_fields(fields).build()
+        <span class="kw">let </span><span class="kw-2">mut </span>batch = builder.with_fields(fields).build()<span class="question-mark">?</span>;
+        batch.sort_and_dedup()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(batch)
     }
 }
 
@@ -1211,9 +1134,7 @@
     <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, ScalarVector};
     <span class="kw">use </span>datatypes::schema::ColumnSchema;
     <span class="kw">use </span>datatypes::value::{OrderedFloat, Value};
-    <span class="kw">use </span>datatypes::vectors::{
-        Float32Vector, Float64Vector, Int64Vector, TimestampMillisecondVector,
-    };
+    <span class="kw">use </span>datatypes::vectors::{Float64Vector, Int64Vector, TimestampMillisecondVector};
     <span class="kw">use </span>store_api::metadata::{ColumnMetadata, RegionMetadataBuilder};
     <span class="kw">use </span>store_api::storage::RegionId;
 
@@ -1313,20 +1234,21 @@
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, series.frozen.len());
     }
 
-    <span class="kw">fn </span>check_value(values: <span class="kw-2">&amp;</span>Values, expect: Vec&lt;Vec&lt;Value&gt;&gt;) {
-        <span class="macro">assert_eq!</span>(values.sequence.len(), values.timestamp.len());
-        <span class="macro">assert_eq!</span>(values.op_type.len(), values.timestamp.len());
-        <span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>values.fields {
-            <span class="macro">assert_eq!</span>(f.len(), values.timestamp.len());
+    <span class="kw">fn </span>check_value(batch: <span class="kw-2">&amp;</span>Batch, expect: Vec&lt;Vec&lt;Value&gt;&gt;) {
+        <span class="kw">let </span>ts_len = batch.timestamps().len();
+        <span class="macro">assert_eq!</span>(batch.sequences().len(), ts_len);
+        <span class="macro">assert_eq!</span>(batch.op_types().len(), ts_len);
+        <span class="kw">for </span>f <span class="kw">in </span>batch.fields() {
+            <span class="macro">assert_eq!</span>(f.data.len(), ts_len);
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>rows = <span class="macro">vec!</span>[];
-        <span class="kw">for </span>idx <span class="kw">in </span><span class="number">0</span>..values.timestamp.len() {
-            <span class="kw">let </span><span class="kw-2">mut </span>row = Vec::with_capacity(values.fields.len() + <span class="number">3</span>);
-            row.push(values.timestamp.get(idx));
-            row.push(values.sequence.get(idx));
-            row.push(values.op_type.get(idx));
-            row.extend(values.fields.iter().map(|f| f.get(idx)));
+        <span class="kw">for </span>idx <span class="kw">in </span><span class="number">0</span>..ts_len {
+            <span class="kw">let </span><span class="kw-2">mut </span>row = Vec::with_capacity(batch.fields().len() + <span class="number">3</span>);
+            row.push(batch.timestamps().get(idx));
+            row.push(batch.sequences().get(idx));
+            row.push(batch.op_types().get(idx));
+            row.extend(batch.fields().iter().map(|f| f.data.get(idx)));
             rows.push(row);
         }
 
@@ -1338,45 +1260,53 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_values_sort() {
-        <span class="kw">let </span>timestamp = Arc::new(TimestampMillisecondVector::from_vec(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">3</span>]));
-        <span class="kw">let </span>sequence = Arc::new(UInt64Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>]));
-        <span class="kw">let </span>op_type = Arc::new(UInt8Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>]));
+        <span class="kw">let </span>schema = schema_for_test();
+        <span class="kw">let </span>timestamp = Arc::new(TimestampMillisecondVector::from_vec(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">3</span>]));
+        <span class="kw">let </span>sequence = Arc::new(UInt64Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>]));
+        <span class="kw">let </span>op_type = Arc::new(UInt8Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>]));
 
-        <span class="kw">let </span>fields = <span class="macro">vec!</span>[Arc::new(Float32Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1.1</span>, <span class="number">2.1</span>, <span class="number">3.3</span>, <span class="number">4.2</span>])) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;];
-        <span class="kw">let </span><span class="kw-2">mut </span>values = Values {
+        <span class="kw">let </span>fields = <span class="macro">vec!</span>[
+            Arc::new(Int64Vector::from_vec(<span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">2</span>])) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;,
+            Arc::new(Float64Vector::from_vec(<span class="macro">vec!</span>[<span class="number">1.1</span>, <span class="number">2.1</span>, <span class="number">4.2</span>, <span class="number">3.3</span>, <span class="number">4.2</span>])) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;,
+        ];
+        <span class="kw">let </span>values = Values {
             timestamp: timestamp <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;,
             sequence,
             op_type,
             fields,
         };
-        values.sort_in_place().unwrap();
 
+        <span class="kw">let </span>batch = values.to_batch(<span class="string">b&quot;test&quot;</span>, <span class="kw-2">&amp;</span>schema).unwrap();
         check_value(
-            <span class="kw-2">&amp;</span>values,
+            <span class="kw-2">&amp;</span>batch,
             <span class="macro">vec!</span>[
                 <span class="macro">vec!</span>[
                     Value::Timestamp(Timestamp::new_millisecond(<span class="number">1</span>)),
                     Value::UInt64(<span class="number">1</span>),
                     Value::UInt8(<span class="number">1</span>),
-                    Value::Float32(OrderedFloat(<span class="number">1.1</span>)),
+                    Value::Int64(<span class="number">4</span>),
+                    Value::Float64(OrderedFloat(<span class="number">1.1</span>)),
                 ],
                 <span class="macro">vec!</span>[
                     Value::Timestamp(Timestamp::new_millisecond(<span class="number">2</span>)),
                     Value::UInt64(<span class="number">1</span>),
                     Value::UInt8(<span class="number">1</span>),
-                    Value::Float32(OrderedFloat(<span class="number">2.1</span>)),
+                    Value::Int64(<span class="number">3</span>),
+                    Value::Float64(OrderedFloat(<span class="number">2.1</span>)),
                 ],
                 <span class="macro">vec!</span>[
                     Value::Timestamp(Timestamp::new_millisecond(<span class="number">3</span>)),
-                    Value::UInt64(<span class="number">0</span>),
-                    Value::UInt8(<span class="number">1</span>),
-                    Value::Float32(OrderedFloat(<span class="number">4.2</span>)),
+                    Value::UInt64(<span class="number">2</span>),
+                    Value::UInt8(<span class="number">0</span>),
+                    Value::Int64(<span class="number">2</span>),
+                    Value::Float64(OrderedFloat(<span class="number">4.2</span>)),
                 ],
                 <span class="macro">vec!</span>[
                     Value::Timestamp(Timestamp::new_millisecond(<span class="number">4</span>)),
                     Value::UInt64(<span class="number">1</span>),
                     Value::UInt8(<span class="number">1</span>),
-                    Value::Float32(OrderedFloat(<span class="number">3.3</span>)),
+                    Value::Int64(<span class="number">1</span>),
+                    Value::Float64(OrderedFloat(<span class="number">3.3</span>)),
                 ],
             ],
         )
