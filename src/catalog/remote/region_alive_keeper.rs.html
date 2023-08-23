@@ -824,6 +824,14 @@
 <a href="#824" id="824">824</a>
 <a href="#825" id="825">825</a>
 <a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -855,6 +863,7 @@
 <span class="kw">use </span>store_api::storage::RegionNumber;
 <span class="kw">use </span>table::engine::manager::TableEngineManagerRef;
 <span class="kw">use </span>table::engine::{CloseTableResult, EngineContext, TableEngineRef};
+<span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>table::requests::CloseTableRequest;
 <span class="kw">use </span>table::TableRef;
 <span class="kw">use </span>tokio::sync::{mpsc, oneshot, Mutex};
@@ -866,7 +875,7 @@
 <span class="doccomment">/// [RegionAliveKeepers] manages all [RegionAliveKeeper] in a scope of tables.
 </span><span class="kw">pub struct </span>RegionAliveKeepers {
     table_engine_manager: TableEngineManagerRef,
-    keepers: Arc&lt;Mutex&lt;HashMap&lt;TableIdent, Arc&lt;RegionAliveKeeper&gt;&gt;&gt;&gt;,
+    keepers: Arc&lt;Mutex&lt;HashMap&lt;TableId, Arc&lt;RegionAliveKeeper&gt;&gt;&gt;&gt;,
     heartbeat_interval_millis: u64,
     started: AtomicBool,
 
@@ -891,12 +900,13 @@
         }
     }
 
-    <span class="kw">pub async fn </span>find_keeper(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: <span class="kw-2">&amp;</span>TableIdent) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionAliveKeeper&gt;&gt; {
-        <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.get(table_ident).cloned()
+    <span class="kw">pub async fn </span>find_keeper(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionAliveKeeper&gt;&gt; {
+        <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.get(<span class="kw-2">&amp;</span>table_id).cloned()
     }
 
     <span class="kw">pub async fn </span>register_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_ident: TableIdent, table: TableRef) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>keeper = <span class="self">self</span>.find_keeper(<span class="kw-2">&amp;</span>table_ident).<span class="kw">await</span>;
+        <span class="kw">let </span>table_id = table_ident.table_id;
+        <span class="kw">let </span>keeper = <span class="self">self</span>.find_keeper(table_id).<span class="kw">await</span>;
         <span class="kw">if </span>keeper.is_some() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
@@ -918,7 +928,7 @@
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>keepers = <span class="self">self</span>.keepers.lock().<span class="kw">await</span>;
-        <span class="kw">let _ </span>= keepers.insert(table_ident.clone(), keeper.clone());
+        <span class="kw">let _ </span>= keepers.insert(table_id, keeper.clone());
 
         <span class="kw">if </span><span class="self">self</span>.started.load(Ordering::Relaxed) {
             keeper.start().<span class="kw">await</span>;
@@ -934,15 +944,16 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_ident: <span class="kw-2">&amp;</span>TableIdent,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;RegionAliveKeeper&gt;&gt; {
-        <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.remove(table_ident).map(|x| {
+        <span class="kw">let </span>table_id = table_ident.table_id;
+        <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.remove(<span class="kw-2">&amp;</span>table_id).map(|x| {
             <span class="macro">info!</span>(<span class="string">&quot;Deregister RegionAliveKeeper for table {table_ident}&quot;</span>);
             x
         })
     }
 
     <span class="kw">pub async fn </span>register_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_ident: <span class="kw-2">&amp;</span>RegionIdent) {
-        <span class="kw">let </span>table_ident = <span class="kw-2">&amp;</span>region_ident.table_ident;
-        <span class="kw">let </span><span class="prelude-val">Some</span>(keeper) = <span class="self">self</span>.find_keeper(table_ident).<span class="kw">await else </span>{
+        <span class="kw">let </span>table_id = region_ident.table_ident.table_id;
+        <span class="kw">let </span><span class="prelude-val">Some</span>(keeper) = <span class="self">self</span>.find_keeper(table_id).<span class="kw">await else </span>{
             <span class="comment">// Alive keeper could be affected by lagging msg, just warn and ignore.
             </span><span class="macro">warn!</span>(<span class="string">&quot;Alive keeper for region {region_ident} is not found!&quot;</span>);
             <span class="kw">return</span>;
@@ -951,8 +962,8 @@
     </span>}
 
     <span class="kw">pub async fn </span>deregister_region(<span class="kw-2">&amp;</span><span class="self">self</span>, region_ident: <span class="kw-2">&amp;</span>RegionIdent) {
-        <span class="kw">let </span>table_ident = <span class="kw-2">&amp;</span>region_ident.table_ident;
-        <span class="kw">let </span><span class="prelude-val">Some</span>(keeper) = <span class="self">self</span>.find_keeper(table_ident).<span class="kw">await else </span>{
+        <span class="kw">let </span>table_id = region_ident.table_ident.table_id;
+        <span class="kw">let </span><span class="prelude-val">Some</span>(keeper) = <span class="self">self</span>.find_keeper(table_id).<span class="kw">await else </span>{
             <span class="comment">// Alive keeper could be affected by lagging msg, just warn and ignore.
             </span><span class="macro">warn!</span>(<span class="string">&quot;Alive keeper for region {region_ident} is not found!&quot;</span>);
             <span class="kw">return</span>;
@@ -1004,7 +1015,8 @@
                 }
             };
 
-            <span class="kw">let </span><span class="prelude-val">Some</span>(keeper) = <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.get(<span class="kw-2">&amp;</span>table_ident).cloned() <span class="kw">else </span>{
+            <span class="kw">let </span>table_id = table_ident.table_id;
+            <span class="kw">let </span><span class="prelude-val">Some</span>(keeper) = <span class="self">self</span>.keepers.lock().<span class="kw">await</span>.get(<span class="kw-2">&amp;</span>table_id).cloned() <span class="kw">else </span>{
                 <span class="comment">// Alive keeper could be affected by lagging msg, just warn and ignore.
                 </span><span class="macro">warn!</span>(<span class="string">&quot;Alive keeper for table {table_ident} is not found!&quot;</span>);
                 <span class="kw">continue</span>;
@@ -1373,7 +1385,11 @@
             .register_table(table_ident.clone(), table)
             .<span class="kw">await
             </span>.unwrap();
-        <span class="macro">assert!</span>(keepers.keepers.lock().<span class="kw">await</span>.contains_key(<span class="kw-2">&amp;</span>table_ident));
+        <span class="macro">assert!</span>(keepers
+            .keepers
+            .lock()
+            .<span class="kw">await
+            </span>.contains_key(<span class="kw-2">&amp;</span>table_ident.table_id));
 
         (table_ident, keepers)
     }
@@ -1428,7 +1444,7 @@
             .keepers
             .lock()
             .<span class="kw">await
-            </span>.get(<span class="kw-2">&amp;</span>table_ident)
+            </span>.get(<span class="kw-2">&amp;</span>table_ident.table_id)
             .cloned()
             .unwrap();
 
@@ -1475,7 +1491,7 @@
             })
             .<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>regions = keepers
-            .find_keeper(<span class="kw-2">&amp;</span>table_ident)
+            .find_keeper(table_ident.table_id)
             .<span class="kw">await
             </span>.unwrap()
             .countdown_task_handles
