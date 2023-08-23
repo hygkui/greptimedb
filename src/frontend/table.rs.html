@@ -641,22 +641,6 @@
 <a href="#641" id="641">641</a>
 <a href="#642" id="642">642</a>
 <a href="#643" id="643">643</a>
-<a href="#644" id="644">644</a>
-<a href="#645" id="645">645</a>
-<a href="#646" id="646">646</a>
-<a href="#647" id="647">647</a>
-<a href="#648" id="648">648</a>
-<a href="#649" id="649">649</a>
-<a href="#650" id="650">650</a>
-<a href="#651" id="651">651</a>
-<a href="#652" id="652">652</a>
-<a href="#653" id="653">653</a>
-<a href="#654" id="654">654</a>
-<a href="#655" id="655">655</a>
-<a href="#656" id="656">656</a>
-<a href="#657" id="657">657</a>
-<a href="#658" id="658">658</a>
-<a href="#659" id="659">659</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -695,11 +679,9 @@
 <span class="kw">use </span>store_api::storage::ScanRequest;
 <span class="kw">use </span>table::error::TableOperationSnafu;
 <span class="kw">use </span>table::metadata::{FilterPushDownType, TableInfoRef, TableType};
-<span class="kw">use </span>table::requests::DeleteRequest;
 <span class="kw">use </span>table::Table;
 
 <span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
-<span class="kw">use </span><span class="kw">crate</span>::instance::distributed::deleter::DistDeleter;
 <span class="kw">use </span><span class="kw">crate</span>::table::scan::{DatanodeInstance, TableScanPlan};
 
 <span class="kw">pub mod </span>delete;
@@ -796,20 +778,6 @@
         filters: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Expr],
     ) -&gt; table::Result&lt;Vec&lt;FilterPushDownType&gt;&gt; {
         <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[FilterPushDownType::Inexact; filters.len()])
-    }
-
-    <span class="kw">async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest) -&gt; table::Result&lt;usize&gt; {
-        <span class="kw">let </span>deleter = DistDeleter::new(
-            request.catalog_name.clone(),
-            request.schema_name.clone(),
-            <span class="self">self</span>.catalog_manager.clone(),
-        );
-        <span class="kw">let </span>affected_rows = deleter
-            .delete(<span class="macro">vec!</span>[request])
-            .<span class="kw">await
-            </span>.map_err(BoxedError::new)
-            .context(TableOperationSnafu)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(affected_rows)
     }
 }
 
