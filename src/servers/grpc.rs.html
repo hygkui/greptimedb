@@ -241,6 +241,10 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -264,12 +268,16 @@
 <span class="kw">use </span>std::net::SocketAddr;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>api::v1::greptime_database_server::{GreptimeDatabase, GreptimeDatabaseServer};
+<span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
+</span><span class="kw">use </span>api::v1::greptime_database_server::GreptimeDatabase;
+<span class="kw">use </span>api::v1::greptime_database_server::GreptimeDatabaseServer;
 <span class="kw">use </span>api::v1::health_check_server::{HealthCheck, HealthCheckServer};
 <span class="kw">use </span>api::v1::prometheus_gateway_server::{PrometheusGateway, PrometheusGatewayServer};
 <span class="kw">use </span>api::v1::region::region_server_server::RegionServerServer;
 <span class="kw">use </span>api::v1::{HealthCheckRequest, HealthCheckResponse};
-<span class="kw">use </span>arrow_flight::flight_service_server::{FlightService, FlightServiceServer};
+<span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
+</span><span class="kw">use </span>arrow_flight::flight_service_server::FlightService;
+<span class="kw">use </span>arrow_flight::flight_service_server::FlightServiceServer;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>auth::UserProviderRef;
 <span class="kw">use </span>common_runtime::Runtime;
