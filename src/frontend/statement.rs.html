@@ -325,6 +325,7 @@
 <a href="#325" id="325">325</a>
 <a href="#326" id="326">326</a>
 <a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -431,11 +432,12 @@
             Statement::ShowTables(stmt) =&gt; <span class="self">self</span>.show_tables(stmt, query_ctx).<span class="kw">await</span>,
 
             Statement::Copy(sql::statements::copy::Copy::CopyTable(stmt)) =&gt; {
-                <span class="kw">let </span>req = to_copy_table_request(stmt, query_ctx)<span class="question-mark">?</span>;
+                <span class="kw">let </span>req = to_copy_table_request(stmt, query_ctx.clone())<span class="question-mark">?</span>;
                 <span class="kw">match </span>req.direction {
-                    CopyDirection::Export =&gt; {
-                        <span class="self">self</span>.copy_table_to(req).<span class="kw">await</span>.map(Output::AffectedRows)
-                    }
+                    CopyDirection::Export =&gt; <span class="self">self
+                        </span>.copy_table_to(req, query_ctx)
+                        .<span class="kw">await
+                        </span>.map(Output::AffectedRows),
                     CopyDirection::Import =&gt; {
                         <span class="self">self</span>.copy_table_from(req).<span class="kw">await</span>.map(Output::AffectedRows)
                     }
