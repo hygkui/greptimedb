@@ -728,14 +728,6 @@
 <a href="#728" id="728">728</a>
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
-<a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -972,7 +964,7 @@
                 datatype: ColumnDataType::String <span class="kw">as </span>i32,
                 semantic_type: SemanticType::Tag <span class="kw">as </span>i32,
             });
-            one_row.push(to_value(ValueData::StringValue(v.to_string())));
+            one_row.push(ValueData::StringValue(v.to_string()).into());
         } <span class="kw">else </span>{
             check_schema(ColumnDataType::String, SemanticType::Tag, <span class="kw-2">&amp;</span>schema[<span class="kw-2">*</span>index])<span class="question-mark">?</span>;
             one_row[<span class="kw-2">*</span>index].value_data = <span class="prelude-val">Some</span>(ValueData::StringValue(v.to_string()));
@@ -1007,7 +999,7 @@
                 datatype: datatype <span class="kw">as </span>i32,
                 semantic_type: SemanticType::Field <span class="kw">as </span>i32,
             });
-            one_row.push(to_value(value));
+            one_row.push(value.into());
         } <span class="kw">else </span>{
             check_schema(datatype, SemanticType::Field, <span class="kw-2">&amp;</span>schema[<span class="kw-2">*</span>index])<span class="question-mark">?</span>;
             one_row[<span class="kw-2">*</span>index].value_data = <span class="prelude-val">Some</span>(value);
@@ -1047,7 +1039,7 @@
             datatype: ColumnDataType::TimestampMillisecond <span class="kw">as </span>i32,
             semantic_type: SemanticType::Timestamp <span class="kw">as </span>i32,
         });
-        one_row.push(to_value(ValueData::TsMillisecondValue(ts)))
+        one_row.push(ValueData::TsMillisecondValue(ts).into())
     } <span class="kw">else </span>{
         check_schema(
             ColumnDataType::TimestampMillisecond,
@@ -1087,14 +1079,6 @@
     );
 
     <span class="prelude-val">Ok</span>(())
-}
-
-<span class="comment">// TODO(jeremy): impl From&lt;ValueData&gt; for Value
-</span><span class="attr">#[inline]
-</span><span class="kw">fn </span>to_value(value: ValueData) -&gt; Value {
-    Value {
-        value_data: <span class="prelude-val">Some</span>(value),
-    }
 }
 
 <span class="attr">#[inline]

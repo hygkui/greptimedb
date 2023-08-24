@@ -398,6 +398,11 @@
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
 <a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -419,7 +424,7 @@
 <span class="kw">use </span>api::v1::{
     AlterExpr, AuthHeader, CompactTableExpr, CreateTableExpr, DdlRequest, DeleteRequests,
     DropTableExpr, FlushTableExpr, GreptimeRequest, InsertRequests, PromRangeQuery, QueryRequest,
-    RequestHeader, TruncateTableExpr,
+    RequestHeader, RowInsertRequests, TruncateTableExpr,
 };
 <span class="kw">use </span>arrow_flight::Ticket;
 <span class="kw">use </span>async_stream::stream;
@@ -513,6 +518,11 @@
     <span class="kw">pub async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, requests: InsertRequests) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_INSERT);
         <span class="self">self</span>.handle(Request::Inserts(requests)).<span class="kw">await
+    </span>}
+
+    <span class="kw">pub async fn </span>row_insert(<span class="kw-2">&amp;</span><span class="self">self</span>, requests: RowInsertRequests) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_INSERT);
+        <span class="self">self</span>.handle(Request::RowInserts(requests)).<span class="kw">await
     </span>}
 
     <span class="kw">pub fn </span>streaming_inserter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;StreamInserter&gt; {
