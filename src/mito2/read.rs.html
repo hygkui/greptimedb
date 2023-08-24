@@ -818,30 +818,6 @@
 <a href="#818" id="818">818</a>
 <a href="#819" id="819">819</a>
 <a href="#820" id="820">820</a>
-<a href="#821" id="821">821</a>
-<a href="#822" id="822">822</a>
-<a href="#823" id="823">823</a>
-<a href="#824" id="824">824</a>
-<a href="#825" id="825">825</a>
-<a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a>
-<a href="#828" id="828">828</a>
-<a href="#829" id="829">829</a>
-<a href="#830" id="830">830</a>
-<a href="#831" id="831">831</a>
-<a href="#832" id="832">832</a>
-<a href="#833" id="833">833</a>
-<a href="#834" id="834">834</a>
-<a href="#835" id="835">835</a>
-<a href="#836" id="836">836</a>
-<a href="#837" id="837">837</a>
-<a href="#838" id="838">838</a>
-<a href="#839" id="839">839</a>
-<a href="#840" id="840">840</a>
-<a href="#841" id="841">841</a>
-<a href="#842" id="842">842</a>
-<a href="#843" id="843">843</a>
-<a href="#844" id="844">844</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -858,7 +834,9 @@
 
 </span><span class="doccomment">//! Common structs and utilities for reading data.
 
-</span><span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">pub mod </span>merge;
+
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::OpType;
 <span class="kw">use </span>async_trait::async_trait;
@@ -873,12 +851,12 @@
     BooleanVector, Helper, UInt32Vector, UInt64Vector, UInt8Vector, Vector, VectorRef,
 };
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
-<span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::storage::{ColumnId, SequenceNumber};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     ComputeArrowSnafu, ComputeVectorSnafu, ConvertVectorSnafu, InvalidBatchSnafu, <span class="prelude-ty">Result</span>,
 };
+<span class="kw">use </span><span class="kw">crate</span>::memtable::BoxedBatchIterator;
 
 <span class="doccomment">/// Storage internal representation of a batch of rows
 /// for a primary key (time series).
@@ -953,7 +931,7 @@
         <span class="self">self</span>.num_rows() == <span class="number">0
     </span>}
 
-    <span class="doccomment">/// Returns the first timestamp in the batch.
+    <span class="doccomment">/// Returns the first timestamp in the batch or `None` if the batch is empty.
     </span><span class="kw">pub fn </span>first_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Timestamp&gt; {
         <span class="kw">if </span><span class="self">self</span>.timestamps.is_empty() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -962,7 +940,7 @@
         <span class="prelude-val">Some</span>(<span class="self">self</span>.get_timestamp(<span class="number">0</span>))
     }
 
-    <span class="doccomment">/// Returns the last timestamp in the batch.
+    <span class="doccomment">/// Returns the last timestamp in the batch or `None` if the batch is empty.
     </span><span class="kw">pub fn </span>last_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Timestamp&gt; {
         <span class="kw">if </span><span class="self">self</span>.timestamps.is_empty() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -1398,20 +1376,23 @@
 <span class="doccomment">/// Async [Batch] reader and iterator wrapper.
 ///
 /// This is the data source for SST writers or internal readers.
-</span><span class="kw">pub enum </span>Source {}
+</span><span class="kw">pub enum </span>Source {
+    <span class="doccomment">/// Source from a [BoxedBatchReader].
+    </span>Reader(BoxedBatchReader),
+    <span class="doccomment">/// Source from a [BoxedBatchIterator].
+    </span>Iter(BoxedBatchIterator),
+}
 
 <span class="kw">impl </span>Source {
     <span class="doccomment">/// Returns next [Batch] from this data source.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>next_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Batch&gt;&gt; {
-        <span class="macro">unimplemented!</span>()
+        <span class="kw">match </span><span class="self">self </span>{
+            Source::Reader(reader) =&gt; reader.next_batch().<span class="kw">await</span>,
+            Source::Iter(iter) =&gt; iter.next().transpose(),
+        }
     }
 
-    <span class="doccomment">/// Returns the metadata of the source region.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionMetadataRef {
-        <span class="macro">unimplemented!</span>()
-    }
-
-    <span class="comment">// TODO(yingwen): Maybe remove this method.
+    <span class="comment">// TODO(yingwen): Remove this method once we support collecting stats in the writer.
     </span><span class="doccomment">/// Returns statisics of fetched batches.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>stats(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SourceStats {
         <span class="macro">unimplemented!</span>()
@@ -1447,38 +1428,9 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>datatypes::arrow::array::{TimestampMillisecondArray, UInt64Array, UInt8Array};
-
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::error::Error;
-
-    <span class="kw">fn </span>new_batch_builder(
-        timestamps: <span class="kw-2">&amp;</span>[i64],
-        sequences: <span class="kw-2">&amp;</span>[u64],
-        op_types: <span class="kw-2">&amp;</span>[OpType],
-        field: <span class="kw-2">&amp;</span>[u64],
-    ) -&gt; BatchBuilder {
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = BatchBuilder::new(<span class="string">b&quot;test&quot;</span>.to_vec());
-        builder
-            .timestamps_array(Arc::new(TimestampMillisecondArray::from_iter_values(
-                timestamps.iter().copied(),
-            )))
-            .unwrap()
-            .sequences_array(Arc::new(UInt64Array::from_iter_values(
-                sequences.iter().copied(),
-            )))
-            .unwrap()
-            .op_types_array(Arc::new(UInt8Array::from_iter_values(
-                op_types.iter().map(|v| <span class="kw-2">*</span>v <span class="kw">as </span>u8),
-            )))
-            .unwrap()
-            .push_field_array(
-                <span class="number">1</span>,
-                Arc::new(UInt64Array::from_iter_values(field.iter().copied())),
-            )
-            .unwrap();
-        builder
-    }
+    <span class="kw">use </span><span class="kw">crate</span>::test_util::new_batch_builder;
 
     <span class="kw">fn </span>new_batch(
         timestamps: <span class="kw-2">&amp;</span>[i64],
@@ -1486,7 +1438,7 @@
         op_types: <span class="kw-2">&amp;</span>[OpType],
         field: <span class="kw-2">&amp;</span>[u64],
     ) -&gt; Batch {
-        new_batch_builder(timestamps, sequences, op_types, field)
+        new_batch_builder(<span class="string">b&quot;test&quot;</span>, timestamps, sequences, op_types, field)
             .build()
             .unwrap()
     }

@@ -138,7 +138,7 @@
 /// Should be unique under the same region.
 </span><span class="kw">pub type </span>MemtableId = u32;
 
-<span class="kw">pub type </span>BoxedBatchIterator = Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;Batch&gt;&gt;&gt;;
+<span class="kw">pub type </span>BoxedBatchIterator = Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;Batch&gt;&gt; + Send + Sync&gt;;
 
 <span class="doccomment">/// In memory write buffer.
 </span><span class="kw">pub trait </span>Memtable: Send + Sync + fmt::Debug {
