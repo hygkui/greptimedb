@@ -344,6 +344,105 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -358,11 +457,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>datafusion::datasource::DefaultTableSource;
+</span><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>datafusion::datasource::DefaultTableSource;
 <span class="kw">use </span>datafusion::error::Result <span class="kw">as </span>DfResult;
 <span class="kw">use </span>datafusion_common::config::ConfigOptions;
-<span class="kw">use </span>datafusion_common::tree_node::{RewriteRecursion, TreeNode, TreeNodeRewriter};
-<span class="kw">use </span>datafusion_expr::LogicalPlan;
+<span class="kw">use </span>datafusion_common::tree_node::{RewriteRecursion, Transformed, TreeNode, TreeNodeRewriter};
+<span class="kw">use </span>datafusion_expr::expr::{Exists, InSubquery};
+<span class="kw">use </span>datafusion_expr::utils::from_plan;
+<span class="kw">use </span>datafusion_expr::{col, Expr, LogicalPlan, LogicalPlanBuilder, Subquery};
 <span class="kw">use </span>datafusion_optimizer::analyzer::AnalyzerRule;
 <span class="kw">use </span>substrait::{DFLogicalSubstraitConvertor, SubstraitPlan};
 <span class="kw">use </span>table::metadata::TableType;
@@ -385,8 +489,63 @@
         plan: LogicalPlan,
         _config: <span class="kw-2">&amp;</span>ConfigOptions,
     ) -&gt; datafusion_common::Result&lt;LogicalPlan&gt; {
+        <span class="kw">let </span>plan = plan.transform(<span class="kw-2">&amp;</span><span class="self">Self</span>::inspect_plan_with_subquery)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>rewriter = PlanRewriter::default();
         plan.rewrite(<span class="kw-2">&amp;mut </span>rewriter)
+    }
+}
+
+<span class="kw">impl </span>DistPlannerAnalyzer {
+    <span class="kw">fn </span>inspect_plan_with_subquery(plan: LogicalPlan) -&gt; DfResult&lt;Transformed&lt;LogicalPlan&gt;&gt; {
+        <span class="kw">let </span>exprs = plan
+            .expressions()
+            .into_iter()
+            .map(|e| e.transform(<span class="kw-2">&amp;</span><span class="self">Self</span>::transform_subquery))
+            .collect::&lt;DfResult&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>inputs = plan.inputs().into_iter().cloned().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="prelude-val">Ok</span>(Transformed::Yes(from_plan(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>exprs, <span class="kw-2">&amp;</span>inputs)<span class="question-mark">?</span>))
+    }
+
+    <span class="kw">fn </span>transform_subquery(expr: Expr) -&gt; DfResult&lt;Transformed&lt;Expr&gt;&gt; {
+        <span class="kw">match </span>expr {
+            Expr::Exists(exists) =&gt; <span class="prelude-val">Ok</span>(Transformed::Yes(Expr::Exists(Exists {
+                subquery: <span class="self">Self</span>::handle_subquery(exists.subquery)<span class="question-mark">?</span>,
+                negated: exists.negated,
+            }))),
+            Expr::InSubquery(in_subquery) =&gt; <span class="prelude-val">Ok</span>(Transformed::Yes(Expr::InSubquery(InSubquery {
+                expr: in_subquery.expr,
+                subquery: <span class="self">Self</span>::handle_subquery(in_subquery.subquery)<span class="question-mark">?</span>,
+                negated: in_subquery.negated,
+            }))),
+            Expr::ScalarSubquery(scalar_subquery) =&gt; <span class="prelude-val">Ok</span>(Transformed::Yes(Expr::ScalarSubquery(
+                <span class="self">Self</span>::handle_subquery(scalar_subquery)<span class="question-mark">?</span>,
+            ))),
+
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(Transformed::No(expr)),
+        }
+    }
+
+    <span class="kw">fn </span>handle_subquery(subquery: Subquery) -&gt; DfResult&lt;Subquery&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>rewriter = PlanRewriter::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>rewrote_subquery = subquery.subquery.as_ref().clone().rewrite(<span class="kw-2">&amp;mut </span>rewriter)<span class="question-mark">?</span>;
+        <span class="comment">// Workaround. DF doesn&#39;t support the first plan in subquery to be an Extension
+        </span><span class="kw">if </span><span class="macro">matches!</span>(rewrote_subquery, LogicalPlan::Extension(<span class="kw">_</span>)) {
+            <span class="kw">let </span>output_schema = rewrote_subquery.schema().clone();
+            <span class="kw">let </span>project_exprs = output_schema
+                .fields()
+                .iter()
+                .map(|f| col(f.name()))
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            rewrote_subquery = LogicalPlanBuilder::from(rewrote_subquery)
+                .project(project_exprs)<span class="question-mark">?
+                </span>.build()<span class="question-mark">?</span>;
+        }
+
+        <span class="prelude-val">Ok</span>(Subquery {
+            subquery: Arc::new(rewrote_subquery),
+            outer_ref_columns: subquery.outer_ref_columns,
+        })
     }
 }
 
@@ -424,7 +583,7 @@
     <span class="doccomment">/// Return true if should stop and expand. The input plan is the parent node of current node
     </span><span class="kw">fn </span>should_expand(<span class="kw-2">&amp;mut </span><span class="self">self</span>, plan: <span class="kw-2">&amp;</span>LogicalPlan) -&gt; bool {
         <span class="kw">if </span>DFLogicalSubstraitConvertor.encode(plan).is_err() {
-            <span class="macro">common_telemetry::info!</span>(
+            <span class="macro">info!</span>(
                 <span class="string">&quot;substrait error: {:?}&quot;</span>,
                 DFLogicalSubstraitConvertor.encode(plan)
             );
@@ -523,6 +682,7 @@
         </span><span class="self">self</span>.stage.clear();
         <span class="self">self</span>.set_unexpanded();
         <span class="self">self</span>.partition_cols = <span class="prelude-val">None</span>;
+
         <span class="prelude-val">Ok</span>(RewriteRecursion::Continue)
     }
 
@@ -576,6 +736,7 @@
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>datafusion::datasource::DefaultTableSource;
+    <span class="kw">use </span>datafusion_common::JoinType;
     <span class="kw">use </span>datafusion_expr::{avg, col, lit, Expr, LogicalPlanBuilder};
     <span class="kw">use </span>table::table::adapter::DfTableProviderAdapter;
     <span class="kw">use </span>table::table::numbers::NumbersTable;
@@ -687,6 +848,43 @@
             <span class="string">&quot;  MergeScan [is_placeholder=false]&quot;</span>,
         ]
         .join(<span class="string">&quot;\n&quot;</span>);
+        <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>transform_unalighed_join_with_alias() {
+        <span class="kw">let </span>left = NumbersTable::table(<span class="number">0</span>);
+        <span class="kw">let </span>right = NumbersTable::table(<span class="number">1</span>);
+        <span class="kw">let </span>left_source = Arc::new(DefaultTableSource::new(Arc::new(
+            DfTableProviderAdapter::new(left),
+        )));
+        <span class="kw">let </span>right_source = Arc::new(DefaultTableSource::new(Arc::new(
+            DfTableProviderAdapter::new(right),
+        )));
+
+        <span class="kw">let </span>right_plan = LogicalPlanBuilder::scan_with_filters(<span class="string">&quot;t&quot;</span>, right_source, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[])
+            .unwrap()
+            .alias(<span class="string">&quot;right&quot;</span>)
+            .unwrap()
+            .build()
+            .unwrap();
+
+        <span class="kw">let </span>plan = LogicalPlanBuilder::scan_with_filters(<span class="string">&quot;t&quot;</span>, left_source, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[])
+            .unwrap()
+            .join_using(right_plan, JoinType::LeftSemi, <span class="macro">vec!</span>[<span class="string">&quot;number&quot;</span>])
+            .unwrap()
+            .limit(<span class="number">0</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>))
+            .unwrap()
+            .build()
+            .unwrap();
+
+        <span class="kw">let </span>config = ConfigOptions::default();
+        <span class="kw">let </span>result = DistPlannerAnalyzer {}.analyze(plan, <span class="kw-2">&amp;</span>config).unwrap();
+        <span class="kw">let </span>expected = <span class="string">&quot;Limit: skip=0, fetch=1\
+            \n  LeftSemi Join: Using t.number = right.number\
+            \n    MergeScan [is_placeholder=false]\
+            \n    SubqueryAlias: right\
+            \n      MergeScan [is_placeholder=false]&quot;</span>;
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
     }
 }
