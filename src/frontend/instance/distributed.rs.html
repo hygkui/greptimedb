@@ -978,10 +978,6 @@
 <a href="#978" id="978">978</a>
 <a href="#979" id="979">979</a>
 <a href="#980" id="980">980</a>
-<a href="#981" id="981">981</a>
-<a href="#982" id="982">982</a>
-<a href="#983" id="983">983</a>
-<a href="#984" id="984">984</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1113,11 +1109,7 @@
 
         create_table.table_id = <span class="prelude-val">Some</span>(api::v1::TableId { id: table_id });
 
-        <span class="kw">let </span>table = Arc::new(DistTable::new(
-            table_name.clone(),
-            table_info,
-            <span class="self">self</span>.catalog_manager.clone(),
-        ));
+        <span class="kw">let </span>table = DistTable::table(table_info);
 
         <span class="kw">let </span>request = RegisterTableRequest {
             catalog: table_name.catalog_name.clone(),
