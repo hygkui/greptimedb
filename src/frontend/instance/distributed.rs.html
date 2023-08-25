@@ -978,6 +978,13 @@
 <a href="#978" id="978">978</a>
 <a href="#979" id="979">979</a>
 <a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1379,7 +1386,8 @@
                     </span>.context(TableNotFoundSnafu { table_name: <span class="kw-2">&amp;</span>table })<span class="question-mark">?</span>;
                 <span class="kw">let </span>table_name = TableName::new(catalog, schema, table);
 
-                <span class="self">self</span>.show_create_table(table_name, table_ref).<span class="kw">await
+                <span class="self">self</span>.show_create_table(table_name, table_ref, query_ctx.clone())
+                    .<span class="kw">await
             </span>}
             Statement::TruncateTable(stmt) =&gt; {
                 <span class="kw">let </span>(catalog, schema, table) =
@@ -1396,7 +1404,12 @@
         }
     }
 
-    <span class="kw">async fn </span>show_create_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName, table: TableRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">async fn </span>show_create_table(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        table_name: TableName,
+        table: TableRef,
+        query_ctx: QueryContextRef,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>partitions = <span class="self">self
             </span>.catalog_manager
             .partition_manager()
@@ -1408,7 +1421,8 @@
 
         <span class="kw">let </span>partitions = create_partitions_stmt(partitions)<span class="question-mark">?</span>;
 
-        query::sql::show_create_table(table, partitions).context(error::ExecuteStatementSnafu)
+        query::sql::show_create_table(table, partitions, query_ctx)
+            .context(error::ExecuteStatementSnafu)
     }
 
     <span class="doccomment">/// Handles distributed database creation
