@@ -859,6 +859,81 @@
 <a href="#859" id="859">859</a>
 <a href="#860" id="860">860</a>
 <a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -945,6 +1020,14 @@
     <span class="kw">pub </span>by: Vec&lt;Expr&gt;,
     <span class="kw">pub </span>schema: DFSchemaRef,
     <span class="kw">pub </span>by_schema: DFSchemaRef,
+    <span class="doccomment">/// If the `schema` of the `RangeSelect` happens to be the same as the content of the upper-level Projection Plan,
+    /// the final output needs to be `project` through `schema_project`,
+    /// so that we can omit the upper-level Projection Plan.
+    </span><span class="kw">pub </span>schema_project: <span class="prelude-ty">Option</span>&lt;Vec&lt;usize&gt;&gt;,
+    <span class="doccomment">/// The schema before run projection, follow the order of `range expr | time index | by columns`
+    /// `schema_before_project  ----  schema_project ----&gt; schema`
+    /// if `schema_project==None` then `schema_before_project==schema`
+    </span><span class="kw">pub </span>schema_before_project: DFSchemaRef,
 }
 
 <span class="kw">impl </span>RangeSelect {
@@ -954,6 +1037,7 @@
         align: Duration,
         time_index: Expr,
         by: Vec&lt;Expr&gt;,
+        projection_expr: <span class="kw-2">&amp;</span>[Expr],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>fields = range_expr
             .iter()
@@ -979,18 +1063,54 @@
         </span><span class="kw">let </span>by_fields =
             exprlist_to_fields(by.iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="kw-2">&amp;</span>input).context(DataFusionSnafu)<span class="question-mark">?</span>;
         fields.extend(by_fields.clone());
-        <span class="kw">let </span>schema = DFSchema::new_with_metadata(fields, input.schema().metadata().clone())
-            .context(DataFusionSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span>by_schema = DFSchema::new_with_metadata(by_fields, input.schema().metadata().clone())
-            .context(DataFusionSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>schema_before_project = Arc::new(
+            DFSchema::new_with_metadata(fields, input.schema().metadata().clone())
+                .context(DataFusionSnafu)<span class="question-mark">?</span>,
+        );
+        <span class="kw">let </span>by_schema = Arc::new(
+            DFSchema::new_with_metadata(by_fields, input.schema().metadata().clone())
+                .context(DataFusionSnafu)<span class="question-mark">?</span>,
+        );
+        <span class="comment">// If the result of the project plan happens to be the schema of the range plan, no project plan is required
+        // that need project is identical to range plan schema.
+        // 1. all exprs in project must belong to range schema
+        // 2. range schema and project exprs must have same size
+        </span><span class="kw">let </span>schema_project = projection_expr
+            .iter()
+            .map(|project_expr| {
+                <span class="kw">if let </span>Expr::Column(column) = project_expr {
+                    schema_before_project
+                        .index_of_column_by_name(column.relation.as_ref(), <span class="kw-2">&amp;</span>column.name)
+                        .unwrap_or(<span class="prelude-val">None</span>)
+                        .ok_or(())
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">Err</span>(())
+                }
+            })
+            .collect::&lt;std::result::Result&lt;Vec&lt;usize&gt;, ()&gt;&gt;()
+            .ok();
+        <span class="kw">let </span>schema = <span class="kw">if let </span><span class="prelude-val">Some</span>(project) = <span class="kw-2">&amp;</span>schema_project {
+            <span class="kw">let </span>project_field = project
+                .iter()
+                .map(|i| schema_before_project.fields()[<span class="kw-2">*</span>i].clone())
+                .collect();
+            Arc::new(
+                DFSchema::new_with_metadata(project_field, input.schema().metadata().clone())
+                    .context(DataFusionSnafu)<span class="question-mark">?</span>,
+            )
+        } <span class="kw">else </span>{
+            schema_before_project.clone()
+        };
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             input,
             range_expr,
             align,
             time_index: time_index_name,
-            schema: Arc::new(schema),
-            by_schema: Arc::new(by_schema),
+            schema,
+            by_schema,
             by,
+            schema_project,
+            schema_before_project,
         })
     }
 }
@@ -1040,6 +1160,8 @@
             schema: <span class="self">self</span>.schema.clone(),
             by: <span class="self">self</span>.by.clone(),
             by_schema: <span class="self">self</span>.by_schema.clone(),
+            schema_project: <span class="self">self</span>.schema_project.clone(),
+            schema_before_project: <span class="self">self</span>.schema_before_project.clone(),
         }
     }
 }
@@ -1065,7 +1187,7 @@
         session_state: <span class="kw-2">&amp;</span>SessionState,
     ) -&gt; DfResult&lt;Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt;&gt; {
         <span class="kw">let </span>fields: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-            </span>.schema
+            </span>.schema_before_project
             .fields()
             .iter()
             .map(|field| Field::new(field.name(), field.data_type().clone(), field.is_nullable()))
@@ -1131,6 +1253,12 @@
                 })
             })
             .collect::&lt;DfResult&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
+        <span class="kw">let </span>schema_before_project = Arc::new(Schema::new(fields));
+        <span class="kw">let </span>schema = <span class="kw">if let </span><span class="prelude-val">Some</span>(project) = <span class="kw-2">&amp;</span><span class="self">self</span>.schema_project {
+            Arc::new(schema_before_project.project(project)<span class="question-mark">?</span>)
+        } <span class="kw">else </span>{
+            schema_before_project.clone()
+        };
         <span class="prelude-val">Ok</span>(Arc::new(RangeSelectExec {
             input: exec_input,
             range_exec,
@@ -1142,9 +1270,11 @@
                 session_state,
             )<span class="question-mark">?</span>,
             time_index: <span class="self">self</span>.time_index.clone(),
-            schema: Arc::new(Schema::new(fields)),
+            schema,
             by_schema: Arc::new(Schema::new(by_fields)),
             metric: ExecutionPlanMetricsSet::new(),
+            schema_before_project,
+            schema_project: <span class="self">self</span>.schema_project.clone(),
         }))
     }
 }
@@ -1166,6 +1296,8 @@
     schema: SchemaRef,
     by_schema: SchemaRef,
     metric: ExecutionPlanMetricsSet,
+    schema_project: <span class="prelude-ty">Option</span>&lt;Vec&lt;usize&gt;&gt;,
+    schema_before_project: SchemaRef,
 }
 
 <span class="kw">impl </span>DisplayAs <span class="kw">for </span>RangeSelectExec {
@@ -1228,6 +1360,8 @@
             schema: <span class="self">self</span>.schema.clone(),
             by_schema: <span class="self">self</span>.by_schema.clone(),
             metric: <span class="self">self</span>.metric.clone(),
+            schema_before_project: <span class="self">self</span>.schema_before_project.clone(),
+            schema_project: <span class="self">self</span>.schema_project.clone(),
         }))
     }
 
@@ -1266,6 +1400,8 @@
             row_converter,
             modify_map: HashMap::new(),
             metric: baseline_metric,
+            schema_project: <span class="self">self</span>.schema_project.clone(),
+            schema_before_project: <span class="self">self</span>.schema_before_project.clone(),
         }))
     }
 
@@ -1302,6 +1438,8 @@
     <span class="doccomment">/// The number of rows of the final output
     </span>output_num_rows: usize,
     metric: BaselineMetrics,
+    schema_project: <span class="prelude-ty">Option</span>&lt;Vec&lt;usize&gt;&gt;,
+    schema_before_project: SchemaRef,
 }
 
 <span class="kw">struct </span>SeriesState {
@@ -1465,11 +1603,20 @@
             columns.push(ScalarValue::iter_to_array(column_scalar)<span class="question-mark">?</span>);
         }
         <span class="kw">let </span>ts_column = ts_builder.finish();
-        <span class="comment">// output schema follow the order of range expr | time index | by columns
-        </span><span class="kw">let </span>ts_column = compute::cast(<span class="kw-2">&amp;</span>ts_column, <span class="self">self</span>.schema.field(columns.len()).data_type())<span class="question-mark">?</span>;
+        <span class="comment">// output schema before project follow the order of range expr | time index | by columns
+        </span><span class="kw">let </span>ts_column = compute::cast(
+            <span class="kw-2">&amp;</span>ts_column,
+            <span class="self">self</span>.schema_before_project.field(columns.len()).data_type(),
+        )<span class="question-mark">?</span>;
         columns.push(ts_column);
         columns.extend(<span class="self">self</span>.row_converter.convert_rows(by_rows)<span class="question-mark">?</span>);
-        <span class="prelude-val">Ok</span>(RecordBatch::try_new(<span class="self">self</span>.schema(), columns)<span class="question-mark">?</span>)
+        <span class="kw">let </span>output = RecordBatch::try_new(<span class="self">self</span>.schema_before_project.clone(), columns)<span class="question-mark">?</span>;
+        <span class="kw">let </span>project_output = <span class="kw">if let </span><span class="prelude-val">Some</span>(project) = <span class="kw-2">&amp;</span><span class="self">self</span>.schema_project {
+            output.project(project)<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            output
+        };
+        <span class="prelude-val">Ok</span>(project_output)
     }
 }
 
@@ -1579,6 +1726,12 @@
         expected: String,
     ) {
         <span class="kw">let </span>memory_exec = Arc::new(prepare_test_data());
+        <span class="kw">let </span>schema = Arc::new(Schema::new(<span class="macro">vec!</span>[
+            Field::new(<span class="string">&quot;MIN(value)&quot;</span>, DataType::Int64, <span class="bool-val">true</span>),
+            Field::new(<span class="string">&quot;MAX(value)&quot;</span>, DataType::Int64, <span class="bool-val">true</span>),
+            Field::new(TIME_INDEX_COLUMN, TimestampMillisecondType::DATA_TYPE, <span class="bool-val">true</span>),
+            Field::new(<span class="string">&quot;host&quot;</span>, DataType::Utf8, <span class="bool-val">true</span>),
+        ]));
         <span class="kw">let </span>range_select_exec = Arc::new(RangeSelectExec {
             input: memory_exec,
             range_exec: <span class="macro">vec!</span>[
@@ -1604,12 +1757,9 @@
             align,
             by: <span class="macro">vec!</span>[Arc::new(Column::new(<span class="string">&quot;host&quot;</span>, <span class="number">2</span>))],
             time_index: TIME_INDEX_COLUMN.to_string(),
-            schema: Arc::new(Schema::new(<span class="macro">vec!</span>[
-                Field::new(<span class="string">&quot;MIN(value)&quot;</span>, DataType::Int64, <span class="bool-val">true</span>),
-                Field::new(<span class="string">&quot;MAX(value)&quot;</span>, DataType::Int64, <span class="bool-val">true</span>),
-                Field::new(TIME_INDEX_COLUMN, TimestampMillisecondType::DATA_TYPE, <span class="bool-val">true</span>),
-                Field::new(<span class="string">&quot;host&quot;</span>, DataType::Utf8, <span class="bool-val">true</span>),
-            ])),
+            schema: schema.clone(),
+            schema_before_project: schema.clone(),
+            schema_project: <span class="prelude-val">None</span>,
             by_schema: Arc::new(Schema::new(<span class="macro">vec!</span>[Field::new(<span class="string">&quot;host&quot;</span>, DataType::Utf8, <span class="bool-val">true</span>)])),
             metric: ExecutionPlanMetricsSet::new(),
         });

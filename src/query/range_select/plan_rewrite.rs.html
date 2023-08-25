@@ -474,16 +474,6 @@
 <a href="#474" id="474">474</a>
 <a href="#475" id="475">475</a>
 <a href="#476" id="476">476</a>
-<a href="#477" id="477">477</a>
-<a href="#478" id="478">478</a>
-<a href="#479" id="479">479</a>
-<a href="#480" id="480">480</a>
-<a href="#481" id="481">481</a>
-<a href="#482" id="482">482</a>
-<a href="#483" id="483">483</a>
-<a href="#484" id="484">484</a>
-<a href="#485" id="485">485</a>
-<a href="#486" id="486">486</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -691,28 +681,18 @@
                 <span class="kw">if </span>range_rewriter.by.is_empty() {
                     range_rewriter.by = default_by;
                 }
+                <span class="kw">let </span>range_select = RangeSelect::try_new(
+                    input.clone(),
+                    range_rewriter.range_fn,
+                    range_rewriter.align,
+                    time_index,
+                    range_rewriter.by,
+                    <span class="kw-2">&amp;</span>new_expr,
+                )<span class="question-mark">?</span>;
+                <span class="kw">let </span>no_additional_project = range_select.schema_project.is_some();
                 <span class="kw">let </span>range_plan = LogicalPlan::Extension(Extension {
-                    node: Arc::new(RangeSelect::try_new(
-                        input.clone(),
-                        range_rewriter.range_fn,
-                        range_rewriter.align,
-                        time_index,
-                        range_rewriter.by,
-                    )<span class="question-mark">?</span>),
+                    node: Arc::new(range_select),
                 });
-                <span class="comment">// If the result of the project plan happens to be the schema of the range plan, no project plan is required
-                // that need project is identical to range plan schema.
-                // 1. all exprs in project must belong to range schema
-                // 2. range schema and project exprs must have same size
-                </span><span class="kw">let </span>all_in_range_schema = new_expr.iter().all(|expr| {
-                    <span class="kw">if let </span>Expr::Column(column) = expr {
-                        range_plan.schema().has_column(column)
-                    } <span class="kw">else </span>{
-                        <span class="bool-val">false
-                    </span>}
-                });
-                <span class="kw">let </span>no_additional_project =
-                    all_in_range_schema &amp;&amp; new_expr.len() == range_plan.schema().fields().len();
                 <span class="kw">if </span>no_additional_project {
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(range_plan))
                 } <span class="kw">else </span>{
@@ -903,7 +883,7 @@
     </span><span class="kw">async fn </span>range_no_project() {
         <span class="kw">let </span>query = <span class="string">r#&quot;SELECT timestamp, tag_0, tag_1, avg(field_0 + field_1) RANGE &#39;5m&#39; FROM test ALIGN &#39;1h&#39; by (tag_0,tag_1);&quot;#</span>;
         <span class="kw">let </span>expected = String::from(
-            <span class="string">&quot;RangeSelect: range_exprs=[RangeFn { expr:AVG(test.field_0 + test.field_1) range:300s fill: }], align=3600s time_index=timestamp [AVG(test.field_0 + test.field_1):Float64;N, timestamp:Timestamp(Millisecond, None), tag_0:Utf8, tag_1:Utf8]\
+            <span class="string">&quot;RangeSelect: range_exprs=[RangeFn { expr:AVG(test.field_0 + test.field_1) range:300s fill: }], align=3600s time_index=timestamp [timestamp:Timestamp(Millisecond, None), tag_0:Utf8, tag_1:Utf8, AVG(test.field_0 + test.field_1):Float64;N]\
             \n  TableScan: test [tag_0:Utf8, tag_1:Utf8, tag_2:Utf8, tag_3:Utf8, tag_4:Utf8, timestamp:Timestamp(Millisecond, None), field_0:Float64;N, field_1:Float64;N, field_2:Float64;N, field_3:Float64;N, field_4:Float64;N]&quot;
         </span>);
         query_plan_compare(query, expected).<span class="kw">await</span>;
