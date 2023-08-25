@@ -806,6 +806,21 @@
 <a href="#806" id="806">806</a>
 <a href="#807" id="807">807</a>
 <a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -823,6 +838,7 @@
 </span><span class="kw">use </span>std::collections::btree_map::Entry;
 <span class="kw">use </span>std::collections::{BTreeMap, Bound, HashSet};
 <span class="kw">use </span>std::fmt::{Debug, Formatter};
+<span class="kw">use </span>std::sync::atomic::{AtomicU32, Ordering};
 <span class="kw">use </span>std::sync::{Arc, RwLock};
 
 <span class="kw">use </span>api::v1::OpType;
@@ -839,12 +855,26 @@
 <span class="kw">use </span>store_api::storage::{ColumnId, ScanRequest};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{ComputeArrowSnafu, ConvertVectorSnafu, PrimaryKeyLengthMismatchSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::memtable::{BoxedBatchIterator, KeyValues, Memtable, MemtableId};
+<span class="kw">use </span><span class="kw">crate</span>::memtable::{
+    BoxedBatchIterator, KeyValues, Memtable, MemtableBuilder, MemtableId, MemtableRef,
+};
 <span class="kw">use </span><span class="kw">crate</span>::read::{Batch, BatchBuilder, BatchColumn};
 <span class="kw">use </span><span class="kw">crate</span>::row_converter::{McmpRowCodec, RowCodec, SortField};
 
 <span class="doccomment">/// Initial vector builder capacity.
 </span><span class="kw">const </span>INITIAL_BUILDER_CAPACITY: usize = <span class="number">32</span>;
+
+<span class="attr">#[derive(Debug, Default)]
+</span><span class="kw">pub struct </span>TimeSeriesMemtableBuilder {
+    id: AtomicU32,
+}
+
+<span class="kw">impl </span>MemtableBuilder <span class="kw">for </span>TimeSeriesMemtableBuilder {
+    <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>RegionMetadataRef) -&gt; MemtableRef {
+        <span class="kw">let </span>id = <span class="self">self</span>.id.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+        Arc::new(TimeSeriesMemtable::new(metadata.clone(), id))
+    }
+}
 
 <span class="doccomment">/// Memtable implementation that groups rows by their primary key.
 </span><span class="kw">pub struct </span>TimeSeriesMemtable {
@@ -855,7 +885,7 @@
 }
 
 <span class="kw">impl </span>TimeSeriesMemtable {
-    <span class="kw">pub fn </span>new(region_metadata: RegionMetadataRef, id: MemtableId) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub fn </span>new(region_metadata: RegionMetadataRef, id: MemtableId) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>row_codec = McmpRowCodec::new(
             region_metadata
                 .primary_key_columns()
@@ -863,12 +893,12 @@
                 .collect(),
         );
         <span class="kw">let </span>series_set = SeriesSet::new(region_metadata.clone());
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+        <span class="self">Self </span>{
             id,
             region_metadata,
             series_set,
             row_codec,
-        })
+        }
     }
 }
 
@@ -1557,7 +1587,7 @@
         common_telemetry::init_default_ut_logging();
         <span class="kw">let </span>schema = schema_for_test();
         <span class="kw">let </span>kvs = build_key_values(<span class="kw-2">&amp;</span>schema, <span class="string">&quot;hello&quot;</span>.to_string(), <span class="number">42</span>, <span class="number">100</span>);
-        <span class="kw">let </span>memtable = TimeSeriesMemtable::new(schema, <span class="number">42</span>).unwrap();
+        <span class="kw">let </span>memtable = TimeSeriesMemtable::new(schema, <span class="number">42</span>);
         memtable.write(<span class="kw-2">&amp;</span>kvs).unwrap();
 
         <span class="kw">let </span>expected_ts = kvs
@@ -1588,7 +1618,7 @@
         common_telemetry::init_default_ut_logging();
         <span class="kw">let </span>schema = schema_for_test();
         <span class="kw">let </span>kvs = build_key_values(<span class="kw-2">&amp;</span>schema, <span class="string">&quot;hello&quot;</span>.to_string(), <span class="number">42</span>, <span class="number">100</span>);
-        <span class="kw">let </span>memtable = TimeSeriesMemtable::new(schema, <span class="number">42</span>).unwrap();
+        <span class="kw">let </span>memtable = TimeSeriesMemtable::new(schema, <span class="number">42</span>);
         memtable.write(<span class="kw-2">&amp;</span>kvs).unwrap();
 
         <span class="kw">let </span>iter = memtable.iter(ScanRequest {

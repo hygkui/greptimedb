@@ -436,6 +436,8 @@
 <a href="#436" id="436">436</a>
 <a href="#437" id="437">437</a>
 <a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -462,6 +464,7 @@
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_runtime::JoinHandle;
 <span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>futures::future::try_join_all;
@@ -474,7 +477,8 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{JoinSnafu, <span class="prelude-ty">Result</span>, WorkerStoppedSnafu};
-<span class="kw">use </span><span class="kw">crate</span>::memtable::{DefaultMemtableBuilder, MemtableBuilderRef};
+<span class="kw">use </span><span class="kw">crate</span>::memtable::time_series::TimeSeriesMemtableBuilder;
+<span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
 <span class="kw">use </span><span class="kw">crate</span>::region::{MitoRegionRef, RegionMap, RegionMapRef};
 <span class="kw">use </span><span class="kw">crate</span>::request::{RegionTask, RequestBody, SenderWriteRequest, WorkerRequest};
 <span class="kw">use </span><span class="kw">crate</span>::wal::Wal;
@@ -626,7 +630,7 @@
             wal: Wal::new(log_store),
             object_store,
             running: running.clone(),
-            memtable_builder: Arc::new(DefaultMemtableBuilder::default()),
+            memtable_builder: Arc::new(TimeSeriesMemtableBuilder::default()),
         };
         <span class="kw">let </span>handle = common_runtime::spawn_write(<span class="kw">async move </span>{
             worker_thread.run().<span class="kw">await</span>;
@@ -811,7 +815,7 @@
         }
 
         <span class="kw">for </span>task <span class="kw">in </span>ddl_tasks {
-            <span class="kw">let </span>res: std::result::Result&lt;(), <span class="kw">crate</span>::error::Error&gt; = <span class="kw">match </span>task.body {
+            <span class="kw">let </span>res: std::result::Result&lt;Output, <span class="kw">crate</span>::error::Error&gt; = <span class="kw">match </span>task.body {
                 RequestBody::Create(req) =&gt; <span class="self">self</span>.handle_create_request(task.region_id, req).<span class="kw">await</span>,
                 RequestBody::Open(req) =&gt; <span class="self">self</span>.handle_open_request(task.region_id, req).<span class="kw">await</span>,
                 RequestBody::Close(<span class="kw">_</span>) =&gt; <span class="self">self</span>.handle_close_request(task.region_id).<span class="kw">await</span>,
