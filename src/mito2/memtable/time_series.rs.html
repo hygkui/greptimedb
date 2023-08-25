@@ -729,6 +729,83 @@
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
 <a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -744,20 +821,24 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::collections::btree_map::Entry;
-<span class="kw">use </span>std::collections::{BTreeMap, Bound};
+<span class="kw">use </span>std::collections::{BTreeMap, Bound, HashSet};
 <span class="kw">use </span>std::fmt::{Debug, Formatter};
 <span class="kw">use </span>std::sync::{Arc, RwLock};
 
 <span class="kw">use </span>api::v1::OpType;
+<span class="kw">use </span>datatypes::arrow;
+<span class="kw">use </span>datatypes::arrow::array::ArrayRef;
 <span class="kw">use </span>datatypes::data_type::DataType;
 <span class="kw">use </span>datatypes::prelude::{MutableVector, ScalarVectorBuilder, Vector, VectorRef};
 <span class="kw">use </span>datatypes::value::ValueRef;
-<span class="kw">use </span>datatypes::vectors::{UInt64Vector, UInt64VectorBuilder, UInt8Vector, UInt8VectorBuilder};
+<span class="kw">use </span>datatypes::vectors::{
+    Helper, UInt64Vector, UInt64VectorBuilder, UInt8Vector, UInt8VectorBuilder,
+};
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
-<span class="kw">use </span>store_api::storage::ScanRequest;
+<span class="kw">use </span>store_api::storage::{ColumnId, ScanRequest};
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{CompactValuesSnafu, PrimaryKeyLengthMismatchSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{ComputeArrowSnafu, ConvertVectorSnafu, PrimaryKeyLengthMismatchSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{BoxedBatchIterator, KeyValues, Memtable, MemtableId};
 <span class="kw">use </span><span class="kw">crate</span>::read::{Batch, BatchBuilder, BatchColumn};
 <span class="kw">use </span><span class="kw">crate</span>::row_converter::{McmpRowCodec, RowCodec, SortField};
@@ -821,13 +902,19 @@
     }
 
     <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>, req: ScanRequest) -&gt; BoxedBatchIterator {
-        <span class="kw">let </span>_projection = req.projection.map(|p| {
-            p.iter()
+        <span class="kw">let </span>projection = <span class="kw">if let </span><span class="prelude-val">Some</span>(projection) = <span class="kw-2">&amp;</span>req.projection {
+            projection
+                .iter()
                 .map(|idx| <span class="self">self</span>.region_metadata.column_metadatas[<span class="kw-2">*</span>idx].column_id)
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-        });
+                .collect()
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.region_metadata
+                .field_columns()
+                .map(|c| c.column_id)
+                .collect()
+        };
 
-        Box::new(<span class="self">self</span>.series_set.iter_series())
+        Box::new(<span class="self">self</span>.series_set.iter_series(projection))
     }
 }
 
@@ -866,10 +953,11 @@
     }
 
     <span class="doccomment">/// Iterates all series in [SeriesSet].
-    </span><span class="kw">fn </span>iter_series(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter {
+    </span><span class="kw">fn </span>iter_series(<span class="kw-2">&amp;</span><span class="self">self</span>, projection: HashSet&lt;ColumnId&gt;) -&gt; Iter {
         Iter {
             metadata: <span class="self">self</span>.region_metadata.clone(),
             series: <span class="self">self</span>.series.clone(),
+            projection,
             last_key: <span class="prelude-val">None</span>,
         }
     }
@@ -878,6 +966,7 @@
 <span class="kw">struct </span>Iter {
     metadata: RegionMetadataRef,
     series: Arc&lt;SeriesRwLockMap&gt;,
+    projection: HashSet&lt;ColumnId&gt;,
     last_key: <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;,
 }
 
@@ -896,7 +985,7 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>((primary_key, series)) = range.next() {
             <span class="self">self</span>.last_key = <span class="prelude-val">Some</span>(primary_key.clone());
             <span class="kw">let </span>values = series.write().unwrap().compact(<span class="kw-2">&amp;</span><span class="self">self</span>.metadata);
-            <span class="prelude-val">Some</span>(values.and_then(|v| v.to_batch(primary_key, <span class="kw-2">&amp;</span><span class="self">self</span>.metadata)))
+            <span class="prelude-val">Some</span>(values.and_then(|v| v.to_batch(primary_key, <span class="kw-2">&amp;</span><span class="self">self</span>.metadata, <span class="kw-2">&amp;</span><span class="self">self</span>.projection)))
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
@@ -968,39 +1057,36 @@
         <span class="self">self</span>.freeze(region_metadata);
 
         <span class="kw">let </span><span class="kw-2">mut </span>frozen = <span class="self">self</span>.frozen.clone();
+
+        <span class="comment">// Each series must contain at least one row
+        </span><span class="macro">debug_assert!</span>(!frozen.is_empty());
+
         <span class="kw">let </span>values = <span class="kw">if </span>frozen.len() == <span class="number">1 </span>{
             frozen.pop().unwrap()
         } <span class="kw">else </span>{
             <span class="comment">// TODO(hl): We should keep track of min/max timestamps for each values and avoid
             // cloning and sorting when values do not overlap with each other.
 
-            </span><span class="kw">let </span>total_len: usize = frozen.iter().map(|v| v.timestamp.len()).sum();
-            <span class="kw">let </span><span class="kw-2">mut </span>builder = ValueBuilder::new(region_metadata, total_len);
+            </span><span class="kw">let </span>column_size = frozen[<span class="number">0</span>].fields.len() + <span class="number">3</span>;
 
-            <span class="kw">for </span>v <span class="kw">in </span>frozen {
-                <span class="kw">let </span>len = v.timestamp.len();
-                builder
-                    .timestamp
-                    .extend_slice_of(<span class="kw-2">&amp;*</span>v.timestamp, <span class="number">0</span>, len)
-                    .context(CompactValuesSnafu)<span class="question-mark">?</span>;
-                builder
-                    .sequence
-                    .extend_slice_of(<span class="kw-2">&amp;*</span>v.sequence, <span class="number">0</span>, len)
-                    .context(CompactValuesSnafu)<span class="question-mark">?</span>;
-
-                builder
-                    .op_type
-                    .extend_slice_of(<span class="kw-2">&amp;*</span>v.op_type, <span class="number">0</span>, len)
-                    .context(CompactValuesSnafu)<span class="question-mark">?</span>;
-
-                <span class="kw">for </span>(idx, f) <span class="kw">in </span>v.fields.iter().enumerate() {
-                    builder.fields[idx]
-                        .extend_slice_of(<span class="kw-2">&amp;**</span>f, <span class="number">0</span>, len)
-                        .context(CompactValuesSnafu)<span class="question-mark">?</span>;
-                }
+            <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {
+                <span class="macro">debug_assert!</span>(frozen
+                    .iter()
+                    .zip(frozen.iter().skip(<span class="number">1</span>))
+                    .all(|(prev, next)| { prev.fields.len() == next.fields.len() }));
             }
 
-            <span class="kw">let </span>values = Values::from(builder);
+            <span class="kw">let </span>arrays = frozen.iter().map(|v| v.columns()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            <span class="kw">let </span>concatenated = (<span class="number">0</span>..column_size)
+                .map(|i| {
+                    <span class="kw">let </span>to_concat = arrays.iter().map(|a| a[i].as_ref()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+                    arrow::compute::concat(<span class="kw-2">&amp;</span>to_concat)
+                })
+                .collect::&lt;std::result::Result&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()
+                .context(ComputeArrowSnafu)<span class="question-mark">?</span>;
+
+            <span class="macro">debug_assert_eq!</span>(concatenated.len(), column_size);
+            <span class="kw">let </span>values = Values::from_columns(<span class="kw-2">&amp;</span>concatenated)<span class="question-mark">?</span>;
             <span class="self">self</span>.frozen = <span class="macro">vec!</span>[values.clone()];
             values
         };
@@ -1053,14 +1139,14 @@
 
     <span class="doccomment">/// Returns the length of [ValueBuilder]
     </span><span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="kw">let </span>timestamp_len = <span class="self">self</span>.timestamp.len();
-        <span class="macro">debug_assert_eq!</span>(timestamp_len, <span class="self">self</span>.op_type.len());
-        <span class="macro">debug_assert_eq!</span>(timestamp_len, <span class="self">self</span>.sequence.len());
-        timestamp_len
+        <span class="kw">let </span>sequence_len = <span class="self">self</span>.sequence.len();
+        <span class="macro">debug_assert_eq!</span>(sequence_len, <span class="self">self</span>.op_type.len());
+        <span class="macro">debug_assert_eq!</span>(sequence_len, <span class="self">self</span>.timestamp.len());
+        sequence_len
     }
 }
 
-<span class="doccomment">/// [Values] holds an immutable vectors of field columns, including `sequence` and `op_typee`.
+<span class="doccomment">/// [Values] holds an immutable vectors of field columns, including `sequence` and `op_type`.
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">struct </span>Values {
     timestamp: VectorRef,
@@ -1072,7 +1158,12 @@
 <span class="kw">impl </span>Values {
     <span class="doccomment">/// Converts [Values] to `Batch`, sorts the batch according to `timestamp, sequence` desc and
     /// keeps only the latest row for the same timestamp.
-    </span><span class="kw">pub fn </span>to_batch(<span class="kw-2">&amp;</span><span class="self">self</span>, primary_key: <span class="kw-2">&amp;</span>[u8], metadata: <span class="kw-2">&amp;</span>RegionMetadataRef) -&gt; <span class="prelude-ty">Result</span>&lt;Batch&gt; {
+    </span><span class="kw">pub fn </span>to_batch(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        primary_key: <span class="kw-2">&amp;</span>[u8],
+        metadata: <span class="kw-2">&amp;</span>RegionMetadataRef,
+        projection: <span class="kw-2">&amp;</span>HashSet&lt;ColumnId&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Batch&gt; {
         <span class="kw">let </span>builder = BatchBuilder::with_required_columns(
             primary_key.to_vec(),
             <span class="self">self</span>.timestamp.clone(),
@@ -1083,15 +1174,45 @@
         <span class="kw">let </span>fields = metadata
             .field_columns()
             .zip(<span class="self">self</span>.fields.iter())
-            .map(|(c, f)| BatchColumn {
-                column_id: c.column_id,
-                data: f.clone(),
+            .filter_map(|(c, f)| {
+                projection.get(<span class="kw-2">&amp;</span>c.column_id).map(|c| BatchColumn {
+                    column_id: <span class="kw-2">*</span>c,
+                    data: f.clone(),
+                })
             })
             .collect();
 
         <span class="kw">let </span><span class="kw-2">mut </span>batch = builder.with_fields(fields).build()<span class="question-mark">?</span>;
         batch.sort_and_dedup()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(batch)
+    }
+
+    <span class="doccomment">/// Returns a vector of all columns converted to arrow [Array] in [Values].
+    </span><span class="kw">fn </span>columns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;ArrayRef&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(<span class="number">3 </span>+ <span class="self">self</span>.fields.len());
+        res.push(<span class="self">self</span>.timestamp.to_arrow_array());
+        res.push(<span class="self">self</span>.sequence.to_arrow_array());
+        res.push(<span class="self">self</span>.op_type.to_arrow_array());
+        res.extend(<span class="self">self</span>.fields.iter().map(|f| f.to_arrow_array()));
+        res
+    }
+
+    <span class="doccomment">/// Builds a new [Values] instance from columns.
+    </span><span class="kw">fn </span>from_columns(cols: <span class="kw-2">&amp;</span>[ArrayRef]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="macro">debug_assert!</span>(cols.len() &gt;= <span class="number">3</span>);
+        <span class="kw">let </span>timestamp = Helper::try_into_vector(<span class="kw-2">&amp;</span>cols[<span class="number">0</span>]).context(ConvertVectorSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>sequence =
+            Arc::new(UInt64Vector::try_from_arrow_array(<span class="kw-2">&amp;</span>cols[<span class="number">1</span>]).context(ConvertVectorSnafu)<span class="question-mark">?</span>);
+        <span class="kw">let </span>op_type =
+            Arc::new(UInt8Vector::try_from_arrow_array(<span class="kw-2">&amp;</span>cols[<span class="number">2</span>]).context(ConvertVectorSnafu)<span class="question-mark">?</span>);
+        <span class="kw">let </span>fields = Helper::try_into_vectors(<span class="kw-2">&amp;</span>cols[<span class="number">3</span>..]).context(ConvertVectorSnafu)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            timestamp,
+            sequence,
+            op_type,
+            fields,
+        })
     }
 }
 
@@ -1276,7 +1397,9 @@
             fields,
         };
 
-        <span class="kw">let </span>batch = values.to_batch(<span class="string">b&quot;test&quot;</span>, <span class="kw-2">&amp;</span>schema).unwrap();
+        <span class="kw">let </span>batch = values
+            .to_batch(<span class="string">b&quot;test&quot;</span>, <span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>].into_iter().collect())
+            .unwrap();
         check_value(
             <span class="kw-2">&amp;</span>batch,
             <span class="macro">vec!</span>[
@@ -1312,7 +1435,7 @@
         )
     }
 
-    <span class="kw">fn </span>build_key_values(schema: <span class="kw-2">&amp;</span>RegionMetadataRef, len: usize) -&gt; KeyValues {
+    <span class="kw">fn </span>build_key_values(schema: <span class="kw-2">&amp;</span>RegionMetadataRef, k0: String, k1: i64, len: usize) -&gt; KeyValues {
         <span class="kw">let </span>column_schema = schema
             .column_metadatas
             .iter()
@@ -1329,10 +1452,10 @@
             .map(|i| Row {
                 values: <span class="macro">vec!</span>[
                     api::v1::Value {
-                        value_data: <span class="prelude-val">Some</span>(ValueData::StringValue(i.to_string())),
+                        value_data: <span class="prelude-val">Some</span>(ValueData::StringValue(k0.clone())),
                     },
                     api::v1::Value {
-                        value_data: <span class="prelude-val">Some</span>(ValueData::I64Value(i <span class="kw">as </span>i64)),
+                        value_data: <span class="prelude-val">Some</span>(ValueData::I64Value(k1)),
                     },
                     api::v1::Value {
                         value_data: <span class="prelude-val">Some</span>(ValueData::TsMillisecondValue(i <span class="kw">as </span>i64)),
@@ -1433,7 +1556,7 @@
     </span><span class="kw">fn </span>test_memtable() {
         common_telemetry::init_default_ut_logging();
         <span class="kw">let </span>schema = schema_for_test();
-        <span class="kw">let </span>kvs = build_key_values(<span class="kw-2">&amp;</span>schema, <span class="number">100</span>);
+        <span class="kw">let </span>kvs = build_key_values(<span class="kw-2">&amp;</span>schema, <span class="string">&quot;hello&quot;</span>.to_string(), <span class="number">42</span>, <span class="number">100</span>);
         <span class="kw">let </span>memtable = TimeSeriesMemtable::new(schema, <span class="number">42</span>).unwrap();
         memtable.write(<span class="kw-2">&amp;</span>kvs).unwrap();
 
@@ -1458,6 +1581,37 @@
             .map(|v| v.unwrap().<span class="number">0</span>.value())
             .collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="macro">assert_eq!</span>(expected_ts, read);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_memtable_projection() {
+        common_telemetry::init_default_ut_logging();
+        <span class="kw">let </span>schema = schema_for_test();
+        <span class="kw">let </span>kvs = build_key_values(<span class="kw-2">&amp;</span>schema, <span class="string">&quot;hello&quot;</span>.to_string(), <span class="number">42</span>, <span class="number">100</span>);
+        <span class="kw">let </span>memtable = TimeSeriesMemtable::new(schema, <span class="number">42</span>).unwrap();
+        memtable.write(<span class="kw-2">&amp;</span>kvs).unwrap();
+
+        <span class="kw">let </span>iter = memtable.iter(ScanRequest {
+            projection: <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="number">3</span>]), <span class="comment">// k0, k1, ts, v0, v1, only take v0
+            </span>..Default::default()
+        });
+
+        <span class="kw">let </span><span class="kw-2">mut </span>v0_all = <span class="macro">vec!</span>[];
+
+        <span class="kw">for </span>res <span class="kw">in </span>iter {
+            <span class="kw">let </span>batch = res.unwrap();
+            <span class="macro">assert_eq!</span>(<span class="number">1</span>, batch.fields().len());
+            <span class="kw">let </span>v0 = batch
+                .fields()
+                .get(<span class="number">0</span>)
+                .unwrap()
+                .data
+                .as_any()
+                .downcast_ref::&lt;Int64Vector&gt;()
+                .unwrap();
+            v0_all.extend(v0.iter_data().map(|v| v.unwrap()));
+        }
+        <span class="macro">assert_eq!</span>((<span class="number">0</span>..<span class="number">100i64</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), v0_all);
     }
 }
 </code></pre></div></section></main></body></html>
