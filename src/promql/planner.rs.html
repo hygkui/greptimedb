@@ -2071,6 +2071,27 @@
 <a href="#2071" id="2071">2071</a>
 <a href="#2072" id="2072">2072</a>
 <a href="#2073" id="2073">2073</a>
+<a href="#2074" id="2074">2074</a>
+<a href="#2075" id="2075">2075</a>
+<a href="#2076" id="2076">2076</a>
+<a href="#2077" id="2077">2077</a>
+<a href="#2078" id="2078">2078</a>
+<a href="#2079" id="2079">2079</a>
+<a href="#2080" id="2080">2080</a>
+<a href="#2081" id="2081">2081</a>
+<a href="#2082" id="2082">2082</a>
+<a href="#2083" id="2083">2083</a>
+<a href="#2084" id="2084">2084</a>
+<a href="#2085" id="2085">2085</a>
+<a href="#2086" id="2086">2086</a>
+<a href="#2087" id="2087">2087</a>
+<a href="#2088" id="2088">2088</a>
+<a href="#2089" id="2089">2089</a>
+<a href="#2090" id="2090">2090</a>
+<a href="#2091" id="2091">2091</a>
+<a href="#2092" id="2092">2092</a>
+<a href="#2093" id="2093">2093</a>
+<a href="#2094" id="2094">2094</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2170,6 +2191,16 @@
             lookback_delta: stmt.lookback_delta.as_millis() <span class="kw">as _</span>,
             ..Default::default()
         }
+    }
+
+    <span class="doccomment">/// Reset all planner states
+    </span><span class="kw">fn </span>reset(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.table_name = <span class="prelude-val">None</span>;
+        <span class="self">self</span>.time_index_column = <span class="prelude-val">None</span>;
+        <span class="self">self</span>.field_columns = <span class="macro">vec!</span>[];
+        <span class="self">self</span>.tag_columns = <span class="macro">vec!</span>[];
+        <span class="self">self</span>.field_column_matcher = <span class="prelude-val">None</span>;
+        <span class="self">self</span>.range = <span class="prelude-val">None</span>;
     }
 }
 
@@ -2546,6 +2577,9 @@
     <span class="doccomment">/// Extract metric name from `__name__` matcher and set it into [PromPlannerContext].
     /// Returns a new [Matchers] that doesn&#39;t contains metric name matcher.
     ///
+    /// Each call to this function means new selector is started. Thus the context will be reset
+    /// at first.
+    ///
     /// Name rule:
     /// - if `name` is some, then the matchers MUST NOT contains `__name__` matcher.
     /// - if `name` is none, then the matchers MAY contains NONE OR MULTIPLE `__name__` matchers.
@@ -2554,6 +2588,7 @@
         label_matchers: <span class="kw-2">&amp;</span>Matchers,
         name: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Matchers&gt; {
+        <span class="self">self</span>.ctx.reset();
         <span class="kw">let </span>metric_name;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = name.clone() {
             metric_name = <span class="prelude-val">Some</span>(name);
@@ -2673,7 +2708,14 @@
                 <span class="kw">let _ </span>= result_set.remove(<span class="kw-2">&amp;</span>col);
             }
 
-            <span class="self">self</span>.ctx.field_columns = result_set.iter().cloned().collect();
+            <span class="comment">// mask the field columns in context using computed result set
+            </span><span class="self">self</span>.ctx.field_columns = <span class="self">self
+                </span>.ctx
+                .field_columns
+                .drain(..)
+                .filter(|col| result_set.contains(col))
+                .collect();
+
             <span class="kw">let </span>exprs = result_set
                 .into_iter()
                 .map(|col| DfExpr::Column(col.into()))
