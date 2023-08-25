@@ -263,6 +263,7 @@
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
 <a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -390,7 +391,8 @@
             .map_err(|<span class="kw">_</span>| InvalidFlumeSenderSnafu {}.build())
     }
 
-    <span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>, await_termination: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="doccomment">/// if await_termination is true, scheduler will wait all tasks finished before stopping
+    </span><span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>, await_termination: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">ensure!</span>(
             <span class="self">self</span>.state.load(Ordering::Relaxed) == STATE_RUNNING,
             InvalidSchedulerStateSnafu
@@ -500,7 +502,7 @@
         <span class="kw">let </span>local_stop = local.clone();
         tokio::spawn(<span class="kw">async move </span>{
             tokio::time::sleep(Duration::from_millis(<span class="number">5</span>)).<span class="kw">await</span>;
-            local_stop.stop(<span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
+            local_stop.stop(<span class="bool-val">true</span>).<span class="kw">await</span>.unwrap();
             barrier_clone.wait().<span class="kw">await</span>;
         });
 
