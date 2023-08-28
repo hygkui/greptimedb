@@ -183,6 +183,11 @@
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -267,6 +272,11 @@
     <span class="doccomment">/// Handles the scan `request` and returns a [Scanner] for the `request`.
     </span><span class="kw">fn </span>handle_query(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, request: ScanRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Scanner&gt; {
         <span class="self">self</span>.inner.handle_query(region_id, request)
+    }
+
+    <span class="attr">#[cfg(test)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_region(<span class="kw-2">&amp;</span><span class="self">self</span>, id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::region::MitoRegionRef&gt; {
+        <span class="self">self</span>.inner.workers.get_region(id)
     }
 }
 

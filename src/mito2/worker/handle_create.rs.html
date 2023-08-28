@@ -74,6 +74,7 @@
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -95,6 +96,7 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
+<span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::metadata::RegionMetadataBuilder;
 <span class="kw">use </span>store_api::region_request::RegionCreateRequest;
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -103,7 +105,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::region::opener::RegionOpener;
 <span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
 
-<span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
+<span class="kw">impl</span>&lt;S: LogStore&gt; RegionWorkerLoop&lt;S&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_create_request(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         region_id: RegionId,

@@ -805,9 +805,7 @@
 
         <span class="self">self</span>.handle_ddl_requests(ddl_requests).<span class="kw">await</span>;
     }
-}
 
-<span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
     <span class="doccomment">/// Takes and handles all ddl requests.
     </span><span class="kw">async fn </span>handle_ddl_requests(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ddl_tasks: Vec&lt;RegionTask&gt;) {
         <span class="kw">if </span>ddl_tasks.is_empty() {
@@ -832,7 +830,9 @@
             }
         }
     }
+}
 
+<span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
     <span class="comment">// Clean up the worker.
     </span><span class="kw">async fn </span>clean(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="comment">// Closes remaining regions.

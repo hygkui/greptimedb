@@ -220,8 +220,8 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) memtables: MemtableVersionRef,
     <span class="doccomment">/// SSTs of the region.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) ssts: SstVersionRef,
-    <span class="doccomment">/// Inclusive max sequence of flushed data.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) flushed_sequence: SequenceNumber,
+    <span class="doccomment">/// Inclusive max WAL entry id of flushed data.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) flushed_entry_id: EntryId,
     <span class="comment">// TODO(yingwen): RegionOptions.
 </span>}
 
@@ -246,7 +246,7 @@
             metadata: <span class="self">self</span>.metadata,
             memtables: Arc::new(MemtableVersion::new(<span class="self">self</span>.mutable)),
             ssts: Arc::new(SstVersion::new()),
-            flushed_sequence: <span class="number">0</span>,
+            flushed_entry_id: <span class="number">0</span>,
         }
     }
 }
