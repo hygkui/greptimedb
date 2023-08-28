@@ -600,10 +600,6 @@
 <a href="#600" id="600">600</a>
 <a href="#601" id="601">601</a>
 <a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -851,7 +847,7 @@
 }
 
 <span class="kw">impl </span>MemoryCatalogManager {
-    <span class="doccomment">/// Create a manager with some default setups
+    <span class="doccomment">/// Creates a manager with some default setups
     /// (e.g. default catalog/schema and information schema)
     </span><span class="kw">pub fn </span>with_default_setup() -&gt; Arc&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>manager = Arc::new(<span class="self">Self </span>{
@@ -873,20 +869,8 @@
         manager
     }
 
-    <span class="doccomment">/// Registers a catalog and return the catalog already exist
-    </span><span class="kw">pub fn </span>register_catalog_if_absent(<span class="kw-2">&amp;</span><span class="self">self</span>, name: String) -&gt; bool {
-        <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.catalogs.write().unwrap();
-        <span class="kw">let </span>entry = catalogs.entry(name);
-        <span class="kw">match </span>entry {
-            Entry::Occupied(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-            Entry::Vacant(v) =&gt; {
-                <span class="kw">let _ </span>= v.insert(HashMap::new());
-                <span class="bool-val">false
-            </span>}
-        }
-    }
-
-    <span class="kw">pub fn </span>register_catalog_sync(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;, name: String) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    <span class="doccomment">/// Registers a catalog if it does not exist and returns false if the schema exists.
+    </span><span class="kw">pub fn </span>register_catalog_sync(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;, name: String) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.catalogs.write().unwrap();
 
         <span class="kw">match </span>catalogs.entry(name.clone()) {
@@ -900,7 +884,10 @@
         }
     }
 
-    <span class="kw">pub fn </span>register_schema_sync(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    <span class="doccomment">/// Registers a schema if it does not exist.
+    /// It returns an error if the catalog does not exist,
+    /// and returns false if the schema exists.
+    </span><span class="kw">pub fn </span>register_schema_sync(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterSchemaRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.catalogs.write().unwrap();
         <span class="kw">let </span>catalog = catalogs
             .get_mut(<span class="kw-2">&amp;</span>request.catalog)
@@ -918,7 +905,8 @@
         }
     }
 
-    <span class="kw">pub fn </span>register_table_sync(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    <span class="doccomment">/// Registers a schema and returns an error if the catalog or schema does not exist.
+    </span><span class="kw">pub fn </span>register_table_sync(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegisterTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>catalogs = <span class="self">self</span>.catalogs.write().unwrap();
         <span class="kw">let </span>schema = catalogs
             .get_mut(<span class="kw-2">&amp;</span>request.catalog)
@@ -1130,10 +1118,14 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">pub fn </span>test_register_if_absent() {
+    </span><span class="kw">pub fn </span>test_register_catalog_sync() {
         <span class="kw">let </span>list = MemoryCatalogManager::with_default_setup();
-        <span class="macro">assert!</span>(!list.register_catalog_if_absent(<span class="string">&quot;test_catalog&quot;</span>.to_string(),));
-        <span class="macro">assert!</span>(list.register_catalog_if_absent(<span class="string">&quot;test_catalog&quot;</span>.to_string()));
+        <span class="macro">assert!</span>(list
+            .register_catalog_sync(<span class="string">&quot;test_catalog&quot;</span>.to_string())
+            .unwrap());
+        <span class="macro">assert!</span>(!list
+            .register_catalog_sync(<span class="string">&quot;test_catalog&quot;</span>.to_string())
+            .unwrap());
     }
 
     <span class="attr">#[tokio::test]
