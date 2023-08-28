@@ -444,6 +444,17 @@
 <a href="#444" id="444">444</a>
 <a href="#445" id="445">445</a>
 <a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -815,12 +826,22 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid flume sender, location: {}&quot;</span>, location,))]
     </span>InvalidFlumeSender { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid scheduler state location: {}&quot;</span>, location,))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid scheduler state, location: {}&quot;</span>, location))]
     </span>InvalidSchedulerState { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop scheduler, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop scheduler, location: {}, source: {}&quot;</span>, location, source))]
     </span>StopScheduler {
         source: JoinError,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to build scan predicate, location: {}, source: {}&quot;</span>,
+        location,
+        source
+    ))]
+    </span>BuildPredicate {
+        source: table::error::Error,
         location: Location,
     },
 }
@@ -883,6 +904,7 @@
             InvalidFlumeSender { .. } =&gt; StatusCode::InvalidArguments,
             InvalidSchedulerState { .. } =&gt; StatusCode::InvalidArguments,
             StopScheduler { .. } =&gt; StatusCode::Internal,
+            BuildPredicate { source, .. } =&gt; source.status_code(),
         }
     }
 

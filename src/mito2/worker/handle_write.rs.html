@@ -261,6 +261,15 @@
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -494,8 +503,11 @@
     }
 
     <span class="doccomment">/// Encode and add WAL entry to the writer.
-    </span><span class="kw">fn </span>add_wal_entry&lt;S: LogStore&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, wal_writer: <span class="kw-2">&amp;mut </span>WalWriter&lt;S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        wal_writer.add_entry(<span class="self">self</span>.region.region_id, <span class="self">self</span>.next_entry_id, <span class="kw-2">&amp;</span><span class="self">self</span>.wal_entry)
+    </span><span class="kw">fn </span>add_wal_entry&lt;S: LogStore&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, wal_writer: <span class="kw-2">&amp;mut </span>WalWriter&lt;S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        wal_writer.add_entry(<span class="self">self</span>.region.region_id, <span class="self">self</span>.next_entry_id, <span class="kw-2">&amp;</span><span class="self">self</span>.wal_entry)<span class="question-mark">?</span>;
+        <span class="comment">// We only call this method one time, but we still bump next entry id for consistency.
+        </span><span class="self">self</span>.next_entry_id += <span class="number">1</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Sets error and marks all write operations are failed.
@@ -510,7 +522,7 @@
     </span><span class="kw">fn </span>write_memtable(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.notifiers.len(), <span class="self">self</span>.wal_entry.mutations.len());
 
-        <span class="kw">let </span>mutable = <span class="self">self</span>.version.memtables.mutable();
+        <span class="kw">let </span>mutable = <span class="kw-2">&amp;</span><span class="self">self</span>.version.memtables.mutable;
         <span class="comment">// Takes mutations from the wal entry.
         </span><span class="kw">let </span>mutations = mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.wal_entry.mutations);
         <span class="kw">for </span>(mutation, notify) <span class="kw">in </span>mutations.into_iter().zip(<span class="kw-2">&amp;mut </span><span class="self">self</span>.notifiers) {
@@ -522,6 +534,12 @@
                 notify.err = <span class="prelude-val">Some</span>(Arc::new(e));
             }
         }
+
+        <span class="comment">// Updates region sequence and entry id. Since we stores last sequence and entry id in region, we need
+        // to decrease `next_sequence` and `next_entry_id` by 1.
+        </span><span class="self">self</span>.region
+            .version_control
+            .set_sequence_and_entry_id(<span class="self">self</span>.next_sequence - <span class="number">1</span>, <span class="self">self</span>.next_entry_id - <span class="number">1</span>);
     }
 }
 </code></pre></div></section></main></body></html>

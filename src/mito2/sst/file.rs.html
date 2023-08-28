@@ -210,6 +210,11 @@
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -333,6 +338,11 @@
     <span class="doccomment">/// Returns the complete file path of the file.
     </span><span class="kw">pub fn </span>file_path(<span class="kw-2">&amp;</span><span class="self">self</span>, file_dir: <span class="kw-2">&amp;</span>str) -&gt; String {
         join_path(file_dir, <span class="kw-2">&amp;</span><span class="self">self</span>.file_id().as_parquet())
+    }
+
+    <span class="doccomment">/// Returns the time range of the file.
+    </span><span class="kw">pub fn </span>time_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FileTimeRange {
+        <span class="self">self</span>.inner.meta.time_range
     }
 }
 

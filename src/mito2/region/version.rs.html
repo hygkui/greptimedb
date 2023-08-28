@@ -117,6 +117,13 @@
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -176,6 +183,13 @@
     <span class="doccomment">/// Returns current copy of data.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>current(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; VersionControlData {
         <span class="self">self</span>.data.read().unwrap().clone()
+    }
+
+    <span class="doccomment">/// Updates committed sequence and entry id.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_sequence_and_entry_id(<span class="kw-2">&amp;</span><span class="self">self</span>, seq: SequenceNumber, entry_id: EntryId) {
+        <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="self">self</span>.data.write().unwrap();
+        data.committed_sequence = seq;
+        data.last_entry_id = entry_id;
     }
 }
 

@@ -106,6 +106,34 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -129,13 +157,14 @@
 
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>object_store::ObjectStore;
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::region_request::RegionRequest;
-<span class="kw">use </span>store_api::storage::RegionId;
+<span class="kw">use </span>store_api::storage::{RegionId, ScanRequest};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
-<span class="kw">use </span><span class="kw">crate</span>::error::{RecvSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{RecvSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::read::scan_region::{ScanRegion, Scanner};
 <span class="kw">use </span><span class="kw">crate</span>::request::{RegionTask, RequestBody};
 <span class="kw">use </span><span class="kw">crate</span>::worker::WorkerGroup;
 
@@ -180,12 +209,19 @@
     </span><span class="kw">pub fn </span>is_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; bool {
         <span class="self">self</span>.inner.workers.is_region_exists(region_id)
     }
+
+    <span class="doccomment">/// Handles the scan `request` and returns a [Scanner] for the `request`.
+    </span><span class="kw">fn </span>handle_query(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, request: ScanRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Scanner&gt; {
+        <span class="self">self</span>.inner.handle_query(region_id, request)
+    }
 }
 
 <span class="doccomment">/// Inner struct of [MitoEngine].
 </span><span class="kw">struct </span>EngineInner {
     <span class="doccomment">/// Region workers group.
     </span>workers: WorkerGroup,
+    <span class="doccomment">/// Shared object store of all regions.
+    </span>object_store: ObjectStore,
 }
 
 <span class="kw">impl </span>EngineInner {
@@ -196,7 +232,8 @@
         object_store: ObjectStore,
     ) -&gt; EngineInner {
         EngineInner {
-            workers: WorkerGroup::start(config, log_store, object_store),
+            workers: WorkerGroup::start(config, log_store, object_store.clone()),
+            object_store,
         }
     }
 
@@ -207,11 +244,30 @@
 
     <span class="doccomment">/// Handles [RequestBody] and return its executed result.
     </span><span class="kw">async fn </span>handle_request(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, request: RegionRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>body = RequestBody::try_from_region_request(region_id, request)<span class="question-mark">?</span>;
+        <span class="comment">// We validate and then convert the `request` into an inner `RequestBody` for ease of handling.
+        </span><span class="kw">let </span>body = RequestBody::try_from_region_request(region_id, request)<span class="question-mark">?</span>;
         <span class="kw">let </span>(request, receiver) = RegionTask::from_request(region_id, body);
         <span class="self">self</span>.workers.submit_to_worker(request).<span class="kw">await</span><span class="question-mark">?</span>;
 
         receiver.<span class="kw">await</span>.context(RecvSnafu)<span class="question-mark">?
     </span>}
+
+    <span class="doccomment">/// Handles the scan `request` and returns a [Scanner] for the `request`.
+    </span><span class="kw">fn </span>handle_query(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, request: ScanRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Scanner&gt; {
+        <span class="comment">// Reading a region doesn&#39;t need to go through the region worker thread.
+        </span><span class="kw">let </span>region = <span class="self">self
+            </span>.workers
+            .get_region(region_id)
+            .context(RegionNotFoundSnafu { region_id })<span class="question-mark">?</span>;
+        <span class="kw">let </span>version = region.version();
+        <span class="kw">let </span>scan_region = ScanRegion::new(
+            version,
+            region.region_dir.clone(),
+            <span class="self">self</span>.object_store.clone(),
+            request,
+        );
+
+        scan_region.scanner()
+    }
 }
 </code></pre></div></section></main></body></html>

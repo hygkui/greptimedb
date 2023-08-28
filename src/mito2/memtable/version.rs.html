@@ -43,6 +43,9 @@
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -67,7 +70,7 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>MemtableVersion {
     <span class="doccomment">/// Mutable memtable.
-    </span>mutable: MemtableRef,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) mutable: MemtableRef,
     <span class="doccomment">/// Immutable memtables.
     </span>immutables: Vec&lt;MemtableRef&gt;,
 }
@@ -83,9 +86,12 @@
         }
     }
 
-    <span class="doccomment">/// Returns the mutable memtable.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mutable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MemtableRef {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.mutable
+    <span class="doccomment">/// Lists mutable and immutable memtables.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>list_memtables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;MemtableRef&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>memtables = Vec::with_capacity(<span class="self">self</span>.immutables.len() + <span class="number">1</span>);
+        memtables.push(<span class="self">self</span>.mutable.clone());
+        memtables.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.immutables);
+        memtables
     }
 }
 </code></pre></div></section></main></body></html>
