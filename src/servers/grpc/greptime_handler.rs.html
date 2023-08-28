@@ -287,7 +287,7 @@
         query_ctx.set_current_user(user_info);
 
         <span class="kw">let </span>handler = <span class="self">self</span>.handler.clone();
-        <span class="kw">let </span>request_type = request_type(<span class="kw-2">&amp;</span>query);
+        <span class="kw">let </span>request_type = request_type(<span class="kw-2">&amp;</span>query).to_string();
         <span class="kw">let </span>db = query_ctx.get_db_string();
         <span class="kw">let </span>timer = RequestTimer::new(db.clone(), request_type);
 
@@ -396,13 +396,13 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RequestTimer {
     start: Instant,
     db: String,
-    request_type: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    request_type: String,
     status_code: StatusCode,
 }
 
 <span class="kw">impl </span>RequestTimer {
     <span class="doccomment">/// Returns a new timer.
-    </span><span class="kw">pub fn </span>new(db: String, request_type: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; RequestTimer {
+    </span><span class="kw">pub fn </span>new(db: String, request_type: String) -&gt; RequestTimer {
         RequestTimer {
             start: Instant::now(),
             db,
@@ -424,7 +424,7 @@
             <span class="self">self</span>.start.elapsed(),
             <span class="kw-2">&amp;</span>[
                 (METRIC_DB_LABEL, std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.db)),
-                (METRIC_TYPE_LABEL, <span class="self">self</span>.request_type.to_string()),
+                (METRIC_TYPE_LABEL, std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.request_type)),
                 (METRIC_CODE_LABEL, <span class="self">self</span>.status_code.to_string())
             ]
         );

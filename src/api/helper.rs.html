@@ -1525,22 +1525,6 @@
 <a href="#1525" id="1525">1525</a>
 <a href="#1526" id="1526">1526</a>
 <a href="#1527" id="1527">1527</a>
-<a href="#1528" id="1528">1528</a>
-<a href="#1529" id="1529">1529</a>
-<a href="#1530" id="1530">1530</a>
-<a href="#1531" id="1531">1531</a>
-<a href="#1532" id="1532">1532</a>
-<a href="#1533" id="1533">1533</a>
-<a href="#1534" id="1534">1534</a>
-<a href="#1535" id="1535">1535</a>
-<a href="#1536" id="1536">1536</a>
-<a href="#1537" id="1537">1537</a>
-<a href="#1538" id="1538">1538</a>
-<a href="#1539" id="1539">1539</a>
-<a href="#1540" id="1540">1540</a>
-<a href="#1541" id="1541">1541</a>
-<a href="#1542" id="1542">1542</a>
-<a href="#1543" id="1543">1543</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1580,7 +1564,6 @@
 <span class="kw">use </span>greptime_proto::v1::ddl_request::Expr;
 <span class="kw">use </span>greptime_proto::v1::greptime_request::Request;
 <span class="kw">use </span>greptime_proto::v1::query_request::Query;
-<span class="kw">use </span>greptime_proto::v1::region::region_request;
 <span class="kw">use </span>greptime_proto::v1::value::ValueData;
 <span class="kw">use </span>greptime_proto::v1::{DdlRequest, IntervalMonthDayNano, QueryRequest, SemanticType};
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
@@ -1873,21 +1856,6 @@
         <span class="prelude-val">Some</span>(Query::LogicalPlan(<span class="kw">_</span>)) =&gt; <span class="string">&quot;query.logical_plan&quot;</span>,
         <span class="prelude-val">Some</span>(Query::PromRangeQuery(<span class="kw">_</span>)) =&gt; <span class="string">&quot;query.prom_range&quot;</span>,
         <span class="prelude-val">None </span>=&gt; <span class="string">&quot;query.empty&quot;</span>,
-    }
-}
-
-<span class="doccomment">/// Returns the type name of the [RegionRequest].
-</span><span class="kw">pub fn </span>region_request_type(request: <span class="kw-2">&amp;</span>region_request::Body) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
-    <span class="kw">match </span>request {
-        region_request::Body::Inserts(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.inserts&quot;</span>,
-        region_request::Body::Deletes(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.deletes&quot;</span>,
-        region_request::Body::Create(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.create&quot;</span>,
-        region_request::Body::Drop(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.drop&quot;</span>,
-        region_request::Body::Open(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.open&quot;</span>,
-        region_request::Body::Close(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.close&quot;</span>,
-        region_request::Body::Alter(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.alter&quot;</span>,
-        region_request::Body::Flush(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.flush&quot;</span>,
-        region_request::Body::Compact(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.compact&quot;</span>,
     }
 }
 

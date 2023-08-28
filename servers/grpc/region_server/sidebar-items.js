@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_query_context"],"struct":["RegionServerRequestHandler"],"trait":["RegionServerHandler"],"type":["RegionServerHandlerRef"]};
+window.SIDEBAR_ITEMS = {"struct":["RegionServerRequestHandler"],"trait":["RegionServerHandler"],"type":["RegionServerHandlerRef"]};
