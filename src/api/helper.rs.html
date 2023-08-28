@@ -1537,6 +1537,10 @@
 <a href="#1537" id="1537">1537</a>
 <a href="#1538" id="1538">1538</a>
 <a href="#1539" id="1539">1539</a>
+<a href="#1540" id="1540">1540</a>
+<a href="#1541" id="1541">1541</a>
+<a href="#1542" id="1542">1542</a>
+<a href="#1543" id="1543">1543</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1593,6 +1597,10 @@
         <span class="kw">let </span>datatype = ColumnDataType::from_i32(datatype)
             .context(error::UnknownColumnDataTypeSnafu { datatype })<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(datatype))
+    }
+
+    <span class="kw">pub fn </span>new(datatype: ColumnDataType) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(datatype)
     }
 
     <span class="kw">pub fn </span>datatype(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ColumnDataType {
@@ -1869,17 +1877,17 @@
 }
 
 <span class="doccomment">/// Returns the type name of the [RegionRequest].
-</span><span class="kw">pub fn </span>region_request_type(request: <span class="kw-2">&amp;</span>region_request::Request) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+</span><span class="kw">pub fn </span>region_request_type(request: <span class="kw-2">&amp;</span>region_request::Body) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
     <span class="kw">match </span>request {
-        region_request::Request::Inserts(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.inserts&quot;</span>,
-        region_request::Request::Deletes(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.deletes&quot;</span>,
-        region_request::Request::Create(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.create&quot;</span>,
-        region_request::Request::Drop(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.drop  &quot;</span>,
-        region_request::Request::Open(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.open&quot;</span>,
-        region_request::Request::Close(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.close&quot;</span>,
-        region_request::Request::Alter(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.alter&quot;</span>,
-        region_request::Request::Flush(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.flush&quot;</span>,
-        region_request::Request::Compact(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.compact&quot;</span>,
+        region_request::Body::Inserts(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.inserts&quot;</span>,
+        region_request::Body::Deletes(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.deletes&quot;</span>,
+        region_request::Body::Create(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.create&quot;</span>,
+        region_request::Body::Drop(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.drop&quot;</span>,
+        region_request::Body::Open(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.open&quot;</span>,
+        region_request::Body::Close(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.close&quot;</span>,
+        region_request::Body::Alter(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.alter&quot;</span>,
+        region_request::Body::Flush(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.flush&quot;</span>,
+        region_request::Body::Compact(<span class="kw">_</span>) =&gt; <span class="string">&quot;region.compact&quot;</span>,
     }
 }
 

@@ -170,7 +170,7 @@
                 .context(RuntimeResourceSnafu)<span class="question-mark">?</span>,
         );
 
-        <span class="kw">let </span>region_server = RegionServer::new(instance.query_engine());
+        <span class="kw">let </span>region_server = RegionServer::new(instance.query_engine(), grpc_runtime.clone());
         <span class="kw">let </span>flight_handler = <span class="kw">if </span>enable_region_server {
             <span class="prelude-val">Some</span>(Arc::new(region_server.clone()) <span class="kw">as _</span>)
         } <span class="kw">else </span>{

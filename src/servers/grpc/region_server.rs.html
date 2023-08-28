@@ -192,7 +192,6 @@
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -211,9 +210,8 @@
 
 <span class="kw">use </span>api::helper::region_request_type;
 <span class="kw">use </span>api::v1::auth_header::AuthScheme;
-<span class="kw">use </span>api::v1::region::region_request::Request <span class="kw">as </span>RequestBody;
-<span class="kw">use </span>api::v1::region::region_server_server::RegionServer <span class="kw">as </span>RegionServerService;
-<span class="kw">use </span>api::v1::region::{RegionRequest, RegionResponse};
+<span class="kw">use </span>api::v1::region::region_server::Region <span class="kw">as </span>RegionServer;
+<span class="kw">use </span>api::v1::region::{region_request, RegionRequest, RegionResponse};
 <span class="kw">use </span>api::v1::{Basic, RequestHeader};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>auth::{Identity, Password, UserInfoRef, UserProviderRef};
@@ -237,7 +235,7 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>RegionServerHandler: Send + Sync {
-    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RequestBody) -&gt; <span class="prelude-ty">Result</span>&lt;RegionResponse&gt;;
+    <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, request: region_request::Body) -&gt; <span class="prelude-ty">Result</span>&lt;RegionResponse&gt;;
 }
 
 <span class="kw">pub type </span>RegionServerHandlerRef = Arc&lt;<span class="kw">dyn </span>RegionServerHandler&gt;;
@@ -263,7 +261,7 @@
     }
 
     <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegionRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RegionResponse&gt; {
-        <span class="kw">let </span>query = request.request.context(InvalidQuerySnafu {
+        <span class="kw">let </span>query = request.body.context(InvalidQuerySnafu {
             reason: <span class="string">&quot;Expecting non-empty GreptimeRequest.&quot;</span>,
         })<span class="question-mark">?</span>;
 
@@ -378,7 +376,7 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl </span>RegionServerService <span class="kw">for </span>RegionServerRequestHandler {
+</span><span class="kw">impl </span>RegionServer <span class="kw">for </span>RegionServerRequestHandler {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         request: Request&lt;RegionRequest&gt;,
