@@ -471,7 +471,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>new_region_routes = table_route_value.region_routes.clone();
 
         <span class="kw">for </span>region_route <span class="kw">in </span>new_region_routes.iter_mut() {
-            <span class="kw">if </span>region_route.region.id == failed_region.region_number <span class="kw">as </span>u64 {
+            <span class="kw">if </span>region_route.region.id.region_number() == failed_region.region_number {
                 region_route.leader_peer = <span class="prelude-val">Some</span>(<span class="self">self</span>.candidate.clone());
                 <span class="kw">break</span>;
             }

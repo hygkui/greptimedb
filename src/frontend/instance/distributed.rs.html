@@ -1732,7 +1732,7 @@
         .into_iter()
         .map(|info| {
             <span class="comment">// Generated the partition name from id
-            </span><span class="kw">let </span>name = <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;r{}&quot;</span>, info.id.as_u64());
+            </span><span class="kw">let </span>name = <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;r{}&quot;</span>, info.id.region_number());
             <span class="kw">let </span>bounds = info.partition.partition_bounds();
             <span class="kw">let </span>value_list = bounds
                 .iter()

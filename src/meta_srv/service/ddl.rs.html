@@ -516,8 +516,8 @@
     // If the peers are not enough, some peers will be used for multiple partitions.
     </span>peers.truncate(partitions.len());
 
-    <span class="kw">let </span>id = table_id_sequence.next().<span class="kw">await</span><span class="question-mark">?</span>;
-    table_info.ident.table_id = id <span class="kw">as </span>u32;
+    <span class="kw">let </span>table_id = table_id_sequence.next().<span class="kw">await</span><span class="question-mark">? </span><span class="kw">as </span>u32;
+    table_info.ident.table_id = table_id;
 
     <span class="macro">ensure!</span>(
         partitions.len() &lt;= MAX_REGION_SEQ <span class="kw">as </span>usize,
@@ -529,7 +529,7 @@
         .enumerate()
         .map(|(i, partition)| {
             <span class="kw">let </span>region = Region {
-                id: RegionId::from_u64(i <span class="kw">as </span>u64),
+                id: RegionId::new(table_id, i <span class="kw">as </span>u32),
                 partition: <span class="prelude-val">Some</span>(partition.into()),
                 ..Default::default()
             };
