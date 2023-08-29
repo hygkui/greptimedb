@@ -188,6 +188,15 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -223,8 +232,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{RecvSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::flush::WriteBufferManagerImpl;
 <span class="kw">use </span><span class="kw">crate</span>::read::scan_region::{ScanRegion, Scanner};
-<span class="kw">use </span><span class="kw">crate</span>::request::{RegionTask, RequestBody};
+<span class="kw">use </span><span class="kw">crate</span>::request::WorkerRequest;
 <span class="kw">use </span><span class="kw">crate</span>::worker::WorkerGroup;
 
 <span class="doccomment">/// Region engine implementation for timeseries data.
@@ -295,8 +305,15 @@
         log_store: Arc&lt;S&gt;,
         object_store: ObjectStore,
     ) -&gt; EngineInner {
+        <span class="kw">let </span>write_buffer_manager = Arc::new(WriteBufferManagerImpl {});
+
         EngineInner {
-            workers: WorkerGroup::start(config, log_store, object_store.clone()),
+            workers: WorkerGroup::start(
+                config,
+                log_store,
+                object_store.clone(),
+                write_buffer_manager,
+            ),
             object_store,
         }
     }
@@ -306,7 +323,10 @@
         <span class="self">self</span>.workers.stop().<span class="kw">await
     </span>}
 
-    <span class="kw">fn </span>get_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;RegionMetadataRef&gt; {
+    <span class="doccomment">/// Get metadata of a region.
+    ///
+    /// Returns error if the region doesn&#39;t exist.
+    </span><span class="kw">fn </span>get_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;RegionMetadataRef&gt; {
         <span class="comment">// Reading a region doesn&#39;t need to go through the region worker thread.
         </span><span class="kw">let </span>region = <span class="self">self
             </span>.workers
@@ -315,12 +335,10 @@
         <span class="prelude-val">Ok</span>(region.metadata())
     }
 
-    <span class="doccomment">/// Handles [RequestBody] and return its executed result.
+    <span class="doccomment">/// Handles [RegionRequest] and return its executed result.
     </span><span class="kw">async fn </span>handle_request(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, request: RegionRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="comment">// We validate and then convert the `request` into an inner `RequestBody` for ease of handling.
-        </span><span class="kw">let </span>body = RequestBody::try_from_region_request(region_id, request)<span class="question-mark">?</span>;
-        <span class="kw">let </span>(request, receiver) = RegionTask::from_request(region_id, body);
-        <span class="self">self</span>.workers.submit_to_worker(request).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>(request, receiver) = WorkerRequest::try_from_region_request(region_id, request)<span class="question-mark">?</span>;
+        <span class="self">self</span>.workers.submit_to_worker(region_id, request).<span class="kw">await</span><span class="question-mark">?</span>;
 
         receiver.<span class="kw">await</span>.context(RecvSnafu)<span class="question-mark">?
     </span>}

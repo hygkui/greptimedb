@@ -821,6 +821,14 @@
 <a href="#821" id="821">821</a>
 <a href="#822" id="822">822</a>
 <a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -946,6 +954,14 @@
 
         Box::new(<span class="self">self</span>.series_set.iter_series(projection))
     }
+
+    <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.series_set.series.read().unwrap().is_empty()
+    }
+
+    <span class="kw">fn </span>mark_immutable(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="comment">// TODO(yingwen): AllocTracker.done_allocating()
+    </span>}
 }
 
 <span class="kw">type </span>SeriesRwLockMap = RwLock&lt;BTreeMap&lt;Vec&lt;u8&gt;, Arc&lt;RwLock&lt;Series&gt;&gt;&gt;&gt;;
