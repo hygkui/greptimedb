@@ -304,7 +304,7 @@
 </span><span class="attr">#[async_trait::async_trait]
 </span><span class="kw">pub trait </span>Scheduler {
     <span class="doccomment">/// Schedules a Job
-    </span><span class="kw">fn </span>schedule(<span class="kw-2">&amp;</span><span class="self">self</span>, req: Job) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
+    </span><span class="kw">fn </span>schedule(<span class="kw-2">&amp;</span><span class="self">self</span>, job: Job) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
 
     <span class="doccomment">/// Stops scheduler. If `await_termination` is set to true, the scheduler will wait until all tasks are processed.
     </span><span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>, await_termination: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
@@ -343,8 +343,8 @@
                             <span class="kw">break</span>;
                         }
                         req_opt = receiver.recv_async() =&gt;{
-                            <span class="kw">if let </span><span class="prelude-val">Ok</span>(req) = req_opt {
-                                req.<span class="kw">await</span>;
+                            <span class="kw">if let </span><span class="prelude-val">Ok</span>(job) = req_opt {
+                                job.<span class="kw">await</span>;
                             }
                         }
                     }
@@ -352,8 +352,8 @@
                 <span class="comment">// When task scheduler is cancelled, we will wait all task finished
                 </span><span class="kw">if </span>state_clone.load(Ordering::Relaxed) == STATE_AWAIT_TERMINATION {
                     <span class="comment">// recv_async waits until all sender&#39;s been dropped.
-                    </span><span class="kw">while let </span><span class="prelude-val">Ok</span>(req) = receiver.recv_async().<span class="kw">await </span>{
-                        req.<span class="kw">await</span>;
+                    </span><span class="kw">while let </span><span class="prelude-val">Ok</span>(job) = receiver.recv_async().<span class="kw">await </span>{
+                        job.<span class="kw">await</span>;
                     }
                     state_clone.store(STATE_STOP, Ordering::Relaxed);
                 }
@@ -377,7 +377,7 @@
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>Scheduler <span class="kw">for </span>LocalScheduler {
-    <span class="kw">fn </span>schedule(<span class="kw-2">&amp;</span><span class="self">self</span>, req: Job) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">fn </span>schedule(<span class="kw-2">&amp;</span><span class="self">self</span>, job: Job) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">ensure!</span>(
             <span class="self">self</span>.state.load(Ordering::Relaxed) == STATE_RUNNING,
             InvalidSchedulerStateSnafu
@@ -387,7 +387,7 @@
             .unwrap()
             .as_ref()
             .context(InvalidSchedulerStateSnafu)<span class="question-mark">?
-            </span>.send(req)
+            </span>.send(job)
             .map_err(|<span class="kw">_</span>| InvalidFlumeSenderSnafu {}.build())
     }
 
