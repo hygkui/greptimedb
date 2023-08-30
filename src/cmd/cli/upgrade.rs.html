@@ -616,7 +616,7 @@
 
     <span class="kw">async fn </span>migrate_schema_key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>v1SchemaKey) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>new_key = SchemaNameKey::new(<span class="kw-2">&amp;</span>key.catalog_name, <span class="kw-2">&amp;</span>key.schema_name);
-        <span class="kw">let </span>schema_name_value = SchemaNameValue;
+        <span class="kw">let </span>schema_name_value = SchemaNameValue::default();
 
         <span class="macro">info!</span>(<span class="string">&quot;Creating &#39;{new_key}&#39;&quot;</span>);
 

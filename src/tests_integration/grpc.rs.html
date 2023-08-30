@@ -900,6 +900,7 @@
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
 <a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -971,6 +972,7 @@
             expr: <span class="prelude-val">Some</span>(DdlExpr::CreateDatabase(CreateDatabaseExpr {
                 database_name: <span class="string">&quot;database_created_through_grpc&quot;</span>.to_string(),
                 create_if_not_exists: <span class="bool-val">true</span>,
+                options: Default::default(),
             })),
         });
         <span class="kw">let </span>output = query(instance, request).<span class="kw">await</span>;
