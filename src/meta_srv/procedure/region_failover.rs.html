@@ -748,6 +748,33 @@
 <a href="#748" id="748">748</a>
 <a href="#749" id="749">749</a>
 <a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -776,6 +803,7 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_meta::ident::TableIdent;
+<span class="kw">use </span>common_meta::key::datanode_table::DatanodeTableKey;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_meta::{ClusterId, RegionIdent};
 <span class="kw">use </span>common_procedure::error::{
@@ -918,6 +946,11 @@
             </span><span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
 
+        <span class="kw">if </span>!<span class="self">self</span>.failed_region_exists(failed_region).<span class="kw">await</span><span class="question-mark">? </span>{
+            <span class="comment">// The failed region could be failover by another procedure.
+            </span><span class="kw">return </span><span class="prelude-val">Ok</span>(());
+        }
+
         <span class="kw">let </span>context = <span class="self">self</span>.create_context();
         <span class="kw">let </span>procedure = RegionFailoverProcedure::new(failed_region.clone(), context);
         <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
@@ -956,6 +989,27 @@
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.is_some())
+    }
+
+    <span class="kw">async fn </span>failed_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, failed_region: <span class="kw-2">&amp;</span>RegionIdent) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="kw">let </span>table_id = failed_region.table_ident.table_id;
+        <span class="kw">let </span>datanode_id = failed_region.datanode_id;
+
+        <span class="kw">let </span>value = <span class="self">self
+            </span>.table_metadata_manager
+            .datanode_table_manager()
+            .get(<span class="kw-2">&amp;</span>DatanodeTableKey::new(datanode_id, table_id))
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(value
+            .map(|value| {
+                value
+                    .regions
+                    .iter()
+                    .any(|region| <span class="kw-2">*</span>region == failed_region.region_number)
+            })
+            .unwrap_or_default())
     }
 }
 
