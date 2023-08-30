@@ -662,7 +662,7 @@
             engine: table_info.meta.engine.clone(),
         };
         region_alive_keepers
-            .register_table(table_ident, table)
+            .register_table(table_ident, table, memory_catalog_manager.clone())
             .<span class="kw">await</span><span class="question-mark">?</span>;
     }
 
