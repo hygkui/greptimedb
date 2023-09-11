@@ -517,6 +517,23 @@
 <a href="#517" id="517">517</a>
 <a href="#518" id="518">518</a>
 <a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -806,7 +823,11 @@
                 TimeUnit::Millisecond =&gt; {
                     Arc::new(TimeMillisecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
                 }
-                <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Arrow array datatype: {:?}&quot;</span>, array.as_ref().data_type()),
+                <span class="comment">// Arrow use time32 for second/millisecond.
+                </span><span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(
+                    <span class="string">&quot;unexpected arrow array datatype: {:?}&quot;</span>,
+                    array.as_ref().data_type()
+                ),
             },
             ArrowDataType::Time64(unit) =&gt; <span class="kw">match </span>unit {
                 TimeUnit::Microsecond =&gt; {
@@ -815,7 +836,11 @@
                 TimeUnit::Nanosecond =&gt; {
                     Arc::new(TimeNanosecondVector::try_from_arrow_time_array(array)<span class="question-mark">?</span>)
                 }
-                <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Arrow array datatype: {:?}&quot;</span>, array.as_ref().data_type()),
+                <span class="comment">// Arrow use time64 for microsecond/nanosecond.
+                </span><span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(
+                    <span class="string">&quot;unexpected arrow array datatype: {:?}&quot;</span>,
+                    array.as_ref().data_type()
+                ),
             },
             ArrowDataType::Interval(unit) =&gt; <span class="kw">match </span>unit {
                 IntervalUnit::YearMonth =&gt; Arc::new(
@@ -839,7 +864,10 @@
             | ArrowDataType::Decimal256(<span class="kw">_</span>, <span class="kw">_</span>)
             | ArrowDataType::Map(<span class="kw">_</span>, <span class="kw">_</span>)
             | ArrowDataType::RunEndEncoded(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
-                <span class="macro">unimplemented!</span>(<span class="string">&quot;Arrow array datatype: {:?}&quot;</span>, array.as_ref().data_type())
+                <span class="kw">return </span>error::UnsupportedArrowTypeSnafu {
+                    arrow_type: array.as_ref().data_type().clone(),
+                }
+                .fail()
             }
         })
     }
@@ -870,6 +898,7 @@
         TimestampSecondArray, UInt16Array, UInt32Array, UInt64Array, UInt8Array,
     };
     <span class="kw">use </span>arrow::datatypes::{Field, Int32Type};
+    <span class="kw">use </span>arrow_array::DictionaryArray;
     <span class="kw">use </span>common_time::time::Time;
     <span class="kw">use </span>common_time::{Date, DateTime, Interval};
 
@@ -1008,6 +1037,11 @@
         check_try_into_vector(Time32MillisecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
         check_try_into_vector(Time64MicrosecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
         check_try_into_vector(Time64NanosecondArray::from(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));
+
+        <span class="kw">let </span>values = StringArray::from_iter_values([<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>]);
+        <span class="kw">let </span>keys = Int8Array::from_iter_values([<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>]);
+        <span class="kw">let </span>array: ArrayRef = Arc::new(DictionaryArray::try_new(keys, Arc::new(values)).unwrap());
+        Helper::try_into_vector(array).unwrap_err();
     }
 
     <span class="attr">#[test]
