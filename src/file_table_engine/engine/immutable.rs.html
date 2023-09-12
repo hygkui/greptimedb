@@ -456,6 +456,7 @@
 <a href="#456" id="456">456</a>
 <a href="#457" id="457">457</a>
 <a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -481,13 +482,14 @@
 <span class="kw">use </span>datatypes::schema::Schema;
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::ResultExt;
-<span class="kw">use </span>table::engine::{table_dir, EngineContext, TableEngine, TableEngineProcedure, TableReference};
+<span class="kw">use </span>store_api::path_utils::table_dir;
+<span class="kw">use </span>table::engine::{EngineContext, TableEngine, TableEngineProcedure, TableReference};
 <span class="kw">use </span>table::error::TableOperationSnafu;
 <span class="kw">use </span>table::metadata::{TableId, TableInfo, TableInfoBuilder, TableMetaBuilder, TableType};
 <span class="kw">use </span>table::requests::{
     AlterTableRequest, CreateTableRequest, DropTableRequest, OpenTableRequest, TruncateTableRequest,
 };
-<span class="kw">use </span>table::{error <span class="kw">as </span>table_error, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, Table, TableRef};
+<span class="kw">use </span>table::{error <span class="kw">as </span>table_error, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult, TableRef};
 <span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use </span><span class="kw">crate</span>::config::EngineConfig;
@@ -759,7 +761,7 @@
 
         <span class="kw">let _ </span>= <span class="self">self</span>.tables.write().unwrap().insert(table_id, table.clone());
 
-        <span class="prelude-val">Ok</span>(table)
+        <span class="prelude-val">Ok</span>(table.as_table_ref())
     }
 
     <span class="kw">fn </span>get_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Option</span>&lt;TableRef&gt; {
@@ -768,7 +770,7 @@
             .unwrap()
             .get(<span class="kw-2">&amp;</span>table_id)
             .cloned()
-            .map(|table| table <span class="kw">as _</span>)
+            .map(|table| table.as_table_ref())
     }
 
     <span class="kw">async fn </span>open_table(
@@ -822,7 +824,7 @@
             );
 
             <span class="kw">let _ </span>= <span class="self">self</span>.tables.write().unwrap().insert(table_id, table.clone());
-            <span class="prelude-val">Some</span>(table <span class="kw">as _</span>)
+            <span class="prelude-val">Some</span>(table.as_table_ref())
         };
 
         <span class="macro">logging::info!</span>(

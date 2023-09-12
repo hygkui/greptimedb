@@ -954,6 +954,14 @@
 <a href="#954" id="954">954</a>
 <a href="#955" id="955">955</a>
 <a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -980,7 +988,7 @@
 <span class="kw">use </span>derive_builder::Builder;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{ensure, ResultExt};
-<span class="kw">use </span>store_api::storage::{ColumnDescriptor, ColumnDescriptorBuilder, ColumnId};
+<span class="kw">use </span>store_api::storage::{ColumnDescriptor, ColumnDescriptorBuilder, ColumnId, RegionId};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::requests::{AddColumnRequest, AlterKind, TableOptions};
@@ -1424,6 +1432,14 @@
 <span class="kw">impl </span>TableInfo {
     <span class="kw">pub fn </span>table_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableId {
         <span class="self">self</span>.ident.table_id
+    }
+
+    <span class="kw">pub fn </span>region_ids(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;RegionId&gt; {
+        <span class="self">self</span>.meta
+            .region_numbers
+            .iter()
+            .map(|id| RegionId::new(<span class="self">self</span>.table_id(), <span class="kw-2">*</span>id))
+            .collect()
     }
 }
 

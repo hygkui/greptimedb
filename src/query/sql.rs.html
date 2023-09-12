@@ -955,7 +955,7 @@
         data: Vec&lt;VectorRef&gt;,
     ) -&gt; TableRef {
         <span class="kw">let </span>record_batch = RecordBatch::new(table_schema, data).unwrap();
-        Arc::new(MemTable::new(table_name, record_batch))
+        MemTable::table(table_name, record_batch)
     }
 }
 </code></pre></div></section></main></body></html>

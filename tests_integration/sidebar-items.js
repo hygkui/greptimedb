@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["catalog","cluster","grpc","influxdb","instance","opentsdb","otlp","prom_store","test_util"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["FrontendCatalogManager"]};
+window.SIDEBAR_ITEMS = {"struct":["FrontendCatalogManager","SystemCatalog"]};

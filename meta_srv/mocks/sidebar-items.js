@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["mock","mock_with_etcdstore","mock_with_memstore","mock_with_memstore_and_selector"],"struct":["MockInfo"]};

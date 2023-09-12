@@ -260,6 +260,7 @@
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -274,9 +275,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>common_telemetry::logging::LoggingOptions;
+</span><span class="kw">use </span>common_config::KvStoreConfig;
+<span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>config::{Config, Environment, File, FileFormat};
-<span class="kw">use </span>datanode::datanode::DatanodeOptions;
+<span class="kw">use </span>datanode::datanode::{DatanodeOptions, ProcedureConfig};
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>meta_srv::metasrv::MetaSrvOptions;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -288,9 +290,12 @@
 <span class="kw">pub const </span>ENV_LIST_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;,&quot;</span>;
 
 <span class="kw">pub struct </span>MixOptions {
+    <span class="kw">pub </span>data_home: String,
+    <span class="kw">pub </span>procedure_cfg: ProcedureConfig,
+    <span class="kw">pub </span>kv_store_cfg: KvStoreConfig,
     <span class="kw">pub </span>fe_opts: FrontendOptions,
     <span class="kw">pub </span>dn_opts: DatanodeOptions,
-    <span class="kw">pub </span>logging: LoggingOptions,
+    <span class="kw">pub </span>logging_opts: LoggingOptions,
 }
 
 <span class="kw">pub enum </span>Options {
@@ -313,7 +318,7 @@
             Options::Datanode(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
             Options::Frontend(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
             Options::Metasrv(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
-            Options::Standalone(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
+            Options::Standalone(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging_opts,
             Options::Cli(opts) =&gt; opts,
         }
     }
@@ -512,9 +517,6 @@
                         <span class="string">&quot;127.0.0.1:3003&quot;</span>.to_string()
                     ]
                 );
-
-                <span class="comment">// Should be the values from config file, not environment variables.
-                </span><span class="macro">assert_eq!</span>(opts.wal.dir.unwrap(), <span class="string">&quot;/tmp/greptimedb/wal&quot;</span>);
 
                 <span class="comment">// Should be default values.
                 </span><span class="macro">assert_eq!</span>(opts.node_id, <span class="prelude-val">None</span>);

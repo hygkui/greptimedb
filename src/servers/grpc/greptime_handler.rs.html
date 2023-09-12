@@ -386,7 +386,7 @@
     QueryContextBuilder::default()
         .current_catalog(catalog.to_string())
         .current_schema(schema.to_string())
-        .try_trace_id(header.and_then(|h: <span class="kw-2">&amp;</span>RequestHeader| h.trace_id))
+        .try_trace_id(header.map(|h| h.trace_id))
         .build()
 }
 

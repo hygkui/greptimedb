@@ -456,6 +456,67 @@
 <a href="#456" id="456">456</a>
 <a href="#457" id="457">457</a>
 <a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -474,16 +535,15 @@
 
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
+<span class="kw">use </span>session::context::QueryContextRef;
+<span class="kw">use </span>sqlparser::ast::ObjectName;
 <span class="kw">use </span>store_api::data_source::DataSource;
 <span class="kw">use </span>store_api::storage::ScanRequest;
 <span class="kw">use </span>table::metadata::{FilterPushDownType, TableInfoRef};
 <span class="kw">use </span>table::thin_table::{ThinTable, ThinTableAdapter};
 <span class="kw">use </span>table::TableRef;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::NotSupportedSnafu;
-
-<span class="kw">pub mod </span>delete;
-<span class="kw">pub mod </span>insert;
+<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidSqlSnafu, NotSupportedSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>DistTable;
@@ -499,7 +559,10 @@
 <span class="kw">pub struct </span>DummyDataSource;
 
 <span class="kw">impl </span>DataSource <span class="kw">for </span>DummyDataSource {
-    <span class="kw">fn </span>get_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: ScanRequest) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream, BoxedError&gt; {
+    <span class="kw">fn </span>get_stream(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        _request: ScanRequest,
+    ) -&gt; std::result::Result&lt;SendableRecordBatchStream, BoxedError&gt; {
         NotSupportedSnafu {
             feat: <span class="string">&quot;get stream from a distributed table&quot;</span>,
         }
@@ -508,18 +571,53 @@
     }
 }
 
+<span class="comment">// TODO(LFC): Refactor consideration: move this function to some helper mod,
+// could be done together or after `TableReference`&#39;s refactoring, when issue #559 is resolved.
+</span><span class="doccomment">/// Converts maybe fully-qualified table name (`&lt;catalog&gt;.&lt;schema&gt;.&lt;table&gt;`) to tuple.
+</span><span class="kw">pub fn </span>table_idents_to_full_name(
+    obj_name: <span class="kw-2">&amp;</span>ObjectName,
+    query_ctx: QueryContextRef,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(String, String, String)&gt; {
+    <span class="kw">match </span><span class="kw-2">&amp;</span>obj_name.<span class="number">0</span>[..] {
+        [table] =&gt; <span class="prelude-val">Ok</span>((
+            query_ctx.current_catalog().to_owned(),
+            query_ctx.current_schema().to_owned(),
+            table.value.clone(),
+        )),
+        [schema, table] =&gt; <span class="prelude-val">Ok</span>((
+            query_ctx.current_catalog().to_owned(),
+            schema.value.clone(),
+            table.value.clone(),
+        )),
+        [catalog, schema, table] =&gt; <span class="prelude-val">Ok</span>((
+            catalog.value.clone(),
+            schema.value.clone(),
+            table.value.clone(),
+        )),
+        <span class="kw">_ </span>=&gt; InvalidSqlSnafu {
+            err_msg: <span class="macro">format!</span>(
+                <span class="string">&quot;expect table name to be &lt;catalog&gt;.&lt;schema&gt;.&lt;table&gt;, &lt;schema&gt;.&lt;table&gt; or &lt;table&gt;, actual: {obj_name}&quot;</span>,
+            ),
+        }.fail(),
+    }
+}
+
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>test {
     <span class="kw">use </span>std::collections::BTreeMap;
     <span class="kw">use </span>std::sync::atomic::{AtomicU32, Ordering};
 
-    <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+    <span class="kw">use </span>catalog::remote::MetaKvBackend;
+    <span class="kw">use </span>common_meta::key::TableMetadataManager;
+    <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
+    <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
     <span class="kw">use </span>common_meta::peer::Peer;
-    <span class="kw">use </span>common_meta::rpc::router::{Region, RegionRoute, Table, TableRoute};
-    <span class="kw">use </span>common_meta::table_name::TableName;
+    <span class="kw">use </span>common_meta::rpc::router::{Region, RegionRoute};
     <span class="kw">use </span>common_query::prelude::Expr;
     <span class="kw">use </span>datafusion_expr::expr_fn::{and, binary_expr, col, or};
     <span class="kw">use </span>datafusion_expr::{lit, Operator};
+    <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
+    <span class="kw">use </span>datatypes::schema::{ColumnSchema, SchemaBuilder};
     <span class="kw">use </span>meta_client::client::MetaClient;
     <span class="kw">use </span>meter_core::collect::Collect;
     <span class="kw">use </span>meter_core::data::{ReadRecord, WriteRecord};
@@ -529,13 +627,51 @@
     <span class="kw">use </span>partition::manager::{PartitionRuleManager, PartitionRuleManagerRef};
     <span class="kw">use </span>partition::partition::{PartitionBound, PartitionDef};
     <span class="kw">use </span>partition::range::RangePartitionRule;
-    <span class="kw">use </span>partition::route::TableRoutes;
     <span class="kw">use </span>partition::PartitionRuleRef;
     <span class="kw">use </span>store_api::storage::RegionNumber;
+    <span class="kw">use </span>table::metadata::{TableInfo, TableInfoBuilder, TableMetaBuilder};
     <span class="kw">use </span>table::meter_insert_request;
     <span class="kw">use </span>table::requests::InsertRequest;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">pub fn </span>new_test_table_info(
+        table_id: u32,
+        table_name: <span class="kw-2">&amp;</span>str,
+        region_numbers: <span class="kw">impl </span>Iterator&lt;Item = u32&gt;,
+    ) -&gt; TableInfo {
+        <span class="kw">let </span>column_schemas = <span class="macro">vec!</span>[
+            ColumnSchema::new(<span class="string">&quot;a&quot;</span>, ConcreteDataType::int32_datatype(), <span class="bool-val">true</span>),
+            ColumnSchema::new(
+                <span class="string">&quot;ts&quot;</span>,
+                ConcreteDataType::timestamp_millisecond_datatype(),
+                <span class="bool-val">false</span>,
+            )
+            .with_time_index(<span class="bool-val">true</span>),
+            ColumnSchema::new(<span class="string">&quot;b&quot;</span>, ConcreteDataType::int32_datatype(), <span class="bool-val">true</span>),
+        ];
+        <span class="kw">let </span>schema = SchemaBuilder::try_from(column_schemas)
+            .unwrap()
+            .version(<span class="number">123</span>)
+            .build()
+            .unwrap();
+
+        <span class="kw">let </span>meta = TableMetaBuilder::default()
+            .schema(Arc::new(schema))
+            .primary_key_indices(<span class="macro">vec!</span>[<span class="number">0</span>])
+            .engine(<span class="string">&quot;engine&quot;</span>)
+            .next_column_id(<span class="number">3</span>)
+            .region_numbers(region_numbers.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;())
+            .build()
+            .unwrap();
+        TableInfoBuilder::default()
+            .table_id(table_id)
+            .table_version(<span class="number">5</span>)
+            .name(table_name)
+            .meta(meta)
+            .build()
+            .unwrap()
+    }
 
     <span class="doccomment">/// Create a partition rule manager with two tables, one is partitioned by single column, and
     /// the other one is two. The tables are under default catalog and schema.
@@ -553,160 +689,145 @@
     ///   PARTITION r2 VALUES LESS THAN (50, &#39;sh&#39;),
     ///   PARTITION r3 VALUES LESS THAN (MAXVALUE, MAXVALUE),
     /// )
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>create_partition_rule_manager() -&gt; PartitionRuleManagerRef {
-        <span class="kw">let </span>table_routes = Arc::new(TableRoutes::new(Arc::new(MetaClient::default())));
-        <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(table_routes.clone()));
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>create_partition_rule_manager(
+        kv_backend: KvBackendRef,
+    ) -&gt; PartitionRuleManagerRef {
+        <span class="kw">let </span>table_metadata_manager = TableMetadataManager::new(kv_backend.clone());
+        <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(kv_backend));
 
-        <span class="kw">let </span>table_name = TableName::new(
-            DEFAULT_CATALOG_NAME,
-            DEFAULT_SCHEMA_NAME,
-            <span class="string">&quot;one_column_partitioning_table&quot;</span>,
-        );
-        <span class="kw">let </span>table_route = TableRoute::new(
-            Table {
-                id: <span class="number">1</span>,
-                table_name: table_name.clone(),
-                table_schema: <span class="macro">vec!</span>[],
-            },
-            <span class="macro">vec!</span>[
-                RegionRoute {
-                    region: Region {
-                        id: <span class="number">3</span>.into(),
-                        name: <span class="string">&quot;r1&quot;</span>.to_string(),
-                        partition: <span class="prelude-val">Some</span>(
-                            PartitionDef::new(
-                                <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string()],
-                                <span class="macro">vec!</span>[PartitionBound::Value(<span class="number">10_i32</span>.into())],
-                            )
-                            .try_into()
-                            .unwrap(),
-                        ),
-                        attrs: BTreeMap::new(),
+        table_metadata_manager
+            .create_table_metadata(
+                new_test_table_info(<span class="number">1</span>, <span class="string">&quot;table_1&quot;</span>, <span class="macro">vec!</span>[<span class="number">0u32</span>, <span class="number">1</span>, <span class="number">2</span>].into_iter()).into(),
+                <span class="macro">vec!</span>[
+                    RegionRoute {
+                        region: Region {
+                            id: <span class="number">3</span>.into(),
+                            name: <span class="string">&quot;r1&quot;</span>.to_string(),
+                            partition: <span class="prelude-val">Some</span>(
+                                PartitionDef::new(
+                                    <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string()],
+                                    <span class="macro">vec!</span>[PartitionBound::Value(<span class="number">10_i32</span>.into())],
+                                )
+                                .try_into()
+                                .unwrap(),
+                            ),
+                            attrs: BTreeMap::new(),
+                        },
+                        leader_peer: <span class="prelude-val">Some</span>(Peer::new(<span class="number">3</span>, <span class="string">&quot;&quot;</span>)),
+                        follower_peers: <span class="macro">vec!</span>[],
                     },
-                    leader_peer: <span class="prelude-val">Some</span>(Peer::new(<span class="number">3</span>, <span class="string">&quot;&quot;</span>)),
-                    follower_peers: <span class="macro">vec!</span>[],
-                },
-                RegionRoute {
-                    region: Region {
-                        id: <span class="number">2</span>.into(),
-                        name: <span class="string">&quot;r2&quot;</span>.to_string(),
-                        partition: <span class="prelude-val">Some</span>(
-                            PartitionDef::new(
-                                <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string()],
-                                <span class="macro">vec!</span>[PartitionBound::Value(<span class="number">50_i32</span>.into())],
-                            )
-                            .try_into()
-                            .unwrap(),
-                        ),
-                        attrs: BTreeMap::new(),
+                    RegionRoute {
+                        region: Region {
+                            id: <span class="number">2</span>.into(),
+                            name: <span class="string">&quot;r2&quot;</span>.to_string(),
+                            partition: <span class="prelude-val">Some</span>(
+                                PartitionDef::new(
+                                    <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string()],
+                                    <span class="macro">vec!</span>[PartitionBound::Value(<span class="number">50_i32</span>.into())],
+                                )
+                                .try_into()
+                                .unwrap(),
+                            ),
+                            attrs: BTreeMap::new(),
+                        },
+                        leader_peer: <span class="prelude-val">Some</span>(Peer::new(<span class="number">2</span>, <span class="string">&quot;&quot;</span>)),
+                        follower_peers: <span class="macro">vec!</span>[],
                     },
-                    leader_peer: <span class="prelude-val">Some</span>(Peer::new(<span class="number">2</span>, <span class="string">&quot;&quot;</span>)),
-                    follower_peers: <span class="macro">vec!</span>[],
-                },
-                RegionRoute {
-                    region: Region {
-                        id: <span class="number">1</span>.into(),
-                        name: <span class="string">&quot;r3&quot;</span>.to_string(),
-                        partition: <span class="prelude-val">Some</span>(
-                            PartitionDef::new(
-                                <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string()],
-                                <span class="macro">vec!</span>[PartitionBound::MaxValue],
-                            )
-                            .try_into()
-                            .unwrap(),
-                        ),
-                        attrs: BTreeMap::new(),
+                    RegionRoute {
+                        region: Region {
+                            id: <span class="number">1</span>.into(),
+                            name: <span class="string">&quot;r3&quot;</span>.to_string(),
+                            partition: <span class="prelude-val">Some</span>(
+                                PartitionDef::new(
+                                    <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string()],
+                                    <span class="macro">vec!</span>[PartitionBound::MaxValue],
+                                )
+                                .try_into()
+                                .unwrap(),
+                            ),
+                            attrs: BTreeMap::new(),
+                        },
+                        leader_peer: <span class="prelude-val">Some</span>(Peer::new(<span class="number">1</span>, <span class="string">&quot;&quot;</span>)),
+                        follower_peers: <span class="macro">vec!</span>[],
                     },
-                    leader_peer: <span class="prelude-val">Some</span>(Peer::new(<span class="number">1</span>, <span class="string">&quot;&quot;</span>)),
-                    follower_peers: <span class="macro">vec!</span>[],
-                },
-            ],
-        );
-        table_routes
-            .insert_table_route(<span class="number">1</span>, Arc::new(table_route))
-            .<span class="kw">await</span>;
+                ],
+            )
+            .<span class="kw">await
+            </span>.unwrap();
 
-        <span class="kw">let </span>table_name = TableName::new(
-            DEFAULT_CATALOG_NAME,
-            DEFAULT_SCHEMA_NAME,
-            <span class="string">&quot;two_column_partitioning_table&quot;</span>,
-        );
-        <span class="kw">let </span>table_route = TableRoute::new(
-            Table {
-                id: <span class="number">2</span>,
-                table_name: table_name.clone(),
-                table_schema: <span class="macro">vec!</span>[],
-            },
-            <span class="macro">vec!</span>[
-                RegionRoute {
-                    region: Region {
-                        id: <span class="number">1</span>.into(),
-                        name: <span class="string">&quot;r1&quot;</span>.to_string(),
-                        partition: <span class="prelude-val">Some</span>(
-                            PartitionDef::new(
-                                <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;b&quot;</span>.to_string()],
-                                <span class="macro">vec!</span>[
-                                    PartitionBound::Value(<span class="number">10_i32</span>.into()),
-                                    PartitionBound::Value(<span class="string">&quot;hz&quot;</span>.into()),
-                                ],
-                            )
-                            .try_into()
-                            .unwrap(),
-                        ),
-                        attrs: BTreeMap::new(),
+        table_metadata_manager
+            .create_table_metadata(
+                new_test_table_info(<span class="number">2</span>, <span class="string">&quot;table_2&quot;</span>, <span class="macro">vec!</span>[<span class="number">0u32</span>, <span class="number">1</span>, <span class="number">2</span>].into_iter()).into(),
+                <span class="macro">vec!</span>[
+                    RegionRoute {
+                        region: Region {
+                            id: <span class="number">1</span>.into(),
+                            name: <span class="string">&quot;r1&quot;</span>.to_string(),
+                            partition: <span class="prelude-val">Some</span>(
+                                PartitionDef::new(
+                                    <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;b&quot;</span>.to_string()],
+                                    <span class="macro">vec!</span>[
+                                        PartitionBound::Value(<span class="number">10_i32</span>.into()),
+                                        PartitionBound::Value(<span class="string">&quot;hz&quot;</span>.into()),
+                                    ],
+                                )
+                                .try_into()
+                                .unwrap(),
+                            ),
+                            attrs: BTreeMap::new(),
+                        },
+                        leader_peer: <span class="prelude-val">None</span>,
+                        follower_peers: <span class="macro">vec!</span>[],
                     },
-                    leader_peer: <span class="prelude-val">None</span>,
-                    follower_peers: <span class="macro">vec!</span>[],
-                },
-                RegionRoute {
-                    region: Region {
-                        id: <span class="number">2</span>.into(),
-                        name: <span class="string">&quot;r2&quot;</span>.to_string(),
-                        partition: <span class="prelude-val">Some</span>(
-                            PartitionDef::new(
-                                <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;b&quot;</span>.to_string()],
-                                <span class="macro">vec!</span>[
-                                    PartitionBound::Value(<span class="number">50_i32</span>.into()),
-                                    PartitionBound::Value(<span class="string">&quot;sh&quot;</span>.into()),
-                                ],
-                            )
-                            .try_into()
-                            .unwrap(),
-                        ),
-                        attrs: BTreeMap::new(),
+                    RegionRoute {
+                        region: Region {
+                            id: <span class="number">2</span>.into(),
+                            name: <span class="string">&quot;r2&quot;</span>.to_string(),
+                            partition: <span class="prelude-val">Some</span>(
+                                PartitionDef::new(
+                                    <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;b&quot;</span>.to_string()],
+                                    <span class="macro">vec!</span>[
+                                        PartitionBound::Value(<span class="number">50_i32</span>.into()),
+                                        PartitionBound::Value(<span class="string">&quot;sh&quot;</span>.into()),
+                                    ],
+                                )
+                                .try_into()
+                                .unwrap(),
+                            ),
+                            attrs: BTreeMap::new(),
+                        },
+                        leader_peer: <span class="prelude-val">None</span>,
+                        follower_peers: <span class="macro">vec!</span>[],
                     },
-                    leader_peer: <span class="prelude-val">None</span>,
-                    follower_peers: <span class="macro">vec!</span>[],
-                },
-                RegionRoute {
-                    region: Region {
-                        id: <span class="number">3</span>.into(),
-                        name: <span class="string">&quot;r3&quot;</span>.to_string(),
-                        partition: <span class="prelude-val">Some</span>(
-                            PartitionDef::new(
-                                <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;b&quot;</span>.to_string()],
-                                <span class="macro">vec!</span>[PartitionBound::MaxValue, PartitionBound::MaxValue],
-                            )
-                            .try_into()
-                            .unwrap(),
-                        ),
-                        attrs: BTreeMap::new(),
+                    RegionRoute {
+                        region: Region {
+                            id: <span class="number">3</span>.into(),
+                            name: <span class="string">&quot;r3&quot;</span>.to_string(),
+                            partition: <span class="prelude-val">Some</span>(
+                                PartitionDef::new(
+                                    <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;b&quot;</span>.to_string()],
+                                    <span class="macro">vec!</span>[PartitionBound::MaxValue, PartitionBound::MaxValue],
+                                )
+                                .try_into()
+                                .unwrap(),
+                            ),
+                            attrs: BTreeMap::new(),
+                        },
+                        leader_peer: <span class="prelude-val">None</span>,
+                        follower_peers: <span class="macro">vec!</span>[],
                     },
-                    leader_peer: <span class="prelude-val">None</span>,
-                    follower_peers: <span class="macro">vec!</span>[],
-                },
-            ],
-        );
-        table_routes
-            .insert_table_route(<span class="number">2</span>, Arc::new(table_route))
-            .<span class="kw">await</span>;
+                ],
+            )
+            .<span class="kw">await
+            </span>.unwrap();
 
         partition_manager
     }
 
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_find_partition_rule() {
-        <span class="kw">let </span>partition_manager = create_partition_rule_manager().<span class="kw">await</span>;
+        <span class="kw">let </span>partition_manager =
+            create_partition_rule_manager(Arc::new(MemoryKvBackend::default())).<span class="kw">await</span>;
 
         <span class="comment">// &quot;one_column_partitioning_table&quot; has id 1
         </span><span class="kw">let </span>partition_rule = partition_manager
@@ -750,9 +871,10 @@
 
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_find_regions() {
-        <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(Arc::new(TableRoutes::new(
-            Arc::new(MetaClient::default()),
-        ))));
+        <span class="kw">let </span>kv_backend = MetaKvBackend {
+            client: Arc::new(MetaClient::default()),
+        };
+        <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(Arc::new(kv_backend)));
 
         <span class="comment">// PARTITION BY RANGE (a) (
         //   PARTITION r1 VALUES LESS THAN (10),

@@ -412,7 +412,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>common_meta::key::table_route::NextTableRouteKey;
+<span class="kw">use </span>common_meta::key::table_route::TableRouteKey;
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::router::RegionRoute;
 <span class="kw">use </span>common_meta::RegionIdent;
@@ -478,7 +478,7 @@
         }
 
         pretty_log_table_route_change(
-            NextTableRouteKey::new(table_id).to_string(),
+            TableRouteKey::new(table_id).to_string(),
             <span class="kw-2">&amp;</span>new_region_routes,
             failed_region,
         );

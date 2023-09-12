@@ -471,11 +471,11 @@
 <span class="kw">use </span>datatypes::schema::{Schema, SchemaRef};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{ensure, ResultExt};
+<span class="kw">use </span>store_api::path_utils::table_dir;
 <span class="kw">use </span>store_api::storage::{
     ColumnId, CompactionStrategy, CreateOptions, EngineContext, OpenOptions,
     RegionDescriptorBuilder, RegionId, RegionNumber, StorageEngine,
 };
-<span class="kw">use </span>table::engine::table_dir;
 <span class="kw">use </span>table::metadata::{TableInfoBuilder, TableMetaBuilder, TableType};
 <span class="kw">use </span>table::requests::CreateTableRequest;
 <span class="kw">use </span>table::TableRef;

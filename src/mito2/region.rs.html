@@ -121,6 +121,25 @@
 <a href="#121" id="121">121</a>
 <a href="#122" id="122">122</a>
 <a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -141,18 +160,19 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>version;
 
 <span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::sync::atomic::{AtomicI64, Ordering};
 <span class="kw">use </span>std::sync::{Arc, RwLock};
 
 <span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>common_time::util::current_time_millis;
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::storage::RegionId;
 
+<span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::manager::RegionManifestManager;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlRef, VersionRef};
-
-<span class="doccomment">/// Type to store region version.
-</span><span class="kw">pub type </span>VersionNumber = u32;
+<span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::FilePurgerRef;
 
 <span class="doccomment">/// Metadata and runtime status of a region.
 ///
@@ -169,20 +189,27 @@
 
     <span class="doccomment">/// Version controller for this region.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) version_control: VersionControlRef,
-    <span class="doccomment">/// Data directory of the region.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) region_dir: String,
+    <span class="doccomment">/// SSTs accessor for this region.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) access_layer: AccessLayerRef,
     <span class="doccomment">/// Manager to maintain manifest for this region.
-    </span>manifest_manager: RegionManifestManager,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) manifest_manager: RegionManifestManager,
+    <span class="doccomment">/// SST file purger.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
+    <span class="doccomment">/// Last flush time in millis.
+    </span>last_flush_millis: AtomicI64,
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>MitoRegionRef = Arc&lt;MitoRegion&gt;;
 
 <span class="kw">impl </span>MitoRegion {
-    <span class="doccomment">/// Stop background tasks for this region.
+    <span class="doccomment">/// Stop background managers for this region.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.manifest_manager.stop().<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="macro">info!</span>(<span class="string">&quot;Stopped region, region_id: {}&quot;</span>, <span class="self">self</span>.region_id);
+        <span class="macro">info!</span>(
+            <span class="string">&quot;Stopped region manifest manager, region_id: {}&quot;</span>,
+            <span class="self">self</span>.region_id
+        );
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -197,6 +224,17 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; VersionRef {
         <span class="kw">let </span>version_data = <span class="self">self</span>.version_control.current();
         version_data.version
+    }
+
+    <span class="doccomment">/// Returns last flush timestamp in millis.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>last_flush_millis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {
+        <span class="self">self</span>.last_flush_millis.load(Ordering::Relaxed)
+    }
+
+    <span class="doccomment">/// Update flush time to current time.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>update_flush_millis(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">let </span>now = current_time_millis();
+        <span class="self">self</span>.last_flush_millis.store(now, Ordering::Relaxed);
     }
 }
 

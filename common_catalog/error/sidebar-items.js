@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["DeserializeCatalogEntryValueSnafu","InvalidCatalogSnafu","SerializeCatalogEntryValueSnafu"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["DeserializeCatalogEntryValueSnafu","InvalidCatalogSnafu","InvalidFullTableNameSnafu","SerializeCatalogEntryValueSnafu"],"type":["Result"]};

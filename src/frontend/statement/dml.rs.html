@@ -215,6 +215,11 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -250,19 +255,18 @@
 
 <span class="kw">use </span><span class="kw">super</span>::StatementExecutor;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    BuildColumnVectorsSnafu, ExecLogicalPlanSnafu, ExecuteStatementSnafu,
-    MissingTimeIndexColumnSnafu, ReadRecordBatchSnafu, <span class="prelude-ty">Result</span>, UnexpectedSnafu,
+    BuildColumnVectorsSnafu, ExecLogicalPlanSnafu, MissingTimeIndexColumnSnafu,
+    ReadRecordBatchSnafu, <span class="prelude-ty">Result</span>, UnexpectedSnafu,
 };
 
 <span class="kw">impl </span>StatementExecutor {
     <span class="kw">pub async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, insert: Box&lt;Insert&gt;, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">if </span>insert.can_extract_values() {
             <span class="comment">// Fast path: plain insert (&quot;insert with literal values&quot;) is executed directly
-            </span><span class="self">self</span>.sql_stmt_executor
-                .execute_sql(Statement::Insert(insert), query_ctx)
+            </span><span class="self">self</span>.inserter
+                .handle_statement_insert(insert.as_ref(), <span class="kw-2">&amp;</span>query_ctx)
                 .<span class="kw">await
-                </span>.context(ExecuteStatementSnafu)
-        } <span class="kw">else </span>{
+        </span>} <span class="kw">else </span>{
             <span class="comment">// Slow path: insert with subquery. Execute the subquery first, via query engine. Then
             // insert the results by sending insert requests.
 
@@ -291,7 +295,10 @@
                 <span class="kw">let </span>record_batch = batch.context(ReadRecordBatchSnafu)<span class="question-mark">?</span>;
                 <span class="kw">let </span>insert_request =
                     build_insert_request(record_batch, table.schema(), <span class="kw-2">&amp;</span>table_info)<span class="question-mark">?</span>;
-                affected_rows += <span class="self">self</span>.send_insert_request(insert_request).<span class="kw">await</span><span class="question-mark">?</span>;
+                affected_rows += <span class="self">self
+                    </span>.inserter
+                    .handle_table_insert(insert_request, query_ctx.clone())
+                    .<span class="kw">await</span><span class="question-mark">?</span>;
             }
 
             <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows))
@@ -322,11 +329,14 @@
         <span class="kw">let </span>table_info = table.table_info();
         <span class="kw">while let </span><span class="prelude-val">Some</span>(batch) = stream.next().<span class="kw">await </span>{
             <span class="kw">let </span>record_batch = batch.context(ReadRecordBatchSnafu)<span class="question-mark">?</span>;
-            <span class="kw">let </span>delete_request = build_delete_request(record_batch, table.schema(), <span class="kw-2">&amp;</span>table_info)<span class="question-mark">?</span>;
-            affected_rows += <span class="self">self</span>.send_delete_request(delete_request).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="kw">let </span>request = build_delete_request(record_batch, table.schema(), <span class="kw-2">&amp;</span>table_info)<span class="question-mark">?</span>;
+            affected_rows += <span class="self">self
+                </span>.deleter
+                .handle_table_delete(request, query_ctx.clone())
+                .<span class="kw">await</span><span class="question-mark">?</span>;
         }
 
-        <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows))
+        <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows <span class="kw">as _</span>))
     }
 
     <span class="kw">async fn </span>execute_dml_subquery(

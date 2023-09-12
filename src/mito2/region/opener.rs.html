@@ -190,6 +190,27 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -206,9 +227,11 @@
 
 </span><span class="doccomment">//! Region opener.
 
-</span><span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">use </span>std::sync::atomic::AtomicI64;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>common_time::util::current_time_millis;
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>object_store::util::join_dir;
 <span class="kw">use </span>object_store::ObjectStore;
@@ -217,6 +240,7 @@
 <span class="kw">use </span>store_api::metadata::RegionMetadata;
 <span class="kw">use </span>store_api::storage::RegionId;
 
+<span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayer;
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{RegionCorruptedSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::manager::{RegionManifestManager, RegionManifestOptions};
@@ -224,6 +248,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionBuilder, VersionControl, VersionControlRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegion;
 <span class="kw">use </span><span class="kw">crate</span>::region_write_ctx::RegionWriteCtx;
+<span class="kw">use </span><span class="kw">crate</span>::schedule::scheduler::SchedulerRef;
+<span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::LocalFilePurger;
 <span class="kw">use </span><span class="kw">crate</span>::wal::{EntryId, Wal};
 
 <span class="doccomment">/// Builder to create a new [MitoRegion] or open an existing one.
@@ -233,6 +259,7 @@
     memtable_builder: MemtableBuilderRef,
     object_store: ObjectStore,
     region_dir: String,
+    scheduler: SchedulerRef,
 }
 
 <span class="kw">impl </span>RegionOpener {
@@ -241,6 +268,7 @@
         region_id: RegionId,
         memtable_builder: MemtableBuilderRef,
         object_store: ObjectStore,
+        scheduler: SchedulerRef,
     ) -&gt; RegionOpener {
         RegionOpener {
             region_id,
@@ -248,6 +276,7 @@
             memtable_builder,
             object_store,
             region_dir: String::new(),
+            scheduler,
         }
     }
 
@@ -274,7 +303,7 @@
         <span class="comment">// Create a manifest manager for this region.
         </span><span class="kw">let </span>options = RegionManifestOptions {
             manifest_dir: new_manifest_dir(<span class="kw-2">&amp;</span><span class="self">self</span>.region_dir),
-            object_store: <span class="self">self</span>.object_store,
+            object_store: <span class="self">self</span>.object_store.clone(),
             compress_type: config.manifest_compress_type,
             checkpoint_distance: config.manifest_checkpoint_distance,
         };
@@ -285,12 +314,15 @@
 
         <span class="kw">let </span>version = VersionBuilder::new(metadata, mutable).build();
         <span class="kw">let </span>version_control = Arc::new(VersionControl::new(version));
+        <span class="kw">let </span>access_layer = Arc::new(AccessLayer::new(<span class="self">self</span>.region_dir, <span class="self">self</span>.object_store.clone()));
 
         <span class="prelude-val">Ok</span>(MitoRegion {
             region_id,
             version_control,
-            region_dir: <span class="self">self</span>.region_dir,
+            access_layer: access_layer.clone(),
             manifest_manager,
+            file_purger: Arc::new(LocalFilePurger::new(<span class="self">self</span>.scheduler, access_layer)),
+            last_flush_millis: AtomicI64::new(current_time_millis()),
         })
     }
 
@@ -304,7 +336,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MitoRegion&gt; {
         <span class="kw">let </span>options = RegionManifestOptions {
             manifest_dir: new_manifest_dir(<span class="kw-2">&amp;</span><span class="self">self</span>.region_dir),
-            object_store: <span class="self">self</span>.object_store,
+            object_store: <span class="self">self</span>.object_store.clone(),
             compress_type: config.manifest_compress_type,
             checkpoint_distance: config.manifest_checkpoint_distance,
         };
@@ -327,17 +359,25 @@
         );
 
         <span class="kw">let </span>region_id = metadata.region_id;
+        <span class="kw">let </span>access_layer = Arc::new(AccessLayer::new(<span class="self">self</span>.region_dir, <span class="self">self</span>.object_store.clone()));
+        <span class="kw">let </span>file_purger = Arc::new(LocalFilePurger::new(<span class="self">self</span>.scheduler, access_layer.clone()));
         <span class="kw">let </span>mutable = <span class="self">self</span>.memtable_builder.build(<span class="kw-2">&amp;</span>metadata);
-        <span class="kw">let </span>version = VersionBuilder::new(metadata, mutable).build();
-        <span class="kw">let </span>flushed_sequence = version.flushed_entry_id;
+        <span class="kw">let </span>version = VersionBuilder::new(metadata, mutable)
+            .add_files(file_purger.clone(), manifest.files.values().cloned())
+            .flushed_entry_id(manifest.flushed_entry_id)
+            .flushed_sequence(manifest.flushed_sequence)
+            .build();
+        <span class="kw">let </span>flushed_entry_id = version.flushed_entry_id;
         <span class="kw">let </span>version_control = Arc::new(VersionControl::new(version));
-        replay_memtable(wal, region_id, flushed_sequence, <span class="kw-2">&amp;</span>version_control).<span class="kw">await</span><span class="question-mark">?</span>;
+        replay_memtable(wal, region_id, flushed_entry_id, <span class="kw-2">&amp;</span>version_control).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>region = MitoRegion {
             region_id: <span class="self">self</span>.region_id,
             version_control,
-            region_dir: <span class="self">self</span>.region_dir,
+            access_layer,
             manifest_manager,
+            file_purger,
+            last_flush_millis: AtomicI64::new(current_time_millis()),
         };
         <span class="prelude-val">Ok</span>(region)
     }
@@ -351,7 +391,9 @@
     version_control: <span class="kw-2">&amp;</span>VersionControlRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>rows_replayed = <span class="number">0</span>;
-    <span class="kw">let </span><span class="kw-2">mut </span>last_entry_id = EntryId::MIN;
+    <span class="comment">// Last entry id should start from flushed entry id since there might be no
+    // data in the WAL.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>last_entry_id = flushed_entry_id;
     <span class="kw">let </span><span class="kw-2">mut </span>region_write_ctx = RegionWriteCtx::new(region_id, version_control);
     <span class="kw">let </span><span class="kw-2">mut </span>wal_stream = wal.scan(region_id, flushed_entry_id)<span class="question-mark">?</span>;
     <span class="kw">while let </span><span class="prelude-val">Some</span>(res) = wal_stream.next().<span class="kw">await </span>{

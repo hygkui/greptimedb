@@ -72,10 +72,10 @@
 
         region.stop().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.regions.remove_region(region_id);
+        <span class="comment">// Clean flush status.
+        </span><span class="self">self</span>.flush_scheduler.on_region_closed(region_id);
 
-        <span class="comment">// TODO(yingwen): Clean flush status.
-
-        </span><span class="macro">info!</span>(<span class="string">&quot;Region {} closed&quot;</span>, region_id);
+        <span class="macro">info!</span>(<span class="string">&quot;Region {} closed&quot;</span>, region_id);
 
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
     }

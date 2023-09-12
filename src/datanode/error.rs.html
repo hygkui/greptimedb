@@ -702,6 +702,13 @@
 <a href="#702" id="702">702</a>
 <a href="#703" id="703">703</a>
 <a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -829,12 +836,6 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Incorrect internal state: {}&quot;</span>, state))]
     </span>IncorrectInternalState { state: String, location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create catalog list, source: {}&quot;</span>, source))]
-    </span>NewCatalog {
-        location: Location,
-        source: catalog::error::Error,
-    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Catalog not found: {}&quot;</span>, name))]
     </span>CatalogNotFound { name: String, location: Location },
@@ -1270,6 +1271,18 @@
         location: Location,
         source: store_api::metadata::MetadataError,
     },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Failed to stop region engine {}, location:{}, source: {}&quot;</span>,
+        name,
+        location,
+        source
+    ))]
+    </span>StopRegionEngine {
+        name: String,
+        location: Location,
+        source: BoxedError,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1287,7 +1300,7 @@
             HandleHeartbeatResponse { source, .. } =&gt; source.status_code(),
 
             DecodeLogicalPlan { source, .. } =&gt; source.status_code(),
-            NewCatalog { source, .. } | RegisterSchema { source, .. } =&gt; source.status_code(),
+            RegisterSchema { source, .. } =&gt; source.status_code(),
             CreateTable { source, .. } =&gt; source.status_code(),
             DropTable { source, .. } =&gt; source.status_code(),
             FlushTable { source, .. } =&gt; source.status_code(),
@@ -1380,6 +1393,7 @@
                 source.status_code()
             }
             HandleRegionRequest { source, .. } =&gt; source.status_code(),
+            StopRegionEngine { source, .. } =&gt; source.status_code(),
         }
     }
 

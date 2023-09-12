@@ -925,7 +925,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>sample_script_engine() -&gt; PyEngine {
         <span class="kw">let </span>catalog_manager =
             MemoryCatalogManager::new_with_table(NumbersTable::table(NUMBERS_TABLE_ID));
-        <span class="kw">let </span>query_engine = QueryEngineFactory::new(catalog_manager, <span class="bool-val">false</span>).query_engine();
+        <span class="kw">let </span>query_engine = QueryEngineFactory::new(catalog_manager, <span class="prelude-val">None</span>, <span class="bool-val">false</span>).query_engine();
 
         PyEngine::new(query_engine.clone())
     }

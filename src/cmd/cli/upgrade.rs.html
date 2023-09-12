@@ -436,7 +436,7 @@
 <span class="kw">use </span>common_meta::key::table_info::{TableInfoKey, TableInfoValue};
 <span class="kw">use </span>common_meta::key::table_name::{TableNameKey, TableNameValue};
 <span class="kw">use </span>common_meta::key::table_region::{TableRegionKey, TableRegionValue};
-<span class="kw">use </span>common_meta::key::table_route::{NextTableRouteKey, TableRouteValue <span class="kw">as </span>NextTableRouteValue};
+<span class="kw">use </span>common_meta::key::table_route::{TableRouteKey, TableRouteValue <span class="kw">as </span>NextTableRouteValue};
 <span class="kw">use </span>common_meta::key::{RegionDistribution, TableMetaKey};
 <span class="kw">use </span>common_meta::range_stream::PaginationStream;
 <span class="kw">use </span>common_meta::rpc::router::TableRoute;
@@ -565,7 +565,7 @@
         <span class="kw">let </span>new_table_value = NextTableRouteValue::new(table_route.region_routes);
 
         <span class="kw">let </span>table_id = table_route.table.id <span class="kw">as </span>u32;
-        <span class="kw">let </span>new_key = NextTableRouteKey::new(table_id);
+        <span class="kw">let </span>new_key = TableRouteKey::new(table_id);
         <span class="macro">info!</span>(<span class="string">&quot;Creating &#39;{new_key}&#39;&quot;</span>);
 
         <span class="kw">if </span><span class="self">self</span>.dryrun {

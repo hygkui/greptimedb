@@ -172,6 +172,16 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -186,10 +196,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::any::Any;
-<span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_datasource::file_format::Format;
 <span class="kw">use </span>common_datasource::object_store::build_backend;
 <span class="kw">use </span>common_error::ext::BoxedError;
@@ -198,10 +206,12 @@
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>store_api::data_source::DataSource;
 <span class="kw">use </span>store_api::storage::{RegionNumber, ScanRequest};
 <span class="kw">use </span>table::error::{<span class="self">self </span><span class="kw">as </span>table_error, <span class="prelude-ty">Result </span><span class="kw">as </span>TableResult};
-<span class="kw">use </span>table::metadata::{RawTableInfo, TableInfo, TableInfoRef, TableType};
-<span class="kw">use </span>table::{requests, Table};
+<span class="kw">use </span>table::metadata::{FilterPushDownType, RawTableInfo, TableInfo};
+<span class="kw">use </span>table::thin_table::{ThinTable, ThinTableAdapter};
+<span class="kw">use </span>table::{requests, TableRef};
 
 <span class="kw">use </span><span class="kw">super</span>::format::create_stream;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, ConvertRawSnafu, <span class="prelude-ty">Result</span>};
@@ -219,68 +229,12 @@
 
 <span class="kw">pub struct </span>ImmutableFileTable {
     metadata: ImmutableMetadata,
-    <span class="comment">// currently, it&#39;s immutable
-    </span>table_info: Arc&lt;TableInfo&gt;,
-    object_store: ObjectStore,
-    files: Vec&lt;String&gt;,
-    format: Format,
+    table_ref: TableRef,
 }
 
 <span class="kw">pub type </span>ImmutableFileTableRef = Arc&lt;ImmutableFileTable&gt;;
 
-<span class="attr">#[async_trait]
-</span><span class="kw">impl </span>Table <span class="kw">for </span>ImmutableFileTable {
-    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
-        <span class="self">self
-    </span>}
-
-    <span class="doccomment">/// The [`SchemaRef`] before the projection.
-    /// It contains all the columns that may appear in the files (All missing columns should be filled NULLs).
-    </span><span class="kw">fn </span>schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SchemaRef {
-        <span class="self">self</span>.table_info().meta.schema.clone()
-    }
-
-    <span class="kw">fn </span>table_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableInfoRef {
-        <span class="self">self</span>.table_info.clone()
-    }
-
-    <span class="kw">fn </span>table_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableType {
-        <span class="self">self</span>.table_info().table_type
-    }
-
-    <span class="kw">async fn </span>scan_to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, request: ScanRequest) -&gt; TableResult&lt;SendableRecordBatchStream&gt; {
-        create_stream(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.format,
-            <span class="kw-2">&amp;</span>CreateScanPlanContext::default(),
-            <span class="kw-2">&amp;</span>ScanPlanConfig {
-                file_schema: <span class="self">self</span>.schema(),
-                files: <span class="kw-2">&amp;</span><span class="self">self</span>.files,
-                projection: request.projection.as_ref(),
-                filters: <span class="kw-2">&amp;</span>request.filters,
-                limit: request.limit,
-                store: <span class="self">self</span>.object_store.clone(),
-            },
-        )
-        .map_err(BoxedError::new)
-        .context(table_error::TableOperationSnafu)
-    }
-
-    <span class="kw">async fn </span>flush(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _region_number: <span class="prelude-ty">Option</span>&lt;RegionNumber&gt;,
-        _wait: <span class="prelude-ty">Option</span>&lt;bool&gt;,
-    ) -&gt; TableResult&lt;()&gt; {
-        <span class="comment">// nothing to flush
-        </span><span class="prelude-val">Ok</span>(())
-    }
-}
-
 <span class="kw">impl </span>ImmutableFileTable {
-    <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ImmutableMetadata {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.metadata
-    }
-
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(table_info: TableInfo, metadata: ImmutableMetadata) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>table_info = Arc::new(table_info);
         <span class="kw">let </span>options = <span class="kw-2">&amp;</span>table_info.meta.options.extra_options;
@@ -303,12 +257,19 @@
 
         <span class="kw">let </span>object_store = build_backend(url, options).context(error::BuildBackendSnafu)<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>schema = table_info.meta.schema.clone();
+        <span class="kw">let </span>thin_table = ThinTable::new(table_info, FilterPushDownType::Unsupported);
+        <span class="kw">let </span>data_source = Arc::new(ImmutableFileDataSource::new(
+            schema,
+            object_store,
+            meta.files,
+            format,
+        ));
+        <span class="kw">let </span>table_ref = Arc::new(ThinTableAdapter::new(thin_table, data_source));
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             metadata,
-            table_info,
-            object_store,
-            files: meta.files,
-            format,
+            table_ref,
         })
     }
 
@@ -344,6 +305,65 @@
             TableInfo::try_from(metadata.table_info.clone()).context(ConvertRawSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((metadata, table_info))
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ImmutableMetadata {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.metadata
+    }
+
+    <span class="kw">pub fn </span>as_table_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TableRef {
+        <span class="self">self</span>.table_ref.clone()
+    }
+
+    <span class="kw">pub async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>, regions: <span class="kw-2">&amp;</span>[RegionNumber]) -&gt; TableResult&lt;()&gt; {
+        <span class="self">self</span>.table_ref.close(regions).<span class="kw">await
+    </span>}
+}
+
+<span class="kw">struct </span>ImmutableFileDataSource {
+    schema: SchemaRef,
+    object_store: ObjectStore,
+    files: Vec&lt;String&gt;,
+    format: Format,
+}
+
+<span class="kw">impl </span>ImmutableFileDataSource {
+    <span class="kw">fn </span>new(
+        schema: SchemaRef,
+        object_store: ObjectStore,
+        files: Vec&lt;String&gt;,
+        format: Format,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            schema,
+            object_store,
+            files,
+            format,
+        }
+    }
+}
+
+<span class="kw">impl </span>DataSource <span class="kw">for </span>ImmutableFileDataSource {
+    <span class="kw">fn </span>get_stream(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        request: ScanRequest,
+    ) -&gt; std::result::Result&lt;SendableRecordBatchStream, BoxedError&gt; {
+        create_stream(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.format,
+            <span class="kw-2">&amp;</span>CreateScanPlanContext::default(),
+            <span class="kw-2">&amp;</span>ScanPlanConfig {
+                file_schema: <span class="self">self</span>.schema.clone(),
+                files: <span class="kw-2">&amp;</span><span class="self">self</span>.files,
+                projection: request.projection.as_ref(),
+                filters: <span class="kw-2">&amp;</span>request.filters,
+                limit: request.limit,
+                store: <span class="self">self</span>.object_store.clone(),
+            },
+        )
+        .map_err(BoxedError::new)
+        .context(table_error::TableOperationSnafu)
+        .map_err(BoxedError::new)
     }
 }
 </code></pre></div></section></main></body></html>

@@ -797,14 +797,14 @@
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>storage::manifest::manifest_compress_type;
+<span class="kw">use </span>store_api::path_utils::{region_name, table_dir};
 <span class="kw">use </span>store_api::storage::{
     CloseOptions, ColumnDescriptorBuilder, ColumnFamilyDescriptor, ColumnFamilyDescriptorBuilder,
     ColumnId, CompactionStrategy, EngineContext <span class="kw">as </span>StorageEngineContext, OpenOptions, RegionNumber,
     RowKeyDescriptor, RowKeyDescriptorBuilder, StorageEngine,
 };
 <span class="kw">use </span>table::engine::{
-    region_name, table_dir, CloseTableResult, EngineContext, TableEngine, TableEngineProcedure,
-    TableReference,
+    CloseTableResult, EngineContext, TableEngine, TableEngineProcedure, TableReference,
 };
 <span class="kw">use </span>table::metadata::{TableId, TableInfo, TableVersion};
 <span class="kw">use </span>table::requests::{

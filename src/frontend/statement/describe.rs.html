@@ -62,7 +62,6 @@
 
 </span><span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>datanode::instance::sql::table_idents_to_full_name;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>sql::statements::describe::DescribeTable;
@@ -71,6 +70,7 @@
     CatalogSnafu, DescribeStatementSnafu, ExternalSnafu, <span class="prelude-ty">Result</span>, TableNotFoundSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::statement::StatementExecutor;
+<span class="kw">use </span><span class="kw">crate</span>::table::table_idents_to_full_name;
 
 <span class="kw">impl </span>StatementExecutor {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">async fn </span>describe_table(

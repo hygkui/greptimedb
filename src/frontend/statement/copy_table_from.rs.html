@@ -612,6 +612,13 @@
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -654,6 +661,7 @@
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>object_store::{Entry, EntryMode, Metakey, ObjectStore};
 <span class="kw">use </span>regex::Regex;
+<span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::engine::TableReference;
 <span class="kw">use </span>table::requests::{CopyTableRequest, InsertRequest};
@@ -849,7 +857,11 @@
         }
     }
 
-    <span class="kw">pub async fn </span>copy_table_from(<span class="kw-2">&amp;</span><span class="self">self</span>, req: CopyTableRequest) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
+    <span class="kw">pub async fn </span>copy_table_from(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        req: CopyTableRequest,
+        query_ctx: QueryContextRef,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
         <span class="kw">let </span>table_ref = TableReference {
             catalog: <span class="kw-2">&amp;</span>req.catalog_name,
             schema: <span class="kw-2">&amp;</span>req.schema_name,
@@ -936,14 +948,16 @@
                     .zip(vectors)
                     .collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
 
-                pending.push(<span class="self">self</span>.send_insert_request(InsertRequest {
-                    catalog_name: req.catalog_name.to_string(),
-                    schema_name: req.schema_name.to_string(),
-                    table_name: req.table_name.to_string(),
-                    columns_values,
-                    <span class="comment">//TODO: support multi-regions
-                    </span>region_number: <span class="number">0</span>,
-                }));
+                pending.push(<span class="self">self</span>.inserter.handle_table_insert(
+                    InsertRequest {
+                        catalog_name: req.catalog_name.to_string(),
+                        schema_name: req.schema_name.to_string(),
+                        table_name: req.table_name.to_string(),
+                        columns_values,
+                        region_number: <span class="number">0</span>,
+                    },
+                    query_ctx.clone(),
+                ));
 
                 <span class="kw">if </span>pending_mem_size <span class="kw">as </span>u64 &gt;= pending_mem_threshold {
                     rows_inserted += batch_insert(<span class="kw-2">&amp;mut </span>pending, <span class="kw-2">&amp;mut </span>pending_mem_size).<span class="kw">await</span><span class="question-mark">?</span>;

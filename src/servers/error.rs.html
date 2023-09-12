@@ -547,6 +547,9 @@
 <a href="#547" id="547">547</a>
 <a href="#548" id="548">548</a>
 <a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1014,8 +1017,11 @@
         | StatusCode::EngineExecuteQuery =&gt; Code::Internal,
         StatusCode::InvalidArguments | StatusCode::InvalidSyntax =&gt; Code::InvalidArgument,
         StatusCode::Cancelled =&gt; Code::Cancelled,
-        StatusCode::TableAlreadyExists | StatusCode::TableColumnExists =&gt; Code::AlreadyExists,
+        StatusCode::TableAlreadyExists
+        | StatusCode::TableColumnExists
+        | StatusCode::RegionAlreadyExists =&gt; Code::AlreadyExists,
         StatusCode::TableNotFound
+        | StatusCode::RegionNotFound
         | StatusCode::TableColumnNotFound
         | StatusCode::DatabaseNotFound
         | StatusCode::UserNotFound =&gt; Code::NotFound,

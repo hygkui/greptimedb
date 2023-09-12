@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Context","DummyCacheInvalidator"],"trait":["CacheInvalidator"],"type":["CacheInvalidatorRef"]};

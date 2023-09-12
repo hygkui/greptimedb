@@ -578,6 +578,12 @@
 <a href="#578" id="578">578</a>
 <a href="#579" id="579">579</a>
 <a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -594,14 +600,20 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>catalog::remote::DummyKvCacheInvalidator;
+<span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_base::Plugins;
+<span class="kw">use </span>common_config::{kv_store_dir, KvStoreConfig, WalConfig};
+<span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
+<span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
-<span class="kw">use </span>datanode::datanode::{Datanode, DatanodeOptions, ProcedureConfig, StorageConfig, WalConfig};
-<span class="kw">use </span>datanode::instance::InstanceRef;
+<span class="kw">use </span>datanode::datanode::{Datanode, DatanodeOptions, ProcedureConfig, StorageConfig};
+<span class="kw">use </span>datanode::region_server::RegionServer;
+<span class="kw">use </span>frontend::catalog::FrontendCatalogManager;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
-<span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
+<span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance, StandaloneDatanodeManager};
 <span class="kw">use </span>frontend::service_config::{
     GrpcOptions, InfluxdbOptions, MysqlOptions, OpentsdbOptions, PostgresOptions, PromStoreOptions,
 };
@@ -612,8 +624,8 @@
 <span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    IllegalConfigSnafu, <span class="prelude-ty">Result</span>, ShutdownDatanodeSnafu, ShutdownFrontendSnafu, StartDatanodeSnafu,
-    StartFrontendSnafu,
+    IllegalConfigSnafu, InitMetadataSnafu, <span class="prelude-ty">Result</span>, ShutdownDatanodeSnafu, ShutdownFrontendSnafu,
+    StartDatanodeSnafu, StartFrontendSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::frontend::load_frontend_plugins;
 <span class="kw">use </span><span class="kw">crate</span>::options::{MixOptions, Options, TopLevelOptions};
@@ -625,12 +637,8 @@
 }
 
 <span class="kw">impl </span>Command {
-    <span class="kw">pub async fn </span>build(
-        <span class="self">self</span>,
-        fe_opts: FrontendOptions,
-        dn_opts: DatanodeOptions,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
-        <span class="self">self</span>.subcmd.build(fe_opts, dn_opts).<span class="kw">await
+    <span class="kw">pub async fn </span>build(<span class="self">self</span>, opts: MixOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="self">self</span>.subcmd.build(opts).<span class="kw">await
     </span>}
 
     <span class="kw">pub fn </span>load_options(<span class="kw-2">&amp;</span><span class="self">self</span>, top_level_options: TopLevelOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Options&gt; {
@@ -644,9 +652,9 @@
 }
 
 <span class="kw">impl </span>SubCommand {
-    <span class="kw">async fn </span>build(<span class="self">self</span>, fe_opts: FrontendOptions, dn_opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: MixOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            SubCommand::Start(cmd) =&gt; cmd.build(fe_opts, dn_opts).<span class="kw">await</span>,
+            SubCommand::Start(cmd) =&gt; cmd.build(opts).<span class="kw">await</span>,
         }
     }
 
@@ -661,17 +669,17 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>StandaloneOptions {
     <span class="kw">pub </span>mode: Mode,
-    <span class="kw">pub </span>enable_memory_catalog: bool,
     <span class="kw">pub </span>enable_telemetry: bool,
-    <span class="kw">pub </span>http_options: <span class="prelude-ty">Option</span>&lt;HttpOptions&gt;,
-    <span class="kw">pub </span>grpc_options: <span class="prelude-ty">Option</span>&lt;GrpcOptions&gt;,
-    <span class="kw">pub </span>mysql_options: <span class="prelude-ty">Option</span>&lt;MysqlOptions&gt;,
-    <span class="kw">pub </span>postgres_options: <span class="prelude-ty">Option</span>&lt;PostgresOptions&gt;,
-    <span class="kw">pub </span>opentsdb_options: <span class="prelude-ty">Option</span>&lt;OpentsdbOptions&gt;,
-    <span class="kw">pub </span>influxdb_options: <span class="prelude-ty">Option</span>&lt;InfluxdbOptions&gt;,
-    <span class="kw">pub </span>prom_store_options: <span class="prelude-ty">Option</span>&lt;PromStoreOptions&gt;,
+    <span class="kw">pub </span>http_options: HttpOptions,
+    <span class="kw">pub </span>grpc_options: GrpcOptions,
+    <span class="kw">pub </span>mysql_options: MysqlOptions,
+    <span class="kw">pub </span>postgres_options: PostgresOptions,
+    <span class="kw">pub </span>opentsdb_options: OpentsdbOptions,
+    <span class="kw">pub </span>influxdb_options: InfluxdbOptions,
+    <span class="kw">pub </span>prom_store_options: PromStoreOptions,
     <span class="kw">pub </span>wal: WalConfig,
     <span class="kw">pub </span>storage: StorageConfig,
+    <span class="kw">pub </span>kv_store: KvStoreConfig,
     <span class="kw">pub </span>procedure: ProcedureConfig,
     <span class="kw">pub </span>logging: LoggingOptions,
 }
@@ -680,17 +688,17 @@
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mode: Mode::Standalone,
-            enable_memory_catalog: <span class="bool-val">false</span>,
             enable_telemetry: <span class="bool-val">true</span>,
-            http_options: <span class="prelude-val">Some</span>(HttpOptions::default()),
-            grpc_options: <span class="prelude-val">Some</span>(GrpcOptions::default()),
-            mysql_options: <span class="prelude-val">Some</span>(MysqlOptions::default()),
-            postgres_options: <span class="prelude-val">Some</span>(PostgresOptions::default()),
-            opentsdb_options: <span class="prelude-val">Some</span>(OpentsdbOptions::default()),
-            influxdb_options: <span class="prelude-val">Some</span>(InfluxdbOptions::default()),
-            prom_store_options: <span class="prelude-val">Some</span>(PromStoreOptions::default()),
+            http_options: HttpOptions::default(),
+            grpc_options: GrpcOptions::default(),
+            mysql_options: MysqlOptions::default(),
+            postgres_options: PostgresOptions::default(),
+            opentsdb_options: OpentsdbOptions::default(),
+            influxdb_options: InfluxdbOptions::default(),
+            prom_store_options: PromStoreOptions::default(),
             wal: WalConfig::default(),
             storage: StorageConfig::default(),
+            kv_store: KvStoreConfig::default(),
             procedure: ProcedureConfig::default(),
             logging: LoggingOptions::default(),
         }
@@ -716,11 +724,9 @@
 
     <span class="kw">fn </span>datanode_options(<span class="self">self</span>) -&gt; DatanodeOptions {
         DatanodeOptions {
-            enable_memory_catalog: <span class="self">self</span>.enable_memory_catalog,
             enable_telemetry: <span class="self">self</span>.enable_telemetry,
             wal: <span class="self">self</span>.wal,
             storage: <span class="self">self</span>.storage,
-            procedure: <span class="self">self</span>.procedure,
             ..Default::default()
         }
     }
@@ -734,10 +740,7 @@
 <span class="kw">impl </span>Instance {
     <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// Start datanode instance before starting services, to avoid requests come in before internal components are started.
-        </span><span class="self">self</span>.datanode
-            .start_instance()
-            .<span class="kw">await
-            </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+        </span><span class="self">self</span>.datanode.start().<span class="kw">await</span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Datanode instance started&quot;</span>);
 
         <span class="self">self</span>.frontend.start().<span class="kw">await</span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
@@ -751,7 +754,7 @@
             </span>.context(ShutdownFrontendSnafu)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.datanode
-            .shutdown_instance()
+            .shutdown()
             .<span class="kw">await
             </span>.context(ShutdownDatanodeSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Datanode instance stopped.&quot;</span>);
@@ -776,8 +779,6 @@
     </span>influxdb_enable: bool,
     <span class="attr">#[clap(short, long)]
     </span>config_file: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="attr">#[clap(short = <span class="string">&#39;m&#39;</span>, long = <span class="string">&quot;memory-catalog&quot;</span>)]
-    </span>enable_memory_catalog: bool,
     <span class="attr">#[clap(long)]
     </span>tls_mode: <span class="prelude-ty">Option</span>&lt;TlsMode&gt;,
     <span class="attr">#[clap(long)]
@@ -798,8 +799,6 @@
             <span class="prelude-val">None</span>,
         )<span class="question-mark">?</span>;
 
-        opts.enable_memory_catalog = <span class="self">self</span>.enable_memory_catalog;
-
         opts.mode = Mode::Standalone;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = top_level_options.log_dir {
@@ -817,9 +816,7 @@
         );
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(http_opts) = <span class="kw-2">&amp;mut </span>opts.http_options {
-                http_opts.addr = addr.clone()
-            }
+            opts.http_options.addr = addr.clone()
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.rpc_addr {
@@ -833,48 +830,52 @@
                 }
                 .fail();
             }
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(grpc_opts) = <span class="kw-2">&amp;mut </span>opts.grpc_options {
-                grpc_opts.addr = addr.clone()
-            }
+            opts.grpc_options.addr = addr.clone()
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.mysql_addr {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(mysql_opts) = <span class="kw-2">&amp;mut </span>opts.mysql_options {
-                mysql_opts.addr = addr.clone();
-                mysql_opts.tls = tls_opts.clone();
-            }
+            opts.mysql_options.enable = <span class="bool-val">true</span>;
+            opts.mysql_options.addr = addr.clone();
+            opts.mysql_options.tls = tls_opts.clone();
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.postgres_addr {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(postgres_opts) = <span class="kw-2">&amp;mut </span>opts.postgres_options {
-                postgres_opts.addr = addr.clone();
-                postgres_opts.tls = tls_opts;
-            }
+            opts.postgres_options.enable = <span class="bool-val">true</span>;
+            opts.postgres_options.addr = addr.clone();
+            opts.postgres_options.tls = tls_opts;
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.opentsdb_addr {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(opentsdb_addr) = <span class="kw-2">&amp;mut </span>opts.opentsdb_options {
-                opentsdb_addr.addr = addr.clone();
-            }
+            opts.opentsdb_options.enable = <span class="bool-val">true</span>;
+            opts.opentsdb_options.addr = addr.clone();
         }
 
         <span class="kw">if </span><span class="self">self</span>.influxdb_enable {
-            opts.influxdb_options = <span class="prelude-val">Some</span>(InfluxdbOptions { enable: <span class="bool-val">true </span>});
+            opts.influxdb_options.enable = <span class="self">self</span>.influxdb_enable;
         }
-
+        <span class="kw">let </span>kv_store_cfg = opts.kv_store.clone();
+        <span class="kw">let </span>procedure_cfg = opts.procedure.clone();
         <span class="kw">let </span>fe_opts = opts.clone().frontend_options();
-        <span class="kw">let </span>logging = opts.logging.clone();
+        <span class="kw">let </span>logging_opts = opts.logging.clone();
         <span class="kw">let </span>dn_opts = opts.datanode_options();
 
         <span class="prelude-val">Ok</span>(Options::Standalone(Box::new(MixOptions {
+            procedure_cfg,
+            kv_store_cfg,
+            data_home: dn_opts.storage.data_home.to_string(),
             fe_opts,
             dn_opts,
-            logging,
+            logging_opts,
         })))
     }
 
-    <span class="kw">async fn </span>build(<span class="self">self</span>, fe_opts: FrontendOptions, dn_opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+    <span class="attr">#[allow(unreachable_code)]
+    #[allow(unused_variables)]
+    #[allow(clippy::diverging_sub_expression)]
+    </span><span class="kw">async fn </span>build(<span class="self">self</span>, opts: MixOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
         <span class="kw">let </span>plugins = Arc::new(load_frontend_plugins(<span class="kw-2">&amp;</span><span class="self">self</span>.user_provider)<span class="question-mark">?</span>);
+        <span class="kw">let </span>fe_opts = opts.fe_opts;
+        <span class="kw">let </span>dn_opts = opts.dn_opts;
 
         <span class="macro">info!</span>(<span class="string">&quot;Standalone start command: {:#?}&quot;</span>, <span class="self">self</span>);
         <span class="macro">info!</span>(
@@ -882,11 +883,41 @@
             fe_opts, dn_opts
         );
 
-        <span class="kw">let </span>datanode = Datanode::new(dn_opts.clone(), Default::default())
+        <span class="kw">let </span>kv_dir = kv_store_dir(<span class="kw-2">&amp;</span>opts.data_home);
+        <span class="kw">let </span>(kv_store, procedure_manager) = FeInstance::try_build_standalone_components(
+            kv_dir,
+            opts.kv_store_cfg,
+            opts.procedure_cfg,
+        )
+        .<span class="kw">await
+        </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>datanode = Datanode::new(dn_opts.clone(), plugins.clone())
             .<span class="kw">await
             </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>region_server = datanode.region_server();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>frontend = build_frontend(plugins.clone(), datanode.get_instance()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>catalog_manager = FrontendCatalogManager::new(
+            kv_store.clone(),
+            Arc::new(DummyKvCacheInvalidator),
+            Arc::new(StandaloneDatanodeManager(region_server.clone())),
+        );
+
+        catalog_manager
+            .table_metadata_manager_ref()
+            .init()
+            .<span class="kw">await
+            </span>.context(InitMetadataSnafu)<span class="question-mark">?</span>;
+
+        <span class="comment">// TODO: build frontend instance like in distributed mode
+        </span><span class="kw">let </span><span class="kw-2">mut </span>frontend = build_frontend(
+            plugins,
+            kv_store,
+            procedure_manager,
+            catalog_manager,
+            region_server,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
 
         frontend
             .build_servers(<span class="kw-2">&amp;</span>fe_opts)
@@ -900,12 +931,20 @@
 <span class="doccomment">/// Build frontend instance in standalone mode
 </span><span class="kw">async fn </span>build_frontend(
     plugins: Arc&lt;Plugins&gt;,
-    datanode_instance: InstanceRef,
+    kv_store: KvBackendRef,
+    procedure_manager: ProcedureManagerRef,
+    catalog_manager: CatalogManagerRef,
+    region_server: RegionServer,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;FeInstance&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>frontend_instance = FeInstance::try_new_standalone(datanode_instance.clone())
-        .<span class="kw">await
-        </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
-    frontend_instance.set_plugins(plugins.clone());
+    <span class="kw">let </span>frontend_instance = FeInstance::try_new_standalone(
+        kv_store,
+        procedure_manager,
+        catalog_manager,
+        plugins,
+        region_server,
+    )
+    .<span class="kw">await
+    </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(frontend_instance)
 }
 
@@ -1001,36 +1040,18 @@
         };
         <span class="kw">let </span>fe_opts = options.fe_opts;
         <span class="kw">let </span>dn_opts = options.dn_opts;
-        <span class="kw">let </span>logging_opts = options.logging;
+        <span class="kw">let </span>logging_opts = options.logging_opts;
         <span class="macro">assert_eq!</span>(Mode::Standalone, fe_opts.mode);
-        <span class="macro">assert_eq!</span>(
-            <span class="string">&quot;127.0.0.1:4000&quot;</span>.to_string(),
-            fe_opts.http_options.as_ref().unwrap().addr
-        );
-        <span class="macro">assert_eq!</span>(
-            Duration::from_secs(<span class="number">30</span>),
-            fe_opts.http_options.as_ref().unwrap().timeout
-        );
-        <span class="macro">assert_eq!</span>(
-            ReadableSize::mb(<span class="number">128</span>),
-            fe_opts.http_options.as_ref().unwrap().body_limit
-        );
-        <span class="macro">assert_eq!</span>(
-            <span class="string">&quot;127.0.0.1:4001&quot;</span>.to_string(),
-            fe_opts.grpc_options.unwrap().addr
-        );
-        <span class="macro">assert_eq!</span>(
-            <span class="string">&quot;127.0.0.1:4002&quot;</span>,
-            fe_opts.mysql_options.as_ref().unwrap().addr
-        );
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, fe_opts.mysql_options.as_ref().unwrap().runtime_size);
-        <span class="macro">assert_eq!</span>(
-            <span class="prelude-val">None</span>,
-            fe_opts.mysql_options.as_ref().unwrap().reject_no_database
-        );
-        <span class="macro">assert!</span>(fe_opts.influxdb_options.as_ref().unwrap().enable);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4000&quot;</span>.to_string(), fe_opts.http_options.addr);
+        <span class="macro">assert_eq!</span>(Duration::from_secs(<span class="number">30</span>), fe_opts.http_options.timeout);
+        <span class="macro">assert_eq!</span>(ReadableSize::mb(<span class="number">128</span>), fe_opts.http_options.body_limit);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4001&quot;</span>.to_string(), fe_opts.grpc_options.addr);
+        <span class="macro">assert!</span>(fe_opts.mysql_options.enable);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4002&quot;</span>, fe_opts.mysql_options.addr);
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, fe_opts.mysql_options.runtime_size);
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, fe_opts.mysql_options.reject_no_database);
+        <span class="macro">assert!</span>(fe_opts.influxdb_options.enable);
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/wal&quot;</span>, dn_opts.wal.dir.unwrap());
         <span class="kw">match </span><span class="kw-2">&amp;</span>dn_opts.storage.store {
             datanode::datanode::ObjectStoreConfig::S3(s3_config) =&gt; {
                 <span class="macro">assert_eq!</span>(
@@ -1064,8 +1085,8 @@
             <span class="macro">unreachable!</span>()
         };
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, opts.logging.dir);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, opts.logging.level.unwrap());
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/logs&quot;</span>, opts.logging_opts.dir);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;debug&quot;</span>, opts.logging_opts.level.unwrap());
     }
 
     <span class="attr">#[test]
@@ -1134,26 +1155,17 @@
                 };
 
                 <span class="comment">// Should be read from env, env &gt; default values.
-                </span><span class="macro">assert_eq!</span>(opts.logging.dir, <span class="string">&quot;/other/log/dir&quot;</span>);
+                </span><span class="macro">assert_eq!</span>(opts.logging_opts.dir, <span class="string">&quot;/other/log/dir&quot;</span>);
 
                 <span class="comment">// Should be read from config file, config file &gt; env &gt; default values.
-                </span><span class="macro">assert_eq!</span>(opts.logging.level.as_ref().unwrap(), <span class="string">&quot;debug&quot;</span>);
+                </span><span class="macro">assert_eq!</span>(opts.logging_opts.level.as_ref().unwrap(), <span class="string">&quot;debug&quot;</span>);
 
                 <span class="comment">// Should be read from cli, cli &gt; config file &gt; env &gt; default values.
-                </span><span class="macro">assert_eq!</span>(
-                    opts.fe_opts.http_options.as_ref().unwrap().addr,
-                    <span class="string">&quot;127.0.0.1:14000&quot;
-                </span>);
-                <span class="macro">assert_eq!</span>(
-                    ReadableSize::mb(<span class="number">64</span>),
-                    opts.fe_opts.http_options.as_ref().unwrap().body_limit
-                );
+                </span><span class="macro">assert_eq!</span>(opts.fe_opts.http_options.addr, <span class="string">&quot;127.0.0.1:14000&quot;</span>);
+                <span class="macro">assert_eq!</span>(ReadableSize::mb(<span class="number">64</span>), opts.fe_opts.http_options.body_limit);
 
                 <span class="comment">// Should be default value.
-                </span><span class="macro">assert_eq!</span>(
-                    opts.fe_opts.grpc_options.unwrap().addr,
-                    GrpcOptions::default().addr
-                );
+                </span><span class="macro">assert_eq!</span>(opts.fe_opts.grpc_options.addr, GrpcOptions::default().addr);
             },
         );
     }

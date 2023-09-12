@@ -169,14 +169,13 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::CatalogManagerRef;
-<span class="kw">use </span>client::client_manager::DatanodeClients;
+<span class="kw">use </span>client::region_handler::RegionRequestHandlerRef;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_function::scalars::aggregate::AggregateFunctionMetaRef;
 <span class="kw">use </span>common_function::scalars::{FunctionRef, FUNCTION_REGISTRY};
 <span class="kw">use </span>common_query::prelude::ScalarUdf;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>datatypes::schema::Schema;
-<span class="kw">use </span>partition::manager::PartitionRuleManager;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>sql::statements::statement::Statement;
 <span class="kw">use </span>table::TableRef;
@@ -234,28 +233,29 @@
 }
 
 <span class="kw">impl </span>QueryEngineFactory {
-    <span class="kw">pub fn </span>new(catalog_manager: CatalogManagerRef, with_dist_planner: bool) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(
+        catalog_manager: CatalogManagerRef,
+        request_handler: <span class="prelude-ty">Option</span>&lt;RegionRequestHandlerRef&gt;,
+        with_dist_planner: bool,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::new_with_plugins(
             catalog_manager,
+            request_handler,
             with_dist_planner,
-            <span class="prelude-val">None</span>,
-            <span class="prelude-val">None</span>,
             Default::default(),
         )
     }
 
     <span class="kw">pub fn </span>new_with_plugins(
         catalog_manager: CatalogManagerRef,
+        request_handler: <span class="prelude-ty">Option</span>&lt;RegionRequestHandlerRef&gt;,
         with_dist_planner: bool,
-        partition_manager: <span class="prelude-ty">Option</span>&lt;Arc&lt;PartitionRuleManager&gt;&gt;,
-        clients: <span class="prelude-ty">Option</span>&lt;Arc&lt;DatanodeClients&gt;&gt;,
         plugins: Arc&lt;Plugins&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>state = Arc::new(QueryEngineState::new(
             catalog_manager,
+            request_handler,
             with_dist_planner,
-            partition_manager,
-            clients,
             plugins.clone(),
         ));
         <span class="kw">let </span>query_engine = Arc::new(DatafusionQueryEngine::new(state, plugins));
@@ -287,7 +287,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_query_engine_factory() {
         <span class="kw">let </span>catalog_list = catalog::local::new_memory_catalog_manager().unwrap();
-        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list, <span class="bool-val">false</span>);
+        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list, <span class="prelude-val">None</span>, <span class="bool-val">false</span>);
 
         <span class="kw">let </span>engine = factory.query_engine();
 

@@ -244,6 +244,7 @@
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -325,22 +326,23 @@
 
 <span class="kw">impl </span>GrpcServer {
     <span class="kw">pub fn </span>new(
-        query_handler: ServerGrpcQueryHandlerRef,
+        query_handler: <span class="prelude-ty">Option</span>&lt;ServerGrpcQueryHandlerRef&gt;,
         prometheus_handler: <span class="prelude-ty">Option</span>&lt;PrometheusHandlerRef&gt;,
         flight_handler: <span class="prelude-ty">Option</span>&lt;FlightCraftRef&gt;,
         region_server_handler: <span class="prelude-ty">Option</span>&lt;RegionServerHandlerRef&gt;,
         user_provider: <span class="prelude-ty">Option</span>&lt;UserProviderRef&gt;,
         runtime: Arc&lt;Runtime&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>database_handler =
-            GreptimeRequestHandler::new(query_handler, user_provider.clone(), runtime.clone());
-        <span class="kw">let </span>region_server_handler =
-            region_server_handler.map(|handler| RegionServerRequestHandler::new(handler, runtime));
+        <span class="kw">let </span>database_handler = query_handler.map(|handler| {
+            GreptimeRequestHandler::new(handler, user_provider.clone(), runtime.clone())
+        });
+        <span class="kw">let </span>region_server_handler = region_server_handler
+            .map(|handler| RegionServerRequestHandler::new(handler, runtime.clone()));
         <span class="self">Self </span>{
             shutdown_tx: Mutex::new(<span class="prelude-val">None</span>),
             user_provider,
             serve_state: Mutex::new(<span class="prelude-val">None</span>),
-            database_handler: <span class="prelude-val">Some</span>(database_handler),
+            database_handler,
             prometheus_handler,
             flight_handler,
             region_server_handler,

@@ -1199,7 +1199,7 @@
     <span class="kw">use </span>std::borrow::Cow::Borrowed;
     <span class="kw">use </span>std::sync::Arc;
 
-    <span class="kw">use </span>catalog::{CatalogManager, RegisterTableRequest};
+    <span class="kw">use </span>catalog::RegisterTableRequest;
     <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, NUMBERS_TABLE_ID};
     <span class="kw">use </span>common_query::Output;
     <span class="kw">use </span>common_recordbatch::{util, RecordBatch};
@@ -1228,9 +1228,9 @@
             table_id: NUMBERS_TABLE_ID,
             table: NumbersTable::table(NUMBERS_TABLE_ID),
         };
-        <span class="kw">let _ </span>= catalog_manager.register_table(req).<span class="kw">await</span>.unwrap();
+        catalog_manager.register_table_sync(req).unwrap();
 
-        QueryEngineFactory::new(catalog_manager, <span class="bool-val">false</span>).query_engine()
+        QueryEngineFactory::new(catalog_manager, <span class="prelude-val">None</span>, <span class="bool-val">false</span>).query_engine()
     }
 
     <span class="attr">#[tokio::test]

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["METASRV_HOME","TABLE_ID_SEQ"],"mod":["builder"],"struct":["Context","DatanodeClientOptions","DatanodeOptions","LeaderValue","MetaSrv","MetaSrvOptions","SelectorContext"],"type":["ElectionRef","SelectorRef"]};
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_DATANODE_LEASE_SECS","DEFAULT_REGION_LEASE_SECS","METASRV_HOME","TABLE_ID_SEQ"],"mod":["builder"],"struct":["Context","DatanodeClientOptions","DatanodeOptions","LeaderValue","MetaSrv","MetaSrvOptions","MetasrvInfo","SelectorContext"],"type":["ElectionRef","SelectorRef"]};

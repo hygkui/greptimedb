@@ -84,8 +84,8 @@
 
 </span><span class="kw">use </span>std::fmt::{Debug, Formatter};
 
-<span class="kw">use </span>api::greptime_proto::v1::add_column::location::LocationType;
-<span class="kw">use </span>api::greptime_proto::v1::add_column::Location;
+<span class="kw">use </span>api::greptime_proto::v1::add_column_location::LocationType;
+<span class="kw">use </span>api::greptime_proto::v1::AddColumnLocation <span class="kw">as </span>Location;
 <span class="kw">use </span>common_recordbatch::{RecordBatches, SendableRecordBatchStream};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
@@ -129,11 +129,11 @@
         <span class="kw">match </span>value {
             AddColumnLocation::First =&gt; Location {
                 location_type: LocationType::First.into(),
-                after_cloumn_name: <span class="string">&quot;&quot;</span>.to_string(),
+                after_column_name: <span class="string">&quot;&quot;</span>.to_string(),
             },
             AddColumnLocation::After { column_name } =&gt; Location {
                 location_type: LocationType::After.into(),
-                after_cloumn_name: column_name.to_string(),
+                after_column_name: column_name.to_string(),
             },
         }
     }

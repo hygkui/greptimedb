@@ -322,107 +322,6 @@
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
-<a href="#380" id="380">380</a>
-<a href="#381" id="381">381</a>
-<a href="#382" id="382">382</a>
-<a href="#383" id="383">383</a>
-<a href="#384" id="384">384</a>
-<a href="#385" id="385">385</a>
-<a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
-<a href="#391" id="391">391</a>
-<a href="#392" id="392">392</a>
-<a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -439,109 +338,64 @@
 
 </span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::collections::BTreeSet;
-<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::sync::{Arc, Weak};
 
-<span class="kw">use </span>api::v1::CreateTableExpr;
 <span class="kw">use </span>catalog::error::{
-    <span class="self">self </span><span class="kw">as </span>catalog_err, InternalSnafu, InvalidSystemTableDefSnafu, ListCatalogsSnafu,
-    ListSchemasSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>CatalogResult, TableMetadataManagerSnafu, UnimplementedSnafu,
+    <span class="self">self </span><span class="kw">as </span>catalog_err, ListCatalogsSnafu, ListSchemasSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>CatalogResult,
+    TableMetadataManagerSnafu,
 };
 <span class="kw">use </span>catalog::information_schema::{InformationSchemaProvider, COLUMNS, TABLES};
 <span class="kw">use </span>catalog::remote::KvCacheInvalidatorRef;
-<span class="kw">use </span>catalog::{
-    CatalogManager, DeregisterSchemaRequest, DeregisterTableRequest, RegisterSchemaRequest,
-    RegisterSystemTableRequest, RegisterTableRequest, RenameTableRequest,
-};
-<span class="kw">use </span>client::client_manager::DatanodeClients;
-<span class="kw">use </span>common_catalog::consts::{
-    DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME, NUMBERS_TABLE_ID,
-};
+<span class="kw">use </span>catalog::CatalogManager;
+<span class="kw">use </span>common_catalog::consts::{DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME, NUMBERS_TABLE_ID};
 <span class="kw">use </span>common_error::ext::BoxedError;
+<span class="kw">use </span>common_meta::cache_invalidator::{CacheInvalidator, Context};
+<span class="kw">use </span>common_meta::datanode_manager::DatanodeManagerRef;
+<span class="kw">use </span>common_meta::error::Result <span class="kw">as </span>MetaResult;
+<span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::key::catalog_name::CatalogNameKey;
 <span class="kw">use </span>common_meta::key::schema_name::SchemaNameKey;
 <span class="kw">use </span>common_meta::key::table_info::TableInfoKey;
 <span class="kw">use </span>common_meta::key::table_name::TableNameKey;
-<span class="kw">use </span>common_meta::key::{TableMetaKey, TableMetadataManagerRef};
+<span class="kw">use </span>common_meta::key::table_route::TableRouteKey;
+<span class="kw">use </span>common_meta::key::{TableMetaKey, TableMetadataManager, TableMetadataManagerRef};
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>futures_util::TryStreamExt;
-<span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
+<span class="kw">use </span>partition::manager::{PartitionRuleManager, PartitionRuleManagerRef};
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>table::table::numbers::{NumbersTable, NUMBERS_TABLE_NAME};
 <span class="kw">use </span>table::TableRef;
 
-<span class="kw">use </span><span class="kw">crate</span>::expr_factory;
-<span class="kw">use </span><span class="kw">crate</span>::instance::distributed::DistInstance;
 <span class="kw">use </span><span class="kw">crate</span>::table::DistTable;
 
-<span class="attr">#[derive(Clone)]
+<span class="doccomment">/// Access all existing catalog, schema and tables.
+///
+/// The result comes from two source, all the user tables are presented in
+/// a kv-backend which persists the metadata of a table. And system tables
+/// comes from [SystemCatalog], which is static and read-only.
+</span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>FrontendCatalogManager {
-    backend: KvBackendRef,
-    backend_cache_invalidator: KvCacheInvalidatorRef,
+    <span class="comment">// TODO(LFC): Maybe use a real implementation for Standalone mode.
+    // Now we use `NoopKvCacheInvalidator` for Standalone mode. In Standalone mode, the KV backend
+    // is implemented by RaftEngine. Maybe we need a cache for it?
+    </span>backend_cache_invalidator: KvCacheInvalidatorRef,
     partition_manager: PartitionRuleManagerRef,
-    datanode_clients: Arc&lt;DatanodeClients&gt;,
     table_metadata_manager: TableMetadataManagerRef,
-
-    <span class="comment">// TODO(LFC): Remove this field.
-    // DistInstance in FrontendCatalogManager is only used for creating distributed script table now.
-    // Once we have some standalone distributed table creator (like create distributed table procedure),
-    // we should use that.
-    </span>dist_instance: <span class="prelude-ty">Option</span>&lt;Arc&lt;DistInstance&gt;&gt;,
+    datanode_manager: DatanodeManagerRef,
+    <span class="doccomment">/// A sub-CatalogManager that handles system tables
+    </span>system_catalog: SystemCatalog,
 }
 
-<span class="kw">impl </span>FrontendCatalogManager {
-    <span class="kw">pub fn </span>new(
-        backend: KvBackendRef,
-        backend_cache_invalidator: KvCacheInvalidatorRef,
-        partition_manager: PartitionRuleManagerRef,
-        datanode_clients: Arc&lt;DatanodeClients&gt;,
-        table_metadata_manager: TableMetadataManagerRef,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            backend,
-            backend_cache_invalidator,
-            partition_manager,
-            datanode_clients,
-            table_metadata_manager,
-            dist_instance: <span class="prelude-val">None</span>,
-        }
-    }
-
-    <span class="kw">pub fn </span>set_dist_instance(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dist_instance: Arc&lt;DistInstance&gt;) {
-        <span class="self">self</span>.dist_instance = <span class="prelude-val">Some</span>(dist_instance)
-    }
-
-    <span class="kw">pub fn </span>backend(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; KvBackendRef {
-        <span class="self">self</span>.backend.clone()
-    }
-
-    <span class="kw">pub fn </span>partition_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PartitionRuleManagerRef {
-        <span class="self">self</span>.partition_manager.clone()
-    }
-
-    <span class="kw">pub fn </span>table_metadata_manager_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableMetadataManagerRef {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.table_metadata_manager
-    }
-
-    <span class="kw">pub fn </span>datanode_clients(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Arc&lt;DatanodeClients&gt; {
-        <span class="self">self</span>.datanode_clients.clone()
-    }
-
-    <span class="kw">pub async fn </span>invalidate_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>key = SchemaNameKey::new(catalog, schema).as_raw_key();
-
-        <span class="self">self</span>.backend_cache_invalidator.invalidate_key(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
-    }
-
-    <span class="kw">pub async fn </span>invalidate_table(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        catalog: <span class="kw-2">&amp;</span>str,
-        schema: <span class="kw-2">&amp;</span>str,
-        table: <span class="kw-2">&amp;</span>str,
-        table_id: TableId,
-    ) {
-        <span class="kw">let </span>key = TableNameKey::new(catalog, schema, table);
+<span class="attr">#[async_trait::async_trait]
+</span><span class="kw">impl </span>CacheInvalidator <span class="kw">for </span>FrontendCatalogManager {
+    <span class="kw">async fn </span>invalidate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_ident: TableIdent) -&gt; MetaResult&lt;()&gt; {
+        <span class="kw">let </span>table_id = table_ident.table_id;
+        <span class="kw">let </span>key = TableNameKey::new(
+            <span class="kw-2">&amp;</span>table_ident.catalog,
+            <span class="kw-2">&amp;</span>table_ident.schema,
+            <span class="kw-2">&amp;</span>table_ident.table,
+        );
         <span class="self">self</span>.backend_cache_invalidator
             .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())
             .<span class="kw">await</span>;
@@ -559,144 +413,57 @@
             String::from_utf8_lossy(<span class="kw-2">&amp;</span>key.as_raw_key())
         );
 
-        <span class="self">self</span>.partition_manager
-            .table_routes()
-            .invalidate_table_route(table_id)
+        <span class="kw">let </span>key = <span class="kw-2">&amp;</span>TableRouteKey { table_id };
+        <span class="self">self</span>.backend_cache_invalidator
+            .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())
             .<span class="kw">await</span>;
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;invalidated cache key: {}&quot;</span>,
+            String::from_utf8_lossy(<span class="kw-2">&amp;</span>key.as_raw_key())
+        );
+
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="comment">// FIXME(hl): Frontend only needs a CatalogList, should replace with trait upcasting
-// as soon as it&#39;s stable: https://github.com/rust-lang/rust/issues/65991
-</span><span class="attr">#[async_trait::async_trait]
+<span class="kw">impl </span>FrontendCatalogManager {
+    <span class="kw">pub fn </span>new(
+        backend: KvBackendRef,
+        backend_cache_invalidator: KvCacheInvalidatorRef,
+        datanode_manager: DatanodeManagerRef,
+    ) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
+        Arc::new_cyclic(|me| <span class="self">Self </span>{
+            backend_cache_invalidator,
+            partition_manager: Arc::new(PartitionRuleManager::new(backend.clone())),
+            table_metadata_manager: Arc::new(TableMetadataManager::new(backend)),
+            datanode_manager,
+            system_catalog: SystemCatalog {
+                catalog_manager: me.clone(),
+            },
+        })
+    }
+
+    <span class="kw">pub fn </span>partition_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PartitionRuleManagerRef {
+        <span class="self">self</span>.partition_manager.clone()
+    }
+
+    <span class="kw">pub fn </span>table_metadata_manager_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TableMetadataManagerRef {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.table_metadata_manager
+    }
+
+    <span class="kw">pub fn </span>datanode_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DatanodeManagerRef {
+        <span class="self">self</span>.datanode_manager.clone()
+    }
+
+    <span class="kw">pub async fn </span>invalidate_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) {
+        <span class="kw">let </span>key = SchemaNameKey::new(catalog, schema).as_raw_key();
+
+        <span class="self">self</span>.backend_cache_invalidator.invalidate_key(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
+    }
+}
+
+<span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>CatalogManager <span class="kw">for </span>FrontendCatalogManager {
-    <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; catalog::error::Result&lt;()&gt; {
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">async fn </span>register_catalog(<span class="self">self</span>: Arc&lt;<span class="self">Self</span>&gt;, _name: String) -&gt; CatalogResult&lt;bool&gt; {
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support registering catalog&quot;</span>)
-    }
-
-    <span class="comment">// TODO(LFC): Handle the table caching in (de)register_table.
-    </span><span class="kw">async fn </span>register_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: RegisterTableRequest) -&gt; CatalogResult&lt;bool&gt; {
-        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
-    }
-
-    <span class="kw">async fn </span>deregister_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: DeregisterTableRequest) -&gt; CatalogResult&lt;()&gt; {
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">async fn </span>register_schema(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _request: RegisterSchemaRequest,
-    ) -&gt; catalog::error::Result&lt;bool&gt; {
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support registering schema&quot;</span>)
-    }
-
-    <span class="kw">async fn </span>deregister_schema(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _request: DeregisterSchemaRequest,
-    ) -&gt; catalog_err::Result&lt;bool&gt; {
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;FrontendCatalogManager does not support deregistering schema&quot;</span>)
-    }
-
-    <span class="kw">async fn </span>rename_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _request: RenameTableRequest) -&gt; catalog_err::Result&lt;bool&gt; {
-        <span class="macro">unimplemented!</span>()
-    }
-
-    <span class="kw">async fn </span>register_system_table(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        request: RegisterSystemTableRequest,
-    ) -&gt; catalog::error::Result&lt;()&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(dist_instance) = <span class="kw-2">&amp;</span><span class="self">self</span>.dist_instance {
-            <span class="kw">let </span>open_hook = request.open_hook;
-            <span class="kw">let </span>request = request.create_table_request;
-
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self
-                </span>.table(
-                    <span class="kw-2">&amp;</span>request.catalog_name,
-                    <span class="kw-2">&amp;</span>request.schema_name,
-                    <span class="kw-2">&amp;</span>request.table_name,
-                )
-                .<span class="kw">await</span><span class="question-mark">?
-            </span>{
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(hook) = open_hook {
-                    (hook)(table)<span class="question-mark">?</span>;
-                }
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-            }
-
-            <span class="kw">let </span>time_index = request
-                .schema
-                .column_schemas
-                .iter()
-                .find_map(|x| {
-                    <span class="kw">if </span>x.is_time_index() {
-                        <span class="prelude-val">Some</span>(x.name.clone())
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>}
-                })
-                .context(InvalidSystemTableDefSnafu {
-                    err_msg: <span class="string">&quot;Time index is not defined.&quot;</span>,
-                })<span class="question-mark">?</span>;
-
-            <span class="kw">let </span>primary_keys = request
-                .schema
-                .column_schemas
-                .iter()
-                .enumerate()
-                .filter_map(|(i, x)| {
-                    <span class="kw">if </span>request.primary_key_indices.contains(<span class="kw-2">&amp;</span>i) {
-                        <span class="prelude-val">Some</span>(x.name.clone())
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>}
-                })
-                .collect();
-
-            <span class="kw">let </span>column_defs = expr_factory::column_schemas_to_defs(request.schema.column_schemas)
-                .map_err(|e| {
-                InvalidSystemTableDefSnafu {
-                    err_msg: e.to_string(),
-                }
-                .build()
-            })<span class="question-mark">?</span>;
-
-            <span class="kw">let </span><span class="kw-2">mut </span>create_table = CreateTableExpr {
-                catalog_name: request.catalog_name,
-                schema_name: request.schema_name,
-                table_name: request.table_name,
-                desc: request.desc.unwrap_or(<span class="string">&quot;&quot;</span>.to_string()),
-                column_defs,
-                time_index,
-                primary_keys,
-                create_if_not_exists: request.create_if_not_exists,
-                table_options: (<span class="kw-2">&amp;</span>request.table_options).into(),
-                table_id: <span class="prelude-val">None</span>, <span class="comment">// Should and will be assigned by Meta.
-                </span>region_numbers: <span class="macro">vec!</span>[<span class="number">0</span>],
-                engine: request.engine,
-            };
-
-            <span class="kw">let </span>table = dist_instance
-                .create_table(<span class="kw-2">&amp;mut </span>create_table, <span class="prelude-val">None</span>)
-                .<span class="kw">await
-                </span>.map_err(BoxedError::new)
-                .context(InternalSnafu)<span class="question-mark">?</span>;
-
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(hook) = open_hook {
-                (hook)(table)<span class="question-mark">?</span>;
-            }
-            <span class="prelude-val">Ok</span>(())
-        } <span class="kw">else </span>{
-            UnimplementedSnafu {
-                operation: <span class="string">&quot;register system table&quot;</span>,
-            }
-            .fail()
-        }
-    }
-
     <span class="kw">async fn </span>catalog_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CatalogResult&lt;Vec&lt;String&gt;&gt; {
         <span class="kw">let </span>stream = <span class="self">self
             </span>.table_metadata_manager
@@ -723,11 +490,13 @@
             .try_collect::&lt;BTreeSet&lt;<span class="kw">_</span>&gt;&gt;()
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
-            .context(ListSchemasSnafu { catalog })<span class="question-mark">?</span>;
+            .context(ListSchemasSnafu { catalog })<span class="question-mark">?
+            </span>.into_iter()
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        keys.insert(INFORMATION_SCHEMA_NAME.to_string());
+        keys.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.system_catalog.schema_names());
 
-        <span class="prelude-val">Ok</span>(keys.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;())
+        <span class="prelude-val">Ok</span>(keys)
     }
 
     <span class="kw">async fn </span>table_names(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;Vec&lt;String&gt;&gt; {
@@ -740,13 +509,7 @@
             </span>.into_iter()
             .map(|(k, <span class="kw">_</span>)| k)
             .collect::&lt;Vec&lt;String&gt;&gt;();
-        <span class="kw">if </span>catalog == DEFAULT_CATALOG_NAME &amp;&amp; schema == DEFAULT_SCHEMA_NAME {
-            tables.push(NUMBERS_TABLE_NAME.to_string());
-        }
-        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME {
-            tables.push(TABLES.to_string());
-            tables.push(COLUMNS.to_string());
-        }
+        tables.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.system_catalog.table_names(schema));
 
         <span class="prelude-val">Ok</span>(tables)
     }
@@ -760,9 +523,10 @@
     }
 
     <span class="kw">async fn </span>schema_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
-        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME {
+        <span class="kw">if </span><span class="self">self</span>.system_catalog.schema_exist(schema) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
         }
+
         <span class="self">self</span>.table_metadata_manager
             .schema_manager()
             .exist(SchemaNameKey::new(catalog, schema))
@@ -771,7 +535,7 @@
     }
 
     <span class="kw">async fn </span>table_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str, table: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
-        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME &amp;&amp; (table == TABLES || table == COLUMNS) {
+        <span class="kw">if </span><span class="self">self</span>.system_catalog.table_exist(schema, table) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
         }
 
@@ -790,28 +554,8 @@
         schema: <span class="kw-2">&amp;</span>str,
         table_name: <span class="kw-2">&amp;</span>str,
     ) -&gt; CatalogResult&lt;<span class="prelude-ty">Option</span>&lt;TableRef&gt;&gt; {
-        <span class="kw">if </span>catalog == DEFAULT_CATALOG_NAME
-            &amp;&amp; schema == DEFAULT_SCHEMA_NAME
-            &amp;&amp; table_name == NUMBERS_TABLE_NAME
-        {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(NumbersTable::table(NUMBERS_TABLE_ID)));
-        }
-
-        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME {
-            <span class="comment">// hack: use existing cyclin reference to get Arc&lt;Self&gt;.
-            // This can be remove by refactoring the struct into something like Arc&lt;Inner&gt;
-            </span><span class="macro">common_telemetry::info!</span>(<span class="string">&quot;going to use dist instance&quot;</span>);
-            <span class="kw">let </span>manager = <span class="kw">if let </span><span class="prelude-val">Some</span>(instance) = <span class="self">self</span>.dist_instance.as_ref() {
-                <span class="macro">common_telemetry::info!</span>(<span class="string">&quot;dist instance exist&quot;</span>);
-                instance.catalog_manager() <span class="kw">as _
-            </span>} <span class="kw">else </span>{
-                <span class="macro">common_telemetry::info!</span>(<span class="string">&quot;dist instance doesn&#39;t exist&quot;</span>);
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
-            };
-
-            <span class="kw">let </span>provider =
-                InformationSchemaProvider::new(catalog.to_string(), Arc::downgrade(<span class="kw-2">&amp;</span>manager));
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(provider.table(table_name));
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.system_catalog.table(catalog, schema, table_name) {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(table));
         }
 
         <span class="kw">let </span>key = TableNameKey::new(catalog, schema, table_name);
@@ -847,5 +591,59 @@
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
         <span class="self">self
     </span>}
+}
+
+<span class="comment">// TODO: This struct can hold a static map of all system tables when
+// the upper layer (e.g., procedure) can inform the catalog manager
+// a new catalog is created.
+</span><span class="doccomment">/// Existing system tables:
+/// - public.numbers
+/// - information_schema.tables
+/// - information_schema.columns
+</span><span class="attr">#[derive(Clone)]
+</span><span class="kw">struct </span>SystemCatalog {
+    catalog_manager: Weak&lt;FrontendCatalogManager&gt;,
+}
+
+<span class="kw">impl </span>SystemCatalog {
+    <span class="kw">fn </span>schema_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;String&gt; {
+        <span class="macro">vec!</span>[INFORMATION_SCHEMA_NAME.to_string()]
+    }
+
+    <span class="kw">fn </span>table_names(<span class="kw-2">&amp;</span><span class="self">self</span>, schema: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;String&gt; {
+        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME {
+            <span class="macro">vec!</span>[TABLES.to_string(), COLUMNS.to_string()]
+        } <span class="kw">else if </span>schema == DEFAULT_SCHEMA_NAME {
+            <span class="macro">vec!</span>[NUMBERS_TABLE_NAME.to_string()]
+        } <span class="kw">else </span>{
+            <span class="macro">vec!</span>[]
+        }
+    }
+
+    <span class="kw">fn </span>schema_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, schema: <span class="kw-2">&amp;</span>str) -&gt; bool {
+        schema == INFORMATION_SCHEMA_NAME
+    }
+
+    <span class="kw">fn </span>table_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, schema: <span class="kw-2">&amp;</span>str, table: <span class="kw-2">&amp;</span>str) -&gt; bool {
+        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME {
+            table == TABLES || table == COLUMNS
+        } <span class="kw">else if </span>schema == DEFAULT_SCHEMA_NAME {
+            table == NUMBERS_TABLE_NAME
+        } <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
+    }
+
+    <span class="kw">fn </span>table(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str, table_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;TableRef&gt; {
+        <span class="kw">if </span>schema == INFORMATION_SCHEMA_NAME {
+            <span class="kw">let </span>information_schema_provider =
+                InformationSchemaProvider::new(catalog.to_string(), <span class="self">self</span>.catalog_manager.clone());
+            information_schema_provider.table(table_name)
+        } <span class="kw">else if </span>schema == DEFAULT_SCHEMA_NAME &amp;&amp; table_name == NUMBERS_TABLE_NAME {
+            <span class="prelude-val">Some</span>(NumbersTable::table(NUMBERS_TABLE_ID))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
+    }
 }
 </code></pre></div></section></main></body></html>

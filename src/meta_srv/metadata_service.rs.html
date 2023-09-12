@@ -151,10 +151,6 @@
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -175,8 +171,7 @@
 <span class="kw">use </span>common_meta::key::catalog_name::CatalogNameKey;
 <span class="kw">use </span>common_meta::key::schema_name::SchemaNameKey;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
-<span class="kw">use </span>common_telemetry::{info, timer};
-<span class="kw">use </span>metrics::increment_counter;
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::error;
@@ -219,15 +214,12 @@
         schema_name: <span class="kw-2">&amp;</span>str,
         if_not_exist: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::METRIC_META_CREATE_SCHEMA);
-
         <span class="self">self</span>.table_metadata_manager
             .catalog_manager()
             .create(CatalogNameKey::new(catalog_name))
             .<span class="kw">await
             </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
-        <span class="macro">increment_counter!</span>(<span class="kw">crate</span>::metrics::METRIC_META_CREATE_CATALOG);
         <span class="macro">info!</span>(<span class="string">&quot;Successfully created a catalog: {}&quot;</span>, catalog_name);
 
         <span class="kw">let </span>schema = SchemaNameKey::new(catalog_name, schema_name);

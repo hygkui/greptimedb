@@ -775,6 +775,14 @@
 <a href="#775" id="775">775</a>
 <a href="#776" id="776">776</a>
 <a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -826,7 +834,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::ResettableKvStoreRef;
 
 <span class="kw">const </span>OPEN_REGION_MESSAGE_TIMEOUT: Duration = Duration::from_secs(<span class="number">30</span>);
-<span class="kw">const </span>CLOSE_REGION_MESSAGE_TIMEOUT: Duration = Duration::from_secs(<span class="number">2</span>);
 
 <span class="doccomment">/// A key for the preventing running multiple failover procedures for the same region.
 </span><span class="attr">#[derive(PartialEq, Eq, Hash, Clone)]
@@ -847,6 +854,7 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RegionFailoverManager {
+    region_lease_secs: u64,
     in_memory: ResettableKvStoreRef,
     mailbox: MailboxRef,
     procedure_manager: ProcedureManagerRef,
@@ -870,15 +878,16 @@
 
 <span class="kw">impl </span>RegionFailoverManager {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
+        region_lease_secs: u64,
         in_memory: ResettableKvStoreRef,
         mailbox: MailboxRef,
         procedure_manager: ProcedureManagerRef,
-        selector: SelectorRef,
-        selector_ctx: SelectorContext,
+        (selector, selector_ctx): (SelectorRef, SelectorContext),
         dist_lock: DistLockRef,
         table_metadata_manager: TableMetadataManagerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
+            region_lease_secs,
             in_memory,
             mailbox,
             procedure_manager,
@@ -892,6 +901,7 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>create_context(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionFailoverContext {
         RegionFailoverContext {
+            region_lease_secs: <span class="self">self</span>.region_lease_secs,
             in_memory: <span class="self">self</span>.in_memory.clone(),
             mailbox: <span class="self">self</span>.mailbox.clone(),
             selector: <span class="self">self</span>.selector.clone(),
@@ -1024,6 +1034,7 @@
 <span class="doccomment">/// The &quot;Context&quot; of region failover procedure state machine.
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>RegionFailoverContext {
+    <span class="kw">pub </span>region_lease_secs: u64,
     <span class="kw">pub </span>in_memory: ResettableKvStoreRef,
     <span class="kw">pub </span>mailbox: MailboxRef,
     <span class="kw">pub </span>selector: SelectorRef,
@@ -1167,6 +1178,7 @@
     <span class="kw">use </span>common_meta::ident::TableIdent;
     <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
     <span class="kw">use </span>common_meta::key::TableMetadataManager;
+    <span class="kw">use </span>common_meta::sequence::Sequence;
     <span class="kw">use </span>common_meta::DatanodeId;
     <span class="kw">use </span>common_procedure::{BoxedProcedure, ProcedureId};
     <span class="kw">use </span>common_procedure_test::MockContextProvider;
@@ -1178,7 +1190,6 @@
     <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatMailbox, Pusher, Pushers};
     <span class="kw">use </span><span class="kw">crate</span>::lock::memory::MemLock;
     <span class="kw">use </span><span class="kw">crate</span>::selector::{Namespace, Selector};
-    <span class="kw">use </span><span class="kw">crate</span>::sequence::Sequence;
     <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::Channel;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvBackendAdapter, KvStoreRef};
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
@@ -1295,8 +1306,12 @@
                 <span class="kw">let _ </span>= heartbeat_receivers.insert(datanode_id, rx);
             }
 
-            <span class="kw">let </span>mailbox_sequence =
-                Sequence::new(<span class="string">&quot;test_heartbeat_mailbox&quot;</span>, <span class="number">0</span>, <span class="number">100</span>, kv_store.clone());
+            <span class="kw">let </span>mailbox_sequence = Sequence::new(
+                <span class="string">&quot;test_heartbeat_mailbox&quot;</span>,
+                <span class="number">0</span>,
+                <span class="number">100</span>,
+                KvBackendAdapter::wrap(kv_store.clone()),
+            );
             <span class="kw">let </span>mailbox = HeartbeatMailbox::create(pushers.clone(), mailbox_sequence);
 
             <span class="kw">let </span>selector = <span class="self">self</span>.selector.unwrap_or_else(|| {
@@ -1320,6 +1335,7 @@
 
             TestingEnv {
                 context: RegionFailoverContext {
+                    region_lease_secs: <span class="number">10</span>,
                     in_memory,
                     mailbox,
                     selector,
@@ -1547,7 +1563,7 @@
         <span class="kw">let </span>result = procedure.execute(<span class="kw-2">&amp;</span>ctx).<span class="kw">await</span>;
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(result, <span class="prelude-val">Ok</span>(Status::Executing { persist: <span class="bool-val">true </span>})));
         <span class="macro">assert_eq!</span>(
-            <span class="string">r#&quot;{&quot;region_failover_state&quot;:&quot;DeactivateRegion&quot;,&quot;candidate&quot;:{&quot;id&quot;:42,&quot;addr&quot;:&quot;&quot;},&quot;region_lease_expiry_seconds&quot;:40}&quot;#</span>,
+            <span class="string">r#&quot;{&quot;region_failover_state&quot;:&quot;DeactivateRegion&quot;,&quot;candidate&quot;:{&quot;id&quot;:42,&quot;addr&quot;:&quot;&quot;}}&quot;#</span>,
             serde_json::to_string(<span class="kw-2">&amp;</span>procedure.node.state).unwrap()
         );
     }

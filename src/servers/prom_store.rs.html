@@ -1537,7 +1537,7 @@
         .unwrap();
 
         <span class="kw">let </span>ctx = SessionContext::new();
-        <span class="kw">let </span>table = Arc::new(MemTable::new(<span class="string">&quot;test&quot;</span>, recordbatch));
+        <span class="kw">let </span>table = MemTable::table(<span class="string">&quot;test&quot;</span>, recordbatch);
         <span class="kw">let </span>table_provider = Arc::new(DfTableProviderAdapter::new(table));
 
         <span class="kw">let </span>dataframe = ctx.read_table(table_provider.clone()).unwrap();

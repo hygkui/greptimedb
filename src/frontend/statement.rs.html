@@ -322,10 +322,6 @@
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -343,6 +339,7 @@
 </span><span class="kw">mod </span>backup;
 <span class="kw">mod </span>copy_table_from;
 <span class="kw">mod </span>copy_table_to;
+<span class="kw">mod </span>ddl;
 <span class="kw">mod </span>describe;
 <span class="kw">mod </span>dml;
 <span class="kw">mod </span>show;
@@ -354,51 +351,67 @@
 
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>common_error::ext::BoxedError;
+<span class="kw">use </span>common_meta::cache_invalidator::CacheInvalidatorRef;
+<span class="kw">use </span>common_meta::ddl::DdlTaskExecutorRef;
+<span class="kw">use </span>common_meta::key::{TableMetadataManager, TableMetadataManagerRef};
+<span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
+<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_time::range::TimestampRange;
 <span class="kw">use </span>common_time::Timestamp;
-<span class="kw">use </span>datanode::instance::sql::{idents_to_full_database_name, table_idents_to_full_name};
+<span class="kw">use </span>partition::manager::{PartitionRuleManager, PartitionRuleManagerRef};
 <span class="kw">use </span>query::parser::QueryStatement;
 <span class="kw">use </span>query::plan::LogicalPlan;
-<span class="kw">use </span>query::query_engine::SqlStatementExecutorRef;
 <span class="kw">use </span>query::QueryEngineRef;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>sql::statements::copy::{CopyDatabaseArgument, CopyTable, CopyTableArgument};
 <span class="kw">use </span>sql::statements::statement::Statement;
+<span class="kw">use </span>sqlparser::ast::ObjectName;
 <span class="kw">use </span>table::engine::TableReference;
-<span class="kw">use </span>table::error::TableOperationSnafu;
-<span class="kw">use </span>table::requests::{
-    CopyDatabaseRequest, CopyDirection, CopyTableRequest, DeleteRequest, InsertRequest,
-};
+<span class="kw">use </span>table::requests::{CopyDatabaseRequest, CopyDirection, CopyTableRequest};
 <span class="kw">use </span>table::TableRef;
 
-<span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
+<span class="kw">use </span><span class="kw">crate</span>::delete::DeleterRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, CatalogSnafu, ExecLogicalPlanSnafu, ExecuteStatementSnafu, ExternalSnafu, InsertSnafu,
-    PlanStatementSnafu, <span class="prelude-ty">Result</span>, TableNotFoundSnafu,
+    <span class="self">self</span>, CatalogSnafu, ExecLogicalPlanSnafu, ExternalSnafu, InvalidSqlSnafu, PlanStatementSnafu,
+    <span class="prelude-ty">Result</span>, TableNotFoundSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::instance::distributed::deleter::DistDeleter;
-<span class="kw">use </span><span class="kw">crate</span>::instance::distributed::inserter::DistInserter;
+<span class="kw">use </span><span class="kw">crate</span>::insert::InserterRef;
 <span class="kw">use </span><span class="kw">crate</span>::statement::backup::{COPY_DATABASE_TIME_END_KEY, COPY_DATABASE_TIME_START_KEY};
+<span class="kw">use </span><span class="kw">crate</span>::table::table_idents_to_full_name;
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>StatementExecutor {
     catalog_manager: CatalogManagerRef,
     query_engine: QueryEngineRef,
-    sql_stmt_executor: SqlStatementExecutorRef,
+    ddl_executor: DdlTaskExecutorRef,
+    table_metadata_manager: TableMetadataManagerRef,
+    partition_manager: PartitionRuleManagerRef,
+    cache_invalidator: CacheInvalidatorRef,
+    inserter: InserterRef,
+    deleter: DeleterRef,
 }
 
 <span class="kw">impl </span>StatementExecutor {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
         catalog_manager: CatalogManagerRef,
         query_engine: QueryEngineRef,
-        sql_stmt_executor: SqlStatementExecutorRef,
+        ddl_task_executor: DdlTaskExecutorRef,
+        kv_backend: KvBackendRef,
+        cache_invalidator: CacheInvalidatorRef,
+        inserter: InserterRef,
+        deleter: DeleterRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             catalog_manager,
             query_engine,
-            sql_stmt_executor,
+            ddl_executor: ddl_task_executor,
+            table_metadata_manager: Arc::new(TableMetadataManager::new(kv_backend.clone())),
+            partition_manager: Arc::new(PartitionRuleManager::new(kv_backend)),
+            cache_invalidator,
+            inserter,
+            deleter,
         }
     }
 
@@ -438,9 +451,10 @@
                         </span>.copy_table_to(req, query_ctx)
                         .<span class="kw">await
                         </span>.map(Output::AffectedRows),
-                    CopyDirection::Import =&gt; {
-                        <span class="self">self</span>.copy_table_from(req).<span class="kw">await</span>.map(Output::AffectedRows)
-                    }
+                    CopyDirection::Import =&gt; <span class="self">self
+                        </span>.copy_table_from(req, query_ctx)
+                        .<span class="kw">await
+                        </span>.map(Output::AffectedRows),
                 }
             }
 
@@ -449,17 +463,58 @@
                     .<span class="kw">await
             </span>}
 
-            Statement::CreateDatabase(<span class="kw">_</span>)
-            | Statement::CreateTable(<span class="kw">_</span>)
-            | Statement::CreateExternalTable(<span class="kw">_</span>)
-            | Statement::Alter(<span class="kw">_</span>)
-            | Statement::DropTable(<span class="kw">_</span>)
-            | Statement::TruncateTable(<span class="kw">_</span>)
-            | Statement::ShowCreateTable(<span class="kw">_</span>) =&gt; <span class="self">self
-                </span>.sql_stmt_executor
-                .execute_sql(stmt, query_ctx)
+            Statement::CreateTable(stmt) =&gt; {
+                <span class="kw">let _ </span>= <span class="self">self</span>.create_table(stmt, query_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+            }
+            Statement::CreateExternalTable(stmt) =&gt; {
+                <span class="kw">let _ </span>= <span class="self">self</span>.create_external_table(stmt, query_ctx).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
+            }
+            Statement::Alter(alter_table) =&gt; <span class="self">self</span>.alter_table(alter_table, query_ctx).<span class="kw">await</span>,
+            Statement::DropTable(stmt) =&gt; {
+                <span class="kw">let </span>(catalog, schema, table) =
+                    table_idents_to_full_name(stmt.table_name(), query_ctx)
+                        .map_err(BoxedError::new)
+                        .context(error::ExternalSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>table_name = TableName::new(catalog, schema, table);
+                <span class="self">self</span>.drop_table(table_name).<span class="kw">await
+            </span>}
+            Statement::TruncateTable(stmt) =&gt; {
+                <span class="kw">let </span>(catalog, schema, table) =
+                    table_idents_to_full_name(stmt.table_name(), query_ctx)
+                        .map_err(BoxedError::new)
+                        .context(error::ExternalSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>table_name = TableName::new(catalog, schema, table);
+                <span class="self">self</span>.truncate_table(table_name).<span class="kw">await
+            </span>}
+
+            Statement::CreateDatabase(stmt) =&gt; {
+                <span class="self">self</span>.create_database(
+                    query_ctx.current_catalog(),
+                    <span class="kw-2">&amp;</span>stmt.name.to_string(),
+                    stmt.if_not_exists,
+                )
                 .<span class="kw">await
-                </span>.context(ExecuteStatementSnafu),
+            </span>}
+
+            Statement::ShowCreateTable(show) =&gt; {
+                <span class="kw">let </span>(catalog, schema, table) =
+                    table_idents_to_full_name(<span class="kw-2">&amp;</span>show.table_name, query_ctx.clone())
+                        .map_err(BoxedError::new)
+                        .context(error::ExternalSnafu)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span>table_ref = <span class="self">self
+                    </span>.catalog_manager
+                    .table(<span class="kw-2">&amp;</span>catalog, <span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>table)
+                    .<span class="kw">await
+                    </span>.context(error::CatalogSnafu)<span class="question-mark">?
+                    </span>.context(error::TableNotFoundSnafu { table_name: <span class="kw-2">&amp;</span>table })<span class="question-mark">?</span>;
+                <span class="kw">let </span>table_name = TableName::new(catalog, schema, table);
+
+                <span class="self">self</span>.show_create_table(table_name, table_ref, query_ctx)
+                    .<span class="kw">await
+            </span>}
         }
     }
 
@@ -492,88 +547,6 @@
             </span>.with_context(|| TableNotFoundSnafu {
                 table_name: table_ref.to_string(),
             })
-    }
-
-    <span class="comment">// TODO(zhongzc): A middle state that eliminates calls to table.insert,
-    // For DistTable, its insert is not invoked; for MitoTable, it is still called but eventually eliminated.
-    </span><span class="kw">async fn </span>send_insert_request(<span class="kw-2">&amp;</span><span class="self">self</span>, request: InsertRequest) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
-        <span class="kw">let </span>frontend_catalog_manager = <span class="self">self
-            </span>.catalog_manager
-            .as_any()
-            .downcast_ref::&lt;FrontendCatalogManager&gt;();
-
-        <span class="kw">let </span>table_name = request.table_name.clone();
-        <span class="kw">match </span>frontend_catalog_manager {
-            <span class="prelude-val">Some</span>(frontend_catalog_manager) =&gt; {
-                <span class="kw">let </span>inserter = DistInserter::new(
-                    request.catalog_name.clone(),
-                    request.schema_name.clone(),
-                    Arc::new(frontend_catalog_manager.clone()),
-                );
-                <span class="kw">let </span>affected_rows = inserter
-                    .insert(<span class="macro">vec!</span>[request])
-                    .<span class="kw">await
-                    </span>.map_err(BoxedError::new)
-                    .context(TableOperationSnafu)
-                    .context(InsertSnafu { table_name })<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(affected_rows <span class="kw">as </span>usize)
-            }
-            <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span>table_ref = TableReference::full(
-                    <span class="kw-2">&amp;</span>request.catalog_name,
-                    <span class="kw-2">&amp;</span>request.schema_name,
-                    <span class="kw-2">&amp;</span>request.table_name,
-                );
-                <span class="kw">let </span>affected_rows = <span class="self">self
-                    </span>.get_table(<span class="kw-2">&amp;</span>table_ref)
-                    .<span class="kw">await</span><span class="question-mark">?
-                    </span>.insert(request)
-                    .<span class="kw">await
-                    </span>.context(InsertSnafu { table_name })<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(affected_rows)
-            }
-        }
-    }
-
-    <span class="comment">// TODO(zhongzc): A middle state that eliminates calls to table.delete,
-    // For DistTable, its delete is not invoked; for MitoTable, it is still called but eventually eliminated.
-    </span><span class="kw">async fn </span>send_delete_request(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
-        <span class="kw">let </span>frontend_catalog_manager = <span class="self">self
-            </span>.catalog_manager
-            .as_any()
-            .downcast_ref::&lt;FrontendCatalogManager&gt;();
-
-        <span class="kw">let </span>table_name = request.table_name.clone();
-        <span class="kw">match </span>frontend_catalog_manager {
-            <span class="prelude-val">Some</span>(frontend_catalog_manager) =&gt; {
-                <span class="kw">let </span>inserter = DistDeleter::new(
-                    request.catalog_name.clone(),
-                    request.schema_name.clone(),
-                    Arc::new(frontend_catalog_manager.clone()),
-                );
-                <span class="kw">let </span>affected_rows = inserter
-                    .delete(<span class="macro">vec!</span>[request])
-                    .<span class="kw">await
-                    </span>.map_err(BoxedError::new)
-                    .context(TableOperationSnafu)
-                    .context(InsertSnafu { table_name })<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(affected_rows)
-            }
-            <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span>table_ref = TableReference::full(
-                    <span class="kw-2">&amp;</span>request.catalog_name,
-                    <span class="kw-2">&amp;</span>request.schema_name,
-                    <span class="kw-2">&amp;</span>request.table_name,
-                );
-                <span class="kw">let </span>affected_rows = <span class="self">self
-                    </span>.get_table(<span class="kw-2">&amp;</span>table_ref)
-                    .<span class="kw">await</span><span class="question-mark">?
-                    </span>.delete(request)
-                    .<span class="kw">await
-                    </span>.context(InsertSnafu { table_name })<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(affected_rows)
-            }
-        }
     }
 }
 
@@ -653,5 +626,24 @@
                 .map_err(|<span class="kw">_</span>| error::InvalidCopyParameterSnafu { key, value: v }.build())
         })
         .transpose()
+}
+
+<span class="kw">fn </span>idents_to_full_database_name(
+    obj_name: <span class="kw-2">&amp;</span>ObjectName,
+    query_ctx: <span class="kw-2">&amp;</span>QueryContextRef,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(String, String)&gt; {
+    <span class="kw">match </span><span class="kw-2">&amp;</span>obj_name.<span class="number">0</span>[..] {
+        [database] =&gt; <span class="prelude-val">Ok</span>((
+            query_ctx.current_catalog().to_owned(),
+            database.value.clone(),
+        )),
+        [catalog, database] =&gt; <span class="prelude-val">Ok</span>((catalog.value.clone(), database.value.clone())),
+        <span class="kw">_ </span>=&gt; InvalidSqlSnafu {
+            err_msg: <span class="macro">format!</span>(
+                <span class="string">&quot;expect database name to be &lt;catalog&gt;.&lt;database&gt;, &lt;database&gt;, found: {obj_name}&quot;</span>,
+            ),
+        }
+        .fail(),
+    }
 }
 </code></pre></div></section></main></body></html>

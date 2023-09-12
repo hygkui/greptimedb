@@ -481,15 +481,6 @@
 <a href="#481" id="481">481</a>
 <a href="#482" id="482">482</a>
 <a href="#483" id="483">483</a>
-<a href="#484" id="484">484</a>
-<a href="#485" id="485">485</a>
-<a href="#486" id="486">486</a>
-<a href="#487" id="487">487</a>
-<a href="#488" id="488">488</a>
-<a href="#489" id="489">489</a>
-<a href="#490" id="490">490</a>
-<a href="#491" id="491">491</a>
-<a href="#492" id="492">492</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -608,7 +599,7 @@
         MergeReaderBuilder::default()
     }
 
-    <span class="doccomment">/// Pushs a batch reader to sources.
+    <span class="doccomment">/// Pushes a batch reader to sources.
     </span><span class="kw">pub fn </span>push_batch_reader(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reader: BoxedBatchReader) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.sources.push(Source::Reader(reader));
         <span class="self">self
@@ -833,22 +824,13 @@
     <span class="kw">use </span>api::v1::OpType;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::test_util::{new_batch, VecBatchReader};
+    <span class="kw">use </span><span class="kw">crate</span>::test_util::{check_reader_result, new_batch, VecBatchReader};
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_merge_reader_empty() {
         <span class="kw">let </span><span class="kw-2">mut </span>reader = MergeReaderBuilder::new().build().<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(reader.next_batch().<span class="kw">await</span>.unwrap().is_none());
         <span class="macro">assert!</span>(reader.next_batch().<span class="kw">await</span>.unwrap().is_none());
-    }
-
-    <span class="kw">async fn </span>check_merge_result(reader: <span class="kw-2">&amp;mut </span>MergeReader, expect: <span class="kw-2">&amp;</span>[Batch]) {
-        <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(batch) = reader.next_batch().<span class="kw">await</span>.unwrap() {
-            result.push(batch);
-        }
-
-        <span class="macro">assert_eq!</span>(expect, result);
     }
 
     <span class="attr">#[tokio::test]
@@ -889,7 +871,7 @@
             .build()
             .<span class="kw">await
             </span>.unwrap();
-        check_merge_result(
+        check_reader_result(
             <span class="kw-2">&amp;mut </span>reader,
             <span class="kw-2">&amp;</span>[
                 new_batch(
@@ -960,7 +942,7 @@
             .build()
             .<span class="kw">await
             </span>.unwrap();
-        check_merge_result(
+        check_reader_result(
             <span class="kw-2">&amp;mut </span>reader,
             <span class="kw-2">&amp;</span>[
                 new_batch(

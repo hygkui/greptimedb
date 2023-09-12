@@ -250,6 +250,7 @@
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -271,7 +272,7 @@
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::RegionIdent;
-<span class="kw">use </span>common_telemetry::debug;
+<span class="kw">use </span>common_telemetry::{debug, info};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::ResultExt;
 
@@ -281,7 +282,7 @@
     Error, <span class="prelude-ty">Result</span>, RetryLaterSnafu, SerializeToJsonSnafu, UnexpectedInstructionReplySnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::handler::HeartbeatMailbox;
-<span class="kw">use </span><span class="kw">crate</span>::inactive_node_manager::InactiveNodeManager;
+<span class="kw">use </span><span class="kw">crate</span>::inactive_region_manager::InactiveRegionManager;
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_failover::OPEN_REGION_MESSAGE_TIMEOUT;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::{Channel, MailboxReceiver};
 
@@ -328,7 +329,7 @@
             datanode_id: <span class="self">self</span>.candidate.id,
             ..failed_region.clone()
         };
-        InactiveNodeManager::new(<span class="kw-2">&amp;</span>ctx.in_memory)
+        InactiveRegionManager::new(<span class="kw-2">&amp;</span>ctx.in_memory)
             .deregister_inactive_region(<span class="kw-2">&amp;</span>candidate)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -387,6 +388,7 @@
         ctx: <span class="kw-2">&amp;</span>RegionFailoverContext,
         failed_region: <span class="kw-2">&amp;</span>RegionIdent,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
+        <span class="macro">info!</span>(<span class="string">&quot;Activating region: {failed_region:?}&quot;</span>);
         <span class="kw">let </span>mailbox_receiver = <span class="self">self
             </span>.send_open_region_message(ctx, failed_region, OPEN_REGION_MESSAGE_TIMEOUT)
             .<span class="kw">await</span><span class="question-mark">?</span>;

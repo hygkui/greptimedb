@@ -343,8 +343,6 @@
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -359,10 +357,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::add_column::location::LocationType;
-<span class="kw">use </span>api::v1::add_column::Location;
+</span><span class="kw">use </span>api::v1::add_column_location::LocationType;
 <span class="kw">use </span>api::v1::alter_expr::Kind;
-<span class="kw">use </span>api::v1::{column_def, AlterExpr, CreateTableExpr, DropColumns, RenameTable};
+<span class="kw">use </span>api::v1::{
+    column_def, AddColumnLocation <span class="kw">as </span>Location, AlterExpr, CreateTableExpr, DropColumns,
+    RenameTable, SemanticType,
+};
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_query::AddColumnLocation;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, RawSchema};
@@ -402,7 +402,7 @@
                     )<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(AddColumnRequest {
                         column_schema: schema,
-                        is_key: ac.is_key,
+                        is_key: column_def.semantic_type == SemanticType::Tag <span class="kw">as </span>i32,
                         location: parse_location(ac.location)<span class="question-mark">?</span>,
                     })
                 })
@@ -426,7 +426,7 @@
         table_name: expr.table_name,
         table_id,
         alter_kind,
-        table_version: <span class="prelude-val">Some</span>(expr.table_version),
+        table_version: <span class="prelude-val">None</span>,
     };
     <span class="prelude-val">Ok</span>(request)
 }
@@ -533,9 +533,9 @@
         }) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(AddColumnLocation::First)),
         <span class="prelude-val">Some</span>(Location {
             location_type: LOCATION_TYPE_AFTER,
-            after_cloumn_name,
+            after_column_name,
         }) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(AddColumnLocation::After {
-            column_name: after_cloumn_name,
+            column_name: after_column_name,
         })),
         <span class="prelude-val">Some</span>(Location { location_type, .. }) =&gt; UnknownLocationTypeSnafu { location_type }.fail(),
         <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
@@ -544,8 +544,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>api::v1::add_column::location::LocationType;
-    <span class="kw">use </span>api::v1::{AddColumn, AddColumns, ColumnDataType, ColumnDef, DropColumn};
+    <span class="kw">use </span>api::v1::{AddColumn, AddColumns, ColumnDataType, ColumnDef, DropColumn, SemanticType};
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -561,15 +560,14 @@
                 add_columns: <span class="macro">vec!</span>[AddColumn {
                     column_def: <span class="prelude-val">Some</span>(ColumnDef {
                         name: <span class="string">&quot;mem_usage&quot;</span>.to_string(),
-                        datatype: ColumnDataType::Float64 <span class="kw">as </span>i32,
+                        data_type: ColumnDataType::Float64 <span class="kw">as </span>i32,
                         is_nullable: <span class="bool-val">false</span>,
                         default_constraint: <span class="macro">vec!</span>[],
+                        semantic_type: SemanticType::Field <span class="kw">as </span>i32,
                     }),
-                    is_key: <span class="bool-val">false</span>,
                     location: <span class="prelude-val">None</span>,
                 }],
             })),
-            ..Default::default()
         };
 
         <span class="kw">let </span>alter_request = alter_expr_to_request(<span class="number">1</span>, expr).unwrap();
@@ -602,32 +600,31 @@
                     AddColumn {
                         column_def: <span class="prelude-val">Some</span>(ColumnDef {
                             name: <span class="string">&quot;mem_usage&quot;</span>.to_string(),
-                            datatype: ColumnDataType::Float64 <span class="kw">as </span>i32,
+                            data_type: ColumnDataType::Float64 <span class="kw">as </span>i32,
                             is_nullable: <span class="bool-val">false</span>,
                             default_constraint: <span class="macro">vec!</span>[],
+                            semantic_type: SemanticType::Field <span class="kw">as </span>i32,
                         }),
-                        is_key: <span class="bool-val">false</span>,
                         location: <span class="prelude-val">Some</span>(Location {
                             location_type: LocationType::First.into(),
-                            after_cloumn_name: <span class="string">&quot;&quot;</span>.to_string(),
+                            after_column_name: <span class="string">&quot;&quot;</span>.to_string(),
                         }),
                     },
                     AddColumn {
                         column_def: <span class="prelude-val">Some</span>(ColumnDef {
                             name: <span class="string">&quot;cpu_usage&quot;</span>.to_string(),
-                            datatype: ColumnDataType::Float64 <span class="kw">as </span>i32,
+                            data_type: ColumnDataType::Float64 <span class="kw">as </span>i32,
                             is_nullable: <span class="bool-val">false</span>,
                             default_constraint: <span class="macro">vec!</span>[],
+                            semantic_type: SemanticType::Field <span class="kw">as </span>i32,
                         }),
-                        is_key: <span class="bool-val">false</span>,
                         location: <span class="prelude-val">Some</span>(Location {
                             location_type: LocationType::After.into(),
-                            after_cloumn_name: <span class="string">&quot;ts&quot;</span>.to_string(),
+                            after_column_name: <span class="string">&quot;ts&quot;</span>.to_string(),
                         }),
                     },
                 ],
             })),
-            ..Default::default()
         };
 
         <span class="kw">let </span>alter_request = alter_expr_to_request(<span class="number">1</span>, expr).unwrap();
@@ -676,7 +673,6 @@
                     name: <span class="string">&quot;mem_usage&quot;</span>.to_string(),
                 }],
             })),
-            ..Default::default()
         };
 
         <span class="kw">let </span>alter_request = alter_expr_to_request(<span class="number">1</span>, expr).unwrap();

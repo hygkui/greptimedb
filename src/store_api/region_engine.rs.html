@@ -51,6 +51,9 @@
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -101,6 +104,9 @@
 
     <span class="doccomment">/// Retrieve region&#39;s metadata.
     </span><span class="kw">async fn </span>get_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;RegionMetadataRef, BoxedError&gt;;
+
+    <span class="doccomment">/// Stop the engine
+    </span><span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), BoxedError&gt;;
 }
 
 <span class="kw">pub type </span>RegionEngineRef = Arc&lt;<span class="kw">dyn </span>RegionEngine&gt;;

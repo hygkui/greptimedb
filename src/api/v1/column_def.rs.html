@@ -62,7 +62,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::v1::ColumnDef;
 
 <span class="kw">pub fn </span>try_as_column_schema(column_def: <span class="kw-2">&amp;</span>ColumnDef) -&gt; <span class="prelude-ty">Result</span>&lt;ColumnSchema&gt; {
-    <span class="kw">let </span>data_type = ColumnDataTypeWrapper::try_new(column_def.datatype)<span class="question-mark">?</span>;
+    <span class="kw">let </span>data_type = ColumnDataTypeWrapper::try_new(column_def.data_type)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>constraint = <span class="kw">if </span>column_def.default_constraint.is_empty() {
         <span class="prelude-val">None

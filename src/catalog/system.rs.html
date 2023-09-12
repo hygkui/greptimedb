@@ -572,66 +572,6 @@
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
-<a href="#612" id="612">612</a>
-<a href="#613" id="613">613</a>
-<a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
-<a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
-<a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
-<a href="#629" id="629">629</a>
-<a href="#630" id="630">630</a>
-<a href="#631" id="631">631</a>
-<a href="#632" id="632">632</a>
-<a href="#633" id="633">633</a>
-<a href="#634" id="634">634</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -654,7 +594,7 @@
     SYSTEM_CATALOG_NAME, SYSTEM_CATALOG_TABLE_ID, SYSTEM_CATALOG_TABLE_NAME,
 };
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
-<span class="kw">use </span>common_telemetry::{debug, warn};
+<span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>common_time::util;
 <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, ScalarVector, VectorRef};
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, RawSchema};
@@ -668,11 +608,9 @@
 <span class="kw">use </span>table::TableRef;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, CreateSystemCatalogSnafu, DeregisterTableSnafu, EmptyValueSnafu, Error,
-    InsertCatalogRecordSnafu, InvalidEntryTypeSnafu, InvalidKeySnafu, OpenSystemCatalogSnafu,
-    <span class="prelude-ty">Result</span>, ValueDeserializeSnafu,
+    <span class="self">self</span>, CreateSystemCatalogSnafu, EmptyValueSnafu, Error, InsertCatalogRecordSnafu,
+    InvalidEntryTypeSnafu, InvalidKeySnafu, OpenSystemCatalogSnafu, <span class="prelude-ty">Result</span>, ValueDeserializeSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::DeregisterTableRequest;
 
 <span class="kw">pub const </span>ENTRY_TYPE_INDEX: usize = <span class="number">0</span>;
 <span class="kw">pub const </span>KEY_INDEX: usize = <span class="number">1</span>;
@@ -736,30 +674,6 @@
             </span>.insert(insert_request)
             .<span class="kw">await
             </span>.context(InsertCatalogRecordSnafu)
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>deregister_table(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        request: <span class="kw-2">&amp;</span>DeregisterTableRequest,
-        table_id: TableId,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>deletion_request = build_table_deletion_request(request, table_id);
-        <span class="self">self</span>.<span class="number">0
-            </span>.insert(deletion_request)
-            .<span class="kw">await
-            </span>.map(|x| {
-                <span class="kw">if </span>x != <span class="number">1 </span>{
-                    <span class="kw">let </span>table = common_catalog::format_full_table_name(
-                        <span class="kw-2">&amp;</span>request.catalog,
-                        <span class="kw-2">&amp;</span>request.schema,
-                        <span class="kw-2">&amp;</span>request.table_name
-                    );
-                    <span class="macro">warn!</span>(<span class="string">&quot;Failed to delete table record from information_schema, unexpected returned result: {x}, table: {table}&quot;</span>);
-                }
-            })
-            .with_context(|<span class="kw">_</span>| DeregisterTableSnafu {
-                request: request.clone(),
-            })
     }
 
     <span class="kw">pub async fn </span>register_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: String, schema: String) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
@@ -860,24 +774,6 @@
             table_name,
             engine,
             is_deleted: <span class="bool-val">false</span>,
-        })
-        .unwrap()
-        .as_bytes(),
-    )
-}
-
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>build_table_deletion_request(
-    request: <span class="kw-2">&amp;</span>DeregisterTableRequest,
-    table_id: TableId,
-) -&gt; InsertRequest {
-    <span class="kw">let </span>entry_key = format_table_entry_key(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema, table_id);
-    build_insert_request(
-        EntryType::Table,
-        entry_key.as_bytes(),
-        serde_json::to_string(<span class="kw-2">&amp;</span>TableEntryValue {
-            table_name: <span class="string">&quot;&quot;</span>.to_string(),
-            engine: <span class="string">&quot;&quot;</span>.to_string(),
-            is_deleted: <span class="bool-val">true</span>,
         })
         .unwrap()
         .as_bytes(),
@@ -1248,22 +1144,6 @@
             is_deleted: <span class="bool-val">false</span>,
         });
         <span class="macro">assert_eq!</span>(entry, expected);
-
-        catalog_table
-            .deregister_table(
-                <span class="kw-2">&amp;</span>DeregisterTableRequest {
-                    catalog: DEFAULT_CATALOG_NAME.to_string(),
-                    schema: DEFAULT_SCHEMA_NAME.to_string(),
-                    table_name: <span class="string">&quot;my_table&quot;</span>.to_string(),
-                },
-                <span class="number">1</span>,
-            )
-            .<span class="kw">await
-            </span>.unwrap();
-
-        <span class="kw">let </span>records = catalog_table.records().<span class="kw">await</span>.unwrap();
-        <span class="kw">let </span>batches = RecordBatches::try_collect(records).<span class="kw">await</span>.unwrap().take();
-        <span class="macro">assert_eq!</span>(batches.len(), <span class="number">1</span>);
     }
 }
 </code></pre></div></section></main></body></html>

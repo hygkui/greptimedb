@@ -212,6 +212,7 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -251,7 +252,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::frontend::FrontendOptions;
 <span class="kw">use </span><span class="kw">crate</span>::instance::FrontendInstance;
-<span class="kw">use </span><span class="kw">crate</span>::service_config::{InfluxdbOptions, OtlpOptions, PromStoreOptions};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Services;
 
@@ -271,7 +271,9 @@
         <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::&lt;ServerHandler&gt;::with_capacity(plugins.len());
         <span class="kw">let </span>user_provider = plugins.get::&lt;UserProviderRef&gt;();
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(opts) = <span class="kw-2">&amp;</span>opts.grpc_options {
+        {
+            <span class="comment">// Always init GRPC server
+            </span><span class="kw">let </span>opts = <span class="kw-2">&amp;</span>opts.grpc_options;
             <span class="kw">let </span>grpc_addr = parse_addr(<span class="kw-2">&amp;</span>opts.addr)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>grpc_runtime = Arc::new(
@@ -283,7 +285,7 @@
             );
 
             <span class="kw">let </span>grpc_server = GrpcServer::new(
-                ServerGrpcQueryHandlerAdaptor::arc(instance.clone()),
+                <span class="prelude-val">Some</span>(ServerGrpcQueryHandlerAdaptor::arc(instance.clone())),
                 <span class="prelude-val">Some</span>(instance.clone()),
                 <span class="prelude-val">None</span>,
                 <span class="prelude-val">None</span>,
@@ -292,9 +294,52 @@
             );
 
             result.push((Box::new(grpc_server), grpc_addr));
-        };
+        }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(opts) = <span class="kw-2">&amp;</span>opts.mysql_options {
+        {
+            <span class="comment">// Always init HTTP server
+            </span><span class="kw">let </span>http_options = <span class="kw-2">&amp;</span>opts.http_options;
+            <span class="kw">let </span>http_addr = parse_addr(<span class="kw-2">&amp;</span>http_options.addr)<span class="question-mark">?</span>;
+
+            <span class="kw">let </span><span class="kw-2">mut </span>http_server_builder = HttpServerBuilder::new(http_options.clone());
+            <span class="kw">let _ </span>= http_server_builder
+                .with_sql_handler(ServerSqlQueryHandlerAdaptor::arc(instance.clone()))
+                .with_grpc_handler(ServerGrpcQueryHandlerAdaptor::arc(instance.clone()));
+
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(user_provider) = user_provider.clone() {
+                <span class="kw">let _ </span>= http_server_builder.with_user_provider(user_provider);
+            }
+
+            <span class="kw">if </span>opts.opentsdb_options.enable {
+                <span class="kw">let _ </span>= http_server_builder.with_opentsdb_handler(instance.clone());
+            }
+
+            <span class="kw">if </span>opts.influxdb_options.enable {
+                <span class="kw">let _ </span>= http_server_builder.with_influxdb_handler(instance.clone());
+            }
+
+            <span class="kw">if </span>opts.prom_store_options.enable {
+                <span class="kw">let _ </span>= http_server_builder
+                    .with_prom_handler(instance.clone())
+                    .with_prometheus_handler(instance.clone());
+            }
+
+            <span class="kw">if </span>opts.otlp_options.enable {
+                <span class="kw">let _ </span>= http_server_builder.with_otlp_handler(instance.clone());
+            }
+
+            <span class="kw">let </span>http_server = http_server_builder
+                .with_metrics_handler(MetricsHandler)
+                .with_script_handler(instance.clone())
+                .with_configurator(plugins.get::&lt;ConfiguratorRef&gt;())
+                .with_greptime_config_options(opts.to_toml_string())
+                .build();
+            result.push((Box::new(http_server), http_addr));
+        }
+
+        <span class="kw">if </span>opts.mysql_options.enable {
+            <span class="comment">// Init MySQL server
+            </span><span class="kw">let </span>opts = <span class="kw-2">&amp;</span>opts.mysql_options;
             <span class="kw">let </span>mysql_addr = parse_addr(<span class="kw-2">&amp;</span>opts.addr)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>mysql_io_runtime = Arc::new(
@@ -324,7 +369,9 @@
             result.push((mysql_server, mysql_addr));
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(opts) = <span class="kw-2">&amp;</span>opts.postgres_options {
+        <span class="kw">if </span>opts.postgres_options.enable {
+            <span class="comment">// Init PosgresSQL Server
+            </span><span class="kw">let </span>opts = <span class="kw-2">&amp;</span>opts.postgres_options;
             <span class="kw">let </span>pg_addr = parse_addr(<span class="kw-2">&amp;</span>opts.addr)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>pg_io_runtime = Arc::new(
@@ -345,9 +392,9 @@
             result.push((pg_server, pg_addr));
         }
 
-        <span class="kw">let </span><span class="kw-2">mut </span>set_opentsdb_handler = <span class="bool-val">false</span>;
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(opts) = <span class="kw-2">&amp;</span>opts.opentsdb_options {
+        <span class="kw">if </span>opts.opentsdb_options.enable {
+            <span class="comment">// Init OpenTSDB server
+            </span><span class="kw">let </span>opts = <span class="kw-2">&amp;</span>opts.opentsdb_options;
             <span class="kw">let </span>addr = parse_addr(<span class="kw-2">&amp;</span>opts.addr)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>io_runtime = Arc::new(
@@ -361,51 +408,6 @@
             <span class="kw">let </span>server = OpentsdbServer::create_server(instance.clone(), io_runtime);
 
             result.push((server, addr));
-            set_opentsdb_handler = <span class="bool-val">true</span>;
-        }
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_options) = <span class="kw-2">&amp;</span>opts.http_options {
-            <span class="kw">let </span>http_addr = parse_addr(<span class="kw-2">&amp;</span>http_options.addr)<span class="question-mark">?</span>;
-
-            <span class="kw">let </span><span class="kw-2">mut </span>http_server_builder = HttpServerBuilder::new(http_options.clone());
-            <span class="kw">let _ </span>= http_server_builder
-                .with_sql_handler(ServerSqlQueryHandlerAdaptor::arc(instance.clone()))
-                .with_grpc_handler(ServerGrpcQueryHandlerAdaptor::arc(instance.clone()));
-
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(user_provider) = user_provider.clone() {
-                <span class="kw">let _ </span>= http_server_builder.with_user_provider(user_provider);
-            }
-
-            <span class="kw">if </span>set_opentsdb_handler {
-                <span class="kw">let _ </span>= http_server_builder.with_opentsdb_handler(instance.clone());
-            }
-            <span class="kw">if </span><span class="macro">matches!</span>(
-                opts.influxdb_options,
-                <span class="prelude-val">Some</span>(InfluxdbOptions { enable: <span class="bool-val">true </span>})
-            ) {
-                <span class="kw">let _ </span>= http_server_builder.with_influxdb_handler(instance.clone());
-            }
-
-            <span class="kw">if </span><span class="macro">matches!</span>(
-                opts.prom_store_options,
-                <span class="prelude-val">Some</span>(PromStoreOptions { enable: <span class="bool-val">true </span>})
-            ) {
-                <span class="kw">let _ </span>= http_server_builder
-                    .with_prom_handler(instance.clone())
-                    .with_prometheus_handler(instance.clone());
-            }
-
-            <span class="kw">if </span><span class="macro">matches!</span>(opts.otlp_options, <span class="prelude-val">Some</span>(OtlpOptions { enable: <span class="bool-val">true </span>})) {
-                <span class="kw">let _ </span>= http_server_builder.with_otlp_handler(instance.clone());
-            }
-
-            <span class="kw">let </span>http_server = http_server_builder
-                .with_metrics_handler(MetricsHandler)
-                .with_script_handler(instance)
-                .with_configurator(plugins.get::&lt;ConfiguratorRef&gt;())
-                .with_greptime_config_options(opts.to_toml_string())
-                .build();
-            result.push((Box::new(http_server), http_addr));
         }
 
         <span class="prelude-val">Ok</span>(result

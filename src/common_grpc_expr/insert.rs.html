@@ -500,12 +500,6 @@
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
-<a href="#503" id="503">503</a>
-<a href="#504" id="504">504</a>
-<a href="#505" id="505">505</a>
-<a href="#506" id="506">506</a>
-<a href="#507" id="507">507</a>
-<a href="#508" id="508">508</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -727,7 +721,7 @@
                         .iter()
                         .find(|c| c.name == <span class="string">&quot;host&quot;</span>)
                         .unwrap()
-                        .datatype
+                        .data_type
                 )
                 .unwrap()
             )
@@ -741,7 +735,7 @@
                         .iter()
                         .find(|c| c.name == <span class="string">&quot;cpu&quot;</span>)
                         .unwrap()
-                        .datatype
+                        .data_type
                 )
                 .unwrap()
             )
@@ -755,7 +749,7 @@
                         .iter()
                         .find(|c| c.name == <span class="string">&quot;memory&quot;</span>)
                         .unwrap()
-                        .datatype
+                        .data_type
                 )
                 .unwrap()
             )
@@ -769,7 +763,7 @@
                         .iter()
                         .find(|c| c.name == <span class="string">&quot;time&quot;</span>)
                         .unwrap()
-                        .datatype
+                        .data_type
                 )
                 .unwrap()
             )
@@ -783,7 +777,7 @@
                         .iter()
                         .find(|c| c.name == <span class="string">&quot;interval&quot;</span>)
                         .unwrap()
-                        .datatype
+                        .data_type
                 )
                 .unwrap()
             )
@@ -797,7 +791,7 @@
                         .iter()
                         .find(|c| c.name == <span class="string">&quot;ts&quot;</span>)
                         .unwrap()
-                        .datatype
+                        .data_type
                 )
                 .unwrap()
             )
@@ -824,46 +818,40 @@
 
         <span class="macro">assert_eq!</span>(<span class="number">4</span>, add_columns.add_columns.len());
         <span class="kw">let </span>host_column = <span class="kw-2">&amp;</span>add_columns.add_columns[<span class="number">0</span>];
-        <span class="macro">assert!</span>(host_column.is_key);
-
         <span class="macro">assert_eq!</span>(
             ConcreteDataType::string_datatype(),
             ConcreteDataType::from(
-                ColumnDataTypeWrapper::try_new(host_column.column_def.as_ref().unwrap().datatype)
+                ColumnDataTypeWrapper::try_new(host_column.column_def.as_ref().unwrap().data_type)
                     .unwrap()
             )
         );
 
         <span class="kw">let </span>memory_column = <span class="kw-2">&amp;</span>add_columns.add_columns[<span class="number">1</span>];
-        <span class="macro">assert!</span>(!memory_column.is_key);
-
         <span class="macro">assert_eq!</span>(
             ConcreteDataType::float64_datatype(),
             ConcreteDataType::from(
-                ColumnDataTypeWrapper::try_new(memory_column.column_def.as_ref().unwrap().datatype)
-                    .unwrap()
+                ColumnDataTypeWrapper::try_new(
+                    memory_column.column_def.as_ref().unwrap().data_type
+                )
+                .unwrap()
             )
         );
 
         <span class="kw">let </span>time_column = <span class="kw-2">&amp;</span>add_columns.add_columns[<span class="number">2</span>];
-        <span class="macro">assert!</span>(!time_column.is_key);
-
         <span class="macro">assert_eq!</span>(
             ConcreteDataType::time_datatype(TimeUnit::Millisecond),
             ConcreteDataType::from(
-                ColumnDataTypeWrapper::try_new(time_column.column_def.as_ref().unwrap().datatype)
+                ColumnDataTypeWrapper::try_new(time_column.column_def.as_ref().unwrap().data_type)
                     .unwrap()
             )
         );
 
         <span class="kw">let </span>interval_column = <span class="kw-2">&amp;</span>add_columns.add_columns[<span class="number">3</span>];
-        <span class="macro">assert!</span>(!interval_column.is_key);
-
         <span class="macro">assert_eq!</span>(
             ConcreteDataType::interval_datatype(IntervalUnit::MonthDayNano),
             ConcreteDataType::from(
                 ColumnDataTypeWrapper::try_new(
-                    interval_column.column_def.as_ref().unwrap().datatype
+                    interval_column.column_def.as_ref().unwrap().data_type
                 )
                 .unwrap()
             )

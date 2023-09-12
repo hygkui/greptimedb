@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["delete","insert"],"struct":["DistTable","DummyDataSource"]};
+window.SIDEBAR_ITEMS = {"fn":["table_idents_to_full_name"],"struct":["DistTable","DummyDataSource"]};

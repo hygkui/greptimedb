@@ -680,6 +680,37 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create default catalog and schema, source: {}&quot;</span>, source))]
+    </span>InitMetadata {
+        location: Location,
+        source: common_meta::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to allocate next sequence number: {}&quot;</span>, source))]
+    </span>NextSequence {
+        location: Location,
+        source: common_meta::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to submit ddl task: {}&quot;</span>, source))]
+    </span>SubmitDdlTask {
+        location: Location,
+        source: common_meta::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to invalidate table cache: {}&quot;</span>, source))]
+    </span>InvalidateTableCache {
+        location: Location,
+        source: common_meta::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to operate region on peer:{}, source: {}&quot;</span>, peer, source))]
+    </span>OperateRegion {
+        location: Location,
+        peer: Peer,
+        source: BoxedError,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to list catalogs: {}&quot;</span>, source))]
     </span>ListCatalogs {
         location: Location,
@@ -697,35 +728,6 @@
     </span>Join {
         location: Location,
         source: JoinError,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert grpc expr, source: {}&quot;</span>, source))]
-    </span>ConvertGrpcExpr {
-        location: Location,
-        source: common_grpc_expr::error::Error,
-    },
-
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to build table meta for table: {}, source: {}&quot;</span>,
-        table_name,
-        source
-    ))]
-    </span>BuildTableMeta {
-        table_name: String,
-        source: table::metadata::TableMetaBuilderError,
-        location: Location,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table occurs error, source: {}&quot;</span>, source))]
-    </span>Table {
-        location: Location,
-        source: table::error::Error,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert RawTableInfo into TableInfo: {}&quot;</span>, source))]
-    </span>ConvertRawTableInfo {
-        location: Location,
-        source: datatypes::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute transaction: {}&quot;</span>, msg))]
@@ -820,6 +822,9 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid datanode stat key: {}&quot;</span>, key))]
     </span>InvalidStatKey { key: String, location: Location },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid inactive region key: {}&quot;</span>, key))]
+    </span>InvalidInactiveRegionKey { key: String, location: Location },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse datanode lease key from utf8: {}&quot;</span>, source))]
     </span>LeaseKeyFromUtf8 {
         source: std::string::FromUtf8Error,
@@ -840,6 +845,12 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse datanode stat value from utf8: {}&quot;</span>, source))]
     </span>StatValueFromUtf8 {
+        source: std::string::FromUtf8Error,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse invalid region key from utf8: {}&quot;</span>, source))]
+    </span>InvalidRegionKeyFromUtf8 {
         source: std::string::FromUtf8Error,
         location: Location,
     },
@@ -877,8 +888,11 @@
         source: common_catalog::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected sequence value: {}&quot;</span>, err_msg))]
-    </span>UnexpectedSequenceValue { err_msg: String, location: Location },
+    <span class="attr">#[snafu(display(<span class="string">&quot;Cannot parse full table name, source: {}&quot;</span>, source))]
+    </span>InvalidFullTableName {
+        location: Location,
+        source: common_catalog::error::Error,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode table route, source: {}&quot;</span>, source))]
     </span>DecodeTableRoute {
@@ -905,17 +919,6 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get sequence: {}&quot;</span>, err_msg))]
-    </span>NextSequence { err_msg: String, location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Sequence out of range: {}, start={}, step={}&quot;</span>, name, start, step))]
-    </span>SequenceOutOfRange {
-        name: String,
-        start: u64,
-        step: u64,
-        location: Location,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;MetaSrv has no leader at this moment&quot;</span>))]
     </span>NoLeader { location: Location },
 
@@ -934,7 +937,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected, violated: {}&quot;</span>, violated))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected, violated: {violated}, at {location}&quot;</span>))]
     </span>Unexpected {
         violated: String,
         location: Location,
@@ -1170,9 +1173,6 @@
         operation: String,
         location: Location,
     },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Primary key &#39;{key}&#39; not found when creating region request, at {location}&quot;</span>))]
-    </span>PrimaryKeyNotFound { key: String, location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1212,7 +1212,6 @@
             | Error::StartGrpc { .. }
             | Error::UpdateTableMetadata { .. }
             | Error::NoEnoughAvailableDatanode { .. }
-            | Error::ConvertGrpcExpr { .. }
             | Error::PublishMessage { .. }
             | Error::Join { .. }
             | Error::Unsupported { .. } =&gt; StatusCode::Internal,
@@ -1223,35 +1222,32 @@
             | Error::EmptyTableName { .. }
             | Error::InvalidLeaseKey { .. }
             | Error::InvalidStatKey { .. }
+            | Error::InvalidInactiveRegionKey { .. }
             | Error::ParseNum { .. }
             | Error::UnsupportedSelectorType { .. }
             | Error::InvalidArguments { .. }
             | Error::InvalidHeartbeatRequest { .. }
-            | Error::PrimaryKeyNotFound { .. }
             | Error::TooManyPartitions { .. } =&gt; StatusCode::InvalidArguments,
             Error::LeaseKeyFromUtf8 { .. }
             | Error::LeaseValueFromUtf8 { .. }
             | Error::StatKeyFromUtf8 { .. }
             | Error::StatValueFromUtf8 { .. }
-            | Error::UnexpectedSequenceValue { .. }
+            | Error::InvalidRegionKeyFromUtf8 { .. }
             | Error::TableRouteNotFound { .. }
             | Error::TableInfoNotFound { .. }
             | Error::CorruptedTableRoute { .. }
-            | Error::NextSequence { .. }
-            | Error::SequenceOutOfRange { .. }
             | Error::MoveValue { .. }
             | Error::InvalidTxnResult { .. }
             | Error::InvalidUtf8Value { .. }
             | Error::UnexpectedInstructionReply { .. }
             | Error::Unexpected { .. }
             | Error::Txn { .. }
-            | Error::TableIdChanged { .. }
-            | Error::ConvertRawTableInfo { .. }
-            | Error::BuildTableMeta { .. } =&gt; StatusCode::Unexpected,
+            | Error::TableIdChanged { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
-            Error::Table { source, .. } =&gt; source.status_code(),
+            Error::InvalidateTableCache { source, .. } =&gt; source.status_code(),
             Error::RequestDatanode { source, .. } =&gt; source.status_code(),
-            Error::InvalidCatalogValue { source, .. } =&gt; source.status_code(),
+            Error::InvalidCatalogValue { source, .. }
+            | Error::InvalidFullTableName { source, .. } =&gt; source.status_code(),
             Error::RecoverProcedure { source, .. }
             | Error::SubmitProcedure { source, .. }
             | Error::WaitProcedure { source, .. } =&gt; source.status_code(),
@@ -1264,15 +1260,19 @@
             }
 
             Error::RegionFailoverCandidatesNotFound { .. } =&gt; StatusCode::RuntimeResourcesExhausted,
+            Error::NextSequence { source, .. } =&gt; source.status_code(),
 
             Error::RegisterProcedureLoader { source, .. } =&gt; source.status_code(),
-
+            Error::OperateRegion { source, .. } =&gt; source.status_code(),
+            Error::SubmitDdlTask { source, .. } =&gt; source.status_code(),
             Error::TableRouteConversion { source, .. }
             | Error::ConvertProtoData { source, .. }
             | Error::TableMetadataManager { source, .. }
             | Error::UpdateTableRoute { source, .. }
             | Error::ConvertEtcdTxnObject { source, .. }
             | Error::GetFullTableInfo { source, .. } =&gt; source.status_code(),
+
+            Error::InitMetadata { source, .. } =&gt; source.status_code(),
 
             Error::Other { source, .. } =&gt; source.status_code(),
         }
