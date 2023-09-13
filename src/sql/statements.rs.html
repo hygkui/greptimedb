@@ -889,7 +889,7 @@
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, COMMENT_KEY};
 <span class="kw">use </span>datatypes::types::TimestampType;
-<span class="kw">use </span>datatypes::value::Value;
+<span class="kw">use </span>datatypes::value::{OrderedF32, OrderedF64, Value};
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::ast::{
@@ -980,12 +980,12 @@
 }
 
 <span class="macro">macro_rules! </span>parse_number_to_value {
-    (<span class="macro-nonterminal">$data_type</span>: expr, <span class="macro-nonterminal">$n</span>: ident,  $((<span class="macro-nonterminal">$Type</span>: ident, <span class="macro-nonterminal">$PrimitiveType</span>: ident)), +) =&gt; {
+    (<span class="macro-nonterminal">$data_type</span>: expr, <span class="macro-nonterminal">$n</span>: ident,  $((<span class="macro-nonterminal">$Type</span>: ident, <span class="macro-nonterminal">$PrimitiveType</span>: ident, <span class="macro-nonterminal">$Target</span>: ident)), +) =&gt; {
         <span class="kw">match </span><span class="macro-nonterminal">$data_type </span>{
             $(
                 ConcreteDataType::<span class="macro-nonterminal">$Type</span>(<span class="kw">_</span>) =&gt; {
                     <span class="kw">let </span>n  = parse_sql_number::&lt;<span class="macro-nonterminal">$PrimitiveType</span>&gt;(<span class="macro-nonterminal">$n</span>)<span class="question-mark">?</span>;
-                    <span class="prelude-val">Ok</span>(Value::from(n))
+                    <span class="prelude-val">Ok</span>(Value::<span class="macro-nonterminal">$Type</span>(<span class="macro-nonterminal">$Target::from</span>(n)))
                 },
             )+
                 <span class="kw">_ </span>=&gt; ParseSqlValueSnafu {
@@ -1001,17 +1001,17 @@
     <span class="macro">parse_number_to_value!</span>(
         data_type,
         n,
-        (UInt8, u8),
-        (UInt16, u16),
-        (UInt32, u32),
-        (UInt64, u64),
-        (Int8, i8),
-        (Int16, i16),
-        (Int32, i32),
-        (Int64, i64),
-        (Float64, f64),
-        (Float32, f32),
-        (Timestamp, i64)
+        (UInt8, u8, u8),
+        (UInt16, u16, u16),
+        (UInt32, u32, u32),
+        (UInt64, u64, u64),
+        (Int8, i8, i8),
+        (Int16, i16, i16),
+        (Int32, i32, i32),
+        (Int64, i64, i64),
+        (Float64, f64, OrderedF64),
+        (Float32, f32, OrderedF32),
+        (Timestamp, i64, Timestamp)
     )
     <span class="comment">// TODO(hl): also Date/DateTime
 </span>}
