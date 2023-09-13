@@ -246,11 +246,11 @@
         <span class="kw">let </span>schema_manager = SchemaManager::new(backend.clone());
 
         catalog_manager
-            .create(CatalogNameKey::default())
+            .create(CatalogNameKey::default(), <span class="bool-val">false</span>)
             .<span class="kw">await
             </span>.unwrap();
         schema_manager
-            .create(SchemaNameKey::default(), <span class="prelude-val">None</span>)
+            .create(SchemaNameKey::default(), <span class="prelude-val">None</span>, <span class="bool-val">false</span>)
             .<span class="kw">await
             </span>.unwrap();
 

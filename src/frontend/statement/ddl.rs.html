@@ -948,9 +948,9 @@
         <span class="kw">let </span>exists = <span class="self">self
             </span>.table_metadata_manager
             .schema_manager()
-            .exist(schema_key)
+            .exists(schema_key)
             .<span class="kw">await
-            </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>exists {
             <span class="kw">return if </span>create_if_not_exists {
@@ -962,9 +962,9 @@
 
         <span class="self">self</span>.table_metadata_manager
             .schema_manager()
-            .create(schema_key, <span class="prelude-val">None</span>)
+            .create(schema_key, <span class="prelude-val">None</span>, <span class="bool-val">false</span>)
             .<span class="kw">await
-            </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?</span>;
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">1</span>))
     }

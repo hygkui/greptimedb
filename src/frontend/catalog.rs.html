@@ -514,27 +514,27 @@
         <span class="prelude-val">Ok</span>(tables)
     }
 
-    <span class="kw">async fn </span>catalog_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
+    <span class="kw">async fn </span>catalog_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
         <span class="self">self</span>.table_metadata_manager
             .catalog_manager()
-            .exist(CatalogNameKey::new(catalog))
+            .exists(CatalogNameKey::new(catalog))
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)
     }
 
-    <span class="kw">async fn </span>schema_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
+    <span class="kw">async fn </span>schema_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
         <span class="kw">if </span><span class="self">self</span>.system_catalog.schema_exist(schema) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
         }
 
         <span class="self">self</span>.table_metadata_manager
             .schema_manager()
-            .exist(SchemaNameKey::new(catalog, schema))
+            .exists(SchemaNameKey::new(catalog, schema))
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)
     }
 
-    <span class="kw">async fn </span>table_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str, table: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
+    <span class="kw">async fn </span>table_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str, table: <span class="kw-2">&amp;</span>str) -&gt; CatalogResult&lt;bool&gt; {
         <span class="kw">if </span><span class="self">self</span>.system_catalog.table_exist(schema, table) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
         }

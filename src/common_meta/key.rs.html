@@ -918,7 +918,6 @@
 <a href="#918" id="918">918</a>
 <a href="#919" id="919">919</a>
 <a href="#920" id="920">920</a>
-<a href="#921" id="921">921</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1089,13 +1088,12 @@
 
     <span class="kw">pub async fn </span>init(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>catalog_name = CatalogNameKey::new(DEFAULT_CATALOG_NAME);
-        <span class="kw">if </span>!<span class="self">self</span>.catalog_manager().exist(catalog_name).<span class="kw">await</span><span class="question-mark">? </span>{
-            <span class="self">self</span>.catalog_manager().create(catalog_name).<span class="kw">await</span><span class="question-mark">?</span>;
-        }
         <span class="kw">let </span>schema_name = SchemaNameKey::new(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME);
-        <span class="kw">if </span>!<span class="self">self</span>.schema_manager().exist(schema_name).<span class="kw">await</span><span class="question-mark">? </span>{
-            <span class="self">self</span>.schema_manager().create(schema_name, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-        }
+
+        <span class="self">self</span>.catalog_manager().create(catalog_name, <span class="bool-val">true</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.schema_manager()
+            .create(schema_name, <span class="prelude-val">None</span>, <span class="bool-val">true</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
