@@ -293,11 +293,11 @@
 <span class="kw">use </span>std::net::SocketAddr;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
-</span><span class="kw">use </span>api::v1::greptime_database_server::GreptimeDatabase;
 <span class="kw">use </span>api::v1::greptime_database_server::GreptimeDatabaseServer;
 <span class="kw">use </span>api::v1::health_check_server::{HealthCheck, HealthCheckServer};
 <span class="kw">use </span>api::v1::prometheus_gateway_server::{PrometheusGateway, PrometheusGatewayServer};
+<span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
+</span><span class="kw">use </span>api::v1::region::region_server::Region;
 <span class="kw">use </span>api::v1::region::region_server::RegionServer;
 <span class="kw">use </span>api::v1::{HealthCheckRequest, HealthCheckResponse};
 <span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
@@ -395,12 +395,12 @@
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
     </span><span class="kw">pub fn </span>create_flight_service(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FlightServiceServer&lt;<span class="kw">impl </span>FlightService&gt; {
-        FlightServiceServer::new(FlightCraftWrapper(<span class="self">self</span>.database_handler.clone().unwrap()))
+        FlightServiceServer::new(FlightCraftWrapper(<span class="self">self</span>.flight_handler.clone().unwrap()))
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
-    </span><span class="kw">pub fn </span>create_database_service(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; GreptimeDatabaseServer&lt;<span class="kw">impl </span>GreptimeDatabase&gt; {
-        GreptimeDatabaseServer::new(DatabaseService::new(<span class="self">self</span>.database_handler.clone().unwrap()))
+    </span><span class="kw">pub fn </span>create_region_service(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionServer&lt;<span class="kw">impl </span>Region&gt; {
+        RegionServer::new(<span class="self">self</span>.region_server_handler.clone().unwrap())
     }
 
     <span class="kw">pub fn </span>create_healthcheck_service(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HealthCheckServer&lt;<span class="kw">impl </span>HealthCheck&gt; {

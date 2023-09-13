@@ -458,6 +458,8 @@
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -476,6 +478,7 @@
 
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_telemetry::logging;
+<span class="kw">use </span>datanode::datanode::builder::DatanodeBuilder;
 <span class="kw">use </span>datanode::datanode::{Datanode, DatanodeOptions};
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>servers::Mode;
@@ -622,7 +625,8 @@
         <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode start command: {:#?}&quot;</span>, <span class="self">self</span>);
         <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode options: {:#?}&quot;</span>, opts);
 
-        <span class="kw">let </span>datanode = Datanode::new(opts, Default::default())
+        <span class="kw">let </span>datanode = DatanodeBuilder::new(opts, Default::default())
+            .build()
             .<span class="kw">await
             </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
 

@@ -343,12 +343,6 @@
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -378,16 +372,14 @@
 <span class="kw">use </span>common_telemetry::{debug, error, info, trace, warn};
 <span class="kw">use </span>meta_client::client::{HeartbeatSender, MetaClient, MetaClientBuilder};
 <span class="kw">use </span>meta_client::MetaClientOptions;
-<span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>tokio::sync::mpsc;
 <span class="kw">use </span>tokio::time::Instant;
 
 <span class="kw">use </span><span class="self">self</span>::handler::RegionHeartbeatResponseHandler;
 <span class="kw">use </span><span class="kw">crate</span>::alive_keeper::RegionAliveKeeper;
 <span class="kw">use </span><span class="kw">crate</span>::datanode::DatanodeOptions;
-<span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, MetaClientInitSnafu, MissingMetasrvOptsSnafu, MissingNodeIdSnafu, <span class="prelude-ty">Result</span>,
-};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MetaClientInitSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::region_server::RegionServer;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>handler;
@@ -413,15 +405,11 @@
 
 <span class="kw">impl </span>HeartbeatTask {
     <span class="doccomment">/// Create a new heartbeat task instance.
-    </span><span class="kw">pub async fn </span>try_new(opts: <span class="kw-2">&amp;</span>DatanodeOptions, region_server: RegionServer) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>meta_client = new_metasrv_client(
-            opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
-            opts.meta_client_options
-                .as_ref()
-                .context(MissingMetasrvOptsSnafu)<span class="question-mark">?</span>,
-        )
-        .<span class="kw">await</span><span class="question-mark">?</span>;
-
+    </span><span class="kw">pub async fn </span>try_new(
+        opts: <span class="kw-2">&amp;</span>DatanodeOptions,
+        region_server: RegionServer,
+        meta_client: MetaClient,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>region_alive_keeper = Arc::new(RegionAliveKeeper::new(
             region_server.clone(),
             opts.heartbeat.interval_millis,

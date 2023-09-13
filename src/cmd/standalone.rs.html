@@ -584,6 +584,8 @@
 <a href="#584" id="584">584</a>
 <a href="#585" id="585">585</a>
 <a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -609,6 +611,7 @@
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
+<span class="kw">use </span>datanode::datanode::builder::DatanodeBuilder;
 <span class="kw">use </span>datanode::datanode::{Datanode, DatanodeOptions, ProcedureConfig, StorageConfig};
 <span class="kw">use </span>datanode::region_server::RegionServer;
 <span class="kw">use </span>frontend::catalog::FrontendCatalogManager;
@@ -892,7 +895,8 @@
         .<span class="kw">await
         </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>datanode = Datanode::new(dn_opts.clone(), plugins.clone())
+        <span class="kw">let </span>datanode = DatanodeBuilder::new(dn_opts.clone(), plugins.clone())
+            .build()
             .<span class="kw">await
             </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>region_server = datanode.region_server();

@@ -570,23 +570,6 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -603,7 +586,9 @@
 
 </span><span class="doccomment">//! Datanode configurations
 
-</span><span class="kw">use </span>std::path::Path;
+</span><span class="kw">pub mod </span>builder;
+
+<span class="kw">use </span>std::path::Path;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
@@ -622,7 +607,7 @@
 <span class="kw">use </span>mito2::config::MitoConfig;
 <span class="kw">use </span>mito2::engine::MitoEngine;
 <span class="kw">use </span>object_store::util::normalize_dir;
-<span class="kw">use </span>query::{QueryEngineFactory, QueryEngineRef};
+<span class="kw">use </span>query::QueryEngineFactory;
 <span class="kw">use </span>secrecy::SecretString;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>servers::heartbeat_options::HeartbeatOptions;
@@ -642,7 +627,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CreateDirSnafu, OpenLogStoreSnafu, <span class="prelude-ty">Result</span>, RuntimeResourceSnafu, ShutdownInstanceSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::greptimedb_telemetry::get_greptimedb_telemetry_task;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
 <span class="kw">use </span><span class="kw">crate</span>::region_server::RegionServer;
 <span class="kw">use </span><span class="kw">crate</span>::server::Services;
@@ -990,12 +974,14 @@
     services: <span class="prelude-ty">Option</span>&lt;Services&gt;,
     heartbeat_task: <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;,
     region_server: RegionServer,
-    query_engine: QueryEngineRef,
     greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
 }
 
 <span class="kw">impl </span>Datanode {
-    <span class="kw">pub async fn </span>new(opts: DatanodeOptions, plugins: Arc&lt;Plugins&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Datanode&gt; {
+    <span class="kw">async fn </span>new_region_server(
+        opts: <span class="kw-2">&amp;</span>DatanodeOptions,
+        plugins: Arc&lt;Plugins&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;RegionServer&gt; {
         <span class="kw">let </span>query_engine_factory = QueryEngineFactory::new_with_plugins(
             <span class="comment">// query engine in datanode only executes plan with resolved table source.
             </span>MemoryCatalogManager::with_default_setup(),
@@ -1014,47 +1000,31 @@
         );
 
         <span class="kw">let </span><span class="kw-2">mut </span>region_server = RegionServer::new(query_engine.clone(), runtime.clone());
-        <span class="kw">let </span>log_store = <span class="self">Self</span>::build_log_store(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>object_store = store::new_object_store(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>engines = <span class="self">Self</span>::build_store_engines(<span class="kw-2">&amp;</span>opts, log_store, object_store).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>log_store = <span class="self">Self</span>::build_log_store(opts).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>object_store = store::new_object_store(opts).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>engines = <span class="self">Self</span>::build_store_engines(opts, log_store, object_store).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">for </span>engine <span class="kw">in </span>engines {
             region_server.register_engine(engine);
         }
 
-        <span class="comment">// build optional things with different modes
-        </span><span class="kw">let </span>services = <span class="kw">match </span>opts.mode {
-            Mode::Distributed =&gt; <span class="prelude-val">Some</span>(Services::try_new(region_server.clone(), <span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>),
-            Mode::Standalone =&gt; <span class="prelude-val">None</span>,
-        };
-        <span class="kw">let </span>heartbeat_task = <span class="kw">match </span>opts.mode {
-            Mode::Distributed =&gt; <span class="prelude-val">Some</span>(HeartbeatTask::try_new(<span class="kw-2">&amp;</span>opts, region_server.clone()).<span class="kw">await</span><span class="question-mark">?</span>),
-            Mode::Standalone =&gt; <span class="prelude-val">None</span>,
-        };
-        <span class="kw">let </span>greptimedb_telemetry_task = get_greptimedb_telemetry_task(
-            <span class="prelude-val">Some</span>(opts.storage.data_home.clone()),
-            <span class="kw-2">&amp;</span>opts.mode,
-            opts.enable_telemetry,
-        )
-        .<span class="kw">await</span>;
-
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            opts,
-            services,
-            heartbeat_task,
-            region_server,
-            query_engine,
-            greptimedb_telemetry_task,
-        })
+        <span class="prelude-val">Ok</span>(region_server)
     }
 
     <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">info!</span>(<span class="string">&quot;Starting datanode instance...&quot;</span>);
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
-            task.start().<span class="kw">await</span><span class="question-mark">?</span>;
-        }
+
+        <span class="self">self</span>.start_heartbeat().<span class="kw">await</span><span class="question-mark">?</span>;
+
         <span class="kw">let _ </span>= <span class="self">self</span>.greptimedb_telemetry_task.start();
         <span class="self">self</span>.start_services().<span class="kw">await
     </span>}
+
+    <span class="kw">pub async fn </span>start_heartbeat(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
+            task.start().<span class="kw">await</span><span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
 
     <span class="doccomment">/// Start services of datanode. This method call will block until services are shutdown.
     </span><span class="kw">pub async fn </span>start_services(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -1090,10 +1060,6 @@
 
     <span class="kw">pub fn </span>region_server(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionServer {
         <span class="self">self</span>.region_server.clone()
-    }
-
-    <span class="kw">pub fn </span>query_engine(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; QueryEngineRef {
-        <span class="self">self</span>.query_engine.clone()
     }
 
     <span class="comment">// internal utils
