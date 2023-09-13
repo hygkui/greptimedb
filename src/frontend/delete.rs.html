@@ -246,6 +246,13 @@
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -485,12 +492,19 @@
     <span class="kw">for </span>request <span class="kw">in </span><span class="kw-2">&amp;</span>requests.deletes {
         <span class="kw">let </span>rows = request.rows.as_ref().unwrap();
         <span class="kw">let </span>column_count = rows.schema.len();
-        <span class="macro">ensure!</span>(
-            rows.rows.iter().all(|r| r.values.len() == column_count),
-            InvalidDeleteRequestSnafu {
-                reason: <span class="string">&quot;column count mismatch&quot;
-            </span>}
-        )
+        rows.rows.iter().try_for_each(|r| {
+            <span class="macro">ensure!</span>(
+                r.values.len() == column_count,
+                InvalidDeleteRequestSnafu {
+                    reason: <span class="macro">format!</span>(
+                        <span class="string">&quot;column count mismatch, columns: {}, values: {}&quot;</span>,
+                        column_count,
+                        r.values.len()
+                    )
+                }
+            );
+            <span class="prelude-val">Ok</span>(())
+        })<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }
