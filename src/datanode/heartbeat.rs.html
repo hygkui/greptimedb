@@ -349,12 +349,6 @@
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -419,11 +413,7 @@
 
 <span class="kw">impl </span>HeartbeatTask {
     <span class="doccomment">/// Create a new heartbeat task instance.
-    </span><span class="kw">pub async fn </span>try_new(
-        opts: <span class="kw-2">&amp;</span>DatanodeOptions,
-        <span class="comment">// TODO: remove optional
-        </span>region_server: <span class="prelude-ty">Option</span>&lt;RegionServer&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    </span><span class="kw">pub async fn </span>try_new(opts: <span class="kw-2">&amp;</span>DatanodeOptions, region_server: RegionServer) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>meta_client = new_metasrv_client(
             opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>,
             opts.meta_client_options
@@ -431,8 +421,6 @@
                 .context(MissingMetasrvOptsSnafu)<span class="question-mark">?</span>,
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">let </span>region_server = region_server.unwrap();
 
         <span class="kw">let </span>region_alive_keeper = Arc::new(RegionAliveKeeper::new(
             region_server.clone(),
@@ -615,14 +603,14 @@
     }
 
     <span class="kw">async fn </span>load_region_stats(region_server: <span class="kw-2">&amp;</span>RegionServer) -&gt; Vec&lt;RegionStat&gt; {
-        <span class="kw">let </span>region_ids = region_server.opened_region_ids();
-        region_ids
+        <span class="kw">let </span>regions = region_server.opened_regions();
+        regions
             .into_iter()
-            .map(|region_id| RegionStat {
+            .map(|(region_id, engine)| RegionStat {
+                region_id: region_id.as_u64(),
+                engine,
                 <span class="comment">// TODO(ruihang): scratch more info
-                </span>region_id: region_id.as_u64(),
-                engine: <span class="string">&quot;MitoEngine&quot;</span>.to_string(),
-                ..Default::default()
+                </span>..Default::default()
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
     }
