@@ -146,7 +146,6 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -168,14 +167,14 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>common_telemetry::tracing::warn;
-<span class="kw">use </span>futures::StreamExt;
+<span class="kw">use </span>futures::TryStreamExt;
 <span class="kw">use </span>object_store::util::join_path;
-<span class="kw">use </span>object_store::{EntryMode, Metakey, ObjectStore};
+<span class="kw">use </span>object_store::{EntryMode, ObjectStore};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::time::sleep;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{OpenDalSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, OpenDalSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::region::RegionMapRef;
 <span class="kw">use </span><span class="kw">crate</span>::worker::{RegionWorkerLoop, DROPPING_MARKER_FILE};
 
@@ -264,17 +263,16 @@
     </span><span class="kw">let </span><span class="kw-2">mut </span>has_parquet_file = <span class="bool-val">false</span>;
     <span class="comment">// record all paths that neither ends with .parquet nor the marker file
     </span><span class="kw">let </span><span class="kw-2">mut </span>files_to_remove_first = <span class="macro">vec!</span>[];
-    <span class="kw">let </span><span class="kw-2">mut </span>files = object_store.scan(region_path).<span class="kw">await</span>.context(OpenDalSnafu)<span class="question-mark">?</span>;
-    <span class="kw">while let </span><span class="prelude-val">Some</span>(file) = files.next().<span class="kw">await </span>{
-        <span class="kw">let </span>file = file.context(OpenDalSnafu)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>files = object_store
+        .lister_with(region_path)
+        .<span class="kw">await
+        </span>.context(OpenDalSnafu)<span class="question-mark">?</span>;
+    <span class="kw">while let </span><span class="prelude-val">Some</span>(file) = files.try_next().<span class="kw">await</span>.context(error::OpenDalSnafu)<span class="question-mark">? </span>{
         <span class="kw">if </span>file.path().ends_with(<span class="string">&quot;.parquet&quot;</span>) {
             has_parquet_file = <span class="bool-val">true</span>;
             <span class="kw">break</span>;
         } <span class="kw">else if </span>!file.path().ends_with(DROPPING_MARKER_FILE) {
-            <span class="kw">let </span>meta = object_store
-                .metadata(<span class="kw-2">&amp;</span>file, Metakey::Mode)
-                .<span class="kw">await
-                </span>.context(OpenDalSnafu)<span class="question-mark">?</span>;
+            <span class="kw">let </span>meta = file.metadata();
             <span class="kw">if </span>meta.mode() == EntryMode::FILE {
                 files_to_remove_first.push(file.path().to_string());
             }

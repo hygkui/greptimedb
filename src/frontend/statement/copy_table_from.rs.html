@@ -615,10 +615,6 @@
 <a href="#615" id="615">615</a>
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -659,7 +655,7 @@
 <span class="kw">use </span>datatypes::arrow::datatypes::{Schema, SchemaRef};
 <span class="kw">use </span>datatypes::vectors::Helper;
 <span class="kw">use </span>futures_util::StreamExt;
-<span class="kw">use </span>object_store::{Entry, EntryMode, Metakey, ObjectStore};
+<span class="kw">use </span>object_store::{Entry, EntryMode, ObjectStore};
 <span class="kw">use </span>regex::Regex;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::ResultExt;
@@ -877,11 +873,7 @@
         <span class="kw">let </span>table_schema = table.schema().arrow_schema().clone();
 
         <span class="kw">for </span>entry <span class="kw">in </span>entries.iter() {
-            <span class="kw">let </span>metadata = object_store
-                .metadata(entry, Metakey::Mode)
-                .<span class="kw">await
-                </span>.context(error::ReadObjectSnafu { path: entry.path() })<span class="question-mark">?</span>;
-            <span class="kw">if </span>metadata.mode() != EntryMode::FILE {
+            <span class="kw">if </span>entry.metadata().mode() != EntryMode::FILE {
                 <span class="kw">continue</span>;
             }
             <span class="kw">let </span>path = entry.path();

@@ -5,8 +5,8 @@
     token: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;,
     root: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;,
     http_client: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../struct.HttpClient.html" title="struct object_store::HttpClient">HttpClient</a>&gt;,
-}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>HTTP Read-only service support like Nginx and Caddy.</p>
-<h2 id="capabilities"><a href="#capabilities">Capabilities</a></h2>
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>HTTP Read-only service support like <a href="https://www.nginx.com/">Nginx</a> and <a href="https://caddyserver.com/">Caddy</a>.</p>
+<h3 id="capabilities"><a href="#capabilities">Capabilities</a></h3>
 <p>This service can be used to:</p>
 <ul>
 <li><input disabled="" type="checkbox" checked=""/>
@@ -32,23 +32,23 @@ read</li>
 <li><input disabled="" type="checkbox"/>
 blocking</li>
 </ul>
-<h2 id="notes"><a href="#notes">Notes</a></h2>
+<h3 id="notes"><a href="#notes">Notes</a></h3>
 <p>Only <code>read</code> ans <code>stat</code> are supported. We can use this service to visit any
 HTTP Server like nginx, caddy.</p>
-<h2 id="configuration"><a href="#configuration">Configuration</a></h2>
+<h3 id="configuration"><a href="#configuration">Configuration</a></h3>
 <ul>
 <li><code>endpoint</code>: set the endpoint for http</li>
 <li><code>root</code>: Set the work directory for backend</li>
 </ul>
 <p>You can refer to <a href="struct.Http.html" title="struct object_store::services::Http"><code>HttpBuilder</code></a>’s docs for more information</p>
-<h2 id="example"><a href="#example">Example</a></h2><h3 id="via-builder"><a href="#via-builder">Via Builder</a></h3>
+<h3 id="example"><a href="#example">Example</a></h3><h4 id="via-builder"><a href="#via-builder">Via Builder</a></h4>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>opendal::services::Http;
 <span class="kw">use </span>opendal::Operator;
 
 <span class="attr">#[tokio::main]
 </span><span class="kw">async fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="comment">// create backend builder
+    <span class="comment">// create http backend builder
     </span><span class="kw">let </span><span class="kw-2">mut </span>builder = Http::default();
 
     builder.endpoint(<span class="string">&quot;127.0.0.1&quot;</span>);
