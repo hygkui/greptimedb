@@ -397,6 +397,7 @@
 <a href="#397" id="397">397</a>
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -457,6 +458,7 @@
         failed_region: <span class="kw-2">&amp;</span>RegionIdent,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>table_id = failed_region.table_ident.table_id;
+        <span class="kw">let </span>engine = failed_region.table_ident.engine.as_str();
 
         <span class="kw">let </span>table_route_value = ctx
             .table_metadata_manager
@@ -484,7 +486,7 @@
         );
 
         ctx.table_metadata_manager
-            .update_table_route(table_id, table_route_value, new_region_routes)
+            .update_table_route(table_id, engine, table_route_value, new_region_routes)
             .<span class="kw">await
             </span>.context(error::UpdateTableRouteSnafu)<span class="question-mark">?</span>;
 

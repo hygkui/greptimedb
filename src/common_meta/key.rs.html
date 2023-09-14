@@ -923,6 +923,13 @@
 <a href="#923" id="923">923</a>
 <a href="#924" id="924">924</a>
 <a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1166,6 +1173,7 @@
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         table_info.meta.region_numbers = region_numbers;
         <span class="kw">let </span>table_id = table_info.ident.table_id;
+        <span class="kw">let </span>engine = table_info.meta.engine.clone();
 
         <span class="comment">// Creates table name.
         </span><span class="kw">let </span>table_name = TableNameKey::new(
@@ -1185,9 +1193,9 @@
 
         <span class="comment">// Creates datanode table key value pairs.
         </span><span class="kw">let </span>distribution = region_distribution(<span class="kw-2">&amp;</span>region_routes)<span class="question-mark">?</span>;
-        <span class="kw">let </span>create_datanode_table_txn = <span class="self">self
-            </span>.datanode_table_manager()
-            .build_create_txn(table_id, distribution)<span class="question-mark">?</span>;
+        <span class="kw">let </span>create_datanode_table_txn =
+            <span class="self">self</span>.datanode_table_manager()
+                .build_create_txn(table_id, <span class="kw-2">&amp;</span>engine, distribution)<span class="question-mark">?</span>;
 
         <span class="comment">// Creates table route.
         </span><span class="kw">let </span>table_route_value = TableRouteValue::new(region_routes);
@@ -1364,6 +1372,7 @@
     <span class="kw">pub async fn </span>update_table_route(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_id: TableId,
+        engine: <span class="kw-2">&amp;</span>str,
         current_table_route_value: TableRouteValue,
         new_region_routes: Vec&lt;RegionRoute&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -1374,6 +1383,7 @@
 
         <span class="kw">let </span>update_datanode_table_txn = <span class="self">self</span>.datanode_table_manager().build_update_txn(
             table_id,
+            engine,
             current_region_distribution,
             new_region_distribution,
         )<span class="question-mark">?</span>;
@@ -1788,6 +1798,7 @@
         <span class="kw">let </span>table_info: RawTableInfo =
             new_test_table_info(region_routes.iter().map(|r| r.region.id.region_number())).into();
         <span class="kw">let </span>table_id = table_info.ident.table_id;
+        <span class="kw">let </span>engine = table_info.meta.engine.as_str();
         <span class="kw">let </span>current_table_route_value = TableRouteValue::new(region_routes.clone());
         <span class="comment">// creates metadata.
         </span>table_metadata_manager
@@ -1804,6 +1815,7 @@
         </span>table_metadata_manager
             .update_table_route(
                 table_id,
+                engine,
                 current_table_route_value.clone(),
                 new_region_routes.clone(),
             )
@@ -1815,6 +1827,7 @@
         </span>table_metadata_manager
             .update_table_route(
                 table_id,
+                engine,
                 current_table_route_value.clone(),
                 new_region_routes.clone(),
             )
@@ -1827,6 +1840,7 @@
         </span>table_metadata_manager
             .update_table_route(
                 table_id,
+                engine,
                 current_table_route_value.clone(),
                 new_region_routes.clone(),
             )
@@ -1843,7 +1857,7 @@
             new_region_route(<span class="number">4</span>, <span class="number">4</span>),
         ]);
         <span class="macro">assert!</span>(table_metadata_manager
-            .update_table_route(table_id, wrong_table_route_value, new_region_routes)
+            .update_table_route(table_id, engine, wrong_table_route_value, new_region_routes)
             .<span class="kw">await
             </span>.is_err());
     }
