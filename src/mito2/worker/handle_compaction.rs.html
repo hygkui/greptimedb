@@ -102,11 +102,6 @@
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -121,28 +116,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::{error, info};
+</span><span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::RegionId;
-<span class="kw">use </span>tokio::sync::oneshot;
 
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionRequest;
-<span class="kw">use </span><span class="kw">crate</span>::error::{RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{RegionEdit, RegionMetaAction, RegionMetaActionList};
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegionRef;
-<span class="kw">use </span><span class="kw">crate</span>::request::{CompactionFailed, CompactionFinished};
-<span class="kw">use </span><span class="kw">crate</span>::worker::{send_result, RegionWorkerLoop};
+<span class="kw">use </span><span class="kw">crate</span>::request::{CompactionFailed, CompactionFinished, OnFailure, OptionOutputTx};
+<span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
 
 <span class="kw">impl</span>&lt;S: LogStore&gt; RegionWorkerLoop&lt;S&gt; {
     <span class="doccomment">/// Handles compaction request submitted to region worker.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>handle_compaction_request(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         region_id: RegionId,
-        sender: <span class="prelude-ty">Option</span>&lt;oneshot::Sender&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt;&gt;,
+        <span class="kw-2">mut </span>sender: OptionOutputTx,
     ) {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.get_region(region_id) <span class="kw">else </span>{
-            send_result(sender, RegionNotFoundSnafu { region_id }.fail());
+        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>sender) <span class="kw">else </span>{
             <span class="kw">return</span>;
         };
 
@@ -163,8 +154,7 @@
         region_id: RegionId,
         <span class="kw-2">mut </span>request: CompactionFinished,
     ) {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.get_region(region_id) <span class="kw">else </span>{
-            request.on_failure(RegionNotFoundSnafu { region_id }.build());
+        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>request) <span class="kw">else </span>{
             <span class="kw">return</span>;
         };
 
@@ -199,7 +189,7 @@
     </span><span class="kw">fn </span>new_compaction_request(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region: <span class="kw-2">&amp;</span>MitoRegionRef,
-        waiter: <span class="prelude-ty">Option</span>&lt;oneshot::Sender&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt;&gt;,
+        waiter: OptionOutputTx,
     ) -&gt; CompactionRequest {
         <span class="kw">let </span>current_version = region.version_control.current().version;
         <span class="kw">let </span>access_layer = region.access_layer.clone();

@@ -90,8 +90,6 @@
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -115,18 +113,16 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
-<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::debug;
 <span class="kw">pub use </span>picker::CompactionPickerRef;
 <span class="kw">use </span>store_api::storage::{CompactionStrategy, RegionId, TwcsOptions};
-<span class="kw">use </span>tokio::sync::{mpsc, oneshot};
+<span class="kw">use </span>tokio::sync::mpsc;
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
 <span class="kw">use </span><span class="kw">crate</span>::compaction::twcs::TwcsPicker;
-<span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::VersionRef;
-<span class="kw">use </span><span class="kw">crate</span>::request::WorkerRequest;
+<span class="kw">use </span><span class="kw">crate</span>::request::{OptionOutputTx, WorkerRequest};
 <span class="kw">use </span><span class="kw">crate</span>::schedule::scheduler::SchedulerRef;
 <span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::FilePurgerRef;
 
@@ -137,7 +133,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) request_sender: mpsc::Sender&lt;WorkerRequest&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) waiter: <span class="prelude-ty">Option</span>&lt;oneshot::Sender&lt;error::Result&lt;Output&gt;&gt;&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) waiter: OptionOutputTx,
     <span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
 }
 

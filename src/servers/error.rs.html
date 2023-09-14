@@ -550,6 +550,8 @@
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
 <a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1031,7 +1033,9 @@
         | StatusCode::UserPasswordMismatch
         | StatusCode::AuthHeaderNotFound
         | StatusCode::InvalidAuthHeader =&gt; Code::Unauthenticated,
-        StatusCode::AccessDenied | StatusCode::PermissionDenied =&gt; Code::PermissionDenied,
+        StatusCode::AccessDenied | StatusCode::PermissionDenied | StatusCode::RegionReadonly =&gt; {
+            Code::PermissionDenied
+        }
     }
 }
 

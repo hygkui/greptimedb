@@ -632,6 +632,16 @@
 <a href="#632" id="632">632</a>
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -656,7 +666,7 @@
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
-<span class="kw">use </span>tokio::sync::{mpsc, oneshot};
+<span class="kw">use </span>tokio::sync::mpsc;
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, FlushRegionSnafu, RegionClosedSnafu, RegionDroppedSnafu, <span class="prelude-ty">Result</span>};
@@ -665,14 +675,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlData, VersionRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegionRef;
 <span class="kw">use </span><span class="kw">crate</span>::request::{
-    BackgroundNotify, FlushFailed, FlushFinished, SenderDdlRequest, SenderWriteRequest,
-    WorkerRequest,
+    BackgroundNotify, FlushFailed, FlushFinished, OptionOutputTx, OutputTx, SenderDdlRequest,
+    SenderWriteRequest, WorkerRequest,
 };
 <span class="kw">use </span><span class="kw">crate</span>::schedule::scheduler::{Job, SchedulerRef};
 <span class="kw">use </span><span class="kw">crate</span>::sst::file::{FileId, FileMeta};
 <span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::FilePurgerRef;
 <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::WriteOptions;
-<span class="kw">use </span><span class="kw">crate</span>::worker::send_result;
 
 <span class="doccomment">/// Global write buffer (memtable) manager.
 ///
@@ -812,7 +821,7 @@
     <span class="doccomment">/// Reason to flush.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) reason: FlushReason,
     <span class="doccomment">/// Flush result senders.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) senders: Vec&lt;oneshot::Sender&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt;&gt;,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) senders: Vec&lt;OutputTx&gt;,
     <span class="doccomment">/// Request sender to notify the worker.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) request_sender: mpsc::Sender&lt;WorkerRequest&gt;,
 
@@ -822,18 +831,24 @@
 }
 
 <span class="kw">impl </span>RegionFlushTask {
+    <span class="doccomment">/// Push the sender if it is not none.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>push_sender(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>sender: OptionOutputTx) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(sender) = sender.take_inner() {
+            <span class="self">self</span>.senders.push(sender);
+        }
+    }
+
     <span class="doccomment">/// Consumes the task and notify the sender the job is success.
     </span><span class="kw">fn </span>on_success(<span class="self">self</span>) {
         <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders {
-            <span class="kw">let _ </span>= sender.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
+            sender.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
         }
     }
 
     <span class="doccomment">/// Send flush error to waiter.
     </span><span class="kw">fn </span>on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, err: Arc&lt;Error&gt;) {
         <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders.drain(..) {
-            <span class="comment">// Ignore send result.
-            </span><span class="kw">let _ </span>= sender.send(<span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
+            sender.send(<span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
                 region_id: <span class="self">self</span>.region_id,
             }));
         }
@@ -1150,6 +1165,15 @@
     }
 }
 
+<span class="kw">impl </span>Drop <span class="kw">for </span>FlushScheduler {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">for </span>(region_id, flush_status) <span class="kw">in </span><span class="self">self</span>.region_status.drain() {
+            <span class="comment">// We are shutting down so notify all pending tasks.
+            </span>flush_status.on_failure(Arc::new(RegionClosedSnafu { region_id }.build()));
+        }
+    }
+}
+
 <span class="doccomment">/// Flush status of a region scheduled by the [FlushScheduler].
 ///
 /// Tracks running and pending flush tasks and all pending requests of a region.
@@ -1191,20 +1215,16 @@
             task.on_failure(err.clone());
         }
         <span class="kw">for </span>ddl <span class="kw">in </span><span class="self">self</span>.pending_ddls {
-            send_result(
-                ddl.sender,
-                <span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
-                    region_id: <span class="self">self</span>.region.region_id,
-                }),
-            );
+            ddl.sender.send(<span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
+                region_id: <span class="self">self</span>.region.region_id,
+            }));
         }
         <span class="kw">for </span>write_req <span class="kw">in </span><span class="self">self</span>.pending_writes {
-            send_result(
-                write_req.sender,
-                <span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
+            write_req
+                .sender
+                .send(<span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
                     region_id: <span class="self">self</span>.region.region_id,
-                }),
-            );
+                }));
         }
     }
 }

@@ -211,6 +211,11 @@
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -227,7 +232,7 @@
 
 </span><span class="doccomment">//! Region opener.
 
-</span><span class="kw">use </span>std::sync::atomic::AtomicI64;
+</span><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicI64};
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_telemetry::info;
@@ -248,6 +253,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionBuilder, VersionControl, VersionControlRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegion;
 <span class="kw">use </span><span class="kw">crate</span>::region_write_ctx::RegionWriteCtx;
+<span class="kw">use </span><span class="kw">crate</span>::request::OptionOutputTx;
 <span class="kw">use </span><span class="kw">crate</span>::schedule::scheduler::SchedulerRef;
 <span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::LocalFilePurger;
 <span class="kw">use </span><span class="kw">crate</span>::wal::{EntryId, Wal};
@@ -323,10 +329,12 @@
             manifest_manager,
             file_purger: Arc::new(LocalFilePurger::new(<span class="self">self</span>.scheduler, access_layer)),
             last_flush_millis: AtomicI64::new(current_time_millis()),
+            <span class="comment">// Region is writable after it is created.
+            </span>writable: AtomicBool::new(<span class="bool-val">true</span>),
         })
     }
 
-    <span class="doccomment">/// Opens an existing region.
+    <span class="doccomment">/// Opens an existing region in read only mode.
     ///
     /// Returns error if the region doesn&#39;t exist.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>open&lt;S: LogStore&gt;(
@@ -378,6 +386,8 @@
             manifest_manager,
             file_purger,
             last_flush_millis: AtomicI64::new(current_time_millis()),
+            <span class="comment">// Region is always opened in read only mode.
+            </span>writable: AtomicBool::new(<span class="bool-val">false</span>),
         };
         <span class="prelude-val">Ok</span>(region)
     }
@@ -405,7 +415,7 @@
                 .as_ref()
                 .map(|rows| rows.rows.len())
                 .unwrap_or(<span class="number">0</span>);
-            region_write_ctx.push_mutation(mutation.op_type, mutation.rows, <span class="prelude-val">None</span>);
+            region_write_ctx.push_mutation(mutation.op_type, mutation.rows, OptionOutputTx::none());
         }
     }
 

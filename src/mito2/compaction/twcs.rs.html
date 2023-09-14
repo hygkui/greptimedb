@@ -834,7 +834,6 @@
 <a href="#834" id="834">834</a>
 <a href="#835" id="835">835</a>
 <a href="#836" id="836">836</a>
-<a href="#837" id="837">837</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -864,7 +863,6 @@
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::sync::mpsc;
-<span class="kw">use </span>tokio::sync::oneshot::Sender;
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
 <span class="kw">use </span><span class="kw">crate</span>::compaction::output::CompactionOutput;
@@ -872,11 +870,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionRequest;
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::CompactRegionSnafu;
-<span class="kw">use </span><span class="kw">crate</span>::request::{BackgroundNotify, CompactionFailed, CompactionFinished, WorkerRequest};
+<span class="kw">use </span><span class="kw">crate</span>::request::{
+    BackgroundNotify, CompactionFailed, CompactionFinished, OptionOutputTx, WorkerRequest,
+};
 <span class="kw">use </span><span class="kw">crate</span>::sst::file::{FileHandle, FileId, FileMeta};
 <span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::FilePurgerRef;
 <span class="kw">use </span><span class="kw">crate</span>::sst::version::LevelMeta;
-<span class="kw">use </span><span class="kw">crate</span>::worker::send_result;
 
 <span class="kw">const </span>MAX_PARALLEL_COMPACTION: usize = <span class="number">8</span>;
 
@@ -994,7 +993,7 @@
 
         <span class="kw">if </span>outputs.is_empty() &amp;&amp; expired_ssts.is_empty() {
             <span class="comment">// Nothing to compact.
-            </span>send_result(waiter, <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
+            </span>waiter.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">let </span>task = TwcsCompactionTask {
@@ -1065,7 +1064,7 @@
     <span class="doccomment">/// Request sender to notify the worker.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) request_sender: mpsc::Sender&lt;WorkerRequest&gt;,
     <span class="doccomment">/// Sender that are used to notify waiters waiting for pending compaction tasks.
-    </span><span class="kw">pub </span>sender: <span class="prelude-ty">Option</span>&lt;Sender&lt;error::Result&lt;Output&gt;&gt;&gt;,
+    </span><span class="kw">pub </span>sender: OptionOutputTx,
 }
 
 <span class="kw">impl </span>Debug <span class="kw">for </span>TwcsCompactionTask {
@@ -1158,11 +1157,10 @@
 
     <span class="doccomment">/// Handles compaction failure, notifies all waiters.
     </span><span class="kw">fn </span>on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, err: Arc&lt;error::Error&gt;) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(sender) = <span class="self">self</span>.sender.take() {
-            <span class="kw">let _ </span>= sender.send(<span class="prelude-val">Err</span>(err.clone()).context(CompactRegionSnafu {
+        <span class="self">self</span>.sender
+            .send_mut(<span class="prelude-val">Err</span>(err.clone()).context(CompactRegionSnafu {
                 region_id: <span class="self">self</span>.region_id,
             }));
-        }
     }
 
     <span class="doccomment">/// Notifies region worker to handle post-compaction tasks.

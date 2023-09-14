@@ -144,8 +144,6 @@
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -174,7 +172,7 @@
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::time::sleep;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, OpenDalSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{OpenDalSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::region::RegionMapRef;
 <span class="kw">use </span><span class="kw">crate</span>::worker::{RegionWorkerLoop, DROPPING_MARKER_FILE};
 
@@ -183,9 +181,7 @@
 
 </span><span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_drop_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.get_region(region_id) <span class="kw">else </span>{
-            <span class="kw">return </span>RegionNotFoundSnafu { region_id }.fail();
-        };
+        <span class="kw">let </span>region = <span class="self">self</span>.regions.writable_region(region_id)<span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;Try to drop region: {}&quot;</span>, region_id);
 
@@ -267,7 +263,7 @@
         .lister_with(region_path)
         .<span class="kw">await
         </span>.context(OpenDalSnafu)<span class="question-mark">?</span>;
-    <span class="kw">while let </span><span class="prelude-val">Some</span>(file) = files.try_next().<span class="kw">await</span>.context(error::OpenDalSnafu)<span class="question-mark">? </span>{
+    <span class="kw">while let </span><span class="prelude-val">Some</span>(file) = files.try_next().<span class="kw">await</span>.context(OpenDalSnafu)<span class="question-mark">? </span>{
         <span class="kw">if </span>file.path().ends_with(<span class="string">&quot;.parquet&quot;</span>) {
             has_parquet_file = <span class="bool-val">true</span>;
             <span class="kw">break</span>;

@@ -135,8 +135,6 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -161,26 +159,24 @@
 <span class="kw">use </span>store_api::metadata::{RegionMetadata, RegionMetadataBuilder, RegionMetadataRef};
 <span class="kw">use </span>store_api::region_request::RegionAlterRequest;
 <span class="kw">use </span>store_api::storage::RegionId;
-<span class="kw">use </span>tokio::sync::oneshot;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidMetadataSnafu, InvalidRegionRequestSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{InvalidMetadataSnafu, InvalidRegionRequestSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::flush::FlushReason;
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{RegionChange, RegionMetaAction, RegionMetaActionList};
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::Version;
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegionRef;
-<span class="kw">use </span><span class="kw">crate</span>::request::{DdlRequest, SenderDdlRequest};
-<span class="kw">use </span><span class="kw">crate</span>::worker::{send_result, RegionWorkerLoop};
+<span class="kw">use </span><span class="kw">crate</span>::request::{DdlRequest, OptionOutputTx, SenderDdlRequest};
+<span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
 
 <span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_alter_request(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionAlterRequest,
-        sender: <span class="prelude-ty">Option</span>&lt;oneshot::Sender&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt;&gt;,
+        <span class="kw-2">mut </span>sender: OptionOutputTx,
     ) {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.get_region(region_id) <span class="kw">else </span>{
-            send_result(sender, RegionNotFoundSnafu { region_id }.fail());
+        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>sender) <span class="kw">else </span>{
             <span class="kw">return</span>;
         };
 
@@ -198,7 +194,7 @@
             </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Alter);
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.flush_scheduler.schedule_flush(<span class="kw-2">&amp;</span>region, task) {
                 <span class="comment">// Unable to flush the region, send error to waiter.
-                </span>send_result(sender, <span class="prelude-val">Err</span>(e));
+                </span>sender.send(<span class="prelude-val">Err</span>(e));
                 <span class="kw">return</span>;
             }
 
@@ -218,7 +214,7 @@
             alter_region_schema(<span class="kw-2">&amp;</span>region, <span class="kw-2">&amp;</span>version, request, <span class="kw-2">&amp;</span><span class="self">self</span>.memtable_builder).<span class="kw">await
         </span>{
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to alter region schema, region_id: {}&quot;</span>, region_id);
-            send_result(sender, <span class="prelude-val">Err</span>(e));
+            sender.send(<span class="prelude-val">Err</span>(e));
             <span class="kw">return</span>;
         }
 
@@ -230,7 +226,7 @@
         );
 
         <span class="comment">// Notifies waiters.
-        </span>send_result(sender, <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
+        </span>sender.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
     }
 }
 
