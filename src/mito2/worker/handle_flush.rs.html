@@ -219,73 +219,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::request::{FlushFailed, FlushFinished, OnFailure, OptionOutputTx};
 <span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
 
-<span class="kw">impl</span>&lt;S: LogStore&gt; RegionWorkerLoop&lt;S&gt; {
-    <span class="doccomment">/// On region flush job finished.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_flush_finished(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        region_id: RegionId,
-        <span class="kw-2">mut </span>request: FlushFinished,
-    ) {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>request) <span class="kw">else </span>{
-            <span class="kw">return</span>;
-        };
-
-        <span class="comment">// Write region edit to manifest.
-        </span><span class="kw">let </span>edit = RegionEdit {
-            files_to_add: std::mem::take(<span class="kw-2">&amp;mut </span>request.file_metas),
-            files_to_remove: Vec::new(),
-            compaction_time_window: <span class="prelude-val">None</span>,
-            flushed_entry_id: <span class="prelude-val">Some</span>(request.flushed_entry_id),
-            flushed_sequence: <span class="prelude-val">Some</span>(request.flushed_sequence),
-        };
-        <span class="kw">let </span>action_list = RegionMetaActionList::with_action(RegionMetaAction::Edit(edit.clone()));
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region.manifest_manager.update(action_list).<span class="kw">await </span>{
-            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to write manifest, region: {}&quot;</span>, region_id);
-            request.on_failure(e);
-            <span class="kw">return</span>;
-        }
-
-        <span class="comment">// Apply edit to region&#39;s version.
-        </span>region.version_control.apply_edit(
-            edit,
-            <span class="kw-2">&amp;</span>request.memtables_to_remove,
-            region.file_purger.clone(),
-        );
-        region.update_flush_millis();
-
-        <span class="comment">// Delete wal.
-        </span><span class="macro">info!</span>(
-            <span class="string">&quot;Region {} flush finished, tries to bump wal to {}&quot;</span>,
-            region_id, request.flushed_entry_id
-        );
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.wal.obsolete(region_id, request.flushed_entry_id).<span class="kw">await </span>{
-            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to write wal, region: {}&quot;</span>, region_id);
-            request.on_failure(e);
-            <span class="kw">return</span>;
-        }
-
-        <span class="comment">// Notifies waiters.
-        </span>request.on_success();
-
-        <span class="comment">// Handle pending requests for the region.
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>((ddl_requests, write_requests)) =
-            <span class="self">self</span>.flush_scheduler.on_flush_success(region_id)
-        {
-            <span class="comment">// Perform DDLs first because they require empty memtables.
-            </span><span class="self">self</span>.handle_ddl_requests(ddl_requests).<span class="kw">await</span>;
-            <span class="comment">// Handle pending write requests, we don&#39;t stall these requests.
-            </span><span class="self">self</span>.handle_write_requests(write_requests, <span class="bool-val">false</span>).<span class="kw">await</span>;
-        }
-
-        <span class="comment">// Handle stalled requests.
-        </span><span class="kw">let </span>stalled = std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.stalled_requests);
-        <span class="comment">// We already stalled these requests, don&#39;t stall them again.
-        </span><span class="self">self</span>.handle_write_requests(stalled.requests, <span class="bool-val">false</span>).<span class="kw">await</span>;
-
-        <span class="self">self</span>.listener.on_flush_success(region_id);
-    }
-}
-
 <span class="kw">impl</span>&lt;S&gt; RegionWorkerLoop&lt;S&gt; {
     <span class="doccomment">/// Handles manual flush request.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_flush_request(
@@ -382,6 +315,73 @@
             memtable_builder: <span class="self">self</span>.memtable_builder.clone(),
             file_purger: region.file_purger.clone(),
         }
+    }
+}
+
+<span class="kw">impl</span>&lt;S: LogStore&gt; RegionWorkerLoop&lt;S&gt; {
+    <span class="doccomment">/// On region flush job finished.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_flush_finished(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        region_id: RegionId,
+        <span class="kw-2">mut </span>request: FlushFinished,
+    ) {
+        <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>request) <span class="kw">else </span>{
+            <span class="kw">return</span>;
+        };
+
+        <span class="comment">// Write region edit to manifest.
+        </span><span class="kw">let </span>edit = RegionEdit {
+            files_to_add: std::mem::take(<span class="kw-2">&amp;mut </span>request.file_metas),
+            files_to_remove: Vec::new(),
+            compaction_time_window: <span class="prelude-val">None</span>,
+            flushed_entry_id: <span class="prelude-val">Some</span>(request.flushed_entry_id),
+            flushed_sequence: <span class="prelude-val">Some</span>(request.flushed_sequence),
+        };
+        <span class="kw">let </span>action_list = RegionMetaActionList::with_action(RegionMetaAction::Edit(edit.clone()));
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region.manifest_manager.update(action_list).<span class="kw">await </span>{
+            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to write manifest, region: {}&quot;</span>, region_id);
+            request.on_failure(e);
+            <span class="kw">return</span>;
+        }
+
+        <span class="comment">// Apply edit to region&#39;s version.
+        </span>region.version_control.apply_edit(
+            edit,
+            <span class="kw-2">&amp;</span>request.memtables_to_remove,
+            region.file_purger.clone(),
+        );
+        region.update_flush_millis();
+
+        <span class="comment">// Delete wal.
+        </span><span class="macro">info!</span>(
+            <span class="string">&quot;Region {} flush finished, tries to bump wal to {}&quot;</span>,
+            region_id, request.flushed_entry_id
+        );
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.wal.obsolete(region_id, request.flushed_entry_id).<span class="kw">await </span>{
+            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to write wal, region: {}&quot;</span>, region_id);
+            request.on_failure(e);
+            <span class="kw">return</span>;
+        }
+
+        <span class="comment">// Notifies waiters.
+        </span>request.on_success();
+
+        <span class="comment">// Handle pending requests for the region.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>((ddl_requests, write_requests)) =
+            <span class="self">self</span>.flush_scheduler.on_flush_success(region_id)
+        {
+            <span class="comment">// Perform DDLs first because they require empty memtables.
+            </span><span class="self">self</span>.handle_ddl_requests(ddl_requests).<span class="kw">await</span>;
+            <span class="comment">// Handle pending write requests, we don&#39;t stall these requests.
+            </span><span class="self">self</span>.handle_write_requests(write_requests, <span class="bool-val">false</span>).<span class="kw">await</span>;
+        }
+
+        <span class="comment">// Handle stalled requests.
+        </span><span class="kw">let </span>stalled = std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.stalled_requests);
+        <span class="comment">// We already stalled these requests, don&#39;t stall them again.
+        </span><span class="self">self</span>.handle_write_requests(stalled.requests, <span class="bool-val">false</span>).<span class="kw">await</span>;
+
+        <span class="self">self</span>.listener.on_flush_success(region_id);
     }
 }
 </code></pre></div></section></main></body></html>

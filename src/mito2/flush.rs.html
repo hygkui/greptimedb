@@ -642,6 +642,7 @@
 <a href="#642" id="642">642</a>
 <a href="#643" id="643">643</a>
 <a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -745,7 +746,8 @@
 
     <span class="doccomment">/// Returns the size limit for mutable memtables.
     </span><span class="kw">fn </span>get_mutable_limit(global_write_buffer_size: usize) -&gt; usize {
-        global_write_buffer_size * <span class="number">7 </span>/ <span class="number">8
+        <span class="comment">// Reserves half of the write buffer for mutable memtable.
+        </span>global_write_buffer_size / <span class="number">2
     </span>}
 }
 
@@ -1235,17 +1237,17 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_get_mutable_limit() {
-        <span class="macro">assert_eq!</span>(<span class="number">7</span>, WriteBufferManagerImpl::get_mutable_limit(<span class="number">8</span>));
-        <span class="macro">assert_eq!</span>(<span class="number">8</span>, WriteBufferManagerImpl::get_mutable_limit(<span class="number">10</span>));
-        <span class="macro">assert_eq!</span>(<span class="number">56</span>, WriteBufferManagerImpl::get_mutable_limit(<span class="number">64</span>));
+        <span class="macro">assert_eq!</span>(<span class="number">4</span>, WriteBufferManagerImpl::get_mutable_limit(<span class="number">8</span>));
+        <span class="macro">assert_eq!</span>(<span class="number">5</span>, WriteBufferManagerImpl::get_mutable_limit(<span class="number">10</span>));
+        <span class="macro">assert_eq!</span>(<span class="number">32</span>, WriteBufferManagerImpl::get_mutable_limit(<span class="number">64</span>));
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, WriteBufferManagerImpl::get_mutable_limit(<span class="number">0</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_over_mutable_limit() {
-        <span class="comment">// Mutable limit is 800.
+        <span class="comment">// Mutable limit is 500.
         </span><span class="kw">let </span>manager = WriteBufferManagerImpl::new(<span class="number">1000</span>);
-        manager.reserve_mem(<span class="number">500</span>);
+        manager.reserve_mem(<span class="number">400</span>);
         <span class="macro">assert!</span>(!manager.should_flush_engine());
         <span class="macro">assert!</span>(!manager.should_stall());
 
@@ -1254,20 +1256,20 @@
         <span class="macro">assert!</span>(manager.should_flush_engine());
 
         <span class="comment">// Freezes mutable.
-        </span>manager.schedule_free_mem(<span class="number">500</span>);
+        </span>manager.schedule_free_mem(<span class="number">400</span>);
         <span class="macro">assert!</span>(!manager.should_flush_engine());
-        <span class="macro">assert_eq!</span>(<span class="number">900</span>, manager.memory_used.load(Ordering::Relaxed));
+        <span class="macro">assert_eq!</span>(<span class="number">800</span>, manager.memory_used.load(Ordering::Relaxed));
         <span class="macro">assert_eq!</span>(<span class="number">400</span>, manager.memory_active.load(Ordering::Relaxed));
 
         <span class="comment">// Releases immutable.
-        </span>manager.free_mem(<span class="number">500</span>);
+        </span>manager.free_mem(<span class="number">400</span>);
         <span class="macro">assert_eq!</span>(<span class="number">400</span>, manager.memory_used.load(Ordering::Relaxed));
         <span class="macro">assert_eq!</span>(<span class="number">400</span>, manager.memory_active.load(Ordering::Relaxed));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_over_global() {
-        <span class="comment">// Mutable limit is 800.
+        <span class="comment">// Mutable limit is 500.
         </span><span class="kw">let </span>manager = WriteBufferManagerImpl::new(<span class="number">1000</span>);
         manager.reserve_mem(<span class="number">1100</span>);
         <span class="macro">assert!</span>(manager.should_stall());
