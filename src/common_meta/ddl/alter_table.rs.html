@@ -515,6 +515,8 @@
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -571,8 +573,8 @@
 <span class="kw">pub struct </span>AlterTableProcedure {
     context: DdlContext,
     data: AlterTableData,
-    <span class="doccomment">/// proto alter Kind.
-    </span>kind: alter_request::Kind,
+    <span class="doccomment">/// proto alter Kind for adding/dropping columns.
+    </span>kind: <span class="prelude-ty">Option</span>&lt;alter_request::Kind&gt;,
 }
 
 <span class="kw">impl </span>AlterTableProcedure {
@@ -688,7 +690,7 @@
         <span class="prelude-val">Ok</span>(AlterRequest {
             region_id: region_id.as_u64(),
             schema_version: table_info.ident.version,
-            kind: <span class="prelude-val">Some</span>(<span class="self">self</span>.kind.clone()),
+            kind: <span class="self">self</span>.kind.clone(),
         })
     }
 
@@ -978,7 +980,7 @@
 </span><span class="kw">pub fn </span>create_proto_alter_kind(
     table_info: <span class="kw-2">&amp;</span>RawTableInfo,
     alter_kind: <span class="kw-2">&amp;</span>Kind,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(alter_request::Kind, <span class="prelude-ty">Option</span>&lt;ColumnId&gt;)&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;alter_request::Kind&gt;, <span class="prelude-ty">Option</span>&lt;ColumnId&gt;)&gt; {
     <span class="kw">match </span>alter_kind {
         Kind::AddColumns(x) =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>next_column_id = table_info.meta.next_column_id;
@@ -1011,7 +1013,7 @@
                 .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
             <span class="prelude-val">Ok</span>((
-                alter_request::Kind::AddColumns(AddColumns { add_columns }),
+                <span class="prelude-val">Some</span>(alter_request::Kind::AddColumns(AddColumns { add_columns })),
                 <span class="prelude-val">Some</span>(next_column_id),
             ))
         }
@@ -1025,11 +1027,13 @@
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
             <span class="prelude-val">Ok</span>((
-                alter_request::Kind::DropColumns(DropColumns { drop_columns }),
+                <span class="prelude-val">Some</span>(alter_request::Kind::DropColumns(DropColumns {
+                    drop_columns,
+                })),
                 <span class="prelude-val">None</span>,
             ))
         }
-        Kind::RenameTable(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+        Kind::RenameTable(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)),
     }
 }
 </code></pre></div></section></main></body></html>
