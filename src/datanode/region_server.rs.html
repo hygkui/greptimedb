@@ -463,6 +463,8 @@
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
 <a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -595,7 +597,7 @@
         <span class="kw">for </span>result <span class="kw">in </span>results {
             <span class="kw">match </span>result
                 .map_err(BoxedError::new)
-                .context(servers_error::ExecuteGrpcRequestSnafu)<span class="question-mark">?
+                .context(ExecuteGrpcRequestSnafu)<span class="question-mark">?
             </span>{
                 Output::AffectedRows(rows) =&gt; affected_rows += rows,
                 Output::Stream(<span class="kw">_</span>) | Output::RecordBatches(<span class="kw">_</span>) =&gt; {
@@ -707,7 +709,9 @@
             }
             RegionChange::Deregisters =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;Region {region_id} is deregistered from engine {engine_type}&quot;</span>);
-                <span class="self">self</span>.region_map.remove(<span class="kw-2">&amp;</span>region_id);
+                <span class="self">self</span>.region_map
+                    .remove(<span class="kw-2">&amp;</span>region_id)
+                    .map(|(id, engine)| engine.set_writable(id, <span class="bool-val">false</span>));
             }
         }
 
@@ -882,7 +886,7 @@
     </span>}
 }
 
-<span class="doccomment">/// For [TableProvider](datafusion::datasource::TableProvider) and [DummyCatalogList]
+<span class="doccomment">/// For [TableProvider](TableProvider) and [DummyCatalogList]
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">struct </span>DummyTableProvider {
     region_id: RegionId,

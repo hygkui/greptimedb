@@ -716,7 +716,7 @@
         <span class="kw">let </span>table_id = resp.table_id.context(error::UnexpectedSnafu {
             violated: <span class="string">&quot;expected table_id&quot;</span>,
         })<span class="question-mark">?</span>;
-        <span class="macro">info!</span>(<span class="string">&quot;Successfully created distributed table &#39;{table_name}&#39; with table id {table_id}&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">&quot;Successfully created table &#39;{table_name}&#39; with table id {table_id}&quot;</span>);
 
         table_info.ident.table_id = table_id;
         <span class="kw">let </span>engine = table_info.meta.engine.to_string();
