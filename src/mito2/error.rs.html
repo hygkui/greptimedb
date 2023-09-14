@@ -546,11 +546,6 @@
 <a href="#546" id="546">546</a>
 <a href="#547" id="547">547</a>
 <a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -739,12 +734,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Invalid request to region {}, location: {}, reason: {}&quot;</span>,
-        region_id,
-        location,
-        reason
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid request to region {}, reason: {}&quot;</span>, region_id, reason))]
     </span>InvalidRequest {
         region_id: RegionId,
         reason: String,

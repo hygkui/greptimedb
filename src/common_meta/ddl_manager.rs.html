@@ -514,7 +514,7 @@
         <span class="kw">let </span>context = <span class="self">self</span>.create_context();
 
         <span class="kw">let </span>procedure =
-            AlterTableProcedure::new(cluster_id, alter_table_task, table_info_value, context);
+            AlterTableProcedure::new(cluster_id, alter_table_task, table_info_value, context)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
 
