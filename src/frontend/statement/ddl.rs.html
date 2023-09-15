@@ -572,6 +572,50 @@
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -607,7 +651,7 @@
 <span class="kw">use </span>datatypes::schema::RawSchema;
 <span class="kw">use </span>partition::partition::{PartitionBound, PartitionDef};
 <span class="kw">use </span>session::context::QueryContextRef;
-<span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>sql::ast::Value <span class="kw">as </span>SqlValue;
 <span class="kw">use </span>sql::statements::alter::AlterTable;
 <span class="kw">use </span>sql::statements::create::{CreateExternalTable, CreateTable, Partitions};
@@ -620,8 +664,9 @@
 <span class="kw">use </span><span class="kw">super</span>::StatementExecutor;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, AlterExprToRequestSnafu, CatalogSnafu, ColumnDataTypeSnafu, ColumnNotFoundSnafu,
-    DeserializePartitionSnafu, ParseSqlSnafu, <span class="prelude-ty">Result</span>, SchemaNotFoundSnafu,
-    TableMetadataManagerSnafu, TableNotFoundSnafu, UnrecognizedTableOptionSnafu,
+    DeserializePartitionSnafu, InvalidPartitionColumnsSnafu, ParseSqlSnafu, <span class="prelude-ty">Result</span>,
+    SchemaNotFoundSnafu, TableMetadataManagerSnafu, TableNotFoundSnafu,
+    UnrecognizedTableOptionSnafu,
 };
 <span class="kw">use crate</span>::{expr_factory, MAX_VALUE};
 
@@ -674,6 +719,8 @@
         );
 
         <span class="kw">let </span>(partitions, partition_cols) = parse_partitions(create_table, partitions)<span class="question-mark">?</span>;
+
+        validate_partition_columns(create_table, <span class="kw-2">&amp;</span>partition_cols)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>table_info = create_table_info(create_table, partition_cols, schema_opts)<span class="question-mark">?</span>;
 
@@ -920,6 +967,22 @@
     }
 }
 
+<span class="kw">fn </span>validate_partition_columns(
+    create_table: <span class="kw-2">&amp;</span>CreateTableExpr,
+    partition_cols: <span class="kw-2">&amp;</span>[String],
+) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="macro">ensure!</span>(
+        partition_cols
+            .iter()
+            .all(|col| <span class="kw-2">&amp;</span>create_table.time_index == col || create_table.primary_keys.contains(col)),
+        InvalidPartitionColumnsSnafu {
+            table: <span class="kw-2">&amp;</span>create_table.table_name,
+            reason: <span class="string">&quot;partition column must belongs to primary keys or equals to time index&quot;
+        </span>}
+    );
+    <span class="prelude-val">Ok</span>(())
+}
+
 <span class="kw">fn </span>parse_partitions(
     create_table: <span class="kw-2">&amp;</span>CreateTableExpr,
     partitions: <span class="prelude-ty">Option</span>&lt;Partitions&gt;,
@@ -1104,6 +1167,31 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::expr_factory;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_validate_partition_columns() {
+        <span class="kw">let </span>create_table = CreateTableExpr {
+            table_name: <span class="string">&quot;my_table&quot;</span>.to_string(),
+            time_index: <span class="string">&quot;ts&quot;</span>.to_string(),
+            primary_keys: <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;b&quot;</span>.to_string()],
+            ..Default::default()
+        };
+
+        <span class="macro">assert!</span>(validate_partition_columns(<span class="kw-2">&amp;</span>create_table, <span class="kw-2">&amp;</span>[]).is_ok());
+        <span class="macro">assert!</span>(validate_partition_columns(<span class="kw-2">&amp;</span>create_table, <span class="kw-2">&amp;</span>[<span class="string">&quot;ts&quot;</span>.to_string()]).is_ok());
+        <span class="macro">assert!</span>(validate_partition_columns(<span class="kw-2">&amp;</span>create_table, <span class="kw-2">&amp;</span>[<span class="string">&quot;a&quot;</span>.to_string()]).is_ok());
+        <span class="macro">assert!</span>(
+            validate_partition_columns(<span class="kw-2">&amp;</span>create_table, <span class="kw-2">&amp;</span>[<span class="string">&quot;b&quot;</span>.to_string(), <span class="string">&quot;a&quot;</span>.to_string()]).is_ok()
+        );
+
+        <span class="macro">assert_eq!</span>(
+            validate_partition_columns(<span class="kw-2">&amp;</span>create_table, <span class="kw-2">&amp;</span>[<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;c&quot;</span>.to_string()])
+                .unwrap_err()
+                .to_string(),
+            <span class="string">&quot;Invalid partition columns when creating table &#39;my_table&#39;, \
+            reason: partition column must belongs to primary keys or equals to time index&quot;</span>,
+        );
+    }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_parse_partitions() {

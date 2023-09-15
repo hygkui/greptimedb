@@ -850,6 +850,18 @@
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
 <a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1541,6 +1553,17 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid region request, reason: {}&quot;</span>, reason))]
     </span>InvalidRegionRequest { reason: String },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Invalid partition columns when creating table &#39;{}&#39;, reason: {}&quot;</span>,
+        table,
+        reason
+    ))]
+    </span>InvalidPartitionColumns {
+        table: String,
+        reason: String,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1566,7 +1589,8 @@
             | Error::UnsupportedFormat { .. }
             | Error::EmptyData { .. }
             | Error::ColumnNoneDefaultValue { .. }
-            | Error::IncompleteGrpcRequest { .. } =&gt; StatusCode::InvalidArguments,
+            | Error::IncompleteGrpcRequest { .. }
+            | Error::InvalidPartitionColumns { .. } =&gt; StatusCode::InvalidArguments,
 
             Error::NotSupported { .. } =&gt; StatusCode::Unsupported,
 
