@@ -276,6 +276,12 @@
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -363,7 +369,8 @@
 </span><span class="kw">pub struct </span>DatanodeTableValue {
     <span class="kw">pub </span>table_id: TableId,
     <span class="kw">pub </span>regions: Vec&lt;RegionNumber&gt;,
-    <span class="kw">pub </span>engine: String,
+    <span class="attr">#[serde(default)]
+    </span><span class="kw">pub </span>engine: String,
     version: u64,
 }
 
@@ -532,6 +539,11 @@
 
         <span class="kw">let </span>actual = DatanodeTableValue::try_from_raw_value(literal).unwrap();
         <span class="macro">assert_eq!</span>(actual, value);
+
+        <span class="comment">// test serde default
+        </span><span class="kw">let </span>raw_str = <span class="string">br#&quot;{&quot;table_id&quot;:42,&quot;regions&quot;:[1,2,3],&quot;version&quot;:1}&quot;#</span>;
+        <span class="kw">let </span>parsed = DatanodeTableValue::try_from_raw_value(raw_str);
+        <span class="macro">assert!</span>(parsed.is_ok());
     }
 
     <span class="attr">#[test]
