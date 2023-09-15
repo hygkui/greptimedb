@@ -558,6 +558,16 @@
 <a href="#558" id="558">558</a>
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -577,6 +587,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>client::api::v1::meta::TableRouteValue;
+<span class="kw">use </span>common_meta::ddl::utils::region_storage_path;
 <span class="kw">use </span>common_meta::error <span class="kw">as </span>MetaError;
 <span class="kw">use </span>common_meta::key::catalog_name::{CatalogNameKey, CatalogNameValue};
 <span class="kw">use </span>common_meta::key::datanode_table::{DatanodeTableKey, DatanodeTableValue};
@@ -947,6 +958,10 @@
     <span class="kw">async fn </span>create_datanode_table_keys(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>TableGlobalValue) {
         <span class="kw">let </span>table_id = value.table_id();
         <span class="kw">let </span>engine = value.table_info.meta.engine.as_str();
+        <span class="kw">let </span>region_storage_path = region_storage_path(
+            <span class="kw-2">&amp;</span>value.table_info.catalog_name,
+            <span class="kw-2">&amp;</span>value.table_info.schema_name,
+        );
         <span class="kw">let </span>region_distribution: RegionDistribution =
             value.regions_id_map.clone().into_iter().collect();
 
@@ -957,7 +972,12 @@
                 <span class="macro">info!</span>(<span class="string">&quot;Creating DatanodeTableKey &#39;{k}&#39; =&gt; {regions:?}&quot;</span>);
                 (
                     k,
-                    DatanodeTableValue::new(table_id, regions, engine.to_string()),
+                    DatanodeTableValue::new(
+                        table_id,
+                        regions,
+                        engine.to_string(),
+                        region_storage_path.clone(),
+                    ),
                 )
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();

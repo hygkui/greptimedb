@@ -471,7 +471,7 @@
 <span class="kw">use </span>datatypes::schema::{Schema, SchemaRef};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{ensure, ResultExt};
-<span class="kw">use </span>store_api::path_utils::table_dir;
+<span class="kw">use </span>store_api::path_utils::table_dir_with_catalog_and_schema;
 <span class="kw">use </span>store_api::storage::{
     ColumnId, CompactionStrategy, CreateOptions, EngineContext, OpenOptions,
     RegionDescriptorBuilder, RegionId, RegionNumber, StorageEngine,
@@ -656,7 +656,7 @@
     /// - Callers MUST acquire the table lock first.
     /// - The procedure may call this method multiple times.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>create_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;TableRef&gt; {
-        <span class="kw">let </span>table_dir = table_dir(
+        <span class="kw">let </span>table_dir = table_dir_with_catalog_and_schema(
             <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.catalog_name,
             <span class="kw-2">&amp;</span><span class="self">self</span>.data.request.schema_name,
             <span class="self">self</span>.data.request.id,

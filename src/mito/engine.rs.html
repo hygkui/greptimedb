@@ -797,7 +797,7 @@
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>storage::manifest::manifest_compress_type;
-<span class="kw">use </span>store_api::path_utils::{region_name, table_dir};
+<span class="kw">use </span>store_api::path_utils::{region_name, table_dir_with_catalog_and_schema};
 <span class="kw">use </span>store_api::storage::{
     CloseOptions, ColumnDescriptorBuilder, ColumnFamilyDescriptor, ColumnFamilyDescriptorBuilder,
     ColumnId, CompactionStrategy, EngineContext <span class="kw">as </span>StorageEngineContext, OpenOptions, RegionNumber,
@@ -1199,7 +1199,7 @@
 
         <span class="kw">let </span>table_id = request.table_id;
         <span class="kw">let </span>engine_ctx = StorageEngineContext::default();
-        <span class="kw">let </span>table_dir = table_dir(catalog_name, schema_name, table_id);
+        <span class="kw">let </span>table_dir = table_dir_with_catalog_and_schema(catalog_name, schema_name, table_id);
 
         <span class="kw">let </span><span class="prelude-val">Some</span>((manifest, table_info)) = <span class="self">self
             </span>.recover_table_manifest_and_info(table_name, <span class="kw-2">&amp;</span>table_dir)
@@ -1289,7 +1289,7 @@
         <span class="kw">let </span>name = <span class="kw-2">&amp;</span>table_info.name;
         <span class="kw">let </span>table_id = table_info.ident.table_id;
 
-        <span class="kw">let </span>table_dir = table_dir(catalog, schema, table_id);
+        <span class="kw">let </span>table_dir = table_dir_with_catalog_and_schema(catalog, schema, table_id);
         <span class="kw">let </span>table_ref = TableReference {
             catalog,
             schema,

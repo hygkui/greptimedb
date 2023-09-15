@@ -396,6 +396,26 @@
 <a href="#396" id="396">396</a>
 <a href="#397" id="397">397</a>
 <a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -411,6 +431,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_meta::ddl::utils::region_storage_path;
 <span class="kw">use </span>common_meta::key::table_route::TableRouteKey;
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::router::RegionRoute;
@@ -421,7 +442,9 @@
 
 <span class="kw">use </span><span class="kw">super</span>::invalidate_cache::InvalidateCache;
 <span class="kw">use super</span>::{RegionFailoverContext, State};
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>, RetryLaterSnafu, TableRouteNotFoundSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    <span class="self">self</span>, <span class="prelude-ty">Result</span>, RetryLaterSnafu, TableInfoNotFoundSnafu, TableRouteNotFoundSnafu,
+};
 <span class="kw">use </span><span class="kw">crate</span>::lock::keys::table_metadata_lock_key;
 <span class="kw">use </span><span class="kw">crate</span>::lock::Opts;
 
@@ -466,6 +489,17 @@
             </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.context(TableRouteNotFoundSnafu { table_id })<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>table_info = ctx
+            .table_metadata_manager
+            .table_info_manager()
+            .get(table_id)
+            .<span class="kw">await
+            </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.context(TableInfoNotFoundSnafu { table_id })<span class="question-mark">?
+            </span>.table_info;
+        <span class="kw">let </span>region_storage_patch =
+            region_storage_path(<span class="kw-2">&amp;</span>table_info.catalog_name, <span class="kw-2">&amp;</span>table_info.schema_name);
+
         <span class="kw">let </span><span class="kw-2">mut </span>new_region_routes = table_route_value.region_routes.clone();
 
         <span class="kw">for </span>region_route <span class="kw">in </span>new_region_routes.iter_mut() {
@@ -482,7 +516,13 @@
         );
 
         ctx.table_metadata_manager
-            .update_table_route(table_id, engine, table_route_value, new_region_routes)
+            .update_table_route(
+                table_id,
+                engine,
+                <span class="kw-2">&amp;</span>region_storage_patch,
+                table_route_value,
+                new_region_routes,
+            )
             .<span class="kw">await
             </span>.context(error::UpdateTableRouteSnafu)<span class="question-mark">?</span>;
 

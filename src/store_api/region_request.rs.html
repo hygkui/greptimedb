@@ -777,7 +777,7 @@
                     .map(ColumnMetadata::try_from_column_def)
                     .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
                 <span class="kw">let </span>region_id = create.region_id.into();
-                <span class="kw">let </span>region_dir = region_dir(<span class="kw-2">&amp;</span>create.catalog, <span class="kw-2">&amp;</span>create.schema, region_id);
+                <span class="kw">let </span>region_dir = region_dir(<span class="kw-2">&amp;</span>create.path, region_id);
                 <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[(
                     region_id,
                     <span class="self">Self</span>::Create(RegionCreateRequest {
@@ -796,7 +796,7 @@
             )]),
             region_request::Body::Open(open) =&gt; {
                 <span class="kw">let </span>region_id = open.region_id.into();
-                <span class="kw">let </span>region_dir = region_dir(<span class="kw-2">&amp;</span>open.catalog, <span class="kw-2">&amp;</span>open.schema, region_id);
+                <span class="kw">let </span>region_dir = region_dir(<span class="kw-2">&amp;</span>open.path, region_id);
                 <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[(
                     region_id,
                     <span class="self">Self</span>::Open(RegionOpenRequest {
