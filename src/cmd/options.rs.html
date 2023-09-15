@@ -261,6 +261,7 @@
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -278,7 +279,7 @@
 </span><span class="kw">use </span>common_config::KvStoreConfig;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>config::{Config, Environment, File, FileFormat};
-<span class="kw">use </span>datanode::datanode::{DatanodeOptions, ProcedureConfig};
+<span class="kw">use </span>datanode::config::{DatanodeOptions, ProcedureConfig};
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>meta_srv::metasrv::MetaSrvOptions;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -289,7 +290,8 @@
 <span class="kw">pub const </span>ENV_VAR_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__&quot;</span>;
 <span class="kw">pub const </span>ENV_LIST_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;,&quot;</span>;
 
-<span class="kw">pub struct </span>MixOptions {
+<span class="doccomment">/// Options mixed up from datanode, frontend and metasrv.
+</span><span class="kw">pub struct </span>MixOptions {
     <span class="kw">pub </span>data_home: String,
     <span class="kw">pub </span>procedure_cfg: ProcedureConfig,
     <span class="kw">pub </span>kv_store_cfg: KvStoreConfig,
@@ -382,7 +384,7 @@
     <span class="kw">use </span>std::time::Duration;
 
     <span class="kw">use </span>common_test_util::temp_dir::create_named_temp_file;
-    <span class="kw">use </span>datanode::datanode::{DatanodeOptions, ObjectStoreConfig};
+    <span class="kw">use </span>datanode::config::{DatanodeOptions, ObjectStoreConfig};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 

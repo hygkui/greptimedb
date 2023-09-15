@@ -465,6 +465,11 @@
 <a href="#465" id="465">465</a>
 <a href="#466" id="466">466</a>
 <a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -509,10 +514,14 @@
 ///
 /// [RegionAliveKeeper] starts a [CountdownTask] for each region. When deadline is reached,
 /// the region will be closed.
+///
 /// The deadline is controlled by Metasrv. It works like &quot;lease&quot; for regions: a Datanode submits its
 /// opened regions to Metasrv, in heartbeats. If Metasrv decides some region could be resided in this
 /// Datanode, it will &quot;extend&quot; the region&#39;s &quot;lease&quot;, with a deadline for [RegionAliveKeeper] to
 /// countdown.
+///
+/// On each lease extension, [RegionAliveKeeper] will reset the deadline to the corresponding time, and
+/// set region&#39;s status to &quot;writable&quot;.
 </span><span class="kw">pub struct </span>RegionAliveKeeper {
     region_server: RegionServer,
     tasks: Arc&lt;Mutex&lt;HashMap&lt;RegionId, Arc&lt;CountdownTaskHandle&gt;&gt;&gt;&gt;,
@@ -780,6 +789,7 @@
                                     <span class="string">&quot;Reset deadline of region {region_id} to approximately {} seconds later&quot;</span>,
                                     (deadline - Instant::now()).as_secs_f32(),
                                 );
+                                <span class="kw">let _ </span>= <span class="self">self</span>.region_server.set_writable(<span class="self">self</span>.region_id, <span class="bool-val">true</span>);
                                 countdown.set(tokio::time::sleep_until(deadline));
                             }
                             <span class="comment">// Else the countdown could be either:

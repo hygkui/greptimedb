@@ -585,6 +585,8 @@
 <a href="#585" id="585">585</a>
 <a href="#586" id="586">586</a>
 <a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -610,8 +612,8 @@
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
-<span class="kw">use </span>datanode::datanode::builder::DatanodeBuilder;
-<span class="kw">use </span>datanode::datanode::{Datanode, DatanodeOptions, ProcedureConfig, StorageConfig};
+<span class="kw">use </span>datanode::config::{DatanodeOptions, ProcedureConfig, StorageConfig};
+<span class="kw">use </span>datanode::datanode::{Datanode, DatanodeBuilder};
 <span class="kw">use </span>datanode::region_server::RegionServer;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance, StandaloneDatanodeManager};
@@ -725,6 +727,7 @@
 
     <span class="kw">fn </span>datanode_options(<span class="self">self</span>) -&gt; DatanodeOptions {
         DatanodeOptions {
+            node_id: <span class="prelude-val">Some</span>(<span class="number">0</span>),
             enable_telemetry: <span class="self">self</span>.enable_telemetry,
             wal: <span class="self">self</span>.wal,
             storage: <span class="self">self</span>.storage,
@@ -893,10 +896,11 @@
         .<span class="kw">await
         </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>datanode = DatanodeBuilder::new(dn_opts.clone(), plugins.clone())
-            .build()
-            .<span class="kw">await
-            </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>datanode =
+            DatanodeBuilder::new(dn_opts.clone(), <span class="prelude-val">Some</span>(kv_store.clone()), plugins.clone())
+                .build()
+                .<span class="kw">await
+                </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>region_server = datanode.region_server();
 
         <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
@@ -1055,7 +1059,7 @@
         <span class="macro">assert!</span>(fe_opts.influxdb_options.enable);
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>dn_opts.storage.store {
-            datanode::datanode::ObjectStoreConfig::S3(s3_config) =&gt; {
+            datanode::config::ObjectStoreConfig::S3(s3_config) =&gt; {
                 <span class="macro">assert_eq!</span>(
                     <span class="string">&quot;Secret([REDACTED alloc::string::String])&quot;</span>.to_string(),
                     <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, s3_config.access_key_id)

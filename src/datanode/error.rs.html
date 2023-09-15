@@ -710,6 +710,22 @@
 <a href="#710" id="710">710</a>
 <a href="#711" id="711">711</a>
 <a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -802,6 +818,12 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response, source: {}&quot;</span>, source))]
     </span>HandleHeartbeatResponse {
+        location: Location,
+        source: common_meta::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get info from meta server, source: {}&quot;</span>, source))]
+    </span>GetMetadata {
         location: Location,
         source: common_meta::error::Error,
     },
@@ -978,6 +1000,12 @@
         source: common_runtime::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Expect KvBackend but not found&quot;</span>))]
+    </span>MissingKvBackend { location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Expect MetaClient but not found, location: {}&quot;</span>, location))]
+    </span>MissingMetaClient { location: Location },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid SQL, error: {}&quot;</span>, msg))]
     </span>InvalidSql { msg: String },
 
@@ -1078,10 +1106,10 @@
         source: table::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id option in distributed mode&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id in Datanode config, location: {}&quot;</span>, location))]
     </span>MissingNodeId { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id option in distributed mode&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id option in distributed mode, location: {}&quot;</span>, location))]
     </span>MissingMetasrvOpts { location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field: {}&quot;</span>, name))]
@@ -1299,7 +1327,9 @@
             | ExecuteLogicalPlan { source, .. } =&gt; source.status_code(),
 
             BuildRegionRequests { source, .. } =&gt; source.status_code(),
-            HandleHeartbeatResponse { source, .. } =&gt; source.status_code(),
+            HandleHeartbeatResponse { source, .. } | GetMetadata { source, .. } =&gt; {
+                source.status_code()
+            }
 
             DecodeLogicalPlan { source, .. } =&gt; source.status_code(),
             RegisterSchema { source, .. } =&gt; source.status_code(),
@@ -1341,7 +1371,9 @@
             | MissingWalDirConfig { .. }
             | PrepareImmutableTable { .. }
             | InvalidInsertRowLen { .. }
-            | ColumnDataType { .. } =&gt; StatusCode::InvalidArguments,
+            | ColumnDataType { .. }
+            | MissingKvBackend { .. }
+            | MissingMetaClient { .. } =&gt; StatusCode::InvalidArguments,
 
             EncodeJson { .. } | DecodeJson { .. } | PayloadNotExist { .. } | Unexpected { .. } =&gt; {
                 StatusCode::Unexpected
