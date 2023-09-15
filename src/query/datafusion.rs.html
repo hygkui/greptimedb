@@ -1220,7 +1220,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::query_engine::{QueryEngineFactory, QueryEngineRef};
 
     <span class="kw">async fn </span>create_test_engine() -&gt; QueryEngineRef {
-        <span class="kw">let </span>catalog_manager = catalog::local::new_memory_catalog_manager().unwrap();
+        <span class="kw">let </span>catalog_manager = catalog::memory::new_memory_catalog_manager().unwrap();
         <span class="kw">let </span>req = RegisterTableRequest {
             catalog: DEFAULT_CATALOG_NAME.to_string(),
             schema: DEFAULT_SCHEMA_NAME.to_string(),

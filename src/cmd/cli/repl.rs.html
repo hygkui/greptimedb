@@ -267,7 +267,6 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -286,7 +285,7 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Instant;
 
-<span class="kw">use </span>catalog::remote::CachedMetaKvBackend;
+<span class="kw">use </span>catalog::kvbackend::{CachedMetaKvBackend, KvBackendCatalogManager};
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>client::{Client, Database, DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_base::Plugins;
@@ -295,7 +294,6 @@
 <span class="kw">use </span>common_recordbatch::RecordBatches;
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>either::Either;
-<span class="kw">use </span>frontend::catalog::FrontendCatalogManager;
 <span class="kw">use </span>meta_client::client::MetaClientBuilder;
 <span class="kw">use </span>query::datafusion::DatafusionQueryEngine;
 <span class="kw">use </span>query::logical_optimizer::LogicalOptimizer;
@@ -523,7 +521,7 @@
 
     <span class="kw">let </span>datanode_clients = Arc::new(DatanodeClients::default());
 
-    <span class="kw">let </span>catalog_list = FrontendCatalogManager::new(
+    <span class="kw">let </span>catalog_list = KvBackendCatalogManager::new(
         cached_meta_backend.clone(),
         cached_meta_backend.clone(),
         datanode_clients,

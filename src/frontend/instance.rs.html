@@ -765,7 +765,6 @@
 <a href="#765" id="765">765</a>
 <a href="#766" id="766">766</a>
 <a href="#767" id="767">767</a>
-<a href="#768" id="768">768</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -795,7 +794,7 @@
 <span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>auth::{PermissionChecker, PermissionCheckerRef, PermissionReq};
-<span class="kw">use </span>catalog::remote::CachedMetaKvBackend;
+<span class="kw">use </span>catalog::kvbackend::{CachedMetaKvBackend, KvBackendCatalogManager};
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_base::Plugins;
@@ -848,7 +847,6 @@
 
 <span class="kw">use </span><span class="self">self</span>::distributed::DistRegionRequestHandler;
 <span class="kw">use </span><span class="self">self</span>::standalone::StandaloneTableMetadataCreator;
-<span class="kw">use </span><span class="kw">crate</span>::catalog::FrontendCatalogManager;
 <span class="kw">use </span><span class="kw">crate</span>::delete::{Deleter, DeleterRef};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, Error, ExecLogicalPlanSnafu, ExecutePromqlSnafu, ExternalSnafu, MissingMetasrvOptsSnafu,
@@ -919,7 +917,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>meta_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
 
-        <span class="kw">let </span>catalog_manager = FrontendCatalogManager::new(
+        <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
             meta_backend.clone(),
             meta_backend.clone(),
             datanode_clients.clone(),

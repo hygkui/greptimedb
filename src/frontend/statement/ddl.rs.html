@@ -612,6 +612,7 @@
 <span class="kw">use </span>sql::statements::alter::AlterTable;
 <span class="kw">use </span>sql::statements::create::{CreateExternalTable, CreateTable, Partitions};
 <span class="kw">use </span>sql::statements::sql_value_to_value;
+<span class="kw">use </span>table::dist_table::DistTable;
 <span class="kw">use </span>table::metadata::{<span class="self">self</span>, RawTableInfo, RawTableMeta, TableId, TableInfo, TableType};
 <span class="kw">use </span>table::requests::{AlterTableRequest, TableOptions};
 <span class="kw">use </span>table::TableRef;
@@ -622,7 +623,6 @@
     DeserializePartitionSnafu, ParseSqlSnafu, <span class="prelude-ty">Result</span>, SchemaNotFoundSnafu,
     TableMetadataManagerSnafu, TableNotFoundSnafu, UnrecognizedTableOptionSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::table::DistTable;
 <span class="kw">use crate</span>::{expr_factory, MAX_VALUE};
 
 <span class="kw">impl </span>StatementExecutor {
