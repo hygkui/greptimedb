@@ -191,6 +191,16 @@
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -212,7 +222,7 @@
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::RegionId;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
+<span class="kw">use </span><span class="kw">crate</span>::error::{RegionTruncatingSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::flush::{FlushReason, RegionFlushTask};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{RegionEdit, RegionMetaAction, RegionMetaActionList};
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegionRef;
@@ -314,6 +324,7 @@
             access_layer: region.access_layer.clone(),
             memtable_builder: <span class="self">self</span>.memtable_builder.clone(),
             file_purger: region.file_purger.clone(),
+            listener: <span class="self">self</span>.listener.clone(),
         }
     }
 }
@@ -328,6 +339,15 @@
         <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>request) <span class="kw">else </span>{
             <span class="kw">return</span>;
         };
+
+        <span class="comment">// The flush task before truncating the region fails immediately.
+        </span><span class="kw">let </span>version_data = region.version_control.current();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(truncated_entry_id) = version_data.version.truncated_entry_id {
+            <span class="kw">if </span>truncated_entry_id &gt;= request.flushed_entry_id {
+                request.on_failure(RegionTruncatingSnafu { region_id }.build());
+                <span class="kw">return</span>;
+            }
+        }
 
         <span class="comment">// Write region edit to manifest.
         </span><span class="kw">let </span>edit = RegionEdit {

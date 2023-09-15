@@ -643,6 +643,20 @@
 <a href="#643" id="643">643</a>
 <a href="#644" id="644">644</a>
 <a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -670,7 +684,9 @@
 <span class="kw">use </span>tokio::sync::mpsc;
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
-<span class="kw">use </span><span class="kw">crate</span>::error::{Error, FlushRegionSnafu, RegionClosedSnafu, RegionDroppedSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    Error, FlushRegionSnafu, RegionClosedSnafu, RegionDroppedSnafu, RegionTruncatingSnafu, <span class="prelude-ty">Result</span>,
+};
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
 <span class="kw">use </span><span class="kw">crate</span>::read::Source;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlData, VersionRef};
@@ -683,6 +699,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::sst::file::{FileId, FileMeta};
 <span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::FilePurgerRef;
 <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::WriteOptions;
+<span class="kw">use </span><span class="kw">crate</span>::worker::WorkerListener;
 
 <span class="doccomment">/// Global write buffer (memtable) manager.
 ///
@@ -830,6 +847,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) access_layer: AccessLayerRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) memtable_builder: MemtableBuilderRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) listener: WorkerListener,
 }
 
 <span class="kw">impl </span>RegionFlushTask {
@@ -871,6 +889,7 @@
 
     <span class="doccomment">/// Runs the flush task.
     </span><span class="kw">async fn </span>do_flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>, version_data: VersionControlData) {
+        <span class="self">self</span>.listener.on_flush_begin(<span class="self">self</span>.region_id).<span class="kw">await</span>;
         <span class="kw">let </span>worker_request = <span class="kw">match </span><span class="self">self</span>.flush_memtables(<span class="kw-2">&amp;</span>version_data.version).<span class="kw">await </span>{
             <span class="prelude-val">Ok</span>(file_metas) =&gt; {
                 <span class="kw">let </span>memtables_to_remove = version_data
@@ -1095,24 +1114,33 @@
 
     <span class="doccomment">/// Notifies the scheduler that the region is dropped.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_region_dropped(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) {
-        <span class="comment">// Remove this region.
-        </span><span class="kw">let </span><span class="prelude-val">Some</span>(flush_status) = <span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region_id) <span class="kw">else </span>{
-            <span class="kw">return</span>;
-        };
-
-        <span class="comment">// Notifies all pending tasks.
-        </span>flush_status.on_failure(Arc::new(RegionDroppedSnafu { region_id }.build()));
+        <span class="self">self</span>.remove_region_on_failure(
+            region_id,
+            Arc::new(RegionDroppedSnafu { region_id }.build()),
+        );
     }
 
     <span class="doccomment">/// Notifies the scheduler that the region is closed.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_region_closed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) {
+        <span class="self">self</span>.remove_region_on_failure(region_id, Arc::new(RegionClosedSnafu { region_id }.build()));
+    }
+
+    <span class="doccomment">/// Notifies the scheduler that the region is truncating.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_region_truncating(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) {
+        <span class="self">self</span>.remove_region_on_failure(
+            region_id,
+            Arc::new(RegionTruncatingSnafu { region_id }.build()),
+        );
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>remove_region_on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId, err: Arc&lt;Error&gt;) {
         <span class="comment">// Remove this region.
         </span><span class="kw">let </span><span class="prelude-val">Some</span>(flush_status) = <span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region_id) <span class="kw">else </span>{
             <span class="kw">return</span>;
         };
 
         <span class="comment">// Notifies all pending tasks.
-        </span>flush_status.on_failure(Arc::new(RegionClosedSnafu { region_id }.build()));
+        </span>flush_status.on_failure(err);
     }
 
     <span class="doccomment">/// Add ddl request to pending queue.

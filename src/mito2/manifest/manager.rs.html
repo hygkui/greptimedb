@@ -538,6 +538,15 @@
 <a href="#538" id="538">538</a>
 <a href="#539" id="539">539</a>
 <a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -819,6 +828,9 @@
                             options.manifest_dir, action
                         );
                     }
+                    RegionMetaAction::Truncate(action) =&gt; {
+                        manifest_builder.apply_truncate(manifest_version, action);
+                    }
                 }
             }
         }
@@ -868,6 +880,9 @@
                         <span class="string">&quot;Unhandled action for region {}, action: {:?}&quot;</span>,
                         <span class="self">self</span>.manifest.metadata.region_id, action
                     );
+                }
+                RegionMetaAction::Truncate(action) =&gt; {
+                    manifest_builder.apply_truncate(version, action);
                 }
             }
         }
@@ -939,6 +954,9 @@
                             <span class="string">&quot;Unhandled action for region {}, action: {:?}&quot;</span>,
                             <span class="self">self</span>.manifest.metadata.region_id, action
                         );
+                    }
+                    RegionMetaAction::Truncate(action) =&gt; {
+                        manifest_builder.apply_truncate(version, action);
                     }
                 }
             }

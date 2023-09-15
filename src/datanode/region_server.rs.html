@@ -469,6 +469,7 @@
 <a href="#469" id="469">469</a>
 <a href="#470" id="470">470</a>
 <a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -681,7 +682,8 @@
             | RegionRequest::Delete(<span class="kw">_</span>)
             | RegionRequest::Alter(<span class="kw">_</span>)
             | RegionRequest::Flush(<span class="kw">_</span>)
-            | RegionRequest::Compact(<span class="kw">_</span>) =&gt; RegionChange::None,
+            | RegionRequest::Compact(<span class="kw">_</span>)
+            | RegionRequest::Truncate(<span class="kw">_</span>) =&gt; RegionChange::None,
         };
 
         <span class="kw">let </span>engine = <span class="kw">match </span><span class="kw-2">&amp;</span>region_change {

@@ -262,6 +262,31 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -299,6 +324,8 @@
     </span>Edit(RegionEdit),
     <span class="doccomment">/// Remove the region.
     </span>Remove(RegionRemove),
+    <span class="doccomment">/// Truncate the region.
+    </span>Truncate(RegionTruncate),
 }
 
 <span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -321,6 +348,16 @@
     <span class="kw">pub </span>region_id: RegionId,
 }
 
+<span class="doccomment">/// Last data truncated in the region.
+</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>RegionTruncate {
+    <span class="kw">pub </span>region_id: RegionId,
+    <span class="doccomment">/// Last WAL entry id of truncated data.
+    </span><span class="kw">pub </span>truncated_entry_id: EntryId,
+    <span class="comment">// Last sequence number of truncated data.
+    </span><span class="kw">pub </span>truncated_sequence: SequenceNumber,
+}
+
 <span class="doccomment">/// The region manifest data.
 </span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>RegionManifest {
@@ -334,6 +371,8 @@
     </span><span class="kw">pub </span>flushed_sequence: SequenceNumber,
     <span class="doccomment">/// Current manifest version.
     </span><span class="kw">pub </span>manifest_version: ManifestVersion,
+    <span class="doccomment">/// Last WAL entry id of truncated data.
+    </span><span class="kw">pub </span>truncated_entry_id: <span class="prelude-ty">Option</span>&lt;EntryId&gt;,
 }
 
 <span class="attr">#[derive(Debug, Default)]
@@ -343,6 +382,7 @@
     flushed_entry_id: EntryId,
     flushed_sequence: SequenceNumber,
     manifest_version: ManifestVersion,
+    truncated_entry_id: <span class="prelude-ty">Option</span>&lt;EntryId&gt;,
 }
 
 <span class="kw">impl </span>RegionManifestBuilder {
@@ -355,6 +395,7 @@
                 flushed_entry_id: s.flushed_entry_id,
                 manifest_version: s.manifest_version,
                 flushed_sequence: s.flushed_sequence,
+                truncated_entry_id: s.truncated_entry_id,
             }
         } <span class="kw">else </span>{
             Default::default()
@@ -382,6 +423,14 @@
         }
     }
 
+    <span class="kw">pub fn </span>apply_truncate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, manifest_version: ManifestVersion, truncate: RegionTruncate) {
+        <span class="self">self</span>.manifest_version = manifest_version;
+        <span class="self">self</span>.flushed_entry_id = truncate.truncated_entry_id;
+        <span class="self">self</span>.flushed_sequence = truncate.truncated_sequence;
+        <span class="self">self</span>.truncated_entry_id = <span class="prelude-val">Some</span>(truncate.truncated_entry_id);
+        <span class="self">self</span>.files.clear();
+    }
+
     <span class="doccomment">/// Check if the builder keeps a [RegionMetadata](crate::metadata::RegionMetadata).
     </span><span class="kw">pub fn </span>contains_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.metadata.is_some()
@@ -395,6 +444,7 @@
             flushed_entry_id: <span class="self">self</span>.flushed_entry_id,
             flushed_sequence: <span class="self">self</span>.flushed_sequence,
             manifest_version: <span class="self">self</span>.manifest_version,
+            truncated_entry_id: <span class="self">self</span>.truncated_entry_id,
         })
     }
 }

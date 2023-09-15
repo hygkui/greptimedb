@@ -1093,6 +1093,12 @@
 <a href="#1093" id="1093">1093</a>
 <a href="#1094" id="1094">1094</a>
 <a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1130,7 +1136,7 @@
 <span class="kw">use </span>store_api::metadata::{ColumnMetadata, RegionMetadata};
 <span class="kw">use </span>store_api::region_request::{
     RegionAlterRequest, RegionCloseRequest, RegionCompactRequest, RegionCreateRequest,
-    RegionDropRequest, RegionFlushRequest, RegionOpenRequest, RegionRequest,
+    RegionDropRequest, RegionFlushRequest, RegionOpenRequest, RegionRequest, RegionTruncateRequest,
 };
 <span class="kw">use </span>store_api::storage::{CompactionStrategy, RegionId, SequenceNumber};
 <span class="kw">use </span>tokio::sync::oneshot::{<span class="self">self</span>, Receiver, Sender};
@@ -1647,6 +1653,11 @@
                 sender: sender.into(),
                 request: DdlRequest::Compact(v),
             }),
+            RegionRequest::Truncate(v) =&gt; WorkerRequest::Ddl(SenderDdlRequest {
+                region_id,
+                sender: sender.into(),
+                request: DdlRequest::Truncate(v),
+            }),
         };
 
         <span class="prelude-val">Ok</span>((worker_request, receiver))
@@ -1663,6 +1674,7 @@
     Alter(RegionAlterRequest),
     Flush(RegionFlushRequest),
     Compact(RegionCompactRequest),
+    Truncate(RegionTruncateRequest),
 }
 
 <span class="doccomment">/// Sender and Ddl request.

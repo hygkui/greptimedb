@@ -604,6 +604,17 @@
 <a href="#604" id="604">604</a>
 <a href="#605" id="605">605</a>
 <a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -627,6 +638,7 @@
 <span class="kw">mod </span>handle_drop;
 <span class="kw">mod </span>handle_flush;
 <span class="kw">mod </span>handle_open;
+<span class="kw">mod </span>handle_truncate;
 <span class="kw">mod </span>handle_write;
 
 <span class="kw">use </span>std::collections::hash_map::DefaultHasher;
@@ -1109,6 +1121,7 @@
                     <span class="self">self</span>.handle_compaction_request(ddl.region_id, ddl.sender);
                     <span class="kw">continue</span>;
                 }
+                DdlRequest::Truncate(<span class="kw">_</span>) =&gt; <span class="self">self</span>.handle_truncate_request(ddl.region_id).<span class="kw">await</span>,
             };
 
             ddl.sender.send(res);
@@ -1146,7 +1159,7 @@
 }
 
 <span class="doccomment">/// Wrapper that only calls event listener in tests.
-</span><span class="attr">#[derive(Default)]
+</span><span class="attr">#[derive(Default, Clone)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>WorkerListener {
     <span class="attr">#[cfg(test)]
     </span>listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
@@ -1176,6 +1189,15 @@
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(listener) = <span class="kw-2">&amp;</span><span class="self">self</span>.listener {
             listener.on_write_stall();
         }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>on_flush_begin(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) {
+        <span class="attr">#[cfg(test)]
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(listener) = <span class="kw-2">&amp;</span><span class="self">self</span>.listener {
+            listener.on_flush_begin(region_id).<span class="kw">await</span>;
+        }
+        <span class="comment">// Avoid compiler warning.
+        </span><span class="kw">let _ </span>= region_id;
     }
 }
 

@@ -705,6 +705,10 @@
 <a href="#705" id="705">705</a>
 <a href="#706" id="706">706</a>
 <a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -745,6 +749,7 @@
     Alter(RegionAlterRequest),
     Flush(RegionFlushRequest),
     Compact(RegionCompactRequest),
+    Truncate(RegionTruncateRequest),
 }
 
 <span class="kw">impl </span>RegionRequest {
@@ -1118,6 +1123,9 @@
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>RegionCompactRequest {}
+
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>RegionTruncateRequest {}
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {

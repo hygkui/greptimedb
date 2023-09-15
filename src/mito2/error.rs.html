@@ -553,6 +553,13 @@
 <a href="#553" id="553">553</a>
 <a href="#554" id="554">554</a>
 <a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -975,6 +982,12 @@
         location: Location,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Region {} is truncating, location: {}&quot;</span>, region_id, location))]
+    </span>RegionTruncating {
+        region_id: RegionId,
+        location: Location,
+    },
+
     <span class="attr">#[snafu(display(
         <span class="string">&quot;Engine write buffer is full, rejecting write requests of region {}, location: {}&quot;</span>,
         region_id,
@@ -1095,6 +1108,7 @@
             FlushRegion { source, .. } =&gt; source.status_code(),
             RegionDropped { .. } =&gt; StatusCode::Cancelled,
             RegionClosed { .. } =&gt; StatusCode::Cancelled,
+            RegionTruncating { .. } =&gt; StatusCode::Cancelled,
             BuildCompactionPredicate { .. } =&gt; StatusCode::Internal,
             RejectWrite { .. } =&gt; StatusCode::StorageUnavailable,
             CompactRegion { source, .. } =&gt; source.status_code(),
