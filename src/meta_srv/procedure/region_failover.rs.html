@@ -772,17 +772,6 @@
 <a href="#772" id="772">772</a>
 <a href="#773" id="773">773</a>
 <a href="#774" id="774">774</a>
-<a href="#775" id="775">775</a>
-<a href="#776" id="776">776</a>
-<a href="#777" id="777">777</a>
-<a href="#778" id="778">778</a>
-<a href="#779" id="779">779</a>
-<a href="#780" id="780">780</a>
-<a href="#781" id="781">781</a>
-<a href="#782" id="782">782</a>
-<a href="#783" id="783">783</a>
-<a href="#784" id="784">784</a>
-<a href="#785" id="785">785</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -810,7 +799,6 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::key::datanode_table::DatanodeTableKey;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>common_meta::{ClusterId, RegionIdent};
@@ -826,6 +814,7 @@
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionNumber;
+<span class="kw">use </span>table::metadata::TableId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, RegisterProcedureLoaderSnafu, <span class="prelude-ty">Result</span>, TableMetadataManagerSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::lock::DistLockRef;
@@ -839,7 +828,7 @@
 </span><span class="attr">#[derive(PartialEq, Eq, Hash, Clone)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>RegionFailoverKey {
     <span class="kw">pub</span>(<span class="kw">crate</span>) cluster_id: ClusterId,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) table_ident: TableIdent,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) table_id: TableId,
     <span class="kw">pub</span>(<span class="kw">crate</span>) region_number: RegionNumber,
 }
 
@@ -847,7 +836,7 @@
     <span class="kw">fn </span>from(region_ident: RegionIdent) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             cluster_id: region_ident.cluster_id,
-            table_ident: region_ident.table_ident,
+            table_id: region_ident.table_id,
             region_number: region_ident.region_number,
         }
     }
@@ -991,18 +980,17 @@
     }
 
     <span class="kw">async fn </span>table_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, failed_region: <span class="kw-2">&amp;</span>RegionIdent) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>table_ident = <span class="kw-2">&amp;</span>failed_region.table_ident;
         <span class="prelude-val">Ok</span>(<span class="self">self
             </span>.table_metadata_manager
             .table_route_manager()
-            .get_region_distribution(table_ident.table_id)
+            .get_region_distribution(failed_region.table_id)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.is_some())
     }
 
     <span class="kw">async fn </span>failed_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, failed_region: <span class="kw-2">&amp;</span>RegionIdent) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>table_id = failed_region.table_ident.table_id;
+        <span class="kw">let </span>table_id = failed_region.table_id;
         <span class="kw">let </span>datanode_id = failed_region.datanode_id;
 
         <span class="kw">let </span>value = <span class="self">self
@@ -1157,13 +1145,11 @@
 
     <span class="kw">fn </span>lock_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LockKey {
         <span class="kw">let </span>region_ident = <span class="kw-2">&amp;</span><span class="self">self</span>.node.failed_region;
-        <span class="kw">let </span>table_key = common_catalog::format_full_table_name(
-            <span class="kw-2">&amp;</span>region_ident.table_ident.catalog,
-            <span class="kw-2">&amp;</span>region_ident.table_ident.schema,
-            <span class="kw-2">&amp;</span>region_ident.table_ident.table,
+        <span class="kw">let </span>region_key = <span class="macro">format!</span>(
+            <span class="string">&quot;{}/region-{}&quot;</span>,
+            region_ident.table_id, region_ident.region_number
         );
-        <span class="kw">let </span>region_key = <span class="macro">format!</span>(<span class="string">&quot;{}/region-{}&quot;</span>, table_key, region_ident.region_number);
-        LockKey::new(<span class="macro">vec!</span>[table_key, region_key])
+        LockKey::single(region_key)
     }
 }
 
@@ -1174,8 +1160,6 @@
 
     <span class="kw">use </span>api::v1::meta::mailbox_message::Payload;
     <span class="kw">use </span>api::v1::meta::{HeartbeatResponse, MailboxMessage, Peer, RequestHeader};
-    <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, MITO_ENGINE};
-    <span class="kw">use </span>common_meta::ident::TableIdent;
     <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
     <span class="kw">use </span>common_meta::key::TableMetadataManager;
     <span class="kw">use </span>common_meta::sequence::Sequence;
@@ -1242,13 +1226,8 @@
                 cluster_id: <span class="number">0</span>,
                 region_number,
                 datanode_id: failed_datanode,
-                table_ident: TableIdent {
-                    table_id: <span class="number">1</span>,
-                    engine: MITO_ENGINE.to_string(),
-                    catalog: DEFAULT_CATALOG_NAME.to_string(),
-                    schema: DEFAULT_SCHEMA_NAME.to_string(),
-                    table: <span class="string">&quot;my_table&quot;</span>.to_string(),
-                },
+                table_id: <span class="number">1</span>,
+                engine: <span class="string">&quot;mito2&quot;</span>.to_string(),
             }
         }
     }
@@ -1278,6 +1257,7 @@
                 <span class="comment">// Safety: all required fields set at initialization
                 </span>.unwrap();
 
+            <span class="kw">let </span>table_id = <span class="number">1</span>;
             <span class="kw">let </span>table = <span class="string">&quot;my_table&quot;</span>;
             <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(
                 KvBackendAdapter::wrap(kv_store.clone()),
@@ -1328,9 +1308,7 @@
                 server_addr: <span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string(),
                 kv_store: kv_store.clone(),
                 meta_peer_client,
-                catalog: <span class="prelude-val">Some</span>(DEFAULT_CATALOG_NAME.to_string()),
-                schema: <span class="prelude-val">Some</span>(DEFAULT_SCHEMA_NAME.to_string()),
-                table: <span class="prelude-val">Some</span>(table.to_string()),
+                table_id: <span class="prelude-val">Some</span>(table_id),
             };
 
             TestingEnv {
@@ -1450,7 +1428,7 @@
 
         <span class="macro">assert_eq!</span>(
             procedure.dump().unwrap(),
-            <span class="string">r#&quot;{&quot;failed_region&quot;:{&quot;cluster_id&quot;:0,&quot;datanode_id&quot;:1,&quot;table_ident&quot;:{&quot;catalog&quot;:&quot;greptime&quot;,&quot;schema&quot;:&quot;public&quot;,&quot;table&quot;:&quot;my_table&quot;,&quot;table_id&quot;:1,&quot;engine&quot;:&quot;mito&quot;},&quot;region_number&quot;:1},&quot;state&quot;:{&quot;region_failover_state&quot;:&quot;RegionFailoverEnd&quot;}}&quot;#
+            <span class="string">r#&quot;{&quot;failed_region&quot;:{&quot;cluster_id&quot;:0,&quot;datanode_id&quot;:1,&quot;table_id&quot;:1,&quot;region_number&quot;:1,&quot;engine&quot;:&quot;mito2&quot;},&quot;state&quot;:{&quot;region_failover_state&quot;:&quot;RegionFailoverEnd&quot;}}&quot;#
         </span>);
 
         <span class="comment">// Verifies that the failed region (region 1) is moved from failed datanode (datanode 1) to the candidate datanode.
@@ -1490,12 +1468,12 @@
         <span class="kw">let </span>s = procedure.dump().unwrap();
         <span class="macro">assert_eq!</span>(
             s,
-            <span class="string">r#&quot;{&quot;failed_region&quot;:{&quot;cluster_id&quot;:0,&quot;datanode_id&quot;:1,&quot;table_ident&quot;:{&quot;catalog&quot;:&quot;greptime&quot;,&quot;schema&quot;:&quot;public&quot;,&quot;table&quot;:&quot;my_table&quot;,&quot;table_id&quot;:1,&quot;engine&quot;:&quot;mito&quot;},&quot;region_number&quot;:1},&quot;state&quot;:{&quot;region_failover_state&quot;:&quot;RegionFailoverStart&quot;,&quot;failover_candidate&quot;:null}}&quot;#
+            <span class="string">r#&quot;{&quot;failed_region&quot;:{&quot;cluster_id&quot;:0,&quot;datanode_id&quot;:1,&quot;table_id&quot;:1,&quot;region_number&quot;:1,&quot;engine&quot;:&quot;mito2&quot;},&quot;state&quot;:{&quot;region_failover_state&quot;:&quot;RegionFailoverStart&quot;,&quot;failover_candidate&quot;:null}}&quot;#
         </span>);
         <span class="kw">let </span>n: Node = serde_json::from_str(<span class="kw-2">&amp;</span>s).unwrap();
         <span class="macro">assert_eq!</span>(
             <span class="macro">format!</span>(<span class="string">&quot;{n:?}&quot;</span>),
-            <span class="string">r#&quot;Node { failed_region: RegionIdent { cluster_id: 0, datanode_id: 1, table_ident: TableIdent { catalog: &quot;greptime&quot;, schema: &quot;public&quot;, table: &quot;my_table&quot;, table_id: 1, engine: &quot;mito&quot; }, region_number: 1 }, state: RegionFailoverStart { failover_candidate: None } }&quot;#
+            <span class="string">r#&quot;Node { failed_region: RegionIdent { cluster_id: 0, datanode_id: 1, table_id: 1, region_number: 1, engine: &quot;mito2&quot; }, state: RegionFailoverStart { failover_candidate: None } }&quot;#
         </span>);
     }
 

@@ -159,11 +159,6 @@
 <a href="#159" id="159">159</a>
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -236,7 +231,6 @@
 </span><span class="kw">mod </span>test {
     <span class="kw">use </span>std::sync::Arc;
 
-    <span class="kw">use </span>common_meta::ident::TableIdent;
     <span class="kw">use </span>common_meta::key::TableMetadataManager;
     <span class="kw">use </span>common_meta::RegionIdent;
     <span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
@@ -297,11 +291,9 @@
             .register_inactive_region(<span class="kw-2">&amp;</span>RegionIdent {
                 cluster_id: <span class="number">1</span>,
                 datanode_id: <span class="number">1</span>,
-                table_ident: TableIdent {
-                    table_id: <span class="number">1</span>,
-                    ..Default::default()
-                },
+                table_id: <span class="number">1</span>,
                 region_number: <span class="number">1</span>,
+                engine: <span class="string">&quot;mito2&quot;</span>.to_string(),
             })
             .<span class="kw">await
             </span>.unwrap();
@@ -309,11 +301,9 @@
             .register_inactive_region(<span class="kw-2">&amp;</span>RegionIdent {
                 cluster_id: <span class="number">1</span>,
                 datanode_id: <span class="number">1</span>,
-                table_ident: TableIdent {
-                    table_id: <span class="number">1</span>,
-                    ..Default::default()
-                },
+                table_id: <span class="number">1</span>,
                 region_number: <span class="number">3</span>,
+                engine: <span class="string">&quot;mito2&quot;</span>.to_string(),
             })
             .<span class="kw">await
             </span>.unwrap();

@@ -141,7 +141,6 @@
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -190,7 +189,7 @@
             Instruction::OpenRegion(region_ident) =&gt; {
                 <span class="kw">let </span>region_id = <span class="self">Self</span>::region_ident_to_region_id(<span class="kw-2">&amp;</span>region_ident);
                 <span class="kw">let </span>open_region_req = RegionRequest::Open(RegionOpenRequest {
-                    engine: region_ident.table_ident.engine,
+                    engine: region_ident.engine,
                     region_dir: <span class="string">&quot;&quot;</span>.to_string(),
                     options: HashMap::new(),
                 });
@@ -201,15 +200,14 @@
                 <span class="kw">let </span>close_region_req = RegionRequest::Close(RegionCloseRequest {});
                 <span class="prelude-val">Ok</span>((region_id, close_region_req))
             }
-            Instruction::InvalidateTableCache(<span class="kw">_</span>) =&gt; InvalidHeartbeatResponseSnafu.fail(),
+            Instruction::InvalidateTableIdCache(<span class="kw">_</span>) | Instruction::InvalidateTableNameCache(<span class="kw">_</span>) =&gt; {
+                InvalidHeartbeatResponseSnafu.fail()
+            }
         }
     }
 
     <span class="kw">fn </span>region_ident_to_region_id(region_ident: <span class="kw-2">&amp;</span>RegionIdent) -&gt; RegionId {
-        RegionId::new(
-            region_ident.table_ident.table_id,
-            region_ident.region_number,
-        )
+        RegionId::new(region_ident.table_id, region_ident.region_number)
     }
 
     <span class="kw">fn </span>reply_template_from_instruction(instruction: <span class="kw-2">&amp;</span>Instruction) -&gt; InstructionReply {
@@ -222,7 +220,7 @@
                 result: <span class="bool-val">false</span>,
                 error: <span class="prelude-val">None</span>,
             }),
-            Instruction::InvalidateTableCache(<span class="kw">_</span>) =&gt; {
+            Instruction::InvalidateTableIdCache(<span class="kw">_</span>) | Instruction::InvalidateTableNameCache(<span class="kw">_</span>) =&gt; {
                 InstructionReply::InvalidateTableCache(SimpleReply {
                     result: <span class="bool-val">false</span>,
                     error: <span class="prelude-val">None</span>,

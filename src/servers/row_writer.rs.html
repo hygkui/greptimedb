@@ -267,7 +267,6 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -378,7 +377,6 @@
                 RowInsertRequest {
                     table_name: table_name.to_string(),
                     rows: <span class="prelude-val">Some</span>(Rows { schema, rows }),
-                    ..Default::default()
                 }
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -497,14 +495,14 @@
             datatype: ColumnDataType::TimestampMillisecond <span class="kw">as </span>i32,
             semantic_type: SemanticType::Timestamp <span class="kw">as </span>i32,
         });
-        one_row.push(ValueData::TsMillisecondValue(ts).into())
+        one_row.push(ValueData::TimestampMillisecondValue(ts).into())
     } <span class="kw">else </span>{
         check_schema(
             ColumnDataType::TimestampMillisecond,
             SemanticType::Timestamp,
             <span class="kw-2">&amp;</span>schema[<span class="kw-2">*</span>index],
         )<span class="question-mark">?</span>;
-        one_row[<span class="kw-2">*</span>index].value_data = <span class="prelude-val">Some</span>(ValueData::TsMillisecondValue(ts));
+        one_row[<span class="kw-2">*</span>index].value_data = <span class="prelude-val">Some</span>(ValueData::TimestampMillisecondValue(ts));
     }
 
     <span class="prelude-val">Ok</span>(())

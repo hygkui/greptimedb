@@ -652,6 +652,7 @@
 <a href="#652" id="652">652</a>
 <a href="#653" id="653">653</a>
 <a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -672,6 +673,7 @@
 <span class="kw">use </span>common_runtime::JoinError;
 <span class="kw">use </span>servers::define_into_tonic_status;
 <span class="kw">use </span>snafu::{Location, Snafu};
+<span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>tokio::sync::mpsc::error::SendError;
 <span class="kw">use </span>tonic::codegen::http;
 
@@ -900,9 +902,9 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table route not found: {}&quot;</span>, table_name))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find table route for {table_id}, at {location}&quot;</span>))]
     </span>TableRouteNotFound {
-        table_name: String,
+        table_id: TableId,
         location: Location,
     },
 

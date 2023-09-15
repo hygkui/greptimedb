@@ -709,6 +709,7 @@
 <a href="#709" id="709">709</a>
 <a href="#710" id="710">710</a>
 <a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -733,6 +734,7 @@
 <span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
 <span class="kw">use </span>table::error::Error <span class="kw">as </span>TableError;
+<span class="kw">use </span>table::metadata::TableId;
 
 <span class="doccomment">/// Business error of datanode.
 </span><span class="attr">#[derive(Debug, Snafu)]
@@ -765,9 +767,9 @@
         source: TableError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get table: {}, source: {}&quot;</span>, table_name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get table {table_id}, source: {source}, at {location}&quot;</span>))]
     </span>GetTable {
-        table_name: String,
+        table_id: TableId,
         location: Location,
         source: TableError,
     },

@@ -352,7 +352,6 @@
 <span class="kw">use </span>common_meta::cache_invalidator::{CacheInvalidator, Context};
 <span class="kw">use </span>common_meta::datanode_manager::DatanodeManagerRef;
 <span class="kw">use </span>common_meta::error::Result <span class="kw">as </span>MetaResult;
-<span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::key::catalog_name::CatalogNameKey;
 <span class="kw">use </span>common_meta::key::schema_name::SchemaNameKey;
 <span class="kw">use </span>common_meta::key::table_info::TableInfoKey;
@@ -360,10 +359,12 @@
 <span class="kw">use </span>common_meta::key::table_route::TableRouteKey;
 <span class="kw">use </span>common_meta::key::{TableMetaKey, TableMetadataManager, TableMetadataManagerRef};
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
+<span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>futures_util::TryStreamExt;
 <span class="kw">use </span>partition::manager::{PartitionRuleManager, PartitionRuleManagerRef};
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>table::table::numbers::{NumbersTable, NUMBERS_TABLE_NAME};
 <span class="kw">use </span>table::TableRef;
 
@@ -389,13 +390,8 @@
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>CacheInvalidator <span class="kw">for </span>FrontendCatalogManager {
-    <span class="kw">async fn </span>invalidate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_ident: TableIdent) -&gt; MetaResult&lt;()&gt; {
-        <span class="kw">let </span>table_id = table_ident.table_id;
-        <span class="kw">let </span>key = TableNameKey::new(
-            <span class="kw-2">&amp;</span>table_ident.catalog,
-            <span class="kw-2">&amp;</span>table_ident.schema,
-            <span class="kw-2">&amp;</span>table_ident.table,
-        );
+    <span class="kw">async fn </span>invalidate_table_name(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_name: TableName) -&gt; MetaResult&lt;()&gt; {
+        <span class="kw">let </span>key: TableNameKey = (<span class="kw-2">&amp;</span>table_name).into();
         <span class="self">self</span>.backend_cache_invalidator
             .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())
             .<span class="kw">await</span>;
@@ -404,6 +400,10 @@
             String::from_utf8_lossy(<span class="kw-2">&amp;</span>key.as_raw_key())
         );
 
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async fn </span>invalidate_table_id(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_id: TableId) -&gt; MetaResult&lt;()&gt; {
         <span class="kw">let </span>key = TableInfoKey::new(table_id);
         <span class="self">self</span>.backend_cache_invalidator
             .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())

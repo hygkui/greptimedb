@@ -482,8 +482,6 @@
 <a href="#482" id="482">482</a>
 <a href="#483" id="483">483</a>
 <a href="#484" id="484">484</a>
-<a href="#485" id="485">485</a>
-<a href="#486" id="486">486</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -591,7 +589,6 @@
         <span class="kw">let </span>(columns, row_count) = convert_record_batch(record_batch);
         <span class="kw">let </span>request = InsertRequest {
             table_name: TABLE_NAME.to_string(),
-            region_number: <span class="number">0</span>,
             columns,
             row_count,
         };
@@ -675,7 +672,7 @@
             <span class="kw">let </span>values = array.values();
             (
                 Values {
-                    ts_microsecond_values: values.to_vec(),
+                    timestamp_microsecond_values: values.to_vec(),
                     ..Default::default()
                 },
                 ColumnDataType::TimestampMicrosecond,
@@ -875,7 +872,6 @@
         primary_keys: <span class="macro">vec!</span>[<span class="string">&quot;VendorID&quot;</span>.to_string()],
         create_if_not_exists: <span class="bool-val">false</span>,
         table_options: Default::default(),
-        region_numbers: <span class="macro">vec!</span>[<span class="number">0</span>],
         table_id: <span class="prelude-val">None</span>,
         engine: <span class="string">&quot;mito&quot;</span>.to_string(),
     }

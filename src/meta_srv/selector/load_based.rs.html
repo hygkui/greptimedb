@@ -106,19 +106,6 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -134,11 +121,11 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>api::v1::meta::Peer;
-<span class="kw">use </span>common_meta::key::table_name::TableNameKey;
 <span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_meta::rpc::router::find_leaders;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>table::metadata::TableId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::keys::{LeaseKey, LeaseValue, StatKey};
@@ -153,32 +140,21 @@
 
 <span class="kw">async fn </span>get_leader_peer_ids(
     table_metadata_manager: <span class="kw-2">&amp;</span>TableMetadataManager,
-    catalog: <span class="kw-2">&amp;</span>str,
-    schema: <span class="kw-2">&amp;</span>str,
-    table: <span class="kw-2">&amp;</span>str,
+    table_id: TableId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u64&gt;&gt; {
-    <span class="kw">let </span>table_name = table_metadata_manager
-        .table_name_manager()
-        .get(TableNameKey::new(catalog, schema, table))
+    table_metadata_manager
+        .table_route_manager()
+        .get(table_id)
         .<span class="kw">await
-        </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(table_name) = table_name {
-        table_metadata_manager
-            .table_route_manager()
-            .get(table_name.table_id())
-            .<span class="kw">await
-            </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
-            </span>.map(|route| {
+        </span>.context(error::TableMetadataManagerSnafu)
+        .map(|route| {
+            route.map_or_else(Vec::new, |route| {
                 find_leaders(<span class="kw-2">&amp;</span>route.region_routes)
                     .into_iter()
                     .map(|peer| peer.id)
                     .collect()
             })
-            .unwrap_or_default()
-    } <span class="kw">else </span>{
-        Vec::new()
-    })
+        })
 }
 
 <span class="attr">#[async_trait::async_trait]
@@ -197,13 +173,11 @@
         <span class="kw">let </span>stat_keys: Vec&lt;StatKey&gt; = lease_kvs.keys().map(|k| k.into()).collect();
         <span class="kw">let </span>stat_kvs = ctx.meta_peer_client.get_dn_stat_kvs(stat_keys).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>leader_peer_ids = <span class="kw">if let </span>(<span class="prelude-val">Some</span>(catalog), <span class="prelude-val">Some</span>(schema), <span class="prelude-val">Some</span>(table)) =
-            (<span class="kw-2">&amp;</span>ctx.catalog, <span class="kw-2">&amp;</span>ctx.schema, <span class="kw-2">&amp;</span>ctx.table)
-        {
+        <span class="kw">let </span>leader_peer_ids = <span class="kw">if let </span><span class="prelude-val">Some</span>(table_id) = ctx.table_id {
             <span class="kw">let </span>table_metadata_manager =
                 TableMetadataManager::new(KvBackendAdapter::wrap(ctx.kv_store.clone()));
 
-            get_leader_peer_ids(<span class="kw-2">&amp;</span>table_metadata_manager, catalog, schema, table).<span class="kw">await</span><span class="question-mark">?
+            get_leader_peer_ids(<span class="kw-2">&amp;</span>table_metadata_manager, table_id).<span class="kw">await</span><span class="question-mark">?
         </span>} <span class="kw">else </span>{
             Vec::new()
         };

@@ -572,37 +572,6 @@
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -628,7 +597,6 @@
 <span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_meta::cache_invalidator::Context;
 <span class="kw">use </span>common_meta::ddl::ExecutorContext;
-<span class="kw">use </span>common_meta::ident::TableIdent;
 <span class="kw">use </span>common_meta::key::schema_name::{SchemaNameKey, SchemaNameValue};
 <span class="kw">use </span>common_meta::rpc::ddl::{DdlTask, SubmitDdlTaskRequest, SubmitDdlTaskResponse};
 <span class="kw">use </span>common_meta::rpc::router::{Partition, Partition <span class="kw">as </span>MetaPartition};
@@ -719,7 +687,6 @@
         <span class="macro">info!</span>(<span class="string">&quot;Successfully created table &#39;{table_name}&#39; with table id {table_id}&quot;</span>);
 
         table_info.ident.table_id = table_id;
-        <span class="kw">let </span>engine = table_info.meta.engine.to_string();
 
         <span class="kw">let </span>table_info = Arc::new(table_info.try_into().context(error::CreateTableInfoSnafu)<span class="question-mark">?</span>);
         create_table.table_id = <span class="prelude-val">Some</span>(api::v1::TableId { id: table_id });
@@ -728,16 +695,7 @@
 
         <span class="comment">// Invalidates local cache ASAP.
         </span><span class="self">self</span>.cache_invalidator
-            .invalidate_table(
-                <span class="kw-2">&amp;</span>Context::default(),
-                TableIdent {
-                    catalog: table_name.catalog_name.to_string(),
-                    schema: table_name.schema_name.to_string(),
-                    table: table_name.table_name.to_string(),
-                    table_id,
-                    engine,
-                },
-            )
+            .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
             .<span class="kw">await
             </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
 
@@ -758,21 +716,11 @@
                 table_name: table_name.to_string(),
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>table_id = table.table_info().table_id();
-        <span class="kw">let </span>engine = table.table_info().meta.engine.to_string();
         <span class="self">self</span>.drop_table_procedure(<span class="kw-2">&amp;</span>table_name, table_id).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// Invalidates local cache ASAP.
         </span><span class="self">self</span>.cache_invalidator
-            .invalidate_table(
-                <span class="kw-2">&amp;</span>Context::default(),
-                TableIdent {
-                    catalog: table_name.catalog_name.to_string(),
-                    schema: table_name.schema_name.to_string(),
-                    table: table_name.table_name.to_string(),
-                    table_id,
-                    engine,
-                },
-            )
+            .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
             .<span class="kw">await
             </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
 
@@ -861,7 +809,6 @@
             })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>table_id = table.table_info().ident.table_id;
-        <span class="kw">let </span>engine = table.table_info().meta.engine.to_string();
         <span class="self">self</span>.verify_alter(table_id, table.table_info(), expr.clone())<span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(
@@ -881,16 +828,7 @@
 
         <span class="comment">// Invalidates local cache ASAP.
         </span><span class="self">self</span>.cache_invalidator
-            .invalidate_table(
-                <span class="kw-2">&amp;</span>Context::default(),
-                TableIdent {
-                    catalog: catalog_name.to_string(),
-                    schema: schema_name.to_string(),
-                    table: table_name.to_string(),
-                    table_id,
-                    engine,
-                },
-            )
+            .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
             .<span class="kw">await
             </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
 

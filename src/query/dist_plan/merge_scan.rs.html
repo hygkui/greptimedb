@@ -317,6 +317,7 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -481,6 +482,7 @@
 
             <span class="kw">for </span>region_id <span class="kw">in </span>regions {
                 <span class="kw">let </span>request = QueryRequest {
+                    header: <span class="prelude-val">None</span>,
                     region_id: region_id.into(),
                     plan: substrait_plan.clone(),
                 };
