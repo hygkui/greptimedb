@@ -1010,8 +1010,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid SQL, error: {}&quot;</span>, err_msg))]
     </span>InvalidSql { err_msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Incomplete GRPC result: {}&quot;</span>, err_msg))]
-    </span>IncompleteGrpcResult { err_msg: String, location: Location },
+    <span class="attr">#[snafu(display(<span class="string">&quot;Incomplete GRPC request: {}&quot;</span>, err_msg))]
+    </span>IncompleteGrpcRequest { err_msg: String, location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find Datanode by region: {:?}&quot;</span>, region))]
     </span>FindDatanode {
@@ -1565,7 +1565,8 @@
             | Error::ProjectSchema { .. }
             | Error::UnsupportedFormat { .. }
             | Error::EmptyData { .. }
-            | Error::ColumnNoneDefaultValue { .. } =&gt; StatusCode::InvalidArguments,
+            | Error::ColumnNoneDefaultValue { .. }
+            | Error::IncompleteGrpcRequest { .. } =&gt; StatusCode::InvalidArguments,
 
             Error::NotSupported { .. } =&gt; StatusCode::Unsupported,
 
@@ -1622,8 +1623,7 @@
             | Error::MissingInsertBody { .. }
             | Error::InvalidRegionRequest { .. } =&gt; StatusCode::Internal,
 
-            Error::IncompleteGrpcResult { .. }
-            | Error::ContextValueNotFound { .. }
+            Error::ContextValueNotFound { .. }
             | Error::InvalidSystemTableDef { .. }
             | Error::EncodeJson { .. } =&gt; StatusCode::Unexpected,
 

@@ -172,6 +172,38 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -186,7 +218,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::ddl_request::Expr <span class="kw">as </span>DdlExpr;
+</span><span class="kw">use </span>api::v1::ddl_request::{Expr <span class="kw">as </span>DdlExpr, Expr};
 <span class="kw">use </span>api::v1::greptime_request::Request;
 <span class="kw">use </span>api::v1::query_request::Query;
 <span class="kw">use </span>api::v1::{DeleteRequests, InsertRequests, RowDeleteRequests, RowInsertRequests};
@@ -201,9 +233,7 @@
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, Error, IncompleteGrpcResultSnafu, NotSupportedSnafu, PermissionSnafu, <span class="prelude-ty">Result</span>,
-};
+<span class="kw">use </span><span class="kw">crate</span>::error::{Error, IncompleteGrpcRequestSnafu, NotSupportedSnafu, PermissionSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::instance::Instance;
 
 <span class="attr">#[async_trait]
@@ -227,7 +257,7 @@
             Request::Deletes(requests) =&gt; <span class="self">self</span>.handle_deletes(requests, ctx.clone()).<span class="kw">await</span><span class="question-mark">?</span>,
             Request::RowDeletes(requests) =&gt; <span class="self">self</span>.handle_row_deletes(requests, ctx.clone()).<span class="kw">await</span><span class="question-mark">?</span>,
             Request::Query(query_request) =&gt; {
-                <span class="kw">let </span>query = query_request.query.context(IncompleteGrpcResultSnafu {
+                <span class="kw">let </span>query = query_request.query.context(IncompleteGrpcRequestSnafu {
                     err_msg: <span class="string">&quot;Missing field &#39;QueryRequest.query&#39;&quot;</span>,
                 })<span class="question-mark">?</span>;
                 <span class="kw">match </span>query {
@@ -267,9 +297,11 @@
                 }
             }
             Request::Ddl(request) =&gt; {
-                <span class="kw">let </span>expr = request.expr.context(error::UnexpectedSnafu {
-                    violated: <span class="string">&quot;expected expr&quot;</span>,
+                <span class="kw">let </span><span class="kw-2">mut </span>expr = request.expr.context(IncompleteGrpcRequestSnafu {
+                    err_msg: <span class="string">&quot;&#39;expr&#39; is absent in DDL request&quot;</span>,
                 })<span class="question-mark">?</span>;
+
+                fill_catalog_and_schema_from_context(<span class="kw-2">&amp;mut </span>expr, <span class="kw-2">&amp;</span>ctx);
 
                 <span class="kw">match </span>expr {
                     DdlExpr::CreateTable(<span class="kw-2">mut </span>expr) =&gt; {
@@ -306,6 +338,38 @@
 
         <span class="kw">let </span>output = interceptor.post_execute(output, ctx)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(output)
+    }
+}
+
+<span class="kw">fn </span>fill_catalog_and_schema_from_context(ddl_expr: <span class="kw-2">&amp;mut </span>DdlExpr, ctx: <span class="kw-2">&amp;</span>QueryContextRef) {
+    <span class="kw">let </span>catalog = ctx.current_catalog();
+    <span class="kw">let </span>schema = ctx.current_schema();
+
+    <span class="macro">macro_rules! </span>check_and_fill {
+        (<span class="macro-nonterminal">$expr</span>:ident) =&gt; {
+            <span class="kw">if </span><span class="macro-nonterminal">$expr</span>.catalog_name.is_empty() {
+                <span class="macro-nonterminal">$expr</span>.catalog_name = catalog.to_string();
+            }
+            <span class="kw">if </span><span class="macro-nonterminal">$expr</span>.schema_name.is_empty() {
+                <span class="macro-nonterminal">$expr</span>.schema_name = schema.to_string();
+            }
+        };
+    }
+
+    <span class="kw">match </span>ddl_expr {
+        Expr::CreateDatabase(<span class="kw">_</span>) =&gt; { <span class="comment">/* do nothing*/ </span>}
+        Expr::CreateTable(expr) =&gt; {
+            <span class="macro">check_and_fill!</span>(expr);
+        }
+        Expr::Alter(expr) =&gt; {
+            <span class="macro">check_and_fill!</span>(expr);
+        }
+        Expr::DropTable(expr) =&gt; {
+            <span class="macro">check_and_fill!</span>(expr);
+        }
+        Expr::TruncateTable(expr) =&gt; {
+            <span class="macro">check_and_fill!</span>(expr);
+        }
     }
 }
 

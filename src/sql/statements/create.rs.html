@@ -341,8 +341,6 @@
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -506,9 +504,7 @@
         <span class="kw">if </span>!<span class="self">self</span>.column_list.is_empty() {
             <span class="macro">write!</span>(
                 f,
-                <span class="string">r#&quot;PARTITION BY RANGE COLUMNS ({}) (
-                    {}
-                )&quot;#</span>,
+                <span class="string">&quot;PARTITION BY RANGE COLUMNS ({}) (\n{}\n)&quot;</span>,
                 <span class="macro">format_list_comma!</span>(<span class="self">self</span>.column_list),
                 <span class="macro">format_list_indent!</span>(<span class="self">self</span>.entries),
             )
@@ -606,10 +602,10 @@ CREATE TABLE IF NOT EXISTS demo (
   PRIMARY KEY (ts, host)
 )
 PARTITION BY RANGE COLUMNS (ts) (
-                      PARTITION r0 VALUES LESS THAN (5),
+  PARTITION r0 VALUES LESS THAN (5),
   PARTITION r1 VALUES LESS THAN (9),
   PARTITION r2 VALUES LESS THAN (MAXVALUE)
-                )
+)
 ENGINE=mito
 WITH(
   regions = 1,
