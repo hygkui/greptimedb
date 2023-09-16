@@ -346,6 +346,7 @@
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -386,7 +387,7 @@
 <span class="kw">use </span>servers::Mode;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
-<span class="kw">use </span>store_api::path_utils::WAL_DIR;
+<span class="kw">use </span>store_api::path_utils::{region_dir, WAL_DIR};
 <span class="kw">use </span>store_api::region_engine::RegionEngineRef;
 <span class="kw">use </span>store_api::region_request::{RegionOpenRequest, RegionRequest};
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -594,7 +595,8 @@
 
         <span class="macro">info!</span>(<span class="string">&quot;going to open {} regions&quot;</span>, regions.len());
 
-        <span class="kw">for </span>(region_id, engine, region_dir) <span class="kw">in </span>regions {
+        <span class="kw">for </span>(region_id, engine, store_path) <span class="kw">in </span>regions {
+            <span class="kw">let </span>region_dir = region_dir(<span class="kw-2">&amp;</span>store_path, region_id);
             region_server
                 .handle_request(
                     region_id,
