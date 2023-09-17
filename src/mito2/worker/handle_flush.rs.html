@@ -201,6 +201,31 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -217,12 +242,12 @@
 
 </span><span class="doccomment">//! Handling flush related requests.
 
-</span><span class="kw">use </span>common_telemetry::{error, info};
+</span><span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>common_time::util::current_time_millis;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::RegionId;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{RegionTruncatingSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{RegionTruncatedSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::flush::{FlushReason, RegionFlushTask};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{RegionEdit, RegionMetaAction, RegionMetaActionList};
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegionRef;
@@ -242,7 +267,10 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Manual);
         task.push_sender(sender);
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.flush_scheduler.schedule_flush(<span class="kw-2">&amp;</span>region, task) {
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
+            <span class="self">self</span>.flush_scheduler
+                .schedule_flush(region.region_id, <span class="kw-2">&amp;</span>region.version_control, task)
+        {
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to schedule flush task for region {}&quot;</span>, region.region_id);
         }
     }
@@ -293,7 +321,11 @@
             <span class="kw">if </span>region.last_flush_millis() &lt; min_last_flush_time {
                 <span class="comment">// If flush time of this region is earlier than `min_last_flush_time`, we can flush this region.
                 </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull);
-                <span class="self">self</span>.flush_scheduler.schedule_flush(region, task)<span class="question-mark">?</span>;
+                <span class="self">self</span>.flush_scheduler.schedule_flush(
+                    region.region_id,
+                    <span class="kw-2">&amp;</span>region.version_control,
+                    task,
+                )<span class="question-mark">?</span>;
             }
         }
 
@@ -302,7 +334,11 @@
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(region) = max_mem_region {
             <span class="kw">if </span>!<span class="self">self</span>.flush_scheduler.is_flush_requested(region.region_id) {
                 <span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull);
-                <span class="self">self</span>.flush_scheduler.schedule_flush(region, task)<span class="question-mark">?</span>;
+                <span class="self">self</span>.flush_scheduler.schedule_flush(
+                    region.region_id,
+                    <span class="kw-2">&amp;</span>region.version_control,
+                    task,
+                )<span class="question-mark">?</span>;
             }
         }
 
@@ -344,7 +380,7 @@
         </span><span class="kw">let </span>version_data = region.version_control.current();
         <span class="kw">if let </span><span class="prelude-val">Some</span>(truncated_entry_id) = version_data.version.truncated_entry_id {
             <span class="kw">if </span>truncated_entry_id &gt;= request.flushed_entry_id {
-                request.on_failure(RegionTruncatingSnafu { region_id }.build());
+                request.on_failure(RegionTruncatedSnafu { region_id }.build());
                 <span class="kw">return</span>;
             }
         }
@@ -400,6 +436,20 @@
         </span><span class="kw">let </span>stalled = std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.stalled_requests);
         <span class="comment">// We already stalled these requests, don&#39;t stall them again.
         </span><span class="self">self</span>.handle_write_requests(stalled.requests, <span class="bool-val">false</span>).<span class="kw">await</span>;
+
+        <span class="comment">// Schedules compaction.
+        </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.compaction_scheduler.schedule_compaction(
+            region.region_id,
+            <span class="kw-2">&amp;</span>region.version_control,
+            <span class="kw-2">&amp;</span>region.access_layer,
+            <span class="kw-2">&amp;</span>region.file_purger,
+            OptionOutputTx::none(),
+        ) {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;Failed to schedule compaction after flush, region: {}, err: {}&quot;</span>,
+                region.region_id, e
+            );
+        }
 
         <span class="self">self</span>.listener.on_flush_success(region_id);
     }

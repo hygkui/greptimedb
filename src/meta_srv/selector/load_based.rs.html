@@ -207,8 +207,8 @@
 
         <span class="prelude-val">Ok</span>(tuples
             .into_iter()
-            .map(|(stat_key, lease_val, <span class="kw">_</span>)| Peer {
-                id: stat_key.node_id,
+            .map(|(lease_key, lease_val, <span class="kw">_</span>)| Peer {
+                id: lease_key.node_id,
                 addr: lease_val.node_addr,
             })
             .collect())

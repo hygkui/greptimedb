@@ -343,6 +343,36 @@
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -380,6 +410,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::alive_keeper::RegionAliveKeeper;
 <span class="kw">use </span><span class="kw">crate</span>::config::DatanodeOptions;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MetaClientInitSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::event_listener::{RegionServerEvent, RegionServerEventReceiver};
 <span class="kw">use </span><span class="kw">crate</span>::region_server::RegionServer;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>handler;
@@ -481,7 +512,7 @@
     }
 
     <span class="doccomment">/// Start heartbeat task, spawn background task.
-    </span><span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>event_receiver: RegionServerEventReceiver) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>running = <span class="self">self</span>.running.clone();
         <span class="kw">if </span>running
             .compare_exchange(<span class="bool-val">false</span>, <span class="bool-val">true</span>, Ordering::AcqRel, Ordering::Acquire)
@@ -514,7 +545,38 @@
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
+        <span class="kw">let </span>self_peer = <span class="prelude-val">Some</span>(Peer {
+            id: node_id,
+            addr: addr.clone(),
+        });
         <span class="kw">let </span>epoch = <span class="self">self</span>.region_alive_keeper.epoch();
+
+        <span class="kw">let </span>keeper = <span class="self">self</span>.region_alive_keeper.clone();
+
+        common_runtime::spawn_bg(<span class="kw">async move </span>{
+            <span class="kw">loop </span>{
+                <span class="kw">if </span>!running.load(Ordering::Relaxed) {
+                    <span class="macro">info!</span>(<span class="string">&quot;shutdown heartbeat task&quot;</span>);
+                    <span class="kw">break</span>;
+                }
+
+                <span class="kw">match </span>event_receiver.<span class="number">0</span>.recv().<span class="kw">await </span>{
+                    <span class="prelude-val">Some</span>(RegionServerEvent::Registered(region_id)) =&gt; {
+                        keeper.register_region(region_id).<span class="kw">await</span>;
+                    }
+                    <span class="prelude-val">Some</span>(RegionServerEvent::Deregistered(region_id)) =&gt; {
+                        keeper.deregister_region(region_id).<span class="kw">await</span>;
+                    }
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="macro">info!</span>(<span class="string">&quot;region server event sender closed!&quot;</span>);
+                        <span class="kw">break</span>;
+                    }
+                }
+            }
+        });
+
+        <span class="kw">let </span>running = <span class="self">self</span>.running.clone();
+
         common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>sleep = tokio::time::sleep(Duration::from_millis(<span class="number">0</span>));
             <span class="macro">tokio::pin!</span>(sleep);
@@ -529,9 +591,8 @@
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(message) = message {
                             <span class="kw">match </span>outgoing_message_to_mailbox_message(message) {
                                 <span class="prelude-val">Ok</span>(message) =&gt; {
-                                    <span class="kw">let </span>peer = <span class="prelude-val">Some</span>(Peer { id: node_id, addr: addr.clone() });
                                     <span class="kw">let </span>req = HeartbeatRequest {
-                                        peer,
+                                        peer: self_peer.clone(),
                                         mailbox_message: <span class="prelude-val">Some</span>(message),
                                         ..Default::default()
                                     };
@@ -547,12 +608,11 @@
                         </span>}
                     }
                     <span class="kw">_ </span>= <span class="kw-2">&amp;mut </span>sleep =&gt; {
-                        <span class="kw">let </span>peer = <span class="prelude-val">Some</span>(Peer { id: node_id, addr: addr.clone() });
                         <span class="kw">let </span>region_stats = <span class="self">Self</span>::load_region_stats(<span class="kw-2">&amp;</span>region_server_clone).<span class="kw">await</span>;
                         <span class="kw">let </span>now = Instant::now();
                         <span class="kw">let </span>duration_since_epoch = (now - epoch).as_millis() <span class="kw">as </span>u64;
                         <span class="kw">let </span>req = HeartbeatRequest {
-                            peer,
+                            peer: self_peer.clone(),
                             region_stats,
                             duration_since_epoch,
                             node_epoch,

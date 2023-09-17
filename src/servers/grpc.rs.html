@@ -341,11 +341,11 @@
     </span>serve_state: Mutex&lt;<span class="prelude-ty">Option</span>&lt;Receiver&lt;<span class="prelude-ty">Result</span>&lt;()&gt;&gt;&gt;&gt;,
 
     <span class="comment">// handlers
-    </span><span class="doccomment">/// Handler for [GreptimeDatabase] service.
+    </span><span class="doccomment">/// Handler for [DatabaseService] service.
     </span>database_handler: <span class="prelude-ty">Option</span>&lt;GreptimeRequestHandler&gt;,
     <span class="doccomment">/// Handler for Prometheus-compatible PromQL queries ([PrometheusGateway]). Only present for frontend server.
     </span>prometheus_handler: <span class="prelude-ty">Option</span>&lt;PrometheusHandlerRef&gt;,
-    <span class="doccomment">/// Handler for [FlightService].
+    <span class="doccomment">/// Handler for [FlightService](arrow_flight::flight_service_server::FlightService).
     </span>flight_handler: <span class="prelude-ty">Option</span>&lt;FlightCraftRef&gt;,
     <span class="doccomment">/// Handler for [RegionServer].
     </span>region_server_handler: <span class="prelude-ty">Option</span>&lt;RegionServerRequestHandler&gt;,

@@ -204,6 +204,17 @@
 <a href="#204" id="204">204</a>
 <a href="#205" id="205">205</a>
 <a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -233,7 +244,10 @@
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{Error, IncompleteGrpcRequestSnafu, NotSupportedSnafu, PermissionSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    Error, IncompleteGrpcRequestSnafu, NotSupportedSnafu, PermissionSnafu, <span class="prelude-ty">Result</span>,
+    TableOperationSnafu,
+};
 <span class="kw">use </span><span class="kw">crate</span>::instance::Instance;
 
 <span class="attr">#[async_trait]
@@ -382,7 +396,8 @@
         <span class="self">self</span>.inserter
             .handle_column_inserts(requests, ctx, <span class="self">self</span>.statement_executor.as_ref())
             .<span class="kw">await
-    </span>}
+            </span>.context(TableOperationSnafu)
+    }
 
     <span class="kw">pub async fn </span>handle_row_inserts(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -392,22 +407,29 @@
         <span class="self">self</span>.inserter
             .handle_row_inserts(requests, ctx, <span class="self">self</span>.statement_executor.as_ref())
             .<span class="kw">await
-    </span>}
+            </span>.context(TableOperationSnafu)
+    }
 
     <span class="kw">pub async fn </span>handle_deletes(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         requests: DeleteRequests,
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="self">self</span>.deleter.handle_column_deletes(requests, ctx).<span class="kw">await
-    </span>}
+        <span class="self">self</span>.deleter
+            .handle_column_deletes(requests, ctx)
+            .<span class="kw">await
+            </span>.context(TableOperationSnafu)
+    }
 
     <span class="kw">pub async fn </span>handle_row_deletes(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         requests: RowDeleteRequests,
         ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="self">self</span>.deleter.handle_row_deletes(requests, ctx).<span class="kw">await
-    </span>}
+        <span class="self">self</span>.deleter
+            .handle_row_deletes(requests, ctx)
+            .<span class="kw">await
+            </span>.context(TableOperationSnafu)
+    }
 }
 </code></pre></div></section></main></body></html>

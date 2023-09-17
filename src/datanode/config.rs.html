@@ -617,7 +617,7 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>RegionManifestConfig {
     <span class="doccomment">/// Region manifest checkpoint actions margin.
-    /// Manifest service create a checkpoint every [checkpoint_margin] actions.
+    /// Manifest service create a checkpoint every `checkpoint_margin` actions.
     </span><span class="kw">pub </span>checkpoint_margin: <span class="prelude-ty">Option</span>&lt;u16&gt;,
     <span class="doccomment">/// Region manifest logs and checkpoints gc task execution duration.
     </span><span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
@@ -728,8 +728,8 @@
     <span class="kw">pub </span>rpc_hostname: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>rpc_runtime_size: usize,
     <span class="kw">pub </span>heartbeat: HeartbeatOptions,
-    <span class="kw">pub </span>http_opts: HttpOptions,
-    <span class="kw">pub </span>meta_client_options: <span class="prelude-ty">Option</span>&lt;MetaClientOptions&gt;,
+    <span class="kw">pub </span>http: HttpOptions,
+    <span class="kw">pub </span>meta_client: <span class="prelude-ty">Option</span>&lt;MetaClientOptions&gt;,
     <span class="kw">pub </span>wal: WalConfig,
     <span class="kw">pub </span>storage: StorageConfig,
     <span class="doccomment">/// Options for different store engines.
@@ -746,13 +746,13 @@
             rpc_addr: <span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(),
             rpc_hostname: <span class="prelude-val">None</span>,
             rpc_runtime_size: <span class="number">8</span>,
-            http_opts: HttpOptions::default(),
-            meta_client_options: <span class="prelude-val">None</span>,
+            http: HttpOptions::default(),
+            meta_client: <span class="prelude-val">None</span>,
             wal: WalConfig::default(),
             storage: StorageConfig::default(),
             region_engine: <span class="macro">vec!</span>[RegionEngineConfig::Mito(MitoConfig::default())],
             logging: LoggingOptions::default(),
-            heartbeat: HeartbeatOptions::default(),
+            heartbeat: HeartbeatOptions::datanode_default(),
             enable_telemetry: <span class="bool-val">true</span>,
         }
     }
@@ -760,7 +760,7 @@
 
 <span class="kw">impl </span>DatanodeOptions {
     <span class="kw">pub fn </span>env_list_keys() -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str]&gt; {
-        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;meta_client_options.metasrv_addrs&quot;</span>])
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;meta_client.metasrv_addrs&quot;</span>])
     }
 
     <span class="kw">pub fn </span>to_toml_string(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {

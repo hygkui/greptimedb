@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":["as_aggr_func_creator","print_caller","range_fn"],"derive":["AggrFuncTypeStore"],"mod":["aggr_func","print_caller","range_fn"]};

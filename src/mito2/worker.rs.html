@@ -868,7 +868,7 @@
             scheduler: <span class="self">self</span>.scheduler.clone(),
             write_buffer_manager: <span class="self">self</span>.write_buffer_manager,
             flush_scheduler: FlushScheduler::new(<span class="self">self</span>.scheduler.clone()),
-            compaction_scheduler: CompactionScheduler::new(<span class="self">self</span>.scheduler),
+            compaction_scheduler: CompactionScheduler::new(<span class="self">self</span>.scheduler, sender.clone()),
             stalled_requests: StalledRequests::default(),
             listener: <span class="self">self</span>.listener,
         };

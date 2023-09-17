@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"datanode":[["impl <a class=\"trait\" href=\"query/query_engine/trait.SqlStatementExecutor.html\" title=\"trait query::query_engine::SqlStatementExecutor\">SqlStatementExecutor</a> for <a class=\"struct\" href=\"datanode/struct.Instance.html\" title=\"struct datanode::Instance\">Instance</a>"]]
+"datanode":[["impl SqlStatementExecutor for <a class=\"struct\" href=\"datanode/struct.Instance.html\" title=\"struct datanode::Instance\">Instance</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

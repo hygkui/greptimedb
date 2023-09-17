@@ -153,6 +153,8 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -258,8 +260,10 @@
                 <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
                     timestamp_millis: time_util::current_time_millis(),
                     cluster_id: header.cluster_id,
-                    id: peer.id,
-                    addr: peer.addr,
+                    <span class="comment">// datanode id
+                    </span>id: peer.id,
+                    <span class="comment">// datanode address
+                    </span>addr: peer.addr,
                     rcus: region_stats.iter().map(|s| s.rcus).sum(),
                     wcus: region_stats.iter().map(|s| s.wcus).sum(),
                     region_num: region_stats.len() <span class="kw">as </span>u64,

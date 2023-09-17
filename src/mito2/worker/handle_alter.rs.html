@@ -135,6 +135,9 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -192,7 +195,10 @@
 
             <span class="comment">// Try to submit a flush task.
             </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Alter);
-            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.flush_scheduler.schedule_flush(<span class="kw-2">&amp;</span>region, task) {
+            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
+                <span class="self">self</span>.flush_scheduler
+                    .schedule_flush(region.region_id, <span class="kw-2">&amp;</span>region.version_control, task)
+            {
                 <span class="comment">// Unable to flush the region, send error to waiter.
                 </span>sender.send(<span class="prelude-val">Err</span>(e));
                 <span class="kw">return</span>;

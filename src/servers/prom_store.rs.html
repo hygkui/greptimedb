@@ -973,7 +973,7 @@
 }
 
 <span class="doccomment">/// Collect each row&#39;s timeseries id
-/// This processing is ugly, hope https://github.com/GreptimeTeam/greptimedb/issues/336 making some progress in future.
+/// This processing is ugly, hope &lt;https://github.com/GreptimeTeam/greptimedb/issues/336&gt; making some progress in future.
 </span><span class="kw">fn </span>collect_timeseries_ids(table_name: <span class="kw-2">&amp;</span>str, recordbatch: <span class="kw-2">&amp;</span>RecordBatch) -&gt; Vec&lt;TimeSeriesId&gt; {
     <span class="kw">let </span>row_count = recordbatch.num_rows();
     <span class="kw">let </span><span class="kw-2">mut </span>timeseries_ids = Vec::with_capacity(row_count);

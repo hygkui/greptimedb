@@ -507,6 +507,9 @@
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
 <a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -526,7 +529,7 @@
 <span class="kw">use </span>api::v1::alter_expr::Kind;
 <span class="kw">use </span>api::v1::region::{
     alter_request, region_request, AddColumn, AddColumns, AlterRequest, DropColumn, DropColumns,
-    RegionColumnDef, RegionRequest,
+    RegionColumnDef, RegionRequest, RegionRequestHeader,
 };
 <span class="kw">use </span>api::v1::{AlterExpr, RenameTable};
 <span class="kw">use </span>async_trait::async_trait;
@@ -710,7 +713,10 @@
                     <span class="kw">let </span>region_id = RegionId::new(table_id, region);
                     <span class="kw">let </span>request = <span class="self">self</span>.create_alter_region_request(region_id)<span class="question-mark">?</span>;
                     <span class="kw">let </span>request = RegionRequest {
-                        header: <span class="prelude-val">None</span>,
+                        header: <span class="prelude-val">Some</span>(RegionRequestHeader {
+                            trace_id: common_telemetry::trace_id().unwrap_or_default(),
+                            ..Default::default()
+                        }),
                         body: <span class="prelude-val">Some</span>(region_request::Body::Alter(request)),
                     };
                     <span class="macro">debug!</span>(<span class="string">&quot;Submitting {request:?} to {datanode}&quot;</span>);

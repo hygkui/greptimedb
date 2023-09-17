@@ -475,15 +475,15 @@
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
-            opts.http_opts.addr = http_addr.clone();
+            opts.http.addr = http_addr.clone();
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_timeout) = <span class="self">self</span>.http_timeout {
-            opts.http_opts.timeout = Duration::from_secs(http_timeout);
+            opts.http.timeout = Duration::from_secs(http_timeout);
         }
 
         <span class="comment">// Disable dashboard in metasrv.
-        </span>opts.http_opts.disable_dashboard = <span class="bool-val">true</span>;
+        </span>opts.http.disable_dashboard = <span class="bool-val">true</span>;
 
         <span class="prelude-val">Ok</span>(Options::Metasrv(Box::new(opts)))
     }
@@ -596,7 +596,7 @@
             selector = &quot;LeaseBased&quot;
             use_memory_store = false
 
-            [http_options]
+            [http]
             addr = &quot;127.0.0.1:4000&quot;
 
             [logging]
@@ -619,10 +619,10 @@
                     <span class="prelude-val">Some</span>(<span class="string">&quot;127.0.0.1:13002&quot;</span>),
                 ),
                 (
-                    <span class="comment">// http_options.addr = 127.0.0.1:24000
+                    <span class="comment">// http.addr = 127.0.0.1:24000
                     </span>[
                         env_prefix.to_string(),
-                        <span class="string">&quot;http_options&quot;</span>.to_uppercase(),
+                        <span class="string">&quot;http&quot;</span>.to_uppercase(),
                         <span class="string">&quot;addr&quot;</span>.to_uppercase(),
                     ]
                     .join(ENV_VAR_SEP),
@@ -650,7 +650,7 @@
                 </span><span class="macro">assert_eq!</span>(opts.server_addr, <span class="string">&quot;127.0.0.1:3002&quot;</span>);
 
                 <span class="comment">// Should be read from cli, cli &gt; config file &gt; env &gt; default values.
-                </span><span class="macro">assert_eq!</span>(opts.http_opts.addr, <span class="string">&quot;127.0.0.1:14000&quot;</span>);
+                </span><span class="macro">assert_eq!</span>(opts.http.addr, <span class="string">&quot;127.0.0.1:14000&quot;</span>);
 
                 <span class="comment">// Should be default value.
                 </span><span class="macro">assert_eq!</span>(opts.store_addr, <span class="string">&quot;127.0.0.1:2379&quot;</span>);

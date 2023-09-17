@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["compaction_strategy_to_picker"],"mod":["output","picker","twcs"],"struct":["CompactionRequest","CompactionScheduler"]};
+window.SIDEBAR_ITEMS = {"fn":["compaction_strategy_to_picker"],"mod":["output","picker","twcs"],"struct":["CompactionRequest","CompactionScheduler","CompactionStatus","PendingCompaction"]};

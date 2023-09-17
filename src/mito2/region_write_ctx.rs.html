@@ -300,7 +300,7 @@
         }
     }
 
-    <span class="doccomment">/// Push [SenderWriteRequest] to the context.
+    <span class="doccomment">/// Push mutation to the context.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>push_mutation(<span class="kw-2">&amp;mut </span><span class="self">self</span>, op_type: i32, rows: <span class="prelude-ty">Option</span>&lt;Rows&gt;, tx: OptionOutputTx) {
         <span class="kw">let </span>num_rows = rows.as_ref().map(|rows| rows.rows.len()).unwrap_or(<span class="number">0</span>);
         <span class="self">self</span>.wal_entry.mutations.push(Mutation {

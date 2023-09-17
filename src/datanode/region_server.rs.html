@@ -481,6 +481,24 @@
 <a href="#481" id="481">481</a>
 <a href="#482" id="482">482</a>
 <a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -542,6 +560,7 @@
     GetRegionMetadataSnafu, HandleRegionRequestSnafu, RegionEngineNotFoundSnafu,
     RegionNotFoundSnafu, <span class="prelude-ty">Result</span>, StopRegionEngineSnafu, UnsupportedOutputSnafu,
 };
+<span class="kw">use </span><span class="kw">crate</span>::event_listener::RegionServerEventListenerRef;
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>RegionServer {
@@ -549,9 +568,17 @@
 }
 
 <span class="kw">impl </span>RegionServer {
-    <span class="kw">pub fn </span>new(query_engine: QueryEngineRef, runtime: Arc&lt;Runtime&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(
+        query_engine: QueryEngineRef,
+        runtime: Arc&lt;Runtime&gt;,
+        event_listener: RegionServerEventListenerRef,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            inner: Arc::new(RegionServerInner::new(query_engine, runtime)),
+            inner: Arc::new(RegionServerInner::new(
+                query_engine,
+                runtime,
+                event_listener,
+            )),
         }
     }
 
@@ -609,23 +636,19 @@
             .context(ExecuteGrpcRequestSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>join_tasks = requests.into_iter().map(|(region_id, req)| {
             <span class="kw">let </span>self_to_move = <span class="self">self</span>.clone();
-            <span class="self">self</span>.inner
-                .runtime
-                .spawn(<span class="kw">async move </span>{ self_to_move.handle_request(region_id, req).<span class="kw">await </span>})
+            <span class="kw">async move </span>{ self_to_move.handle_request(region_id, req).<span class="kw">await </span>}
         });
 
         <span class="kw">let </span>results = try_join_all(join_tasks)
             .<span class="kw">await
-            </span>.context(servers_error::JoinTaskSnafu)<span class="question-mark">?</span>;
+            </span>.map_err(BoxedError::new)
+            .context(ExecuteGrpcRequestSnafu)<span class="question-mark">?</span>;
 
         <span class="comment">// merge results by simply sum up affected rows.
         // only insert/delete will have multiple results.
         </span><span class="kw">let </span><span class="kw-2">mut </span>affected_rows = <span class="number">0</span>;
         <span class="kw">for </span>result <span class="kw">in </span>results {
-            <span class="kw">match </span>result
-                .map_err(BoxedError::new)
-                .context(ExecuteGrpcRequestSnafu)<span class="question-mark">?
-            </span>{
+            <span class="kw">match </span>result {
                 Output::AffectedRows(rows) =&gt; affected_rows += rows,
                 Output::Stream(<span class="kw">_</span>) | Output::RecordBatches(<span class="kw">_</span>) =&gt; {
                     <span class="comment">// TODO: change the output type to only contains `affected_rows`
@@ -655,10 +678,15 @@
         <span class="kw">let </span>ticket = request.into_inner().ticket;
         <span class="kw">let </span>request = QueryRequest::decode(ticket.as_ref())
             .context(servers_error::InvalidFlightTicketSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>trace_id = request
+            .header
+            .as_ref()
+            .map(|h| h.trace_id)
+            .unwrap_or_default();
 
         <span class="kw">let </span>result = <span class="self">self</span>.handle_read(request).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>stream = Box::pin(FlightRecordBatchStream::new(result));
+        <span class="kw">let </span>stream = Box::pin(FlightRecordBatchStream::new(result, trace_id));
         <span class="prelude-val">Ok</span>(Response::new(stream))
     }
 }
@@ -668,15 +696,21 @@
     region_map: DashMap&lt;RegionId, RegionEngineRef&gt;,
     query_engine: QueryEngineRef,
     runtime: Arc&lt;Runtime&gt;,
+    event_listener: RegionServerEventListenerRef,
 }
 
 <span class="kw">impl </span>RegionServerInner {
-    <span class="kw">pub fn </span>new(query_engine: QueryEngineRef, runtime: Arc&lt;Runtime&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(
+        query_engine: QueryEngineRef,
+        runtime: Arc&lt;Runtime&gt;,
+        event_listener: RegionServerEventListenerRef,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             engines: RwLock::new(HashMap::new()),
             region_map: DashMap::new(),
             query_engine,
             runtime,
+            event_listener,
         }
     }
 
@@ -734,12 +768,14 @@
             RegionChange::Register(<span class="kw">_</span>) =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;Region {region_id} is registered to engine {engine_type}&quot;</span>);
                 <span class="self">self</span>.region_map.insert(region_id, engine);
+                <span class="self">self</span>.event_listener.on_region_registered(region_id);
             }
             RegionChange::Deregisters =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;Region {region_id} is deregistered from engine {engine_type}&quot;</span>);
                 <span class="self">self</span>.region_map
                     .remove(<span class="kw-2">&amp;</span>region_id)
                     .map(|(id, engine)| engine.set_writable(id, <span class="bool-val">false</span>));
+                <span class="self">self</span>.event_listener.on_region_deregistered(region_id);
             }
         }
 

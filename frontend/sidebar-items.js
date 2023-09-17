@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MAX_VALUE"],"mod":["delete","error","expr_factory","frontend","heartbeat","insert","instance","metrics","region_req_factory","req_convert","script","server","service_config","statement","table"]};
+window.SIDEBAR_ITEMS = {"mod":["error","frontend","heartbeat","instance","metrics","script","server","service_config"]};

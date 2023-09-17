@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["HeartbeatOptions"]};
+window.SIDEBAR_ITEMS = {"constant":["HEARTBEAT_INTERVAL_MILLIS"],"struct":["HeartbeatOptions"]};

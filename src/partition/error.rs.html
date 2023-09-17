@@ -154,25 +154,6 @@
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -251,17 +232,6 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to read column {}, could not create default value, source: {}&quot;</span>,
-        column,
-        source
-    ))]
-    </span>CreateDefaultToRead {
-        column: String,
-        location: Location,
-        source: datatypes::error::Error,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;The column &#39;{}&#39; does not have a default value.&quot;</span>, column))]
     </span>MissingDefaultValue { column: String },
 
@@ -278,12 +248,6 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find regions by filters: {:?}&quot;</span>, filters))]
     </span>FindRegions {
         filters: Vec&lt;Expr&gt;,
-        location: Location,
-    },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find partition column: {}&quot;</span>, column_name))]
-    </span>FindPartitionColumn {
-        column_name: String,
         location: Location,
     },
 
@@ -330,13 +294,11 @@
             | Error::FindRegions { .. }
             | Error::RegionKeysSize { .. }
             | Error::InvalidInsertRequest { .. }
-            | Error::InvalidDeleteRequest { .. }
-            | Error::FindPartitionColumn { .. } =&gt; StatusCode::InvalidArguments,
+            | Error::InvalidDeleteRequest { .. } =&gt; StatusCode::InvalidArguments,
             Error::SerializeJson { .. } | Error::DeserializeJson { .. } =&gt; StatusCode::Internal,
             Error::InvalidTableRouteData { .. } =&gt; StatusCode::Internal,
             Error::ConvertScalarValue { .. } =&gt; StatusCode::Internal,
             Error::FindDatanode { .. } =&gt; StatusCode::InvalidArguments,
-            Error::CreateDefaultToRead { source, .. } =&gt; source.status_code(),
             Error::TableRouteManager { source, .. } =&gt; source.status_code(),
             Error::MissingDefaultValue { .. } =&gt; StatusCode::Internal,
         }

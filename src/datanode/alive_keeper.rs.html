@@ -510,9 +510,9 @@
 
 <span class="kw">const </span>MAX_CLOSE_RETRY_TIMES: usize = <span class="number">10</span>;
 
-<span class="doccomment">/// [RegionAliveKeeper] manages all [CountdownTaskHandle]s.
+<span class="doccomment">/// [RegionAliveKeeper] manages all `CountdownTaskHandles`.
 ///
-/// [RegionAliveKeeper] starts a [CountdownTask] for each region. When deadline is reached,
+/// [RegionAliveKeeper] starts a `CountdownTask` for each region. When deadline is reached,
 /// the region will be closed.
 ///
 /// The deadline is controlled by Metasrv. It works like &quot;lease&quot; for regions: a Datanode submits its
@@ -528,7 +528,7 @@
     heartbeat_interval_millis: u64,
     started: AtomicBool,
 
-    <span class="doccomment">/// The epoch when [RegionAliveKeepers] is created. It&#39;s used to get a monotonically non-decreasing
+    <span class="doccomment">/// The epoch when [RegionAliveKeeper] is created. It&#39;s used to get a monotonically non-decreasing
     /// elapsed time when submitting heartbeats to Metasrv (because [Instant] is monotonically
     /// non-decreasing). The heartbeat request will carry the duration since this epoch, and the
     /// duration acts like an &quot;invariant point&quot; for region&#39;s keep alive lease.

@@ -529,37 +529,6 @@
 <a href="#529" id="529">529</a>
 <a href="#530" id="530">530</a>
 <a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
-<a href="#555" id="555">555</a>
-<a href="#556" id="556">556</a>
-<a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-<a href="#560" id="560">560</a>
-<a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -667,12 +636,6 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid metadata, {}, location: {}&quot;</span>, reason, location))]
     </span>InvalidMeta { reason: String, location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid schema, source: {}, location: {}&quot;</span>, source, location))]
-    </span>InvalidSchema {
-        source: datatypes::error::Error,
-        location: Location,
-    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid region metadata, source: {}, location: {}&quot;</span>, source, location))]
     </span>InvalidMetadata {
@@ -832,18 +795,6 @@
     </span><span class="attr">#[snafu(display(<span class="string">&quot;Failed to write region, source: {}&quot;</span>, source))]
     </span>WriteGroup { source: Arc&lt;Error&gt; },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Row length mismatch, expect: {}, actual: {}, location: {}&quot;</span>,
-        expect,
-        actual,
-        location
-    ))]
-    </span>RowLengthMismatch {
-        expect: usize,
-        actual: usize,
-        location: Location,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Row value mismatches field data type&quot;</span>))]
     </span>FieldTypeMismatch { source: datatypes::error::Error },
 
@@ -982,8 +933,8 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Region {} is truncating, location: {}&quot;</span>, region_id, location))]
-    </span>RegionTruncating {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Region {} is truncated, location: {}&quot;</span>, region_id, location))]
+    </span>RegionTruncated {
         region_id: RegionId,
         location: Location,
     },
@@ -995,16 +946,6 @@
     ))]
     </span>RejectWrite {
         region_id: RegionId,
-        location: Location,
-    },
-
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to build time range predicate for compaction, location: {}, source: {}&quot;</span>,
-        location,
-        source
-    ))]
-    </span>BuildCompactionPredicate {
-        source: table::error::Error,
         location: Location,
     },
 
@@ -1077,7 +1018,6 @@
             RegionExists { .. } =&gt; StatusCode::RegionAlreadyExists,
             InvalidScanIndex { .. }
             | InvalidMeta { .. }
-            | InvalidSchema { .. }
             | InvalidRequest { .. }
             | FillDefault { .. }
             | InvalidMetadata { .. } =&gt; StatusCode::InvalidArguments,
@@ -1089,7 +1029,6 @@
             | DecodeWal { .. } =&gt; StatusCode::Internal,
             WriteBuffer { source, .. } =&gt; source.status_code(),
             WriteGroup { source, .. } =&gt; source.status_code(),
-            RowLengthMismatch { .. } =&gt; StatusCode::InvalidArguments,
             FieldTypeMismatch { source, .. } =&gt; source.status_code(),
             SerializeField { .. } =&gt; StatusCode::Internal,
             NotSupportedField { .. } =&gt; StatusCode::Unsupported,
@@ -1108,8 +1047,7 @@
             FlushRegion { source, .. } =&gt; source.status_code(),
             RegionDropped { .. } =&gt; StatusCode::Cancelled,
             RegionClosed { .. } =&gt; StatusCode::Cancelled,
-            RegionTruncating { .. } =&gt; StatusCode::Cancelled,
-            BuildCompactionPredicate { .. } =&gt; StatusCode::Internal,
+            RegionTruncated { .. } =&gt; StatusCode::Cancelled,
             RejectWrite { .. } =&gt; StatusCode::StorageUnavailable,
             CompactRegion { source, .. } =&gt; source.status_code(),
             CompatReader { .. } =&gt; StatusCode::Unexpected,

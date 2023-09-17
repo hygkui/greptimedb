@@ -588,7 +588,7 @@
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(metasrv_addrs) = <span class="kw-2">&amp;</span><span class="self">self</span>.metasrv_addr {
-            opts.meta_client_options
+            opts.meta_client
                 .get_or_insert_with(MetaClientOptions::default)
                 .metasrv_addrs = metasrv_addrs.clone();
             opts.mode = Mode::Distributed;
@@ -606,15 +606,15 @@
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
-            opts.http_opts.addr = http_addr.clone();
+            opts.http.addr = http_addr.clone();
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(http_timeout) = <span class="self">self</span>.http_timeout {
-            opts.http_opts.timeout = Duration::from_secs(http_timeout)
+            opts.http.timeout = Duration::from_secs(http_timeout)
         }
 
         <span class="comment">// Disable dashboard in datanode.
-        </span>opts.http_opts.disable_dashboard = <span class="bool-val">true</span>;
+        </span>opts.http.disable_dashboard = <span class="bool-val">true</span>;
 
         <span class="prelude-val">Ok</span>(Options::Datanode(Box::new(opts)))
     }
@@ -656,7 +656,7 @@
             rpc_hostname = &quot;127.0.0.1&quot;
             rpc_runtime_size = 8
 
-            [meta_client_options]
+            [meta_client]
             metasrv_addrs = [&quot;127.0.0.1:3002&quot;]
             timeout_millis = 3000
             connect_timeout_millis = 5000
@@ -715,7 +715,7 @@
             connect_timeout_millis,
             tcp_nodelay,
             ddl_timeout_millis,
-        } = options.meta_client_options.unwrap();
+        } = options.meta_client.unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()], metasrv_addr);
         <span class="macro">assert_eq!</span>(<span class="number">5000</span>, connect_timeout_millis);
@@ -813,7 +813,7 @@
             rpc_hostname = &quot;127.0.0.1&quot;
             rpc_runtime_size = 8
 
-            [meta_client_options]
+            [meta_client]
             timeout_millis = 3000
             connect_timeout_millis = 5000
             tcp_nodelay = true
@@ -866,10 +866,10 @@
                     <span class="prelude-val">Some</span>(<span class="string">&quot;99&quot;</span>),
                 ),
                 (
-                    <span class="comment">// meta_client_options.metasrv_addrs = 127.0.0.1:3001,127.0.0.1:3002,127.0.0.1:3003
+                    <span class="comment">// meta_client.metasrv_addrs = 127.0.0.1:3001,127.0.0.1:3002,127.0.0.1:3003
                     </span>[
                         env_prefix.to_string(),
-                        <span class="string">&quot;meta_client_options&quot;</span>.to_uppercase(),
+                        <span class="string">&quot;meta_client&quot;</span>.to_uppercase(),
                         <span class="string">&quot;metasrv_addrs&quot;</span>.to_uppercase(),
                     ]
                     .join(ENV_VAR_SEP),
@@ -895,7 +895,7 @@
                     <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">9</span>))
                 );
                 <span class="macro">assert_eq!</span>(
-                    opts.meta_client_options.unwrap().metasrv_addrs,
+                    opts.meta_client.unwrap().metasrv_addrs,
                     <span class="macro">vec!</span>[
                         <span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(),
                         <span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string(),

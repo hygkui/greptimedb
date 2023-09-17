@@ -657,6 +657,45 @@
 <a href="#657" id="657">657</a>
 <a href="#658" id="658">658</a>
 <a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -685,12 +724,11 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    Error, FlushRegionSnafu, RegionClosedSnafu, RegionDroppedSnafu, RegionTruncatingSnafu, <span class="prelude-ty">Result</span>,
+    Error, FlushRegionSnafu, RegionClosedSnafu, RegionDroppedSnafu, RegionTruncatedSnafu, <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
 <span class="kw">use </span><span class="kw">crate</span>::read::Source;
-<span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlData, VersionRef};
-<span class="kw">use </span><span class="kw">crate</span>::region::MitoRegionRef;
+<span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlData, VersionControlRef, VersionRef};
 <span class="kw">use </span><span class="kw">crate</span>::request::{
     BackgroundNotify, FlushFailed, FlushFinished, OptionOutputTx, OutputTx, SenderDdlRequest,
     SenderWriteRequest, WorkerRequest,
@@ -877,10 +915,10 @@
     <span class="doccomment">/// Converts the flush task into a background job.
     ///
     /// We must call this in the region worker.
-    </span><span class="kw">fn </span>into_flush_job(<span class="kw-2">mut </span><span class="self">self</span>, region: <span class="kw-2">&amp;</span>MitoRegionRef) -&gt; Job {
+    </span><span class="kw">fn </span>into_flush_job(<span class="kw-2">mut </span><span class="self">self</span>, version_control: <span class="kw-2">&amp;</span>VersionControlRef) -&gt; Job {
         <span class="comment">// Get a version of this region before creating a job to get current
         // wal entry id, sequence and immutable memtables.
-        </span><span class="kw">let </span>version_data = region.version_control.current();
+        </span><span class="kw">let </span>version_data = version_control.current();
 
         Box::pin(<span class="kw">async move </span>{
             <span class="self">self</span>.do_flush(version_data).<span class="kw">await</span>;
@@ -1012,14 +1050,15 @@
     <span class="doccomment">/// Schedules a flush `task` for specific `region`.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>schedule_flush(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        region: <span class="kw-2">&amp;</span>MitoRegionRef,
+        region_id: RegionId,
+        version_control: <span class="kw-2">&amp;</span>VersionControlRef,
         task: RegionFlushTask,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">debug_assert_eq!</span>(region.region_id, task.region_id);
+        <span class="macro">debug_assert_eq!</span>(region_id, task.region_id);
 
-        <span class="kw">let </span>version = region.version_control.current().version;
+        <span class="kw">let </span>version = version_control.current().version;
         <span class="kw">if </span>version.memtables.mutable.is_empty() &amp;&amp; version.memtables.immutables().is_empty() {
-            <span class="macro">debug_assert!</span>(!<span class="self">self</span>.region_status.contains_key(<span class="kw-2">&amp;</span>region.region_id));
+            <span class="macro">debug_assert!</span>(!<span class="self">self</span>.region_status.contains_key(<span class="kw-2">&amp;</span>region_id));
             <span class="comment">// The region has nothing to flush.
             </span>task.on_success();
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
@@ -1028,8 +1067,8 @@
         <span class="comment">// Add this region to status map.
         </span><span class="kw">let </span>flush_status = <span class="self">self
             </span>.region_status
-            .entry(region.region_id)
-            .or_insert_with(|| FlushStatus::new(region.clone()));
+            .entry(region_id)
+            .or_insert_with(|| FlushStatus::new(region_id, version_control.clone()));
         <span class="comment">// Checks whether we can flush the region now.
         </span><span class="kw">if </span>flush_status.flushing {
             <span class="comment">// There is already a flush job running.
@@ -1037,25 +1076,24 @@
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
 
-        <span class="comment">// If there are pending tasks, then we should push it to pending list.
+        <span class="comment">// TODO(yingwen): We can merge with pending and execute directly.
+        // If there are pending tasks, then we should push it to pending list.
         </span><span class="kw">if </span>flush_status.pending_task.is_some() {
             flush_status.merge_task(task);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
 
         <span class="comment">// Now we can flush the region directly.
-        </span>region
-            .version_control
-            .freeze_mutable(<span class="kw-2">&amp;</span>task.memtable_builder);
+        </span>version_control.freeze_mutable(<span class="kw-2">&amp;</span>task.memtable_builder);
         <span class="comment">// Submit a flush job.
-        </span><span class="kw">let </span>job = task.into_flush_job(region);
+        </span><span class="kw">let </span>job = task.into_flush_job(version_control);
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.scheduler.schedule(job) {
             <span class="comment">// If scheduler returns error, senders in the job will be dropped and waiters
             // can get recv errors.
-            </span><span class="macro">error!</span>(e; <span class="string">&quot;Failed to schedule flush job for region {}&quot;</span>, region.region_id);
+            </span><span class="macro">error!</span>(e; <span class="string">&quot;Failed to schedule flush job for region {}&quot;</span>, region_id);
 
             <span class="comment">// Remove from region status if we can&#39;t submit the task.
-            </span><span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region.region_id);
+            </span><span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region_id);
             <span class="kw">return </span><span class="prelude-val">Err</span>(e);
         }
         flush_status.flushing = <span class="bool-val">true</span>;
@@ -1094,7 +1132,7 @@
         pending_requests
     }
 
-    <span class="doccomment">/// Notifies the scheduler that the flush job is finished.
+    <span class="doccomment">/// Notifies the scheduler that the flush job is failed.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_flush_failed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId, err: Arc&lt;Error&gt;) {
         <span class="macro">error!</span>(err; <span class="string">&quot;Region {} failed to flush, cancel all pending tasks&quot;</span>, region_id);
 
@@ -1125,15 +1163,15 @@
         <span class="self">self</span>.remove_region_on_failure(region_id, Arc::new(RegionClosedSnafu { region_id }.build()));
     }
 
-    <span class="doccomment">/// Notifies the scheduler that the region is truncating.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_region_truncating(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) {
+    <span class="doccomment">/// Notifies the scheduler that the region is truncated.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_region_truncated(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId) {
         <span class="self">self</span>.remove_region_on_failure(
             region_id,
-            Arc::new(RegionTruncatingSnafu { region_id }.build()),
+            Arc::new(RegionTruncatedSnafu { region_id }.build()),
         );
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>remove_region_on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId, err: Arc&lt;Error&gt;) {
+    <span class="kw">fn </span>remove_region_on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId, err: Arc&lt;Error&gt;) {
         <span class="comment">// Remove this region.
         </span><span class="kw">let </span><span class="prelude-val">Some</span>(flush_status) = <span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region_id) <span class="kw">else </span>{
             <span class="kw">return</span>;
@@ -1177,7 +1215,7 @@
         <span class="macro">debug_assert!</span>(<span class="self">self
             </span>.region_status
             .values()
-            .all(|status| !status.flushing &amp;&amp; status.pending_task.is_some()));
+            .all(|status| status.flushing || status.pending_task.is_some()));
 
         <span class="comment">// Get the first region from status map.
         </span><span class="kw">let </span><span class="prelude-val">Some</span>(flush_status) = <span class="self">self
@@ -1189,9 +1227,10 @@
         };
         <span class="macro">debug_assert!</span>(!flush_status.flushing);
         <span class="kw">let </span>task = flush_status.pending_task.take().unwrap();
-        <span class="kw">let </span>region = flush_status.region.clone();
+        <span class="kw">let </span>region_id = flush_status.region_id;
+        <span class="kw">let </span>version_control = flush_status.version_control.clone();
 
-        <span class="self">self</span>.schedule_flush(<span class="kw-2">&amp;</span>region, task)
+        <span class="self">self</span>.schedule_flush(region_id, <span class="kw-2">&amp;</span>version_control, task)
     }
 }
 
@@ -1209,8 +1248,13 @@
 /// Tracks running and pending flush tasks and all pending requests of a region.
 </span><span class="kw">struct </span>FlushStatus {
     <span class="doccomment">/// Current region.
-    </span>region: MitoRegionRef,
+    </span>region_id: RegionId,
+    <span class="doccomment">/// Version control of the region.
+    </span>version_control: VersionControlRef,
     <span class="doccomment">/// There is a flush task running.
+    ///
+    /// It is possible that a region is not flushing but has pending task if the scheduler
+    /// doesn&#39;t schedules this region.
     </span>flushing: bool,
     <span class="doccomment">/// Task waiting for next flush.
     </span>pending_task: <span class="prelude-ty">Option</span>&lt;RegionFlushTask&gt;,
@@ -1221,9 +1265,10 @@
 }
 
 <span class="kw">impl </span>FlushStatus {
-    <span class="kw">fn </span>new(region: MitoRegionRef) -&gt; FlushStatus {
+    <span class="kw">fn </span>new(region_id: RegionId, version_control: VersionControlRef) -&gt; FlushStatus {
         FlushStatus {
-            region,
+            region_id,
+            version_control,
             flushing: <span class="bool-val">false</span>,
             pending_task: <span class="prelude-val">None</span>,
             pending_ddls: Vec::new(),
@@ -1246,14 +1291,14 @@
         }
         <span class="kw">for </span>ddl <span class="kw">in </span><span class="self">self</span>.pending_ddls {
             ddl.sender.send(<span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
-                region_id: <span class="self">self</span>.region.region_id,
+                region_id: <span class="self">self</span>.region_id,
             }));
         }
         <span class="kw">for </span>write_req <span class="kw">in </span><span class="self">self</span>.pending_writes {
             write_req
                 .sender
                 .send(<span class="prelude-val">Err</span>(err.clone()).context(FlushRegionSnafu {
-                    region_id: <span class="self">self</span>.region.region_id,
+                    region_id: <span class="self">self</span>.region_id,
                 }));
         }
     }
@@ -1261,7 +1306,11 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>tokio::sync::oneshot;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::test_util::scheduler_util::SchedulerEnv;
+    <span class="kw">use </span><span class="kw">crate</span>::test_util::version_util::VersionControlBuilder;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_get_mutable_limit() {
@@ -1314,6 +1363,35 @@
         <span class="macro">assert!</span>(manager.should_flush_engine());
         manager.reserve_mem(<span class="number">100</span>);
         <span class="macro">assert!</span>(manager.should_flush_engine());
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_schedule_empty() {
+        <span class="kw">let </span>env = SchedulerEnv::new();
+        <span class="kw">let </span>(tx, _rx) = mpsc::channel(<span class="number">4</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>scheduler = env.mock_flush_scheduler();
+        <span class="kw">let </span>builder = VersionControlBuilder::new();
+
+        <span class="kw">let </span>version_control = Arc::new(builder.build());
+        <span class="kw">let </span>(output_tx, output_rx) = oneshot::channel();
+        <span class="kw">let </span><span class="kw-2">mut </span>task = RegionFlushTask {
+            region_id: builder.region_id(),
+            reason: FlushReason::Others,
+            senders: Vec::new(),
+            request_sender: tx,
+            access_layer: env.access_layer.clone(),
+            memtable_builder: builder.memtable_builder(),
+            file_purger: builder.file_purger(),
+            listener: WorkerListener::default(),
+        };
+        task.push_sender(OptionOutputTx::from(output_tx));
+        scheduler
+            .schedule_flush(builder.region_id(), <span class="kw-2">&amp;</span>version_control, task)
+            .unwrap();
+        <span class="macro">assert!</span>(scheduler.region_status.is_empty());
+        <span class="kw">let </span>output = output_rx.<span class="kw">await</span>.unwrap().unwrap();
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(output, Output::AffectedRows(<span class="number">0</span>)));
+        <span class="macro">assert!</span>(scheduler.region_status.is_empty());
     }
 }
 </code></pre></div></section></main></body></html>

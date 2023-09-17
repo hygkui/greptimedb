@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {};
+window.SIDEBAR_ITEMS = {"mod":["delete","error","expr_factory","insert","metrics","region_req_factory","req_convert","statement","table"]};

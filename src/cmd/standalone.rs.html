@@ -712,14 +712,14 @@
     <span class="kw">fn </span>frontend_options(<span class="self">self</span>) -&gt; FrontendOptions {
         FrontendOptions {
             mode: <span class="self">self</span>.mode,
-            http_options: <span class="self">self</span>.http_options,
-            grpc_options: <span class="self">self</span>.grpc_options,
-            mysql_options: <span class="self">self</span>.mysql_options,
-            postgres_options: <span class="self">self</span>.postgres_options,
-            opentsdb_options: <span class="self">self</span>.opentsdb_options,
-            influxdb_options: <span class="self">self</span>.influxdb_options,
-            prom_store_options: <span class="self">self</span>.prom_store_options,
-            meta_client_options: <span class="prelude-val">None</span>,
+            http: <span class="self">self</span>.http_options,
+            grpc: <span class="self">self</span>.grpc_options,
+            mysql: <span class="self">self</span>.mysql_options,
+            postgres: <span class="self">self</span>.postgres_options,
+            opentsdb: <span class="self">self</span>.opentsdb_options,
+            influxdb: <span class="self">self</span>.influxdb_options,
+            prom_store: <span class="self">self</span>.prom_store_options,
+            meta_client: <span class="prelude-val">None</span>,
             logging: <span class="self">self</span>.logging,
             ..Default::default()
         }
@@ -1048,15 +1048,15 @@
         <span class="kw">let </span>dn_opts = options.dn_opts;
         <span class="kw">let </span>logging_opts = options.logging_opts;
         <span class="macro">assert_eq!</span>(Mode::Standalone, fe_opts.mode);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4000&quot;</span>.to_string(), fe_opts.http_options.addr);
-        <span class="macro">assert_eq!</span>(Duration::from_secs(<span class="number">30</span>), fe_opts.http_options.timeout);
-        <span class="macro">assert_eq!</span>(ReadableSize::mb(<span class="number">128</span>), fe_opts.http_options.body_limit);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4001&quot;</span>.to_string(), fe_opts.grpc_options.addr);
-        <span class="macro">assert!</span>(fe_opts.mysql_options.enable);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4002&quot;</span>, fe_opts.mysql_options.addr);
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, fe_opts.mysql_options.runtime_size);
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, fe_opts.mysql_options.reject_no_database);
-        <span class="macro">assert!</span>(fe_opts.influxdb_options.enable);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4000&quot;</span>.to_string(), fe_opts.http.addr);
+        <span class="macro">assert_eq!</span>(Duration::from_secs(<span class="number">30</span>), fe_opts.http.timeout);
+        <span class="macro">assert_eq!</span>(ReadableSize::mb(<span class="number">128</span>), fe_opts.http.body_limit);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4001&quot;</span>.to_string(), fe_opts.grpc.addr);
+        <span class="macro">assert!</span>(fe_opts.mysql.enable);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;127.0.0.1:4002&quot;</span>, fe_opts.mysql.addr);
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, fe_opts.mysql.runtime_size);
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, fe_opts.mysql.reject_no_database);
+        <span class="macro">assert!</span>(fe_opts.influxdb.enable);
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>dn_opts.storage.store {
             datanode::config::ObjectStoreConfig::S3(s3_config) =&gt; {
@@ -1101,7 +1101,7 @@
         <span class="kw">let </span>toml_str = <span class="string">r#&quot;
             mode = &quot;standalone&quot;
 
-            [http_options]
+            [http]
             addr = &quot;127.0.0.1:4000&quot;
 
             [logging]
@@ -1133,7 +1133,7 @@
                     <span class="prelude-val">Some</span>(<span class="string">&quot;info&quot;</span>),
                 ),
                 (
-                    <span class="comment">// http_options.addr = 127.0.0.1:24000
+                    <span class="comment">// http.addr = 127.0.0.1:24000
                     </span>[
                         env_prefix.to_string(),
                         <span class="string">&quot;http_options&quot;</span>.to_uppercase(),
@@ -1167,11 +1167,11 @@
                 </span><span class="macro">assert_eq!</span>(opts.logging_opts.level.as_ref().unwrap(), <span class="string">&quot;debug&quot;</span>);
 
                 <span class="comment">// Should be read from cli, cli &gt; config file &gt; env &gt; default values.
-                </span><span class="macro">assert_eq!</span>(opts.fe_opts.http_options.addr, <span class="string">&quot;127.0.0.1:14000&quot;</span>);
-                <span class="macro">assert_eq!</span>(ReadableSize::mb(<span class="number">64</span>), opts.fe_opts.http_options.body_limit);
+                </span><span class="macro">assert_eq!</span>(opts.fe_opts.http.addr, <span class="string">&quot;127.0.0.1:14000&quot;</span>);
+                <span class="macro">assert_eq!</span>(ReadableSize::mb(<span class="number">64</span>), opts.fe_opts.http.body_limit);
 
                 <span class="comment">// Should be default value.
-                </span><span class="macro">assert_eq!</span>(opts.fe_opts.grpc_options.addr, GrpcOptions::default().addr);
+                </span><span class="macro">assert_eq!</span>(opts.fe_opts.grpc.addr, GrpcOptions::default().addr);
             },
         );
     }

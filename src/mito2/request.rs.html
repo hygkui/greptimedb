@@ -1099,6 +1099,14 @@
 <a href="#1099" id="1099">1099</a>
 <a href="#1100" id="1100">1100</a>
 <a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1143,7 +1151,8 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::config::DEFAULT_WRITE_BUFFER_SIZE;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    CreateDefaultSnafu, Error, FillDefaultSnafu, FlushRegionSnafu, InvalidRequestSnafu, <span class="prelude-ty">Result</span>,
+    CompactRegionSnafu, CreateDefaultSnafu, Error, FillDefaultSnafu, FlushRegionSnafu,
+    InvalidRequestSnafu, <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableId;
 <span class="kw">use </span><span class="kw">crate</span>::sst::file::FileMeta;
@@ -1762,15 +1771,17 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) compaction_outputs: Vec&lt;FileMeta&gt;,
     <span class="doccomment">/// Compacted files that are to be removed from region version.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) compacted_files: Vec&lt;FileMeta&gt;,
-    <span class="doccomment">/// Compaction result sender.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) sender: OptionOutputTx,
+    <span class="doccomment">/// Compaction result senders.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) senders: Vec&lt;OutputTx&gt;,
     <span class="doccomment">/// File purger for cleaning files on failure.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
 }
 
 <span class="kw">impl </span>CompactionFinished {
     <span class="kw">pub fn </span>on_success(<span class="self">self</span>) {
-        <span class="self">self</span>.sender.send(<span class="prelude-val">Ok</span>(AffectedRows(<span class="number">0</span>)));
+        <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders {
+            sender.send(<span class="prelude-val">Ok</span>(AffectedRows(<span class="number">0</span>)));
+        }
         <span class="macro">info!</span>(<span class="string">&quot;Successfully compacted region: {}&quot;</span>, <span class="self">self</span>.region_id);
     }
 }
@@ -1779,7 +1790,12 @@
     <span class="doccomment">/// Compaction succeeded but failed to update manifest or region&#39;s already been dropped,
     /// clean compaction output files.
     </span><span class="kw">fn </span>on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, err: Error) {
-        <span class="self">self</span>.sender.send_mut(<span class="prelude-val">Err</span>(err));
+        <span class="kw">let </span>err = Arc::new(err);
+        <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders.drain(..) {
+            sender.send(<span class="prelude-val">Err</span>(err.clone()).context(CompactRegionSnafu {
+                region_id: <span class="self">self</span>.region_id,
+            }));
+        }
         <span class="kw">for </span>file <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.compacted_files {
             <span class="kw">let </span>file_id = file.file_id;
             <span class="macro">warn!</span>(

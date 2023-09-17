@@ -834,6 +834,9 @@
 <a href="#834" id="834">834</a>
 <a href="#835" id="835">835</a>
 <a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -871,7 +874,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::CompactRegionSnafu;
 <span class="kw">use </span><span class="kw">crate</span>::request::{
-    BackgroundNotify, CompactionFailed, CompactionFinished, OptionOutputTx, WorkerRequest,
+    BackgroundNotify, CompactionFailed, CompactionFinished, OutputTx, WorkerRequest,
 };
 <span class="kw">use </span><span class="kw">crate</span>::sst::file::{FileHandle, FileId, FileMeta};
 <span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::FilePurgerRef;
@@ -959,7 +962,7 @@
             ttl,
             compaction_time_window,
             request_sender,
-            waiter,
+            waiters,
             file_purger,
         } = req;
 
@@ -992,8 +995,10 @@
         <span class="kw">let </span>outputs = <span class="self">self</span>.build_output(<span class="kw-2">&amp;</span>windows, active_window, time_window_size);
 
         <span class="kw">if </span>outputs.is_empty() &amp;&amp; expired_ssts.is_empty() {
-            <span class="comment">// Nothing to compact.
-            </span>waiter.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
+            <span class="comment">// Nothing to compact, we are done. Notifies all waiters as we consume the compaction request.
+            </span><span class="kw">for </span>waiter <span class="kw">in </span>waiters {
+                waiter.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
+            }
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">let </span>task = TwcsCompactionTask {
@@ -1005,7 +1010,7 @@
             sst_write_buffer_size: ReadableSize::mb(<span class="number">4</span>),
             compaction_time_window: <span class="prelude-val">None</span>,
             request_sender,
-            sender: waiter,
+            waiters,
             file_purger,
         };
         <span class="prelude-val">Some</span>(Box::new(task))
@@ -1063,8 +1068,8 @@
     <span class="kw">pub </span>file_purger: FilePurgerRef,
     <span class="doccomment">/// Request sender to notify the worker.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) request_sender: mpsc::Sender&lt;WorkerRequest&gt;,
-    <span class="doccomment">/// Sender that are used to notify waiters waiting for pending compaction tasks.
-    </span><span class="kw">pub </span>sender: OptionOutputTx,
+    <span class="doccomment">/// Senders that are used to notify waiters waiting for pending compaction tasks.
+    </span><span class="kw">pub </span>waiters: Vec&lt;OutputTx&gt;,
 }
 
 <span class="kw">impl </span>Debug <span class="kw">for </span>TwcsCompactionTask {
@@ -1157,10 +1162,11 @@
 
     <span class="doccomment">/// Handles compaction failure, notifies all waiters.
     </span><span class="kw">fn </span>on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, err: Arc&lt;error::Error&gt;) {
-        <span class="self">self</span>.sender
-            .send_mut(<span class="prelude-val">Err</span>(err.clone()).context(CompactRegionSnafu {
+        <span class="kw">for </span>waiter <span class="kw">in </span><span class="self">self</span>.waiters.drain(..) {
+            waiter.send(<span class="prelude-val">Err</span>(err.clone()).context(CompactRegionSnafu {
                 region_id: <span class="self">self</span>.region_id,
             }));
+        }
     }
 
     <span class="doccomment">/// Notifies region worker to handle post-compaction tasks.
@@ -1188,7 +1194,7 @@
                     region_id: <span class="self">self</span>.region_id,
                     compaction_outputs: added,
                     compacted_files: deleted,
-                    sender: <span class="self">self</span>.sender.take(),
+                    senders: std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.waiters),
                     file_purger: <span class="self">self</span>.file_purger.clone(),
                 })
             }

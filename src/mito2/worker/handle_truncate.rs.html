@@ -64,6 +64,7 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -110,10 +111,11 @@
         region.manifest_manager.update(action_list).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// Notifies flush scheduler.
-        </span><span class="self">self</span>.flush_scheduler.on_region_truncating(region_id);
-        <span class="comment">// TODO(DevilExileSu): Notifies compaction scheduler.
+        </span><span class="self">self</span>.flush_scheduler.on_region_truncated(region_id);
+        <span class="comment">// Notifies compaction scheduler.
+        </span><span class="self">self</span>.compaction_scheduler.on_region_truncated(region_id);
 
-        // Reset region&#39;s version and mark all SSTs deleted.
+        <span class="comment">// Reset region&#39;s version and mark all SSTs deleted.
         </span>region.version_control.truncate(
             truncated_entry_id,
             truncated_sequence,

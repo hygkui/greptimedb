@@ -304,6 +304,7 @@
     <span class="kw">use </span>common_error::ext::BoxedError;
     <span class="kw">use </span>common_meta::table_name::TableName;
     <span class="kw">use </span>common_telemetry::logging::error;
+    <span class="kw">use </span>operator::expr_factory;
     <span class="kw">use </span>script::manager::ScriptManager;
     <span class="kw">use </span>servers::query_handler::grpc::GrpcQueryHandler;
     <span class="kw">use </span>session::context::QueryContext;
@@ -312,7 +313,6 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::error::{CatalogSnafu, InvalidSystemTableDefSnafu, TableNotFoundSnafu};
-    <span class="kw">use </span><span class="kw">crate</span>::expr_factory;
     <span class="kw">use </span><span class="kw">crate</span>::instance::Instance;
 
     <span class="kw">pub struct </span>ScriptExecutor {
