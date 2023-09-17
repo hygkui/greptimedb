@@ -44,7 +44,6 @@
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
 <a href="#46" id="46">46</a>
-<a href="#47" id="47">47</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -59,9 +58,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>serde::{Deserialize, Serialize};
-
-<span class="kw">pub const </span>HEARTBEAT_INTERVAL_MILLIS: u64 = <span class="number">5000</span>;
+</span><span class="kw">use </span>common_meta::distributed_time_constants;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -78,8 +76,8 @@
     <span class="kw">pub fn </span>frontend_default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             <span class="comment">// Frontend can send heartbeat with a longer interval.
-            </span>interval_millis: HEARTBEAT_INTERVAL_MILLIS * <span class="number">10</span>,
-            retry_interval_millis: HEARTBEAT_INTERVAL_MILLIS,
+            </span>interval_millis: distributed_time_constants::FRONTEND_HEARTBEAT_INTERVAL_MILLIS,
+            retry_interval_millis: distributed_time_constants::HEARTBEAT_INTERVAL_MILLIS,
         }
     }
 }
@@ -87,8 +85,8 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>HeartbeatOptions {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            interval_millis: HEARTBEAT_INTERVAL_MILLIS,
-            retry_interval_millis: HEARTBEAT_INTERVAL_MILLIS,
+            interval_millis: distributed_time_constants::HEARTBEAT_INTERVAL_MILLIS,
+            retry_interval_millis: distributed_time_constants::HEARTBEAT_INTERVAL_MILLIS,
         }
     }
 }

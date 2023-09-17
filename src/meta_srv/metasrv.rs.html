@@ -384,15 +384,6 @@
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
-<a href="#391" id="391">391</a>
-<a href="#392" id="392">392</a>
-<a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -441,19 +432,12 @@
 <span class="kw">pub const </span>TABLE_ID_SEQ: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table_id&quot;</span>;
 <span class="kw">pub const </span>METASRV_HOME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;/tmp/metasrv&quot;</span>;
 
-<span class="kw">pub const </span>DEFAULT_DATANODE_LEASE_SECS: u64 = <span class="number">20</span>;
-<span class="doccomment">/// The lease seconds of a region. It&#39;s set by two default heartbeat intervals (5 second × 2) plus
-/// two roundtrip time (2 second × 2 × 2), plus some extra buffer (2 second).
-</span><span class="kw">pub const </span>DEFAULT_REGION_LEASE_SECS: u64 = <span class="number">20</span>;
-
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>MetaSrvOptions {
     <span class="kw">pub </span>bind_addr: String,
     <span class="kw">pub </span>server_addr: String,
     <span class="kw">pub </span>store_addr: String,
-    <span class="kw">pub </span>datanode_lease_secs: u64,
-    <span class="kw">pub </span>region_lease_secs: u64,
     <span class="kw">pub </span>selector: SelectorType,
     <span class="kw">pub </span>use_memory_store: bool,
     <span class="kw">pub </span>enable_region_failover: bool,
@@ -471,8 +455,6 @@
             bind_addr: <span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string(),
             server_addr: <span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string(),
             store_addr: <span class="string">&quot;127.0.0.1:2379&quot;</span>.to_string(),
-            datanode_lease_secs: DEFAULT_DATANODE_LEASE_SECS,
-            region_lease_secs: DEFAULT_REGION_LEASE_SECS,
             selector: SelectorType::default(),
             use_memory_store: <span class="bool-val">false</span>,
             enable_region_failover: <span class="bool-val">true</span>,

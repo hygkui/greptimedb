@@ -368,11 +368,6 @@
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -394,6 +389,7 @@
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_grpc::channel_manager::ChannelConfig;
 <span class="kw">use </span>common_meta::ddl_manager::{DdlManager, DdlManagerRef};
+<span class="kw">use </span>common_meta::distributed_time_constants;
 <span class="kw">use </span>common_meta::key::{TableMetadataManager, TableMetadataManagerRef};
 <span class="kw">use </span>common_meta::sequence::{Sequence, SequenceRef};
 <span class="kw">use </span>common_meta::state_store::KvStateStore;
@@ -541,9 +537,9 @@
         <span class="kw">let </span>table_id_sequence = Arc::new(Sequence::new(TABLE_ID_SEQ, <span class="number">1024</span>, <span class="number">10</span>, kv_backend.clone()));
         <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(kv_backend.clone()));
         <span class="kw">let </span>lock = lock.unwrap_or_else(|| Arc::new(MemLock::default()));
-        <span class="kw">let </span>ctx = SelectorContext {
-            datanode_lease_secs: options.datanode_lease_secs,
+        <span class="kw">let </span>selector_ctx = SelectorContext {
             server_addr: options.server_addr.clone(),
+            datanode_lease_secs: distributed_time_constants::DATANODE_LEASE_SECS,
             kv_store: kv_store.clone(),
             meta_peer_client: meta_peer_client.clone(),
             table_id: <span class="prelude-val">None</span>,
@@ -554,7 +550,7 @@
             <span class="kw-2">&amp;</span>procedure_manager,
             <span class="kw-2">&amp;</span>mailbox,
             <span class="kw-2">&amp;</span>table_metadata_manager,
-            (<span class="kw-2">&amp;</span>selector, <span class="kw-2">&amp;</span>ctx),
+            (<span class="kw-2">&amp;</span>selector, <span class="kw-2">&amp;</span>selector_ctx),
             <span class="kw-2">&amp;</span>table_id_sequence,
         );
         <span class="kw">let _ </span>= ddl_manager.try_start();
@@ -563,19 +559,12 @@
             <span class="prelude-val">Some</span>(handler_group) =&gt; handler_group,
             <span class="prelude-val">None </span>=&gt; {
                 <span class="kw">let </span>region_failover_handler = <span class="kw">if </span>options.enable_region_failover {
-                    <span class="kw">let </span>selector_ctx = SelectorContext {
-                        server_addr: options.server_addr.clone(),
-                        datanode_lease_secs: options.datanode_lease_secs,
-                        kv_store: kv_store.clone(),
-                        meta_peer_client: meta_peer_client.clone(),
-                        table_id: <span class="prelude-val">None</span>,
-                    };
                     <span class="kw">let </span>region_failover_manager = Arc::new(RegionFailoverManager::new(
-                        options.region_lease_secs,
+                        distributed_time_constants::REGION_LEASE_SECS,
                         in_memory.clone(),
                         mailbox.clone(),
                         procedure_manager.clone(),
-                        (selector.clone(), selector_ctx),
+                        (selector.clone(), selector_ctx.clone()),
                         lock.clone(),
                         table_metadata_manager.clone(),
                     ));
@@ -593,7 +582,8 @@
                     <span class="prelude-val">None
                 </span>};
 
-                <span class="kw">let </span>region_lease_handler = RegionLeaseHandler::new(options.region_lease_secs);
+                <span class="kw">let </span>region_lease_handler =
+                    RegionLeaseHandler::new(distributed_time_constants::REGION_LEASE_SECS);
 
                 <span class="kw">let </span>group = HeartbeatHandlerGroup::new(pushers);
                 group.add_handler(ResponseHeaderHandler).<span class="kw">await</span>;
