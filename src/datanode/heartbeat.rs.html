@@ -356,23 +356,6 @@
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -403,14 +386,14 @@
 <span class="kw">use </span>meta_client::client::{HeartbeatSender, MetaClient, MetaClientBuilder};
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>snafu::ResultExt;
-<span class="kw">use </span>tokio::sync::mpsc;
+<span class="kw">use </span>tokio::sync::{mpsc, Notify};
 <span class="kw">use </span>tokio::time::Instant;
 
 <span class="kw">use </span><span class="self">self</span>::handler::RegionHeartbeatResponseHandler;
 <span class="kw">use </span><span class="kw">crate</span>::alive_keeper::RegionAliveKeeper;
 <span class="kw">use </span><span class="kw">crate</span>::config::DatanodeOptions;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MetaClientInitSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::event_listener::{RegionServerEvent, RegionServerEventReceiver};
+<span class="kw">use </span><span class="kw">crate</span>::event_listener::RegionServerEventReceiver;
 <span class="kw">use </span><span class="kw">crate</span>::region_server::RegionServer;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>handler;
@@ -471,6 +454,7 @@
         running: Arc&lt;AtomicBool&gt;,
         handler_executor: HeartbeatResponseHandlerExecutorRef,
         mailbox: MailboxRef,
+        <span class="kw-2">mut </span>notify: <span class="prelude-ty">Option</span>&lt;Arc&lt;Notify&gt;&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;HeartbeatSender&gt; {
         <span class="kw">let </span>client_id = meta_client.id();
 
@@ -486,10 +470,12 @@
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(msg) = res.mailbox_message.as_ref() {
                     <span class="macro">info!</span>(<span class="string">&quot;Received mailbox message: {msg:?}, meta_client id: {client_id:?}&quot;</span>);
                 }
-
                 <span class="kw">let </span>ctx = HeartbeatResponseHandlerContext::new(mailbox.clone(), res);
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">Self</span>::handle_response(ctx, handler_executor.clone()).<span class="kw">await </span>{
                     <span class="macro">error!</span>(e; <span class="string">&quot;Error while handling heartbeat response&quot;</span>);
+                }
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(notify) = notify.take() {
+                    notify.notify_one();
                 }
                 <span class="kw">if </span>!running.load(Ordering::Acquire) {
                     <span class="macro">info!</span>(<span class="string">&quot;Heartbeat task shutdown&quot;</span>);
@@ -512,7 +498,11 @@
     }
 
     <span class="doccomment">/// Start heartbeat task, spawn background task.
-    </span><span class="kw">pub async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>event_receiver: RegionServerEventReceiver) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>start(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        event_receiver: RegionServerEventReceiver,
+        notify: <span class="prelude-ty">Option</span>&lt;Arc&lt;Notify&gt;&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>running = <span class="self">self</span>.running.clone();
         <span class="kw">if </span>running
             .compare_exchange(<span class="bool-val">false</span>, <span class="bool-val">true</span>, Ordering::AcqRel, Ordering::Acquire)
@@ -527,8 +517,6 @@
         <span class="kw">let </span>addr = resolve_addr(<span class="kw-2">&amp;</span><span class="self">self</span>.server_addr, <span class="kw-2">&amp;</span><span class="self">self</span>.server_hostname);
         <span class="macro">info!</span>(<span class="string">&quot;Starting heartbeat to Metasrv with interval {interval}. My node id is {node_id}, address is {addr}.&quot;</span>);
 
-        <span class="self">self</span>.region_alive_keeper.start().<span class="kw">await</span>;
-
         <span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.clone();
         <span class="kw">let </span>region_server_clone = <span class="self">self</span>.region_server.clone();
 
@@ -542,6 +530,7 @@
             running.clone(),
             handler_executor.clone(),
             mailbox.clone(),
+            notify,
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -551,31 +540,7 @@
         });
         <span class="kw">let </span>epoch = <span class="self">self</span>.region_alive_keeper.epoch();
 
-        <span class="kw">let </span>keeper = <span class="self">self</span>.region_alive_keeper.clone();
-
-        common_runtime::spawn_bg(<span class="kw">async move </span>{
-            <span class="kw">loop </span>{
-                <span class="kw">if </span>!running.load(Ordering::Relaxed) {
-                    <span class="macro">info!</span>(<span class="string">&quot;shutdown heartbeat task&quot;</span>);
-                    <span class="kw">break</span>;
-                }
-
-                <span class="kw">match </span>event_receiver.<span class="number">0</span>.recv().<span class="kw">await </span>{
-                    <span class="prelude-val">Some</span>(RegionServerEvent::Registered(region_id)) =&gt; {
-                        keeper.register_region(region_id).<span class="kw">await</span>;
-                    }
-                    <span class="prelude-val">Some</span>(RegionServerEvent::Deregistered(region_id)) =&gt; {
-                        keeper.deregister_region(region_id).<span class="kw">await</span>;
-                    }
-                    <span class="prelude-val">None </span>=&gt; {
-                        <span class="macro">info!</span>(<span class="string">&quot;region server event sender closed!&quot;</span>);
-                        <span class="kw">break</span>;
-                    }
-                }
-            }
-        });
-
-        <span class="kw">let </span>running = <span class="self">self</span>.running.clone();
+        <span class="self">self</span>.region_alive_keeper.start(<span class="prelude-val">Some</span>(event_receiver)).<span class="kw">await</span><span class="question-mark">?</span>;
 
         common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>sleep = tokio::time::sleep(Duration::from_millis(<span class="number">0</span>));
@@ -631,6 +596,7 @@
                             running.clone(),
                             handler_executor.clone(),
                             mailbox.clone(),
+                            <span class="prelude-val">None</span>,
                         )
                         .<span class="kw">await
                         </span>{

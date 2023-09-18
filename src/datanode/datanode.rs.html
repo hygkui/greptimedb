@@ -378,6 +378,25 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -424,6 +443,7 @@
 <span class="kw">use </span>store_api::region_request::{RegionOpenRequest, RegionRequest};
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::fs;
+<span class="kw">use </span>tokio::sync::Notify;
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{DatanodeOptions, RegionEngineConfig};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
@@ -451,6 +471,7 @@
     region_event_receiver: <span class="prelude-ty">Option</span>&lt;RegionServerEventReceiver&gt;,
     region_server: RegionServer,
     greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
+    coordinated_notifier: <span class="prelude-ty">Option</span>&lt;Arc&lt;Notify&gt;&gt;,
 }
 
 <span class="kw">impl </span>Datanode {
@@ -458,6 +479,7 @@
         <span class="macro">info!</span>(<span class="string">&quot;Starting datanode instance...&quot;</span>);
 
         <span class="self">self</span>.start_heartbeat().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.wait_coordinated().<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= <span class="self">self</span>.greptimedb_telemetry_task.start();
         <span class="self">self</span>.start_services().<span class="kw">await
@@ -467,9 +489,18 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
             <span class="comment">// Safety: The event_receiver must exist.
             </span><span class="kw">let </span>receiver = <span class="self">self</span>.region_event_receiver.take().unwrap();
-            task.start(receiver).<span class="kw">await</span><span class="question-mark">?</span>;
+
+            task.start(receiver, <span class="self">self</span>.coordinated_notifier.clone())
+                .<span class="kw">await</span><span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// If `coordinated_notifier` exists, it waits for all regions to be coordinated.
+    </span><span class="kw">pub async fn </span>wait_coordinated(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(notifier) = <span class="self">self</span>.coordinated_notifier.take() {
+            notifier.notified().<span class="kw">await</span>;
+        }
     }
 
     <span class="doccomment">/// Start services of datanode. This method call will block until services are shutdown.
@@ -617,6 +648,12 @@
         )
         .<span class="kw">await</span>;
 
+        <span class="kw">let </span>coordinated_notifier = <span class="kw">if </span><span class="self">self</span>.opts.coordination &amp;&amp; <span class="macro">matches!</span>(mode, Mode::Distributed) {
+            <span class="prelude-val">Some</span>(Arc::new(Notify::new()))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
+
         <span class="prelude-val">Ok</span>(Datanode {
             opts: <span class="self">self</span>.opts,
             services,
@@ -624,6 +661,7 @@
             region_server,
             greptimedb_telemetry_task,
             region_event_receiver,
+            coordinated_notifier,
         })
     }
 
