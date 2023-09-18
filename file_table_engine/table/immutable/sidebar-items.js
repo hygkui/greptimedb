@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ImmutableFileDataSource","ImmutableFileTable","ImmutableFileTableOptions"],"type":["ImmutableFileTableRef"]};

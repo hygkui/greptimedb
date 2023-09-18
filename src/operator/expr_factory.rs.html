@@ -367,6 +367,67 @@
 <a href="#367" id="367">367</a>
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -392,8 +453,11 @@
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_grpc_expr::util::ColumnExpr;
 <span class="kw">use </span>datatypes::schema::ColumnSchema;
-<span class="kw">use </span>file_table_engine::table::immutable::ImmutableFileTableOptions;
-<span class="kw">use </span>query::sql::prepare_immutable_file_table_files_and_schema;
+<span class="kw">use </span>file_engine::FileOptions;
+<span class="kw">use </span>query::sql::{
+    check_file_to_table_schema_compatibility, file_column_schemas_to_table,
+    infer_file_table_schema, prepare_file_table_files,
+};
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>sql::ast::{ColumnDef, ColumnOption, TableConstraint};
@@ -402,12 +466,13 @@
 <span class="kw">use </span>sql::statements::{column_def_to_schema, sql_column_def_to_grpc_column_def};
 <span class="kw">use </span>sql::util::to_lowercase_options_map;
 <span class="kw">use </span>table::engine::TableReference;
-<span class="kw">use </span>table::requests::{TableOptions, IMMUTABLE_TABLE_META_KEY};
+<span class="kw">use </span>table::requests::{TableOptions, FILE_TABLE_META_KEY};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     BuildCreateExprOnInsertionSnafu, ColumnDataTypeSnafu, ConvertColumnDefaultConstraintSnafu,
-    EncodeJsonSnafu, ExternalSnafu, IllegalPrimaryKeysDefSnafu, InvalidSqlSnafu, NotSupportedSnafu,
-    ParseSqlSnafu, PrepareImmutableTableSnafu, <span class="prelude-ty">Result</span>, UnrecognizedTableOptionSnafu,
+    EncodeJsonSnafu, ExternalSnafu, IllegalPrimaryKeysDefSnafu, InferFileTableSchemaSnafu,
+    InvalidSqlSnafu, NotSupportedSnafu, ParseSqlSnafu, PrepareFileTableSnafu, <span class="prelude-ty">Result</span>,
+    SchemaIncompatibleSnafu, UnrecognizedTableOptionSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::table::table_idents_to_full_name;
 
@@ -454,7 +519,35 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>create_external_expr(
+<span class="comment">// When the `CREATE EXTERNAL TABLE` statement is in expanded form, like
+// ```sql
+// CREATE EXTERNAL TABLE city (
+//   host string,
+//   ts timestamp,
+//   cpu float64,
+//   memory float64,
+//   TIME INDEX (ts),
+//   PRIMARY KEY(host)
+// ) WITH (location=&#39;/var/data/city.csv&#39;, format=&#39;csv&#39;);
+// ```
+// The user needs to specify the TIME INDEX column. If there is no suitable
+// column in the file to use as TIME INDEX, an additional placeholder column
+// needs to be created as the TIME INDEX, and a `DEFAULT &lt;value&gt;` constraint
+// should be added.
+//
+//
+// When the `CREATE EXTERNAL TABLE` statement is in inferred form, like
+// ```sql
+// CREATE EXTERNAL TABLE IF NOT EXISTS city WITH (location=&#39;/var/data/city.csv&#39;,format=&#39;csv&#39;);
+// ```
+// 1. If the TIME INDEX column can be inferred from metadata, use that column
+//    as the TIME INDEX. Otherwise,
+// 2. If a column named `greptime_timestamp` exists (with the requirement that
+//    the column is with type TIMESTAMP, otherwise an error is thrown), use
+//    that column as the TIME INDEX. Otherwise,
+// 3. Automatically create the `greptime_timestamp` column and add a `DEFAULT 0`
+//    constraint.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>create_external_expr(
     create: CreateExternalTable,
     query_ctx: QueryContextRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;CreateTableExpr&gt; {
@@ -463,30 +556,53 @@
             .map_err(BoxedError::new)
             .context(ExternalSnafu)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span><span class="kw-2">mut </span>options = create.options;
+    <span class="kw">let </span><span class="kw-2">mut </span>table_options = create.options;
 
-    <span class="kw">let </span>(files, schema) = prepare_immutable_file_table_files_and_schema(<span class="kw-2">&amp;</span>options, <span class="kw-2">&amp;</span>create.columns)
+    <span class="kw">let </span>(object_store, files) = prepare_file_table_files(<span class="kw-2">&amp;</span>table_options)
         .<span class="kw">await
-        </span>.context(PrepareImmutableTableSnafu)<span class="question-mark">?</span>;
+        </span>.context(PrepareFileTableSnafu)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>meta = ImmutableFileTableOptions { files };
-    <span class="kw">let _ </span>= options.insert(
-        IMMUTABLE_TABLE_META_KEY.to_string(),
+    <span class="kw">let </span>file_column_schemas = infer_file_table_schema(<span class="kw-2">&amp;</span>object_store, <span class="kw-2">&amp;</span>files, <span class="kw-2">&amp;</span>table_options)
+        .<span class="kw">await
+        </span>.context(InferFileTableSchemaSnafu)<span class="question-mark">?
+        </span>.column_schemas;
+
+    <span class="kw">let </span>(time_index, primary_keys, table_column_schemas) = <span class="kw">if </span>!create.columns.is_empty() {
+        <span class="comment">// expanded form
+        </span><span class="kw">let </span>time_index = find_time_index(<span class="kw-2">&amp;</span>create.constraints)<span class="question-mark">?</span>;
+        <span class="kw">let </span>primary_keys = find_primary_keys(<span class="kw-2">&amp;</span>create.columns, <span class="kw-2">&amp;</span>create.constraints)<span class="question-mark">?</span>;
+        <span class="kw">let </span>column_schemas = columns_to_column_schemas(<span class="kw-2">&amp;</span>create.columns, <span class="kw-2">&amp;</span>time_index)<span class="question-mark">?</span>;
+        (time_index, primary_keys, column_schemas)
+    } <span class="kw">else </span>{
+        <span class="comment">// inferred form
+        </span><span class="kw">let </span>(column_schemas, time_index) = file_column_schemas_to_table(<span class="kw-2">&amp;</span>file_column_schemas);
+        <span class="kw">let </span>primary_keys = <span class="macro">vec!</span>[];
+        (time_index, primary_keys, column_schemas)
+    };
+
+    check_file_to_table_schema_compatibility(<span class="kw-2">&amp;</span>file_column_schemas, <span class="kw-2">&amp;</span>table_column_schemas)
+        .context(SchemaIncompatibleSnafu)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>meta = FileOptions {
+        files,
+        file_column_schemas,
+    };
+    <span class="kw">let _ </span>= table_options.insert(
+        FILE_TABLE_META_KEY.to_string(),
         serde_json::to_string(<span class="kw-2">&amp;</span>meta).context(EncodeJsonSnafu)<span class="question-mark">?</span>,
     );
 
-    <span class="kw">let </span>primary_keys = <span class="macro">vec!</span>[];
-
+    <span class="kw">let </span>column_defs = column_schemas_to_defs(table_column_schemas, <span class="kw-2">&amp;</span>primary_keys)<span class="question-mark">?</span>;
     <span class="kw">let </span>expr = CreateTableExpr {
         catalog_name,
         schema_name,
         table_name,
         desc: <span class="string">&quot;&quot;</span>.to_string(),
-        column_defs: column_schemas_to_defs(schema.column_schemas, <span class="kw-2">&amp;</span>primary_keys)<span class="question-mark">?</span>,
-        time_index: <span class="string">&quot;&quot;</span>.to_string(),
-        primary_keys: <span class="macro">vec!</span>[],
+        column_defs,
+        time_index,
+        primary_keys,
         create_if_not_exists: create.if_not_exists,
-        table_options: options,
+        table_options,
         table_id: <span class="prelude-val">None</span>,
         engine: create.engine.to_string(),
     };
@@ -608,12 +724,18 @@
     time_index: <span class="kw-2">&amp;</span>str,
     primary_keys: <span class="kw-2">&amp;</span>[String],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;api::v1::ColumnDef&gt;&gt; {
-    <span class="kw">let </span>column_schemas = column_defs
+    <span class="kw">let </span>column_schemas = columns_to_column_schemas(column_defs, time_index)<span class="question-mark">?</span>;
+    column_schemas_to_defs(column_schemas, primary_keys)
+}
+
+<span class="kw">fn </span>columns_to_column_schemas(
+    column_defs: <span class="kw-2">&amp;</span>[ColumnDef],
+    time_index: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ColumnSchema&gt;&gt; {
+    column_defs
         .iter()
         .map(|c| column_def_to_schema(c, c.name.to_string() == time_index).context(ParseSqlSnafu))
-        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;ColumnSchema&gt;&gt;&gt;()<span class="question-mark">?</span>;
-
-    column_schemas_to_defs(column_schemas, primary_keys)
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;ColumnSchema&gt;&gt;&gt;()
 }
 
 <span class="kw">pub fn </span>column_schemas_to_defs(

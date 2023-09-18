@@ -300,6 +300,24 @@
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -543,6 +561,22 @@
         duration: Duration,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Column schema incompatible, column: {}, file_type: {}, table_type: {}&quot;</span>,
+        column,
+        file_type,
+        table_type
+    ))]
+    </span>ColumnSchemaIncompatible {
+        column: String,
+        file_type: ConcreteDataType,
+        table_type: ConcreteDataType,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Column schema has no default value, column: {}&quot;</span>, column))]
+    </span>ColumnSchemaNoDefault { column: String, location: Location },
 }
 
 <span class="kw">impl </span>ErrorExt <span class="kw">for </span>Error {
@@ -563,7 +597,9 @@
             | MissingRequiredField { .. }
             | BuildRegex { .. }
             | ConvertSchema { .. }
-            | AddSystemTimeOverflow { .. } =&gt; StatusCode::InvalidArguments,
+            | AddSystemTimeOverflow { .. }
+            | ColumnSchemaIncompatible { .. }
+            | ColumnSchemaNoDefault { .. } =&gt; StatusCode::InvalidArguments,
 
             BuildBackend { .. } | ListObjects { .. } =&gt; StatusCode::StorageUnavailable,
             EncodeSubstraitLogicalPlan { source, .. } =&gt; source.status_code(),

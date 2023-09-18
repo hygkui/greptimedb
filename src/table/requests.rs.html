@@ -446,10 +446,10 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::ParseTableOptionSnafu;
 <span class="kw">use </span><span class="kw">crate</span>::metadata::{TableId, TableVersion};
 
-<span class="kw">pub const </span>IMMUTABLE_TABLE_META_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__private.immutable_table_meta&quot;</span>;
-<span class="kw">pub const </span>IMMUTABLE_TABLE_LOCATION_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;location&quot;</span>;
-<span class="kw">pub const </span>IMMUTABLE_TABLE_PATTERN_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;pattern&quot;</span>;
-<span class="kw">pub const </span>IMMUTABLE_TABLE_FORMAT_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;format&quot;</span>;
+<span class="kw">pub const </span>FILE_TABLE_META_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__private.file_table_meta&quot;</span>;
+<span class="kw">pub const </span>FILE_TABLE_LOCATION_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;location&quot;</span>;
+<span class="kw">pub const </span>FILE_TABLE_PATTERN_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;pattern&quot;</span>;
+<span class="kw">pub const </span>FILE_TABLE_FORMAT_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;format&quot;</span>;
 
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>CreateDatabaseRequest {
@@ -750,9 +750,9 @@
 <span class="kw">pub fn </span>valid_table_option(key: <span class="kw-2">&amp;</span>str) -&gt; bool {
     <span class="macro">matches!</span>(
         key,
-        IMMUTABLE_TABLE_LOCATION_KEY
-            | IMMUTABLE_TABLE_FORMAT_KEY
-            | IMMUTABLE_TABLE_PATTERN_KEY
+        FILE_TABLE_LOCATION_KEY
+            | FILE_TABLE_FORMAT_KEY
+            | FILE_TABLE_PATTERN_KEY
             | WRITE_BUFFER_SIZE_KEY
             | TTL_KEY
             | REGIONS_KEY
@@ -775,9 +775,9 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_validate_table_option() {
-        <span class="macro">assert!</span>(valid_table_option(IMMUTABLE_TABLE_LOCATION_KEY));
-        <span class="macro">assert!</span>(valid_table_option(IMMUTABLE_TABLE_FORMAT_KEY));
-        <span class="macro">assert!</span>(valid_table_option(IMMUTABLE_TABLE_PATTERN_KEY));
+        <span class="macro">assert!</span>(valid_table_option(FILE_TABLE_LOCATION_KEY));
+        <span class="macro">assert!</span>(valid_table_option(FILE_TABLE_FORMAT_KEY));
+        <span class="macro">assert!</span>(valid_table_option(FILE_TABLE_PATTERN_KEY));
         <span class="macro">assert!</span>(valid_table_option(TTL_KEY));
         <span class="macro">assert!</span>(valid_table_option(REGIONS_KEY));
         <span class="macro">assert!</span>(valid_table_option(WRITE_BUFFER_SIZE_KEY));

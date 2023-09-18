@@ -358,7 +358,7 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt::{Display, Formatter};
 
-<span class="kw">use </span>common_catalog::consts::IMMUTABLE_FILE_ENGINE;
+<span class="kw">use </span>common_catalog::consts::FILE_ENGINE;
 <span class="kw">use </span>itertools::Itertools;
 
 <span class="kw">use </span><span class="kw">crate</span>::ast::{ColumnDef, Ident, ObjectName, SqlOption, TableConstraint, Value <span class="kw">as </span>SqlValue};
@@ -523,7 +523,7 @@
         <span class="kw">let </span>partitions = <span class="self">self</span>.format_partitions();
         <span class="kw">let </span>engine = <span class="kw-2">&amp;</span><span class="self">self</span>.engine;
         <span class="kw">let </span>options = <span class="self">self</span>.format_options();
-        <span class="kw">let </span>maybe_external = <span class="kw">if </span><span class="self">self</span>.engine == IMMUTABLE_FILE_ENGINE {
+        <span class="kw">let </span>maybe_external = <span class="kw">if </span><span class="self">self</span>.engine == FILE_ENGINE {
             <span class="string">&quot;EXTERNAL &quot;
         </span>} <span class="kw">else </span>{
             <span class="string">&quot;&quot;

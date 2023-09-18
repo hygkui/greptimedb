@@ -1612,7 +1612,7 @@
                 actual: <span class="self">self</span>.peek_token_as_string(),
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>(columns, constraints) = <span class="self">self</span>.parse_columns()<span class="question-mark">?</span>;
-        <span class="kw">let </span>engine = <span class="self">self</span>.parse_table_engine(common_catalog::consts::IMMUTABLE_FILE_ENGINE)<span class="question-mark">?</span>;
+        <span class="kw">let </span>engine = <span class="self">self</span>.parse_table_engine(common_catalog::consts::FILE_ENGINE)<span class="question-mark">?</span>;
         <span class="kw">let </span>options = <span class="self">self
             </span>.parser
             .parse_options(Keyword::WITH)
@@ -2349,7 +2349,7 @@
     <span class="kw">use </span>std::assert_matches::assert_matches;
     <span class="kw">use </span>std::collections::HashMap;
 
-    <span class="kw">use </span>common_catalog::consts::IMMUTABLE_FILE_ENGINE;
+    <span class="kw">use </span>common_catalog::consts::FILE_ENGINE;
     <span class="kw">use </span>sqlparser::ast::ColumnOption::NotNull;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -2391,7 +2391,7 @@
                     (<span class="string">&quot;location&quot;</span>.to_string(), <span class="string">&quot;/var/data/city.csv&quot;</span>.to_string()),
                     (<span class="string">&quot;format&quot;</span>.to_string(), <span class="string">&quot;csv&quot;</span>.to_string()),
                 ]),
-                expected_engine: IMMUTABLE_FILE_ENGINE,
+                expected_engine: FILE_ENGINE,
                 expected_if_not_exist: <span class="bool-val">false</span>,
             },
             Test {
