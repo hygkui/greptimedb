@@ -1047,8 +1047,8 @@
         <span class="comment">// wait for countdown task to finish
         </span><span class="kw">let </span>before_await = Instant::now();
         <span class="kw">let </span>(finish_instant, result) = rx.<span class="kw">await</span>.unwrap();
-        <span class="comment">// the mock region server cannot close the region
-        </span><span class="macro">assert_eq!</span>(result, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+        <span class="comment">// it returns `RegionNotFound`
+        </span><span class="macro">assert_eq!</span>(result, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
         <span class="comment">// this task should be finished after 5 * heartbeat_interval_millis
         // we assert 4 times here
         </span><span class="macro">assert!</span>(

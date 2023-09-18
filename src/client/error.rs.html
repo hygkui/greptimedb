@@ -134,6 +134,9 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -208,6 +211,9 @@
         source: common_grpc::error::Error,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request RegionServer, code: {}, source: {}&quot;</span>, code, source))]
+    </span>RegionServer { code: Code, source: BoxedError },
+
     <span class="comment">// Server error carried in Tonic Status&#39;s metadata.
     </span><span class="attr">#[snafu(display(<span class="string">&quot;{}&quot;</span>, msg))]
     </span>Server { code: StatusCode, msg: String },
@@ -231,9 +237,9 @@
             | Error::ClientStreaming { .. } =&gt; StatusCode::Internal,
 
             Error::Server { code, .. } =&gt; <span class="kw-2">*</span>code,
-            Error::FlightGet { source, .. } | Error::HandleRequest { source, .. } =&gt; {
-                source.status_code()
-            }
+            Error::FlightGet { source, .. }
+            | Error::HandleRequest { source, .. }
+            | Error::RegionServer { source, .. } =&gt; source.status_code(),
             Error::CreateChannel { source, .. } | Error::ConvertFlightData { source, .. } =&gt; {
                 source.status_code()
             }
