@@ -824,6 +824,30 @@
 <a href="#824" id="824">824</a>
 <a href="#825" id="825">825</a>
 <a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -946,6 +970,10 @@
         <span class="macro">matches!</span>(<span class="self">self</span>, ConcreteDataType::Boolean(<span class="kw">_</span>))
     }
 
+    <span class="kw">pub fn </span>is_string(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, ConcreteDataType::String(<span class="kw">_</span>))
+    }
+
     <span class="kw">pub fn </span>is_stringifiable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="macro">matches!</span>(
             <span class="self">self</span>,
@@ -982,6 +1010,22 @@
                 | ConcreteDataType::UInt16(<span class="kw">_</span>)
                 | ConcreteDataType::UInt32(<span class="kw">_</span>)
                 | ConcreteDataType::UInt64(<span class="kw">_</span>)
+        )
+    }
+
+    <span class="kw">pub fn </span>is_numeric(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(
+            <span class="self">self</span>,
+            ConcreteDataType::Int8(<span class="kw">_</span>)
+                | ConcreteDataType::Int16(<span class="kw">_</span>)
+                | ConcreteDataType::Int32(<span class="kw">_</span>)
+                | ConcreteDataType::Int64(<span class="kw">_</span>)
+                | ConcreteDataType::UInt8(<span class="kw">_</span>)
+                | ConcreteDataType::UInt16(<span class="kw">_</span>)
+                | ConcreteDataType::UInt32(<span class="kw">_</span>)
+                | ConcreteDataType::UInt64(<span class="kw">_</span>)
+                | ConcreteDataType::Float32(<span class="kw">_</span>)
+                | ConcreteDataType::Float64(<span class="kw">_</span>)
         )
     }
 
@@ -1282,6 +1326,10 @@
     <span class="doccomment">/// Returns true if the data type is compatible with timestamp type so we can
     /// use it as a timestamp.
     </span><span class="kw">fn </span>is_timestamp_compatible(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
+
+    <span class="doccomment">/// Casts the value to specific DataType.
+    /// Return None if cast failed.
+    </span><span class="kw">fn </span>try_cast(<span class="kw-2">&amp;</span><span class="self">self</span>, from: Value) -&gt; <span class="prelude-ty">Option</span>&lt;Value&gt;;
 }
 
 <span class="kw">pub type </span>DataTypeRef = Arc&lt;<span class="kw">dyn </span>DataType&gt;;
