@@ -471,7 +471,7 @@
     region_event_receiver: <span class="prelude-ty">Option</span>&lt;RegionServerEventReceiver&gt;,
     region_server: RegionServer,
     greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
-    coordinated_notifier: <span class="prelude-ty">Option</span>&lt;Arc&lt;Notify&gt;&gt;,
+    leases_notifier: <span class="prelude-ty">Option</span>&lt;Arc&lt;Notify&gt;&gt;,
 }
 
 <span class="kw">impl </span>Datanode {
@@ -490,15 +490,14 @@
             <span class="comment">// Safety: The event_receiver must exist.
             </span><span class="kw">let </span>receiver = <span class="self">self</span>.region_event_receiver.take().unwrap();
 
-            task.start(receiver, <span class="self">self</span>.coordinated_notifier.clone())
-                .<span class="kw">await</span><span class="question-mark">?</span>;
+            task.start(receiver, <span class="self">self</span>.leases_notifier.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// If `coordinated_notifier` exists, it waits for all regions to be coordinated.
+    <span class="doccomment">/// If `leases_notifier` exists, it waits until leases have been obtained in all regions.
     </span><span class="kw">pub async fn </span>wait_coordinated(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(notifier) = <span class="self">self</span>.coordinated_notifier.take() {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(notifier) = <span class="self">self</span>.leases_notifier.take() {
             notifier.notified().<span class="kw">await</span>;
         }
     }
@@ -648,11 +647,12 @@
         )
         .<span class="kw">await</span>;
 
-        <span class="kw">let </span>coordinated_notifier = <span class="kw">if </span><span class="self">self</span>.opts.coordination &amp;&amp; <span class="macro">matches!</span>(mode, Mode::Distributed) {
-            <span class="prelude-val">Some</span>(Arc::new(Notify::new()))
-        } <span class="kw">else </span>{
-            <span class="prelude-val">None
-        </span>};
+        <span class="kw">let </span>leases_notifier =
+            <span class="kw">if </span><span class="self">self</span>.opts.require_lease_before_startup &amp;&amp; <span class="macro">matches!</span>(mode, Mode::Distributed) {
+                <span class="prelude-val">Some</span>(Arc::new(Notify::new()))
+            } <span class="kw">else </span>{
+                <span class="prelude-val">None
+            </span>};
 
         <span class="prelude-val">Ok</span>(Datanode {
             opts: <span class="self">self</span>.opts,
@@ -661,7 +661,7 @@
             region_server,
             greptimedb_telemetry_task,
             region_event_receiver,
-            coordinated_notifier,
+            leases_notifier,
         })
     }
 

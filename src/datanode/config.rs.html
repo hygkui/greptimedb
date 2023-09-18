@@ -733,7 +733,7 @@
 </span><span class="kw">pub struct </span>DatanodeOptions {
     <span class="kw">pub </span>mode: Mode,
     <span class="kw">pub </span>node_id: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-    <span class="kw">pub </span>coordination: bool,
+    <span class="kw">pub </span>require_lease_before_startup: bool,
     <span class="kw">pub </span>rpc_addr: String,
     <span class="kw">pub </span>rpc_hostname: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>rpc_runtime_size: usize,
@@ -753,7 +753,7 @@
         <span class="self">Self </span>{
             mode: Mode::Standalone,
             node_id: <span class="prelude-val">None</span>,
-            coordination: <span class="bool-val">false</span>,
+            require_lease_before_startup: <span class="bool-val">false</span>,
             rpc_addr: <span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(),
             rpc_hostname: <span class="prelude-val">None</span>,
             rpc_runtime_size: <span class="number">8</span>,
