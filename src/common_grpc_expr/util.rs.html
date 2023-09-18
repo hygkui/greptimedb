@@ -184,6 +184,8 @@
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -306,6 +308,7 @@
             is_nullable,
             default_constraint: <span class="macro">vec!</span>[],
             semantic_type,
+            comment: String::new(),
         };
         column_defs.push(column_def);
     }
@@ -345,6 +348,7 @@
                 is_nullable: <span class="bool-val">true</span>,
                 default_constraint: <span class="macro">vec!</span>[],
                 semantic_type: expr.semantic_type,
+                comment: String::new(),
             });
             AddColumn {
                 column_def,

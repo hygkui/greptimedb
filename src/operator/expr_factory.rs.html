@@ -428,6 +428,12 @@
 <a href="#428" id="428">428</a>
 <a href="#429" id="429">429</a>
 <a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -452,7 +458,7 @@
 };
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_grpc_expr::util::ColumnExpr;
-<span class="kw">use </span>datatypes::schema::ColumnSchema;
+<span class="kw">use </span>datatypes::schema::{ColumnSchema, COMMENT_KEY};
 <span class="kw">use </span>file_engine::FileOptions;
 <span class="kw">use </span>query::sql::{
     check_file_to_table_schema_compatibility, file_column_schemas_to_table,
@@ -762,6 +768,11 @@
             } <span class="kw">else </span>{
                 SemanticType::Field
             } <span class="kw">as </span>i32;
+            <span class="kw">let </span>comment = schema
+                .metadata()
+                .get(COMMENT_KEY)
+                .cloned()
+                .unwrap_or_default();
 
             <span class="prelude-val">Ok</span>(api::v1::ColumnDef {
                 name: schema.name.clone(),
@@ -778,6 +789,7 @@
                     </span>}
                 },
                 semantic_type,
+                comment,
             })
         })
         .collect()
