@@ -850,6 +850,10 @@
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
 <a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -872,10 +876,12 @@
 <span class="kw">pub mod </span>drop;
 <span class="kw">pub mod </span>explain;
 <span class="kw">pub mod </span>insert;
+<span class="kw">mod </span>option_map;
 <span class="kw">pub mod </span>query;
 <span class="kw">pub mod </span>show;
 <span class="kw">pub mod </span>statement;
 <span class="kw">pub mod </span>tql;
+<span class="kw">mod </span>transform;
 <span class="kw">pub mod </span>truncate;
 
 <span class="kw">use </span>std::str::FromStr;
@@ -890,7 +896,9 @@
 <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, COMMENT_KEY};
 <span class="kw">use </span>datatypes::types::TimestampType;
 <span class="kw">use </span>datatypes::value::{OrderedF32, OrderedF64, Value};
+<span class="kw">pub use </span>option_map::OptionMap;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">pub use </span>transform::{get_data_type_by_alias_name, transform_statements};
 
 <span class="kw">use </span><span class="kw">crate</span>::ast::{
     ColumnDef, ColumnOption, ColumnOptionDef, DataType <span class="kw">as </span>SqlDataType, Expr, TimezoneInfo,

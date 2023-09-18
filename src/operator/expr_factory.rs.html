@@ -558,11 +558,11 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>table_options = create.options;
 
-    <span class="kw">let </span>(object_store, files) = prepare_file_table_files(<span class="kw-2">&amp;</span>table_options)
+    <span class="kw">let </span>(object_store, files) = prepare_file_table_files(<span class="kw-2">&amp;</span>table_options.map)
         .<span class="kw">await
         </span>.context(PrepareFileTableSnafu)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>file_column_schemas = infer_file_table_schema(<span class="kw-2">&amp;</span>object_store, <span class="kw-2">&amp;</span>files, <span class="kw-2">&amp;</span>table_options)
+    <span class="kw">let </span>file_column_schemas = infer_file_table_schema(<span class="kw-2">&amp;</span>object_store, <span class="kw-2">&amp;</span>files, <span class="kw-2">&amp;</span>table_options.map)
         .<span class="kw">await
         </span>.context(InferFileTableSchemaSnafu)<span class="question-mark">?
         </span>.column_schemas;
@@ -587,7 +587,7 @@
         files,
         file_column_schemas,
     };
-    <span class="kw">let _ </span>= table_options.insert(
+    table_options.insert(
         FILE_TABLE_META_KEY.to_string(),
         serde_json::to_string(<span class="kw-2">&amp;</span>meta).context(EncodeJsonSnafu)<span class="question-mark">?</span>,
     );
@@ -602,7 +602,7 @@
         time_index,
         primary_keys,
         create_if_not_exists: create.if_not_exists,
-        table_options,
+        table_options: table_options.map,
         table_id: <span class="prelude-val">None</span>,
         engine: create.engine.to_string(),
     };

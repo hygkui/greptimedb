@@ -341,6 +341,7 @@
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -355,13 +356,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::fmt::{Display, Formatter};
+</span><span class="kw">use </span>std::fmt::{Display, Formatter};
 
 <span class="kw">use </span>common_catalog::consts::FILE_ENGINE;
 <span class="kw">use </span>itertools::Itertools;
+<span class="kw">use </span>sqlparser_derive::{Visit, VisitMut};
 
 <span class="kw">use </span><span class="kw">crate</span>::ast::{ColumnDef, Ident, ObjectName, SqlOption, TableConstraint, Value <span class="kw">as </span>SqlValue};
+<span class="kw">use </span><span class="kw">crate</span>::statements::OptionMap;
 
 <span class="kw">const </span>LINE_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;,\n&quot;</span>;
 <span class="kw">const </span>COMMA_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;, &quot;</span>;
@@ -400,7 +402,7 @@
     }  <span class="kw">if </span>name.value == TIME_INDEX)
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
+<span class="attr">#[derive(Debug, PartialEq, Eq, Clone, Visit, VisitMut)]
 </span><span class="kw">pub struct </span>CreateTable {
     <span class="doccomment">/// Create if not exists
     </span><span class="kw">pub </span>if_not_exists: bool,
@@ -467,7 +469,7 @@
     }
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
+<span class="attr">#[derive(Debug, PartialEq, Eq, Clone, Visit, VisitMut)]
 </span><span class="kw">pub struct </span>Partitions {
     <span class="kw">pub </span>column_list: Vec&lt;Ident&gt;,
     <span class="kw">pub </span>entries: Vec&lt;PartitionEntry&gt;,
@@ -482,7 +484,7 @@
     }
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
+<span class="attr">#[derive(Debug, PartialEq, Eq, Clone, Visit, VisitMut)]
 </span><span class="kw">pub struct </span>PartitionEntry {
     <span class="kw">pub </span>name: Ident,
     <span class="kw">pub </span>value_list: Vec&lt;SqlValue&gt;,
@@ -540,14 +542,14 @@
     }
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
+<span class="attr">#[derive(Debug, PartialEq, Eq, Clone, Visit, VisitMut)]
 </span><span class="kw">pub struct </span>CreateDatabase {
     <span class="kw">pub </span>name: ObjectName,
     <span class="doccomment">/// Create if not exists
     </span><span class="kw">pub </span>if_not_exists: bool,
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
+<span class="attr">#[derive(Debug, PartialEq, Eq, Clone, Visit, VisitMut)]
 </span><span class="kw">pub struct </span>CreateExternalTable {
     <span class="doccomment">/// Table name
     </span><span class="kw">pub </span>name: ObjectName,
@@ -555,7 +557,7 @@
     <span class="kw">pub </span>constraints: Vec&lt;TableConstraint&gt;,
     <span class="doccomment">/// Table options in `WITH`.
     /// All keys are lowercase.
-    </span><span class="kw">pub </span>options: HashMap&lt;String, String&gt;,
+    </span><span class="kw">pub </span>options: OptionMap,
     <span class="kw">pub </span>if_not_exists: bool,
     <span class="kw">pub </span>engine: String,
 }

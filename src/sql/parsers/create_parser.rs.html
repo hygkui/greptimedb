@@ -1530,6 +1530,26 @@
 <a href="#1530" id="1530">1530</a>
 <a href="#1531" id="1531">1531</a>
 <a href="#1532" id="1532">1532</a>
+<a href="#1533" id="1533">1533</a>
+<a href="#1534" id="1534">1534</a>
+<a href="#1535" id="1535">1535</a>
+<a href="#1536" id="1536">1536</a>
+<a href="#1537" id="1537">1537</a>
+<a href="#1538" id="1538">1538</a>
+<a href="#1539" id="1539">1539</a>
+<a href="#1540" id="1540">1540</a>
+<a href="#1541" id="1541">1541</a>
+<a href="#1542" id="1542">1542</a>
+<a href="#1543" id="1543">1543</a>
+<a href="#1544" id="1544">1544</a>
+<a href="#1545" id="1545">1545</a>
+<a href="#1546" id="1546">1546</a>
+<a href="#1547" id="1547">1547</a>
+<a href="#1548" id="1548">1548</a>
+<a href="#1549" id="1549">1549</a>
+<a href="#1550" id="1550">1550</a>
+<a href="#1551" id="1551">1551</a>
+<a href="#1552" id="1552">1552</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1569,7 +1589,9 @@
     CreateDatabase, CreateExternalTable, CreateTable, PartitionEntry, Partitions, TIME_INDEX,
 };
 <span class="kw">use </span><span class="kw">crate</span>::statements::statement::Statement;
-<span class="kw">use </span><span class="kw">crate</span>::statements::{sql_data_type_to_concrete_data_type, sql_value_to_value};
+<span class="kw">use </span><span class="kw">crate</span>::statements::{
+    get_data_type_by_alias_name, sql_data_type_to_concrete_data_type, sql_value_to_value,
+};
 <span class="kw">use </span><span class="kw">crate</span>::util::parse_option_string;
 
 <span class="kw">pub const </span>ENGINE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;ENGINE&quot;</span>;
@@ -1638,7 +1660,7 @@
             name: table_name,
             columns,
             constraints,
-            options,
+            options: options.into(),
             if_not_exists,
             engine,
         }))
@@ -1906,8 +1928,11 @@
                     msg: <span class="string">&quot;time index column can&#39;t be null&quot;</span>,
                 }
             );
+
+            <span class="comment">// The timestamp type may be an alias type, we have to retrieve the actual type.
+            </span><span class="kw">let </span>data_type = get_real_timestamp_type(<span class="kw-2">&amp;</span>column.data_type);
             <span class="macro">ensure!</span>(
-                <span class="macro">matches!</span>(column.data_type, DataType::Timestamp(<span class="kw">_</span>, <span class="kw">_</span>)),
+                <span class="macro">matches!</span>(data_type, DataType::Timestamp(<span class="kw">_</span>, <span class="kw">_</span>)),
                 InvalidColumnOptionSnafu {
                     name: column.name.to_string(),
                     msg: <span class="string">&quot;time index column data type should be timestamp&quot;</span>,
@@ -2185,8 +2210,9 @@
             ),
         })<span class="question-mark">?</span>;
 
+    <span class="kw">let </span>time_index_data_type = get_real_timestamp_type(<span class="kw-2">&amp;</span>time_index_column.data_type);
     <span class="macro">ensure!</span>(
-        <span class="macro">matches!</span>(time_index_column.data_type, DataType::Timestamp(<span class="kw">_</span>, <span class="kw">_</span>)),
+        <span class="macro">matches!</span>(time_index_data_type, DataType::Timestamp(<span class="kw">_</span>, <span class="kw">_</span>)),
         InvalidColumnOptionSnafu {
             name: time_index_column.name.to_string(),
             msg: <span class="string">&quot;time index column data type should be timestamp&quot;</span>,
@@ -2194,6 +2220,19 @@
     );
 
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">fn </span>get_real_timestamp_type(data_type: <span class="kw-2">&amp;</span>DataType) -&gt; DataType {
+    <span class="kw">match </span>data_type {
+        DataType::Custom(name, tokens) <span class="kw">if </span>name.<span class="number">0</span>.len() == <span class="number">1 </span>&amp;&amp; tokens.is_empty() =&gt; {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(real_type) = get_data_type_by_alias_name(name.<span class="number">0</span>[<span class="number">0</span>].value.as_str()) {
+                real_type
+            } <span class="kw">else </span>{
+                data_type.clone()
+            }
+        }
+        <span class="kw">_ </span>=&gt; data_type.clone(),
+    }
 }
 
 <span class="kw">fn </span>validate_partitions(columns: <span class="kw-2">&amp;</span>[ColumnDef], partitions: <span class="kw-2">&amp;</span>Partitions) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2413,7 +2452,7 @@
             <span class="kw">match </span><span class="kw-2">&amp;</span>stmts[<span class="number">0</span>] {
                 Statement::CreateExternalTable(c) =&gt; {
                     <span class="macro">assert_eq!</span>(c.name.to_string(), test.expected_table_name.to_string());
-                    <span class="macro">assert_eq!</span>(c.options, test.expected_options);
+                    <span class="macro">assert_eq!</span>(c.options, test.expected_options.into());
                     <span class="macro">assert_eq!</span>(c.if_not_exists, test.expected_if_not_exist);
                     <span class="macro">assert_eq!</span>(c.engine, test.expected_engine);
                 }
@@ -2427,7 +2466,7 @@
         <span class="kw">let </span>sql = <span class="string">&quot;CREATE EXTERNAL TABLE city (
             host string,
             ts int64,
-            cpu float64 default 0,
+            cpu float32 default 0,
             memory float64,
             TIME INDEX (ts),
             PRIMARY KEY(ts, host)
@@ -2443,13 +2482,13 @@
         <span class="kw">match </span><span class="kw-2">&amp;</span>stmts[<span class="number">0</span>] {
             Statement::CreateExternalTable(c) =&gt; {
                 <span class="macro">assert_eq!</span>(c.name.to_string(), <span class="string">&quot;city&quot;</span>);
-                <span class="macro">assert_eq!</span>(c.options, options);
+                <span class="macro">assert_eq!</span>(c.options, options.into());
 
                 <span class="kw">let </span>columns = <span class="kw-2">&amp;</span>c.columns;
                 assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">0</span>], <span class="string">&quot;host&quot;</span>, <span class="string">&quot;STRING&quot;</span>);
-                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">1</span>], <span class="string">&quot;ts&quot;</span>, <span class="string">&quot;int64&quot;</span>);
-                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">2</span>], <span class="string">&quot;cpu&quot;</span>, <span class="string">&quot;float64&quot;</span>);
-                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">3</span>], <span class="string">&quot;memory&quot;</span>, <span class="string">&quot;float64&quot;</span>);
+                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">1</span>], <span class="string">&quot;ts&quot;</span>, <span class="string">&quot;BIGINT&quot;</span>);
+                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">2</span>], <span class="string">&quot;cpu&quot;</span>, <span class="string">&quot;FLOAT&quot;</span>);
+                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">3</span>], <span class="string">&quot;memory&quot;</span>, <span class="string">&quot;DOUBLE&quot;</span>);
 
                 <span class="kw">let </span>constraints = <span class="kw-2">&amp;</span>c.constraints;
                 <span class="macro">assert_matches!</span>(
@@ -2955,7 +2994,7 @@ ENGINE=mito&quot;</span>;
         <span class="kw">let </span>sql = <span class="string">r&quot;create table demo(
                              host string,
                              ts timestamp,
-                             cpu float64 default 0,
+                             cpu float32 default 0,
                              memory float64,
                              TIME INDEX (ts),
                              PRIMARY KEY(ts, host)) engine=mito
@@ -2972,8 +3011,9 @@ ENGINE=mito&quot;</span>;
                 <span class="kw">let </span>columns = <span class="kw-2">&amp;</span>c.columns;
                 assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">0</span>], <span class="string">&quot;host&quot;</span>, <span class="string">&quot;STRING&quot;</span>);
                 assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">1</span>], <span class="string">&quot;ts&quot;</span>, <span class="string">&quot;TIMESTAMP&quot;</span>);
-                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">2</span>], <span class="string">&quot;cpu&quot;</span>, <span class="string">&quot;float64&quot;</span>);
-                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">3</span>], <span class="string">&quot;memory&quot;</span>, <span class="string">&quot;float64&quot;</span>);
+                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">2</span>], <span class="string">&quot;cpu&quot;</span>, <span class="string">&quot;FLOAT&quot;</span>);
+                assert_column_def(<span class="kw-2">&amp;</span>columns[<span class="number">3</span>], <span class="string">&quot;memory&quot;</span>, <span class="string">&quot;DOUBLE&quot;</span>);
+
                 <span class="kw">let </span>constraints = <span class="kw-2">&amp;</span>c.constraints;
                 <span class="macro">assert_matches!</span>(
                     <span class="kw-2">&amp;</span>constraints[<span class="number">0</span>],

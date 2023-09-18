@@ -349,7 +349,6 @@
 <span class="kw">mod </span>show;
 <span class="kw">mod </span>tql;
 
-<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::str::FromStr;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -371,6 +370,7 @@
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>sql::statements::copy::{CopyDatabaseArgument, CopyTable, CopyTableArgument};
 <span class="kw">use </span>sql::statements::statement::Statement;
+<span class="kw">use </span>sql::statements::OptionMap;
 <span class="kw">use </span>sqlparser::ast::ObjectName;
 <span class="kw">use </span>table::engine::TableReference;
 <span class="kw">use </span>table::requests::{CopyDatabaseRequest, CopyDirection, CopyTableRequest};
@@ -587,8 +587,8 @@
         schema_name,
         table_name,
         location,
-        with,
-        connection,
+        with: with.map,
+        connection: connection.map,
         pattern,
         direction,
         <span class="comment">// we copy the whole table by default.
@@ -620,14 +620,14 @@
         catalog_name,
         schema_name: database_name,
         location: arg.location,
-        with: arg.with,
-        connection: arg.connection,
+        with: arg.with.map,
+        connection: arg.connection.map,
         time_range,
     })
 }
 
 <span class="doccomment">/// Extracts timestamp from a [HashMap&lt;String, String&gt;] with given key.
-</span><span class="kw">fn </span>extract_timestamp(map: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Timestamp&gt;&gt; {
+</span><span class="kw">fn </span>extract_timestamp(map: <span class="kw-2">&amp;</span>OptionMap, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Timestamp&gt;&gt; {
     map.get(key)
         .map(|v| {
             Timestamp::from_str(v)
