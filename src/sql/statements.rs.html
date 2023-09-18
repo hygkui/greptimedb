@@ -855,6 +855,9 @@
 <a href="#855" id="855">855</a>
 <a href="#856" id="856">856</a>
 <a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1276,11 +1279,14 @@
             <span class="prelude-val">Some</span>(time_type.precision()),
             TimezoneInfo::None,
         )),
+        ConcreteDataType::Interval(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Interval),
         ConcreteDataType::Binary(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Varbinary(<span class="prelude-val">None</span>)),
-        ConcreteDataType::Null(<span class="kw">_</span>) | ConcreteDataType::List(<span class="kw">_</span>) | ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; {
+        ConcreteDataType::Duration(<span class="kw">_</span>)
+        | ConcreteDataType::Null(<span class="kw">_</span>)
+        | ConcreteDataType::List(<span class="kw">_</span>)
+        | ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; {
             <span class="macro">unreachable!</span>()
         }
-        ConcreteDataType::Interval(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Interval),
     }
 }
 

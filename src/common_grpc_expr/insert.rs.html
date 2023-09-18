@@ -419,6 +419,45 @@
 <a href="#419" id="419">419</a>
 <a href="#420" id="420">420</a>
 <a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -580,8 +619,8 @@
         );
 
         <span class="kw">let </span>column_defs = create_expr.column_defs;
-        <span class="macro">assert_eq!</span>(column_defs[<span class="number">5</span>].name, create_expr.time_index);
-        <span class="macro">assert_eq!</span>(<span class="number">6</span>, column_defs.len());
+        <span class="macro">assert_eq!</span>(column_defs[<span class="number">6</span>].name, create_expr.time_index);
+        <span class="macro">assert_eq!</span>(<span class="number">7</span>, column_defs.len());
 
         <span class="macro">assert_eq!</span>(
             ConcreteDataType::string_datatype(),
@@ -654,6 +693,20 @@
         );
 
         <span class="macro">assert_eq!</span>(
+            ConcreteDataType::duration_millisecond_datatype(),
+            ConcreteDataType::from(
+                ColumnDataTypeWrapper::try_new(
+                    column_defs
+                        .iter()
+                        .find(|c| c.name == <span class="string">&quot;duration&quot;</span>)
+                        .unwrap()
+                        .data_type
+                )
+                .unwrap()
+            )
+        );
+
+        <span class="macro">assert_eq!</span>(
             ConcreteDataType::timestamp_millisecond_datatype(),
             ConcreteDataType::from(
                 ColumnDataTypeWrapper::try_new(
@@ -686,7 +739,7 @@
 
         <span class="kw">let </span>add_columns = find_new_columns(<span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>insert_batch.<span class="number">0</span>).unwrap().unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="number">4</span>, add_columns.add_columns.len());
+        <span class="macro">assert_eq!</span>(<span class="number">5</span>, add_columns.add_columns.len());
         <span class="kw">let </span>host_column = <span class="kw-2">&amp;</span>add_columns.add_columns[<span class="number">0</span>];
         <span class="macro">assert_eq!</span>(
             ConcreteDataType::string_datatype(),
@@ -722,6 +775,18 @@
             ConcreteDataType::from(
                 ColumnDataTypeWrapper::try_new(
                     interval_column.column_def.as_ref().unwrap().data_type
+                )
+                .unwrap()
+            )
+        );
+
+        <span class="kw">let </span>duration_column = <span class="kw-2">&amp;</span>add_columns.add_columns[<span class="number">4</span>];
+
+        <span class="macro">assert_eq!</span>(
+            ConcreteDataType::duration_millisecond_datatype(),
+            ConcreteDataType::from(
+                ColumnDataTypeWrapper::try_new(
+                    duration_column.column_def.as_ref().unwrap().data_type
                 )
                 .unwrap()
             )
@@ -815,6 +880,18 @@
             datatype: ColumnDataType::IntervalMonthDayNano <span class="kw">as </span>i32,
         };
 
+        <span class="kw">let </span>duration_vals = Values {
+            duration_millisecond_values: <span class="macro">vec!</span>[<span class="number">100</span>, <span class="number">101</span>],
+            ..Default::default()
+        };
+        <span class="kw">let </span>duration_column = Column {
+            column_name: <span class="string">&quot;duration&quot;</span>.to_string(),
+            semantic_type: SemanticType::Field <span class="kw">as </span>i32,
+            values: <span class="prelude-val">Some</span>(duration_vals),
+            null_mask: <span class="macro">vec!</span>[<span class="number">0</span>],
+            datatype: ColumnDataType::DurationMillisecond <span class="kw">as </span>i32,
+        };
+
         <span class="kw">let </span>ts_vals = Values {
             timestamp_millisecond_values: <span class="macro">vec!</span>[<span class="number">100</span>, <span class="number">101</span>],
             ..Default::default()
@@ -834,6 +911,7 @@
                 mem_column,
                 time_column,
                 interval_column,
+                duration_column,
                 ts_column,
             ],
             row_count,
