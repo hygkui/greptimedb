@@ -1162,7 +1162,7 @@
             heartbeat_task.start().<span class="kw">await</span><span class="question-mark">?</span>;
         }
 
-        <span class="self">self</span>.script_executor.start(<span class="self">self</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.script_executor.start(<span class="self">self</span>)<span class="question-mark">?</span>;
 
         futures::future::try_join_all(<span class="self">self</span>.servers.values().map(start_server))
             .<span class="kw">await
