@@ -337,7 +337,6 @@
 
 <span class="kw">use </span>arrow_schema::{Schema <span class="kw">as </span>ArrowSchema, SchemaRef <span class="kw">as </span>ArrowSchemaRef};
 <span class="kw">use </span>async_stream::stream;
-<span class="kw">use </span>client::region_handler::RegionRequestHandlerRef;
 <span class="kw">use </span>common_base::bytes::Bytes;
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_meta::table_name::TableName;
@@ -361,6 +360,7 @@
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::ConvertSchemaSnafu;
+<span class="kw">use </span><span class="kw">crate</span>::region_query::RegionQueryHandlerRef;
 
 <span class="attr">#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 </span><span class="kw">pub struct </span>MergeScanLogicalPlan {
@@ -433,7 +433,7 @@
     substrait_plan: Bytes,
     schema: SchemaRef,
     arrow_schema: ArrowSchemaRef,
-    request_handler: RegionRequestHandlerRef,
+    region_query_handler: RegionQueryHandlerRef,
     metric: ExecutionPlanMetricsSet,
 }
 
@@ -453,7 +453,7 @@
         regions: Vec&lt;RegionId&gt;,
         substrait_plan: Bytes,
         arrow_schema: <span class="kw-2">&amp;</span>ArrowSchema,
-        request_handler: RegionRequestHandlerRef,
+        region_query_handler: RegionQueryHandlerRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>arrow_schema_without_metadata = <span class="self">Self</span>::arrow_schema_without_metadata(arrow_schema);
         <span class="kw">let </span>schema_without_metadata =
@@ -464,7 +464,7 @@
             substrait_plan,
             schema: schema_without_metadata,
             arrow_schema: arrow_schema_without_metadata,
-            request_handler,
+            region_query_handler,
             metric: ExecutionPlanMetricsSet::new(),
         })
     }
@@ -472,7 +472,7 @@
     <span class="kw">pub fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, _context: Arc&lt;TaskContext&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
         <span class="kw">let </span>substrait_plan = <span class="self">self</span>.substrait_plan.to_vec();
         <span class="kw">let </span>regions = <span class="self">self</span>.regions.clone();
-        <span class="kw">let </span>request_handler = <span class="self">self</span>.request_handler.clone();
+        <span class="kw">let </span>region_query_handler = <span class="self">self</span>.region_query_handler.clone();
         <span class="kw">let </span>metric = MergeScanMetric::new(<span class="kw-2">&amp;</span><span class="self">self</span>.metric);
 
         <span class="kw">let </span>stream = Box::pin(<span class="macro">stream!</span>({
@@ -486,7 +486,7 @@
                     region_id: region_id.into(),
                     plan: substrait_plan.clone(),
                 };
-                <span class="kw">let </span><span class="kw-2">mut </span>stream = request_handler
+                <span class="kw">let </span><span class="kw-2">mut </span>stream = region_query_handler
                     .do_get(request)
                     .<span class="kw">await
                     </span>.map_err(BoxedError::new)

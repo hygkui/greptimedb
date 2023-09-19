@@ -781,12 +781,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>distributed;
-<span class="kw">mod </span>grpc;
+</span><span class="kw">mod </span>grpc;
 <span class="kw">mod </span>influxdb;
 <span class="kw">mod </span>opentsdb;
 <span class="kw">mod </span>otlp;
 <span class="kw">mod </span>prom_store;
+<span class="kw">mod </span>region_query;
 <span class="kw">mod </span>script;
 <span class="kw">mod </span>standalone;
 <span class="kw">use </span>std::collections::HashMap;
@@ -851,7 +851,7 @@
 <span class="kw">use </span>sqlparser::ast::ObjectName;
 <span class="kw">pub use </span>standalone::StandaloneDatanodeManager;
 
-<span class="kw">use </span><span class="self">self</span>::distributed::DistRegionRequestHandler;
+<span class="kw">use </span><span class="self">self</span>::region_query::FrontendRegionQueryHandler;
 <span class="kw">use </span><span class="self">self</span>::standalone::StandaloneTableMetadataCreator;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, Error, ExecLogicalPlanSnafu, ExecutePromqlSnafu, ExternalSnafu, MissingMetasrvOptsSnafu,
@@ -927,14 +927,14 @@
         );
         <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(meta_backend.clone()));
 
-        <span class="kw">let </span>region_request_handler = DistRegionRequestHandler::arc(
+        <span class="kw">let </span>region_query_handler = FrontendRegionQueryHandler::arc(
             partition_manager.clone(),
             catalog_manager.datanode_manager().clone(),
         );
 
         <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
             catalog_manager.clone(),
-            <span class="prelude-val">Some</span>(region_request_handler.clone()),
+            <span class="prelude-val">Some</span>(region_query_handler.clone()),
             <span class="bool-val">true</span>,
             plugins.clone(),
         )
@@ -1067,12 +1067,12 @@
         <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(kv_backend.clone()));
         <span class="kw">let </span>datanode_manager = Arc::new(StandaloneDatanodeManager(region_server));
 
-        <span class="kw">let </span>region_request_handler =
-            DistRegionRequestHandler::arc(partition_manager.clone(), datanode_manager.clone());
+        <span class="kw">let </span>region_query_handler =
+            FrontendRegionQueryHandler::arc(partition_manager.clone(), datanode_manager.clone());
 
         <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
             catalog_manager.clone(),
-            <span class="prelude-val">Some</span>(region_request_handler),
+            <span class="prelude-val">Some</span>(region_query_handler),
             <span class="bool-val">true</span>,
             plugins.clone(),
         )

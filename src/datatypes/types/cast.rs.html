@@ -296,6 +296,11 @@
 <a href="#296" id="296">296</a>
 <a href="#297" id="297">297</a>
 <a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -356,7 +361,7 @@
     <span class="kw">match </span>new_value {
         <span class="prelude-val">Some</span>(v) =&gt; <span class="prelude-val">Ok</span>(v),
         <span class="prelude-val">None </span>=&gt; {
-            <span class="kw">if </span>cast_option.strict {
+            <span class="kw">if </span>cast_option.strict &amp;&amp; !src_value.is_null() {
                 <span class="prelude-val">Err</span>(invalid_type_cast(<span class="kw-2">&amp;</span>src_value, dest_type))
             } <span class="kw">else </span>{
                 <span class="prelude-val">Ok</span>(Value::Null)
@@ -381,6 +386,7 @@
     <span class="kw">match </span>(src_type, dest_type) {
         <span class="comment">// null type cast
         </span>(<span class="kw">_</span>, Null(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
+        (Null(<span class="kw">_</span>), <span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
 
         <span class="comment">// boolean type cast
         </span>(<span class="kw">_</span>, Boolean(<span class="kw">_</span>)) =&gt; src_type.is_numeric() || src_type.is_string(),
@@ -400,18 +406,22 @@
         // Date type
         </span>(Date(<span class="kw">_</span>), Int32(<span class="kw">_</span>) | Timestamp(<span class="kw">_</span>) | String(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Int32(<span class="kw">_</span>) | String(<span class="kw">_</span>) | Timestamp(<span class="kw">_</span>), Date(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
+        (Date(<span class="kw">_</span>), Date(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         <span class="comment">// DateTime type
         </span>(DateTime(<span class="kw">_</span>), Int64(<span class="kw">_</span>) | Timestamp(<span class="kw">_</span>) | String(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Int64(<span class="kw">_</span>) | Timestamp(<span class="kw">_</span>) | String(<span class="kw">_</span>), DateTime(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
+        (DateTime(<span class="kw">_</span>), DateTime(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         <span class="comment">// Timestamp type
         </span>(Timestamp(<span class="kw">_</span>), Int64(<span class="kw">_</span>) | String(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Int64(<span class="kw">_</span>) | String(<span class="kw">_</span>), Timestamp(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
+        (Timestamp(<span class="kw">_</span>), Timestamp(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         <span class="comment">// Time type
         </span>(Time(<span class="kw">_</span>), String(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Time(Second(<span class="kw">_</span>)), Int32(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Time(Millisecond(<span class="kw">_</span>)), Int32(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Time(Microsecond(<span class="kw">_</span>)), Int64(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Time(Nanosecond(<span class="kw">_</span>)), Int64(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
+        (Time(<span class="kw">_</span>), Time(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         <span class="comment">// TODO(QuenKar): interval type cast
         </span>(Interval(<span class="kw">_</span>), String(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
         (Duration(<span class="kw">_</span>), String(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,

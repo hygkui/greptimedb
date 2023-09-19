@@ -858,6 +858,17 @@
 <a href="#858" id="858">858</a>
 <a href="#859" id="859">859</a>
 <a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -898,7 +909,8 @@
 <span class="kw">use </span>common_time::Timestamp;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, COMMENT_KEY};
-<span class="kw">use </span>datatypes::types::TimestampType;
+<span class="kw">use </span>datatypes::types::cast::CastOption;
+<span class="kw">use </span>datatypes::types::{cast, TimestampType};
 <span class="kw">use </span>datatypes::value::{OrderedF32, OrderedF64, Value};
 <span class="kw">pub use </span>option_map::OptionMap;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -910,7 +922,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, ColumnTypeMismatchSnafu, ConvertSqlValueSnafu, ConvertToGrpcDataTypeSnafu,
-    ConvertValueSnafu, InvalidSqlValueSnafu, ParseSqlValueSnafu, <span class="prelude-ty">Result</span>,
+    ConvertValueSnafu, InvalidCastSnafu, InvalidSqlValueSnafu, ParseSqlValueSnafu, <span class="prelude-ty">Result</span>,
     SerializeColumnDefaultConstraintSnafu, TimestampOverflowSnafu, UnsupportedDefaultValueSnafu,
 };
 
@@ -1046,7 +1058,7 @@
     data_type: <span class="kw-2">&amp;</span>ConcreteDataType,
     sql_val: <span class="kw-2">&amp;</span>SqlValue,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Value&gt; {
-    <span class="prelude-val">Ok</span>(<span class="kw">match </span>sql_val {
+    <span class="kw">let </span>value = <span class="kw">match </span>sql_val {
         SqlValue::Number(n, <span class="kw">_</span>) =&gt; sql_number_to_value(data_type, n)<span class="question-mark">?</span>,
         SqlValue::Null =&gt; Value::Null,
         SqlValue::Boolean(b) =&gt; {
@@ -1075,7 +1087,17 @@
             }
             .fail()
         }
-    })
+    };
+    <span class="kw">if </span>value.data_type() != <span class="kw-2">*</span>data_type {
+        cast::cast_with_opt(value, data_type, <span class="kw-2">&amp;</span>CastOption { strict: <span class="bool-val">true </span>}).with_context(|<span class="kw">_</span>| {
+            InvalidCastSnafu {
+                sql_value: sql_val.clone(),
+                datatype: data_type,
+            }
+        })
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Ok</span>(value)
+    }
 }
 
 <span class="kw">pub fn </span>value_to_sql_value(val: <span class="kw-2">&amp;</span>Value) -&gt; <span class="prelude-ty">Result</span>&lt;SqlValue&gt; {

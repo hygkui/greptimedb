@@ -256,7 +256,6 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::CatalogManagerRef;
-<span class="kw">use </span>client::region_handler::RegionRequestHandlerRef;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_function::scalars::aggregate::AggregateFunctionMetaRef;
 <span class="kw">use </span>common_query::physical_plan::SessionContext;
@@ -286,6 +285,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::optimizer::type_conversion::TypeConversionRule;
 <span class="kw">use </span><span class="kw">crate</span>::query_engine::options::QueryOptions;
 <span class="kw">use </span><span class="kw">crate</span>::range_select::planner::RangeSelectPlanner;
+<span class="kw">use </span><span class="kw">crate</span>::region_query::RegionQueryHandlerRef;
 
 <span class="doccomment">/// Query engine global state
 </span><span class="comment">// TODO(yingwen): This QueryEngineState still relies on datafusion, maybe we can define a trait for it,
@@ -310,7 +310,7 @@
 <span class="kw">impl </span>QueryEngineState {
     <span class="kw">pub fn </span>new(
         catalog_list: CatalogManagerRef,
-        request_handler: <span class="prelude-ty">Option</span>&lt;RegionRequestHandlerRef&gt;,
+        region_query_handler: <span class="prelude-ty">Option</span>&lt;RegionQueryHandlerRef&gt;,
         with_dist_planner: bool,
         plugins: Arc&lt;Plugins&gt;,
     ) -&gt; <span class="self">Self </span>{
@@ -351,7 +351,7 @@
         .with_analyzer_rules(analyzer.rules)
         .with_query_planner(Arc::new(DfQueryPlanner::new(
             catalog_list.clone(),
-            request_handler,
+            region_query_handler,
         )))
         .with_optimizer_rules(optimizer.rules)
         .with_physical_optimizer_rules(physical_optimizers);
@@ -459,14 +459,14 @@
 <span class="kw">impl </span>DfQueryPlanner {
     <span class="kw">fn </span>new(
         catalog_manager: CatalogManagerRef,
-        request_handler: <span class="prelude-ty">Option</span>&lt;RegionRequestHandlerRef&gt;,
+        region_query_handler: <span class="prelude-ty">Option</span>&lt;RegionQueryHandlerRef&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>planners: Vec&lt;Arc&lt;<span class="kw">dyn </span>ExtensionPlanner + Send + Sync&gt;&gt; =
             <span class="macro">vec!</span>[Arc::new(PromExtensionPlanner), Arc::new(RangeSelectPlanner)];
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(request_handler) = request_handler {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(region_query_handler) = region_query_handler {
             planners.push(Arc::new(DistExtensionPlanner::new(
                 catalog_manager,
-                request_handler,
+                region_query_handler,
             )));
         }
         <span class="self">Self </span>{

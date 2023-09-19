@@ -262,7 +262,6 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::CatalogManagerRef;
-<span class="kw">use </span>client::region_handler::RegionRequestHandlerRef;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>datafusion::common::Result;
@@ -283,20 +282,21 @@
 <span class="kw">use </span><span class="kw">crate</span>::dist_plan::merge_scan::{MergeScanExec, MergeScanLogicalPlan};
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::{CatalogSnafu, TableNotFoundSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::region_query::RegionQueryHandlerRef;
 
 <span class="kw">pub struct </span>DistExtensionPlanner {
     catalog_manager: CatalogManagerRef,
-    request_handler: RegionRequestHandlerRef,
+    region_query_handler: RegionQueryHandlerRef,
 }
 
 <span class="kw">impl </span>DistExtensionPlanner {
     <span class="kw">pub fn </span>new(
         catalog_manager: CatalogManagerRef,
-        request_handler: RegionRequestHandlerRef,
+        region_query_handler: RegionQueryHandlerRef,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             catalog_manager,
-            request_handler,
+            region_query_handler,
         }
     }
 }
@@ -352,7 +352,7 @@
             regions,
             substrait_plan,
             <span class="kw-2">&amp;</span>schema,
-            <span class="self">self</span>.request_handler.clone(),
+            <span class="self">self</span>.region_query_handler.clone(),
         )<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(merge_scan_plan) <span class="kw">as _</span>))
     }

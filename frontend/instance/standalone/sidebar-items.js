@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["TABLE_ID_SEQ"],"struct":["StandaloneDatanodeManager","StandaloneRegionRequestHandler","StandaloneTableMetadataCreator"]};
+window.SIDEBAR_ITEMS = {"constant":["TABLE_ID_SEQ"],"struct":["RegionInvoker","StandaloneDatanodeManager","StandaloneTableMetadataCreator"]};
