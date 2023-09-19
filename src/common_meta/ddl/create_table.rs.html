@@ -319,6 +319,8 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -503,7 +505,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>create_region_tasks = Vec::with_capacity(leaders.len());
 
         <span class="kw">for </span>datanode <span class="kw">in </span>leaders {
-            <span class="kw">let </span>manager = <span class="self">self</span>.context.datanode_manager.clone();
+            <span class="kw">let </span>requester = <span class="self">self</span>.context.datanode_manager.datanode(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
 
             <span class="kw">let </span>regions = find_leader_regions(region_routes, <span class="kw-2">&amp;</span>datanode);
             <span class="kw">let </span>requests = regions
@@ -518,23 +520,25 @@
                 })
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-            create_region_tasks.push(<span class="kw">async move </span>{
-                <span class="kw">for </span>request <span class="kw">in </span>requests {
-                    <span class="kw">let </span>requester = manager.datanode(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
+            <span class="kw">for </span>request <span class="kw">in </span>requests {
+                <span class="kw">let </span>request = RegionRequest {
+                    header: <span class="prelude-val">Some</span>(RegionRequestHeader {
+                        trace_id: <span class="number">0</span>,
+                        span_id: <span class="number">0</span>,
+                    }),
+                    body: <span class="prelude-val">Some</span>(request),
+                };
 
-                    <span class="kw">let </span>request = RegionRequest {
-                        header: <span class="prelude-val">Some</span>(RegionRequestHeader {
-                            trace_id: <span class="number">0</span>,
-                            span_id: <span class="number">0</span>,
-                        }),
-                        body: <span class="prelude-val">Some</span>(request),
-                    };
+                <span class="kw">let </span>datanode = datanode.clone();
+                <span class="kw">let </span>requester = requester.clone();
+
+                create_region_tasks.push(<span class="kw">async move </span>{
                     <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = requester.handle(request).<span class="kw">await </span>{
                         <span class="kw">return </span><span class="prelude-val">Err</span>(handle_operate_region_error(datanode)(err));
                     }
-                }
-                <span class="prelude-val">Ok</span>(())
-            });
+                    <span class="prelude-val">Ok</span>(())
+                });
+            }
         }
 
         join_all(create_region_tasks)

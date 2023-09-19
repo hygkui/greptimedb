@@ -275,6 +275,9 @@
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -419,7 +422,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>drop_region_tasks = Vec::with_capacity(leaders.len());
 
         <span class="kw">for </span>datanode <span class="kw">in </span>leaders {
-            <span class="kw">let </span>clients = <span class="self">self</span>.context.datanode_manager.clone();
+            <span class="kw">let </span>requester = <span class="self">self</span>.context.datanode_manager.datanode(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
 
             <span class="kw">let </span>regions = find_leader_regions(region_routes, <span class="kw-2">&amp;</span>datanode);
             <span class="kw">let </span>region_ids = regions
@@ -427,28 +430,31 @@
                 .map(|region_number| RegionId::new(table_id, <span class="kw-2">*</span>region_number))
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-            drop_region_tasks.push(<span class="kw">async move </span>{
-                <span class="kw">for </span>region_id <span class="kw">in </span>region_ids {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Dropping region {region_id} on Datanode {datanode:?}&quot;</span>);
+            <span class="kw">for </span>region_id <span class="kw">in </span>region_ids {
+                <span class="macro">debug!</span>(<span class="string">&quot;Dropping region {region_id} on Datanode {datanode:?}&quot;</span>);
 
-                    <span class="kw">let </span>request = RegionRequest {
-                        header: <span class="prelude-val">Some</span>(RegionRequestHeader {
-                            trace_id: <span class="number">0</span>,
-                            span_id: <span class="number">0</span>,
-                        }),
-                        body: <span class="prelude-val">Some</span>(region_request::Body::Drop(PbDropRegionRequest {
-                            region_id: region_id.as_u64(),
-                        })),
-                    };
+                <span class="kw">let </span>request = RegionRequest {
+                    header: <span class="prelude-val">Some</span>(RegionRequestHeader {
+                        trace_id: <span class="number">0</span>,
+                        span_id: <span class="number">0</span>,
+                    }),
+                    body: <span class="prelude-val">Some</span>(region_request::Body::Drop(PbDropRegionRequest {
+                        region_id: region_id.as_u64(),
+                    })),
+                };
 
-                    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = clients.datanode(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>.handle(request).<span class="kw">await </span>{
+                <span class="kw">let </span>datanode = datanode.clone();
+                <span class="kw">let </span>requester = requester.clone();
+
+                drop_region_tasks.push(<span class="kw">async move </span>{
+                    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = requester.handle(request).<span class="kw">await </span>{
                         <span class="kw">if </span>err.status_code() != StatusCode::RegionNotFound {
                             <span class="kw">return </span><span class="prelude-val">Err</span>(handle_operate_region_error(datanode)(err));
                         }
                     }
-                }
-                <span class="prelude-val">Ok</span>(())
-            });
+                    <span class="prelude-val">Ok</span>(())
+                });
+            }
         }
 
         join_all(drop_region_tasks)

@@ -510,6 +510,9 @@
 <a href="#510" id="510">510</a>
 <a href="#511" id="511">511</a>
 <a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -629,9 +632,10 @@
         <span class="kw">let </span>catalog = <span class="kw-2">&amp;</span>alter_expr.catalog_name;
         <span class="kw">let </span>schema = <span class="kw-2">&amp;</span>alter_expr.schema_name;
 
+        <span class="kw">let </span>alter_kind = <span class="self">self</span>.alter_kind()<span class="question-mark">?</span>;
         <span class="kw">let </span>manager = <span class="kw-2">&amp;</span><span class="self">self</span>.context.table_metadata_manager;
 
-        <span class="kw">if let </span>Kind::RenameTable(RenameTable { new_table_name }) = <span class="self">self</span>.alter_kind()<span class="question-mark">? </span>{
+        <span class="kw">if let </span>Kind::RenameTable(RenameTable { new_table_name }) = alter_kind {
             <span class="kw">let </span>new_table_name_key = TableNameKey::new(catalog, schema, new_table_name);
 
             <span class="kw">let </span>exist = manager
@@ -658,7 +662,11 @@
             }
         );
 
-        <span class="self">self</span>.data.state = AlterTableState::UpdateMetadata;
+        <span class="kw">if </span><span class="macro">matches!</span>(alter_kind, Kind::RenameTable { .. }) {
+            <span class="self">self</span>.data.state = AlterTableState::UpdateMetadata;
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.data.state = AlterTableState::SubmitAlterRegionRequests;
+        };
 
         <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
     }
@@ -686,7 +694,7 @@
         })
     }
 
-    <span class="kw">pub async fn </span>submit_alter_region_requests(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
+    <span class="kw">pub async fn </span>submit_alter_region_requests(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Status&gt; {
         <span class="kw">let </span>table_id = <span class="self">self</span>.data.table_id();
         <span class="kw">let </span>table_ref = <span class="self">self</span>.data.table_ref();
 
@@ -704,30 +712,31 @@
         <span class="kw">let </span><span class="kw-2">mut </span>alter_region_tasks = Vec::with_capacity(leaders.len());
 
         <span class="kw">for </span>datanode <span class="kw">in </span>leaders {
-            <span class="kw">let </span>datanode_manager = <span class="self">self</span>.context.datanode_manager.clone();
-
+            <span class="kw">let </span>requester = <span class="self">self</span>.context.datanode_manager.datanode(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
             <span class="kw">let </span>regions = find_leader_regions(<span class="kw-2">&amp;</span>region_routes, <span class="kw-2">&amp;</span>datanode);
 
-            alter_region_tasks.push(<span class="kw">async move </span>{
-                <span class="kw">for </span>region <span class="kw">in </span>regions {
-                    <span class="kw">let </span>region_id = RegionId::new(table_id, region);
-                    <span class="kw">let </span>request = <span class="self">self</span>.create_alter_region_request(region_id)<span class="question-mark">?</span>;
-                    <span class="kw">let </span>request = RegionRequest {
-                        header: <span class="prelude-val">Some</span>(RegionRequestHeader {
-                            trace_id: common_telemetry::trace_id().unwrap_or_default(),
-                            ..Default::default()
-                        }),
-                        body: <span class="prelude-val">Some</span>(region_request::Body::Alter(request)),
-                    };
-                    <span class="macro">debug!</span>(<span class="string">&quot;Submitting {request:?} to {datanode}&quot;</span>);
+            <span class="kw">for </span>region <span class="kw">in </span>regions {
+                <span class="kw">let </span>region_id = RegionId::new(table_id, region);
+                <span class="kw">let </span>request = <span class="self">self</span>.create_alter_region_request(region_id)<span class="question-mark">?</span>;
+                <span class="kw">let </span>request = RegionRequest {
+                    header: <span class="prelude-val">Some</span>(RegionRequestHeader {
+                        trace_id: common_telemetry::trace_id().unwrap_or_default(),
+                        ..Default::default()
+                    }),
+                    body: <span class="prelude-val">Some</span>(region_request::Body::Alter(request)),
+                };
+                <span class="macro">debug!</span>(<span class="string">&quot;Submitting {request:?} to {datanode}&quot;</span>);
 
-                    <span class="kw">let </span>requester = datanode_manager.datanode(<span class="kw-2">&amp;</span>datanode).<span class="kw">await</span>;
+                <span class="kw">let </span>datanode = datanode.clone();
+                <span class="kw">let </span>requester = requester.clone();
+
+                alter_region_tasks.push(<span class="kw">async move </span>{
                     <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = requester.handle(request).<span class="kw">await </span>{
                         <span class="kw">return </span><span class="prelude-val">Err</span>(handle_operate_region_error(datanode)(e));
                     }
-                }
-                <span class="prelude-val">Ok</span>(())
-            });
+                    <span class="prelude-val">Ok</span>(())
+                });
+            }
         }
 
         future::join_all(alter_region_tasks)
@@ -735,7 +744,9 @@
             </span>.into_iter()
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(Status::Done)
+        <span class="self">self</span>.data.state = AlterTableState::UpdateMetadata;
+
+        <span class="prelude-val">Ok</span>(Status::executing(<span class="bool-val">true</span>))
     }
 
     <span class="doccomment">/// Update table metadata for rename table operation.
@@ -825,22 +836,17 @@
         <span class="kw">let </span>alter_kind = <span class="self">self</span>.alter_kind()<span class="question-mark">?</span>;
         <span class="kw">let </span>cache_invalidator = <span class="kw-2">&amp;</span><span class="self">self</span>.context.cache_invalidator;
 
-        <span class="kw">let </span>status = <span class="kw">if </span><span class="macro">matches!</span>(alter_kind, Kind::RenameTable { .. }) {
+        <span class="kw">if </span><span class="macro">matches!</span>(alter_kind, Kind::RenameTable { .. }) {
             cache_invalidator
                 .invalidate_table_name(<span class="kw-2">&amp;</span>Context::default(), <span class="self">self</span>.data.table_ref().into())
                 .<span class="kw">await</span><span class="question-mark">?</span>;
-
-            Status::Done
         } <span class="kw">else </span>{
             cache_invalidator
                 .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), <span class="self">self</span>.data.table_id())
                 .<span class="kw">await</span><span class="question-mark">?</span>;
-
-            <span class="self">self</span>.data.state = AlterTableState::SubmitAlterRegionRequests;
-
-            Status::executing(<span class="bool-val">true</span>)
         };
-        <span class="prelude-val">Ok</span>(status)
+
+        <span class="prelude-val">Ok</span>(Status::Done)
     }
 
     <span class="kw">fn </span>lock_key_inner(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;String&gt; {
@@ -888,9 +894,9 @@
 
         <span class="kw">match </span>state {
             AlterTableState::Prepare =&gt; <span class="self">self</span>.on_prepare().<span class="kw">await</span>,
+            AlterTableState::SubmitAlterRegionRequests =&gt; <span class="self">self</span>.submit_alter_region_requests().<span class="kw">await</span>,
             AlterTableState::UpdateMetadata =&gt; <span class="self">self</span>.on_update_metadata().<span class="kw">await</span>,
             AlterTableState::InvalidateTableCache =&gt; <span class="self">self</span>.on_broadcast().<span class="kw">await</span>,
-            AlterTableState::SubmitAlterRegionRequests =&gt; <span class="self">self</span>.submit_alter_region_requests().<span class="kw">await</span>,
         }
         .map_err(error_handler)
     }
@@ -910,11 +916,11 @@
 </span><span class="kw">enum </span>AlterTableState {
     <span class="doccomment">/// Prepares to alter the table
     </span>Prepare,
+    SubmitAlterRegionRequests,
     <span class="doccomment">/// Updates table metadata.
     </span>UpdateMetadata,
     <span class="doccomment">/// Broadcasts the invalidating table cache instruction.
     </span>InvalidateTableCache,
-    SubmitAlterRegionRequests,
 }
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize)]
