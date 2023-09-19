@@ -374,11 +374,6 @@
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
-<a href="#380" id="380">380</a>
-<a href="#381" id="381">381</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -401,12 +396,11 @@
 
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_telemetry::{debug, error};
 <span class="kw">pub use </span>picker::CompactionPickerRef;
 <span class="kw">use </span>snafu::ResultExt;
-<span class="kw">use </span>store_api::storage::{CompactionStrategy, RegionId, TwcsOptions};
+<span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::sync::mpsc::{<span class="self">self</span>, Sender};
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
@@ -414,6 +408,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CompactRegionSnafu, Error, RegionClosedSnafu, RegionDroppedSnafu, RegionTruncatedSnafu, <span class="prelude-ty">Result</span>,
 };
+<span class="kw">use </span><span class="kw">crate</span>::region::options::CompactionOptions;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlRef, VersionRef};
 <span class="kw">use </span><span class="kw">crate</span>::request::{OptionOutputTx, OutputTx, WorkerRequest};
 <span class="kw">use </span><span class="kw">crate</span>::schedule::scheduler::SchedulerRef;
@@ -423,7 +418,6 @@
 </span><span class="kw">pub struct </span>CompactionRequest {
     <span class="kw">pub</span>(<span class="kw">crate</span>) current_version: VersionRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) access_layer: AccessLayerRef,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) ttl: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
     <span class="doccomment">/// Sender to send notification to the region worker.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) request_sender: mpsc::Sender&lt;WorkerRequest&gt;,
@@ -445,13 +439,13 @@
     }
 }
 
-<span class="doccomment">/// Builds compaction picker according to [CompactionStrategy].
-</span><span class="kw">pub fn </span>compaction_strategy_to_picker(strategy: <span class="kw-2">&amp;</span>CompactionStrategy) -&gt; CompactionPickerRef {
+<span class="doccomment">/// Builds compaction picker according to [CompactionOptions].
+</span><span class="kw">pub fn </span>compaction_options_to_picker(strategy: <span class="kw-2">&amp;</span>CompactionOptions) -&gt; CompactionPickerRef {
     <span class="kw">match </span>strategy {
-        CompactionStrategy::Twcs(twcs_opts) =&gt; Arc::new(TwcsPicker::new(
+        CompactionOptions::Twcs(twcs_opts) =&gt; Arc::new(TwcsPicker::new(
             twcs_opts.max_active_window_files,
             twcs_opts.max_inactive_window_files,
-            twcs_opts.time_window_seconds,
+            twcs_opts.time_window_seconds(),
         )) <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;,
     }
 }
@@ -556,9 +550,7 @@
     ///
     /// If the region has nothing to compact, it removes the region from the status map.
     </span><span class="kw">fn </span>schedule_compaction_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, request: CompactionRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="comment">// TODO(hl): build picker according to region options.
-        </span><span class="kw">let </span>picker =
-            compaction_strategy_to_picker(<span class="kw-2">&amp;</span>CompactionStrategy::Twcs(TwcsOptions::default()));
+        <span class="kw">let </span>picker = compaction_options_to_picker(<span class="kw-2">&amp;</span>request.current_version.options.compaction);
         <span class="kw">let </span>region_id = request.region_id();
         <span class="macro">debug!</span>(
             <span class="string">&quot;Pick compaction strategy {:?} for region: {}&quot;</span>,
@@ -690,8 +682,6 @@
         <span class="kw">let </span><span class="kw-2">mut </span>req = CompactionRequest {
             current_version,
             access_layer: <span class="self">self</span>.access_layer.clone(),
-            <span class="comment">// TODO(hl): get TTL info from region metadata
-            </span>ttl: <span class="prelude-val">None</span>,
             <span class="comment">// TODO(hl): get persisted region compaction time window
             </span>compaction_time_window: <span class="prelude-val">None</span>,
             request_sender: request_sender.clone(),

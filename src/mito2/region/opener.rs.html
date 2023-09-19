@@ -217,6 +217,21 @@
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -233,7 +248,8 @@
 
 </span><span class="doccomment">//! Region opener.
 
-</span><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicI64};
+</span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicI64};
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_telemetry::info;
@@ -251,6 +267,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{RegionCorruptedSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::manager::{RegionManifestManager, RegionManifestOptions};
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
+<span class="kw">use </span><span class="kw">crate</span>::region::options::RegionOptions;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionBuilder, VersionControl, VersionControlRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::MitoRegion;
 <span class="kw">use </span><span class="kw">crate</span>::region_write_ctx::RegionWriteCtx;
@@ -267,6 +284,7 @@
     object_store: ObjectStore,
     region_dir: String,
     scheduler: SchedulerRef,
+    options: HashMap&lt;String, String&gt;,
 }
 
 <span class="kw">impl </span>RegionOpener {
@@ -284,6 +302,7 @@
             object_store,
             region_dir: String::new(),
             scheduler,
+            options: HashMap::new(),
         }
     }
 
@@ -296,6 +315,12 @@
     <span class="doccomment">/// Sets the region dir.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>region_dir(<span class="kw-2">mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.region_dir = value.to_string();
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Sets options for the region.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>options(<span class="kw-2">mut </span><span class="self">self</span>, value: HashMap&lt;String, String&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.options = value;
         <span class="self">self
     </span>}
 
@@ -319,7 +344,10 @@
 
         <span class="kw">let </span>mutable = <span class="self">self</span>.memtable_builder.build(<span class="kw-2">&amp;</span>metadata);
 
-        <span class="kw">let </span>version = VersionBuilder::new(metadata, mutable).build();
+        <span class="kw">let </span>options = RegionOptions::try_from(<span class="kw-2">&amp;</span><span class="self">self</span>.options)<span class="question-mark">?</span>;
+        <span class="kw">let </span>version = VersionBuilder::new(metadata, mutable)
+            .options(options)
+            .build();
         <span class="kw">let </span>version_control = Arc::new(VersionControl::new(version));
         <span class="kw">let </span>access_layer = Arc::new(AccessLayer::new(<span class="self">self</span>.region_dir, <span class="self">self</span>.object_store.clone()));
 
@@ -371,11 +399,13 @@
         <span class="kw">let </span>access_layer = Arc::new(AccessLayer::new(<span class="self">self</span>.region_dir, <span class="self">self</span>.object_store.clone()));
         <span class="kw">let </span>file_purger = Arc::new(LocalFilePurger::new(<span class="self">self</span>.scheduler, access_layer.clone()));
         <span class="kw">let </span>mutable = <span class="self">self</span>.memtable_builder.build(<span class="kw-2">&amp;</span>metadata);
+        <span class="kw">let </span>options = RegionOptions::try_from(<span class="kw-2">&amp;</span><span class="self">self</span>.options)<span class="question-mark">?</span>;
         <span class="kw">let </span>version = VersionBuilder::new(metadata, mutable)
             .add_files(file_purger.clone(), manifest.files.values().cloned())
             .flushed_entry_id(manifest.flushed_entry_id)
             .flushed_sequence(manifest.flushed_sequence)
             .truncated_entry_id(manifest.truncated_entry_id)
+            .options(options)
             .build();
         <span class="kw">let </span>flushed_entry_id = version.flushed_entry_id;
         <span class="kw">let </span>version_control = Arc::new(VersionControl::new(version));

@@ -836,7 +836,6 @@
 <a href="#836" id="836">836</a>
 <a href="#837" id="837">837</a>
 <a href="#838" id="838">838</a>
-<a href="#839" id="839">839</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -959,7 +958,6 @@
         <span class="kw">let </span>CompactionRequest {
             current_version,
             access_layer,
-            ttl,
             compaction_time_window,
             request_sender,
             waiters,
@@ -970,6 +968,7 @@
         <span class="kw">let </span>region_id = region_metadata.region_id;
 
         <span class="kw">let </span>levels = current_version.ssts.levels();
+        <span class="kw">let </span>ttl = current_version.options.ttl;
         <span class="kw">let </span>expired_ssts = get_expired_ssts(levels, ttl, Timestamp::current_millis());
         <span class="kw">if </span>!expired_ssts.is_empty() {
             <span class="macro">info!</span>(<span class="string">&quot;Expired SSTs in region {}: {:?}&quot;</span>, region_id, expired_ssts);
@@ -1215,8 +1214,7 @@
             notify,
         })
         .<span class="kw">await</span>;
-        <span class="comment">// TODO(hl): handle reschedule
-    </span>}
+    }
 }
 
 <span class="doccomment">/// Infers the suitable time bucket duration.

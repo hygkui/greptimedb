@@ -529,6 +529,13 @@
 <a href="#529" id="529">529</a>
 <a href="#530" id="530">530</a>
 <a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -984,6 +991,12 @@
         region_id: RegionId,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid options, source: {}&quot;</span>, source))]
+    </span>JsonOptions {
+        source: serde_json::Error,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T, E = Error&gt; = std::result::Result&lt;T, E&gt;;
@@ -1053,6 +1066,7 @@
             CompatReader { .. } =&gt; StatusCode::Unexpected,
             InvalidRegionRequest { source, .. } =&gt; source.status_code(),
             RegionReadonly { .. } =&gt; StatusCode::RegionReadonly,
+            JsonOptions { .. } =&gt; StatusCode::InvalidArguments,
         }
     }
 
