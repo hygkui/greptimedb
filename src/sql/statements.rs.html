@@ -869,6 +869,24 @@
 <a href="#869" id="869">869</a>
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1012,10 +1030,15 @@
                     <span class="prelude-val">Ok</span>(Value::<span class="macro-nonterminal">$Type</span>(<span class="macro-nonterminal">$Target::from</span>(n)))
                 },
             )+
-                <span class="kw">_ </span>=&gt; ParseSqlValueSnafu {
-                    msg: <span class="macro">format!</span>(<span class="string">&quot;Fail to parse number {}, invalid column type: {:?}&quot;</span>,
-                                 <span class="macro-nonterminal">$n</span>, <span class="macro-nonterminal">$data_type
-                    </span>)}.fail(),
+            ConcreteDataType::Timestamp(t) =&gt; {
+                <span class="kw">let </span>n  = parse_sql_number::&lt;i64&gt;(<span class="macro-nonterminal">$n</span>)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(Value::Timestamp(Timestamp::new(n, t.unit())))
+            },
+
+            <span class="kw">_ </span>=&gt; ParseSqlValueSnafu {
+                msg: <span class="macro">format!</span>(<span class="string">&quot;Fail to parse number {}, invalid column type: {:?}&quot;</span>,
+                                <span class="macro-nonterminal">$n</span>, <span class="macro-nonterminal">$data_type
+                </span>)}.fail(),
         }
     }
 }
@@ -1034,8 +1057,7 @@
         (Int32, i32, i32),
         (Int64, i64, i64),
         (Float64, f64, OrderedF64),
-        (Float32, f32, OrderedF32),
-        (Timestamp, i64, Timestamp)
+        (Float32, f32, OrderedF32)
     )
     <span class="comment">// TODO(hl): also Date/DateTime
 </span>}
@@ -1418,6 +1440,20 @@
 
         <span class="kw">let </span>v = sql_number_to_value(<span class="kw-2">&amp;</span>ConcreteDataType::int32_datatype(), <span class="string">&quot;999&quot;</span>).unwrap();
         <span class="macro">assert_eq!</span>(Value::Int32(<span class="number">999</span>), v);
+
+        <span class="kw">let </span>v = sql_number_to_value(
+            <span class="kw-2">&amp;</span>ConcreteDataType::timestamp_nanosecond_datatype(),
+            <span class="string">&quot;1073741821&quot;</span>,
+        )
+        .unwrap();
+        <span class="macro">assert_eq!</span>(Value::Timestamp(Timestamp::new_nanosecond(<span class="number">1073741821</span>)), v);
+
+        <span class="kw">let </span>v = sql_number_to_value(
+            <span class="kw-2">&amp;</span>ConcreteDataType::timestamp_millisecond_datatype(),
+            <span class="string">&quot;999999&quot;</span>,
+        )
+        .unwrap();
+        <span class="macro">assert_eq!</span>(Value::Timestamp(Timestamp::new_millisecond(<span class="number">999999</span>)), v);
 
         <span class="kw">let </span>v = sql_number_to_value(<span class="kw-2">&amp;</span>ConcreteDataType::string_datatype(), <span class="string">&quot;999&quot;</span>);
         <span class="macro">assert!</span>(v.is_err(), <span class="string">&quot;parse value error is: {v:?}&quot;</span>);
