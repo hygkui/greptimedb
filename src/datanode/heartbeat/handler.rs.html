@@ -141,6 +141,10 @@
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -162,11 +166,12 @@
 <span class="kw">use </span>common_meta::heartbeat::handler::{
     HandleControl, HeartbeatResponseHandler, HeartbeatResponseHandlerContext,
 };
-<span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
+<span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, OpenRegion, SimpleReply};
 <span class="kw">use </span>common_meta::RegionIdent;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>snafu::OptionExt;
+<span class="kw">use </span>store_api::path_utils::region_dir;
 <span class="kw">use </span>store_api::region_request::{RegionCloseRequest, RegionOpenRequest, RegionRequest};
 <span class="kw">use </span>store_api::storage::RegionId;
 
@@ -186,11 +191,14 @@
 
     <span class="kw">fn </span>instruction_to_request(instruction: Instruction) -&gt; MetaResult&lt;(RegionId, RegionRequest)&gt; {
         <span class="kw">match </span>instruction {
-            Instruction::OpenRegion(region_ident) =&gt; {
+            Instruction::OpenRegion(OpenRegion {
+                region_ident,
+                region_storage_path,
+            }) =&gt; {
                 <span class="kw">let </span>region_id = <span class="self">Self</span>::region_ident_to_region_id(<span class="kw-2">&amp;</span>region_ident);
                 <span class="kw">let </span>open_region_req = RegionRequest::Open(RegionOpenRequest {
                     engine: region_ident.engine,
-                    region_dir: <span class="string">&quot;&quot;</span>.to_string(),
+                    region_dir: region_dir(<span class="kw-2">&amp;</span>region_storage_path, region_id),
                     options: HashMap::new(),
                 });
                 <span class="prelude-val">Ok</span>((region_id, open_region_req))
