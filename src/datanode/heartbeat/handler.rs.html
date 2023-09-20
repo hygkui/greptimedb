@@ -145,6 +145,15 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -162,6 +171,8 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_error::ext::ErrorExt;
+<span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_meta::error::{InvalidHeartbeatResponseSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>MetaResult};
 <span class="kw">use </span>common_meta::heartbeat::handler::{
     HandleControl, HeartbeatResponseHandler, HeartbeatResponseHandlerContext,
@@ -239,16 +250,23 @@
 
     <span class="kw">fn </span>fill_reply(<span class="kw-2">mut </span>template: InstructionReply, result: <span class="prelude-ty">Result</span>&lt;Output&gt;) -&gt; InstructionReply {
         <span class="kw">let </span>success = result.is_ok();
-        <span class="kw">let </span>error = result.map_err(|e| e.to_string()).err();
+        <span class="kw">let </span>error = result.as_ref().map_err(|e| e.to_string()).err();
         <span class="kw">match </span><span class="kw-2">&amp;mut </span>template {
             InstructionReply::OpenRegion(reply) =&gt; {
                 reply.result = success;
                 reply.error = error;
             }
-            InstructionReply::CloseRegion(reply) =&gt; {
-                reply.result = success;
-                reply.error = error;
-            }
+            InstructionReply::CloseRegion(reply) =&gt; <span class="kw">match </span>result {
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="kw">if </span>e.status_code() == StatusCode::RegionNotFound {
+                        reply.result = <span class="bool-val">true</span>;
+                    }
+                }
+                <span class="kw">_ </span>=&gt; {
+                    reply.result = success;
+                    reply.error = error;
+                }
+            },
             InstructionReply::InvalidateTableCache(reply) =&gt; {
                 reply.result = success;
                 reply.error = error;

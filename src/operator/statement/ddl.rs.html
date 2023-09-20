@@ -616,6 +616,13 @@
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -741,12 +748,6 @@
 
         <span class="kw">let </span>table = DistTable::table(table_info);
 
-        <span class="comment">// Invalidates local cache ASAP.
-        </span><span class="self">self</span>.cache_invalidator
-            .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
-            .<span class="kw">await
-            </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
-
         <span class="prelude-val">Ok</span>(table)
     }
 
@@ -769,6 +770,11 @@
         <span class="comment">// Invalidates local cache ASAP.
         </span><span class="self">self</span>.cache_invalidator
             .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
+            .<span class="kw">await
+            </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.cache_invalidator
+            .invalidate_table_name(<span class="kw-2">&amp;</span>Context::default(), table_name.clone())
             .<span class="kw">await
             </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
 
@@ -877,6 +883,14 @@
         <span class="comment">// Invalidates local cache ASAP.
         </span><span class="self">self</span>.cache_invalidator
             .invalidate_table_id(<span class="kw-2">&amp;</span>Context::default(), table_id)
+            .<span class="kw">await
+            </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.cache_invalidator
+            .invalidate_table_name(
+                <span class="kw-2">&amp;</span>Context::default(),
+                TableName::new(catalog_name, schema_name, table_name),
+            )
             .<span class="kw">await
             </span>.context(error::InvalidateTableCacheSnafu)<span class="question-mark">?</span>;
 
