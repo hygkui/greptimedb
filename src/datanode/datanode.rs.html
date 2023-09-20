@@ -397,6 +397,18 @@
 <a href="#397" id="397">397</a>
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -429,6 +441,7 @@
 <span class="kw">use </span>common_runtime::Runtime;
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>file_engine::engine::FileRegionEngine;
+<span class="kw">use </span>futures_util::future::try_join_all;
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>log_store::raft_engine::log_store::RaftEngineLogStore;
 <span class="kw">use </span>meta_client::client::MetaClient;
@@ -462,6 +475,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::store;
 
 <span class="kw">pub const </span>DEFAULT_OBJECT_STORE_CACHE_SIZE: ReadableSize = ReadableSize(<span class="number">1024</span>);
+
+<span class="kw">const </span>OPEN_REGION_PARALLELISM: usize = <span class="number">16</span>;
 
 <span class="doccomment">/// Datanode service.
 </span><span class="kw">pub struct </span>Datanode {
@@ -676,6 +691,7 @@
         <span class="kw">let </span>node_id = <span class="self">self</span>.opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>regions = <span class="macro">vec!</span>[];
         <span class="kw">let </span><span class="kw-2">mut </span>table_values = datanode_table_manager.tables(node_id);
+
         <span class="kw">while let </span><span class="prelude-val">Some</span>(table_value) = table_values.next().<span class="kw">await </span>{
             <span class="kw">let </span>table_value = table_value.context(GetMetadataSnafu)<span class="question-mark">?</span>;
             <span class="kw">for </span>region_number <span class="kw">in </span>table_value.regions {
@@ -688,27 +704,35 @@
         }
 
         <span class="macro">info!</span>(<span class="string">&quot;going to open {} regions&quot;</span>, regions.len());
+        <span class="kw">let </span>semaphore = Arc::new(tokio::sync::Semaphore::new(OPEN_REGION_PARALLELISM));
+        <span class="kw">let </span><span class="kw-2">mut </span>tasks = <span class="macro">vec!</span>[];
 
         <span class="kw">for </span>(region_id, engine, store_path) <span class="kw">in </span>regions {
             <span class="kw">let </span>region_dir = region_dir(<span class="kw-2">&amp;</span>store_path, region_id);
-            region_server
-                .handle_request(
-                    region_id,
-                    RegionRequest::Open(RegionOpenRequest {
-                        engine: engine.clone(),
-                        region_dir,
-                        options: HashMap::new(),
-                    }),
-                )
-                .<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="kw">if </span>open_with_writable {
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region_server.set_writable(region_id, <span class="bool-val">true</span>) {
-                    <span class="macro">error!</span>(
-                        e; <span class="string">&quot;failed to set writable for region {region_id}&quot;
-                    </span>);
+            <span class="kw">let </span>semaphore_moved = semaphore.clone();
+            tasks.push(<span class="kw">async move </span>{
+                <span class="kw">let </span>_permit = semaphore_moved.acquire().<span class="kw">await</span>;
+                region_server
+                    .handle_request(
+                        region_id,
+                        RegionRequest::Open(RegionOpenRequest {
+                            engine: engine.clone(),
+                            region_dir,
+                            options: HashMap::new(),
+                        }),
+                    )
+                    .<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">if </span>open_with_writable {
+                    <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region_server.set_writable(region_id, <span class="bool-val">true</span>) {
+                        <span class="macro">error!</span>(
+                            e; <span class="string">&quot;failed to set writable for region {region_id}&quot;
+                        </span>);
+                    }
                 }
-            }
+                <span class="prelude-val">Ok</span>(())
+            });
         }
+        <span class="kw">let _ </span>= try_join_all(tasks).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;region server is initialized&quot;</span>);
 
