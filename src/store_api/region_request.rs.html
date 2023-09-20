@@ -728,6 +728,18 @@
 <a href="#728" id="728">728</a>
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -742,7 +754,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::collections::{HashMap, HashSet};
+</span><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt;
 
 <span class="kw">use </span>api::v1::add_column_location::LocationType;
@@ -881,6 +893,7 @@
     <span class="doccomment">/// Columns in the primary key.
     </span><span class="kw">pub </span>primary_key: Vec&lt;ColumnId&gt;,
     <span class="doccomment">/// Create region if not exists.
+    </span><span class="comment">// TODO(yingwen): Remove this.
     </span><span class="kw">pub </span>create_if_not_exists: bool,
     <span class="doccomment">/// Options of the created region.
     </span><span class="kw">pub </span>options: HashMap&lt;String, String&gt;,
@@ -933,6 +946,14 @@
 
         <span class="prelude-val">Ok</span>(())
     }
+
+    <span class="doccomment">/// Returns true if we need to apply the request to the region.
+    ///
+    /// The `request` should be valid.
+    </span><span class="kw">pub fn </span>need_alter(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>RegionMetadata) -&gt; bool {
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.validate(metadata).is_ok());
+        <span class="self">self</span>.kind.need_alter(metadata)
+    }
 }
 
 <span class="kw">impl </span>TryFrom&lt;AlterRequest&gt; <span class="kw">for </span>RegionAlterRequest {
@@ -968,23 +989,13 @@
 
 <span class="kw">impl </span>AlterKind {
     <span class="doccomment">/// Returns an error if the the alter kind is invalid.
+    ///
+    /// It allows adding column if not exists and dropping column if exists.
     </span><span class="kw">pub fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>RegionMetadata) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             AlterKind::AddColumns { columns } =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>names = HashSet::with_capacity(columns.len());
                 <span class="kw">for </span>col_to_add <span class="kw">in </span>columns {
-                    <span class="macro">ensure!</span>(
-                        !names.contains(<span class="kw-2">&amp;</span>col_to_add.column_metadata.column_schema.name),
-                        InvalidRegionRequestSnafu {
-                            region_id: metadata.region_id,
-                            err: <span class="macro">format!</span>(
-                                <span class="string">&quot;add column {} more than once&quot;</span>,
-                                col_to_add.column_metadata.column_schema.name
-                            ),
-                        }
-                    );
                     col_to_add.validate(metadata)<span class="question-mark">?</span>;
-                    names.insert(<span class="kw-2">&amp;</span>col_to_add.column_metadata.column_schema.name);
                 }
             }
             AlterKind::DropColumns { names } =&gt; {
@@ -996,14 +1007,24 @@
         <span class="prelude-val">Ok</span>(())
     }
 
+    <span class="doccomment">/// Returns true if we need to apply the alteration to the region.
+    </span><span class="kw">pub fn </span>need_alter(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>RegionMetadata) -&gt; bool {
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.validate(metadata).is_ok());
+        <span class="kw">match </span><span class="self">self </span>{
+            AlterKind::AddColumns { columns } =&gt; columns
+                .iter()
+                .any(|col_to_add| col_to_add.need_alter(metadata)),
+            AlterKind::DropColumns { names } =&gt; names
+                .iter()
+                .any(|name| metadata.column_by_name(name).is_some()),
+        }
+    }
+
     <span class="doccomment">/// Returns an error if the column to drop is invalid.
     </span><span class="kw">fn </span>validate_column_to_drop(name: <span class="kw-2">&amp;</span>str, metadata: <span class="kw-2">&amp;</span>RegionMetadata) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>column = metadata
-            .column_by_name(name)
-            .with_context(|| InvalidRegionRequestSnafu {
-                region_id: metadata.region_id,
-                err: <span class="macro">format!</span>(<span class="string">&quot;column {} does not exist&quot;</span>, name),
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="prelude-val">Some</span>(column) = metadata.column_by_name(name) <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+        };
         <span class="macro">ensure!</span>(
             column.semantic_type == SemanticType::Field,
             InvalidRegionRequestSnafu {
@@ -1050,6 +1071,8 @@
 
 <span class="kw">impl </span>AddColumn {
     <span class="doccomment">/// Returns an error if the column to add is invalid.
+    ///
+    /// It allows adding existing columns.
     </span><span class="kw">pub fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>RegionMetadata) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">ensure!</span>(
             <span class="self">self</span>.column_metadata.column_schema.is_nullable()
@@ -1066,20 +1089,16 @@
                 ),
             }
         );
-        <span class="macro">ensure!</span>(
-            metadata
-                .column_by_name(<span class="kw-2">&amp;</span><span class="self">self</span>.column_metadata.column_schema.name)
-                .is_none(),
-            InvalidRegionRequestSnafu {
-                region_id: metadata.region_id,
-                err: <span class="macro">format!</span>(
-                    <span class="string">&quot;column {} already exists&quot;</span>,
-                    <span class="self">self</span>.column_metadata.column_schema.name
-                ),
-            }
-        );
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Returns true if no column to add to the region.
+    </span><span class="kw">pub fn </span>need_alter(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>RegionMetadata) -&gt; bool {
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.validate(metadata).is_ok());
+        metadata
+            .column_by_name(<span class="kw-2">&amp;</span><span class="self">self</span>.column_metadata.column_schema.name)
+            .is_none()
     }
 }
 
@@ -1304,7 +1323,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_add_column_validate() {
         <span class="kw">let </span>metadata = new_metadata();
-        AddColumn {
+        <span class="kw">let </span>add_column = AddColumn {
             column_metadata: ColumnMetadata {
                 column_schema: ColumnSchema::new(
                     <span class="string">&quot;tag_1&quot;</span>,
@@ -1315,11 +1334,12 @@
                 column_id: <span class="number">4</span>,
             },
             location: <span class="prelude-val">None</span>,
-        }
-        .validate(<span class="kw-2">&amp;</span>metadata)
-        .unwrap();
+        };
+        add_column.validate(<span class="kw-2">&amp;</span>metadata).unwrap();
+        <span class="macro">assert!</span>(add_column.need_alter(<span class="kw-2">&amp;</span>metadata));
 
-        AddColumn {
+        <span class="comment">// Add not null column.
+        </span>AddColumn {
             column_metadata: ColumnMetadata {
                 column_schema: ColumnSchema::new(
                     <span class="string">&quot;tag_1&quot;</span>,
@@ -1334,7 +1354,8 @@
         .validate(<span class="kw-2">&amp;</span>metadata)
         .unwrap_err();
 
-        AddColumn {
+        <span class="comment">// Add existing column.
+        </span><span class="kw">let </span>add_column = AddColumn {
             column_metadata: ColumnMetadata {
                 column_schema: ColumnSchema::new(
                     <span class="string">&quot;tag_0&quot;</span>,
@@ -1345,9 +1366,9 @@
                 column_id: <span class="number">4</span>,
             },
             location: <span class="prelude-val">None</span>,
-        }
-        .validate(<span class="kw-2">&amp;</span>metadata)
-        .unwrap_err();
+        };
+        add_column.validate(<span class="kw-2">&amp;</span>metadata).unwrap();
+        <span class="macro">assert!</span>(!add_column.need_alter(<span class="kw-2">&amp;</span>metadata));
     }
 
     <span class="attr">#[test]
@@ -1381,27 +1402,30 @@
             ],
         };
         <span class="kw">let </span>metadata = new_metadata();
-        kind.validate(<span class="kw-2">&amp;</span>metadata).unwrap_err();
+        kind.validate(<span class="kw-2">&amp;</span>metadata).unwrap();
+        <span class="macro">assert!</span>(kind.need_alter(<span class="kw-2">&amp;</span>metadata));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_validate_drop_column() {
         <span class="kw">let </span>metadata = new_metadata();
-        AlterKind::DropColumns {
+        <span class="kw">let </span>kind = AlterKind::DropColumns {
             names: <span class="macro">vec!</span>[<span class="string">&quot;xxxx&quot;</span>.to_string()],
-        }
-        .validate(<span class="kw-2">&amp;</span>metadata)
-        .unwrap_err();
+        };
+        kind.validate(<span class="kw-2">&amp;</span>metadata).unwrap();
+        <span class="macro">assert!</span>(!kind.need_alter(<span class="kw-2">&amp;</span>metadata));
+
         AlterKind::DropColumns {
             names: <span class="macro">vec!</span>[<span class="string">&quot;tag_0&quot;</span>.to_string()],
         }
         .validate(<span class="kw-2">&amp;</span>metadata)
         .unwrap_err();
-        AlterKind::DropColumns {
+
+        <span class="kw">let </span>kind = AlterKind::DropColumns {
             names: <span class="macro">vec!</span>[<span class="string">&quot;field_0&quot;</span>.to_string()],
-        }
-        .validate(<span class="kw-2">&amp;</span>metadata)
-        .unwrap();
+        };
+        kind.validate(<span class="kw-2">&amp;</span>metadata).unwrap();
+        <span class="macro">assert!</span>(kind.need_alter(<span class="kw-2">&amp;</span>metadata));
     }
 
     <span class="attr">#[test]

@@ -297,6 +297,21 @@
 <a href="#297" id="297">297</a>
 <a href="#298" id="298">298</a>
 <a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -336,6 +351,10 @@
 <span class="attr">#[derive(Serialize, Deserialize, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>ActivateRegion {
     candidate: Peer,
+    <span class="comment">// If the meta leader node dies during the execution of the procedure,
+    // the new leader node needs to remark the failed region as &quot;inactive&quot;
+    // to prevent it from renewing the lease.
+    </span>remark_inactive_region: bool,
     region_storage_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
 }
 
@@ -343,6 +362,7 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(candidate: Peer) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             candidate,
+            remark_inactive_region: <span class="bool-val">false</span>,
             region_storage_path: <span class="prelude-val">None</span>,
         }
     }
@@ -354,8 +374,7 @@
         timeout: Duration,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MailboxReceiver&gt; {
         <span class="kw">let </span>table_id = failed_region.table_id;
-        <span class="comment">// TODO(weny): considers fetching table info only once.
-        </span><span class="kw">let </span>table_info = ctx
+        <span class="kw">let </span>table_info = ctx
             .table_metadata_manager
             .table_info_manager()
             .get(table_id)
@@ -467,12 +486,23 @@
         ctx: <span class="kw-2">&amp;</span>RegionFailoverContext,
         failed_region: <span class="kw-2">&amp;</span>RegionIdent,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.remark_inactive_region {
+            <span class="comment">// Remark the fail region as inactive to prevent it from renewing the lease.
+            </span>InactiveRegionManager::new(<span class="kw-2">&amp;</span>ctx.in_memory)
+                .register_inactive_region(failed_region)
+                .<span class="kw">await</span><span class="question-mark">?</span>;
+        }
+
         <span class="kw">let </span>mailbox_receiver = <span class="self">self
             </span>.send_open_region_message(ctx, failed_region, OPEN_REGION_MESSAGE_TIMEOUT)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="self">self</span>.handle_response(mailbox_receiver, failed_region).<span class="kw">await
     </span>}
+
+    <span class="kw">fn </span>remark_inactive_region_if_needed(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.remark_inactive_region = <span class="bool-val">true</span>;
+    }
 }
 
 <span class="attr">#[cfg(test)]

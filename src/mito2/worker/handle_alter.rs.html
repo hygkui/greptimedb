@@ -147,6 +147,18 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -166,7 +178,7 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::{error, info, warn};
+<span class="kw">use </span>common_telemetry::{debug, error, info, warn};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::metadata::{RegionMetadata, RegionMetadataBuilder, RegionMetadataRef};
 <span class="kw">use </span>store_api::region_request::RegionAlterRequest;
@@ -197,14 +209,31 @@
         <span class="comment">// Get the version before alter.
         </span><span class="kw">let </span>version = region.version();
         <span class="kw">if </span>version.metadata.schema_version &gt; request.schema_version {
-            <span class="macro">warn!</span>(
-                <span class="string">&quot;Ignored alert request, region id:{}, region schema version {} is greater than request schema version {}&quot;</span>,
+            <span class="comment">// This is possible if we retry the request.
+            </span><span class="macro">warn!</span>(
+                <span class="string">&quot;Ignores alter request, region id:{}, region schema version {} is greater than request schema version {}&quot;</span>,
                 region_id, version.metadata.schema_version, request.schema_version
             );
             <span class="comment">// Returns if it altered.
             </span>sender.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
             <span class="kw">return</span>;
         }
+        <span class="comment">// Validate request.
+        </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = request.validate(<span class="kw-2">&amp;</span>version.metadata) {
+            <span class="comment">// Invalid request.
+            </span>sender.send(<span class="prelude-val">Err</span>(e).context(InvalidRegionRequestSnafu));
+            <span class="kw">return</span>;
+        }
+        <span class="comment">// Checks whether we need to alter the region.
+        </span><span class="kw">if </span>!request.need_alter(<span class="kw-2">&amp;</span>version.metadata) {
+            <span class="macro">debug!</span>(
+                <span class="string">&quot;Ignores alter request as it alters nothing, region_id: {}, request: {:?}&quot;</span>,
+                region_id, request
+            );
+            sender.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
+            <span class="kw">return</span>;
+        }
+
         <span class="comment">// Checks whether we can alter the region directly.
         </span><span class="kw">if </span>!version.memtables.is_empty() {
             <span class="comment">// If memtable is not empty, we can&#39;t alter it directly and need to flush
@@ -281,11 +310,6 @@
     metadata: <span class="kw-2">&amp;</span>RegionMetadata,
     request: RegionAlterRequest,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;RegionMetadataRef&gt; {
-    <span class="comment">// Validates request.
-    </span>request
-        .validate(metadata)
-        .context(InvalidRegionRequestSnafu)<span class="question-mark">?</span>;
-
     <span class="kw">let </span><span class="kw-2">mut </span>builder = RegionMetadataBuilder::from_existing(metadata.clone());
     builder
         .alter(request.kind)
