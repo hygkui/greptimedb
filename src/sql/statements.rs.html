@@ -887,6 +887,7 @@
 <a href="#887" id="887">887</a>
 <a href="#888" id="888">888</a>
 <a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1275,9 +1276,10 @@
         SqlDataType::Double =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::float64_datatype()),
         SqlDataType::Boolean =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::boolean_datatype()),
         SqlDataType::Date =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::date_datatype()),
-        SqlDataType::Blob(<span class="kw">_</span>) | SqlDataType::Bytea | SqlDataType::Varbinary(<span class="kw">_</span>) =&gt; {
-            <span class="prelude-val">Ok</span>(ConcreteDataType::binary_datatype())
-        }
+        SqlDataType::Binary(<span class="kw">_</span>)
+        | SqlDataType::Blob(<span class="kw">_</span>)
+        | SqlDataType::Bytea
+        | SqlDataType::Varbinary(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::binary_datatype()),
         SqlDataType::Datetime(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::datetime_datatype()),
         SqlDataType::Timestamp(precision, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(precision
             .as_ref()
