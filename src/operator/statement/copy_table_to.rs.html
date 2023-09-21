@@ -142,6 +142,12 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -163,16 +169,18 @@
 <span class="kw">use </span>common_datasource::file_format::json::stream_to_json;
 <span class="kw">use </span>common_datasource::file_format::Format;
 <span class="kw">use </span>common_datasource::object_store::{build_backend, parse_url};
+<span class="kw">use </span>common_datasource::util::find_dir_and_filename;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::adapter::DfRecordBatchStreamAdapter;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
+<span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>datafusion::datasource::DefaultTableSource;
 <span class="kw">use </span>datafusion_common::TableReference <span class="kw">as </span>DfTableReference;
 <span class="kw">use </span>datafusion_expr::LogicalPlanBuilder;
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>query::plan::LogicalPlan;
 <span class="kw">use </span>session::context::QueryContextRef;
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>storage::sst::SstInfo;
 <span class="kw">use </span>storage::{ParquetWriter, Source};
 <span class="kw">use </span>table::engine::TableReference;
@@ -233,7 +241,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
         <span class="kw">let </span>table_ref = TableReference::full(<span class="kw-2">&amp;</span>req.catalog_name, <span class="kw-2">&amp;</span>req.schema_name, <span class="kw-2">&amp;</span>req.table_name);
         <span class="kw">let </span>table = <span class="self">self</span>.get_table(<span class="kw-2">&amp;</span>table_ref).<span class="kw">await</span><span class="question-mark">?</span>;
-
+        <span class="kw">let </span>table_id = table.table_info().table_id();
         <span class="kw">let </span>format = Format::try_from(<span class="kw-2">&amp;</span>req.with).context(error::ParseFileFormatSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>df_table_ref = DfTableReference::from(table_ref);
@@ -276,11 +284,15 @@
         };
 
         <span class="kw">let </span>(_schema, _host, path) = parse_url(<span class="kw-2">&amp;</span>req.location).context(error::ParseUrlSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(<span class="kw">_</span>, filename) = find_dir_and_filename(<span class="kw-2">&amp;</span>path);
+        <span class="kw">let </span>filename = filename.context(error::UnexpectedSnafu {
+            violated: <span class="macro">format!</span>(<span class="string">&quot;Expected filename, path: {path}&quot;</span>),
+        })<span class="question-mark">?</span>;
         <span class="kw">let </span>object_store =
             build_backend(<span class="kw-2">&amp;</span>req.location, <span class="kw-2">&amp;</span>req.connection).context(error::BuildBackendSnafu)<span class="question-mark">?</span>;
-
+        <span class="macro">debug!</span>(<span class="string">&quot;Copy table: {table_id} to path: {path}&quot;</span>);
         <span class="kw">let </span>rows_copied = <span class="self">self
-            </span>.stream_to_file(stream, <span class="kw-2">&amp;</span>format, object_store, <span class="kw-2">&amp;</span>path)
+            </span>.stream_to_file(stream, <span class="kw-2">&amp;</span>format, object_store, <span class="kw-2">&amp;</span>filename)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(rows_copied)

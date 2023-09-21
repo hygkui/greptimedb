@@ -615,6 +615,7 @@
 <a href="#615" id="615">615</a>
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -646,6 +647,7 @@
 <span class="kw">use </span>common_datasource::util::find_dir_and_filename;
 <span class="kw">use </span>common_recordbatch::adapter::ParquetRecordBatchStreamAdapter;
 <span class="kw">use </span>common_recordbatch::DfSendableRecordBatchStream;
+<span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>datafusion::datasource::listing::PartitionedFile;
 <span class="kw">use </span>datafusion::datasource::object_store::ObjectStoreUrl;
 <span class="kw">use </span>datafusion::datasource::physical_plan::{FileOpener, FileScanConfig, FileStream};
@@ -692,10 +694,10 @@
             Source::Dir
         };
 
-        <span class="kw">let </span>lister = Lister::new(object_store.clone(), source, dir, regex);
+        <span class="kw">let </span>lister = Lister::new(object_store.clone(), source.clone(), dir.to_string(), regex);
 
         <span class="kw">let </span>entries = lister.list().<span class="kw">await</span>.context(error::ListObjectsSnafu)<span class="question-mark">?</span>;
-
+        <span class="macro">debug!</span>(<span class="string">&quot;Copy from dir: {dir:?}, {source:?}, entries: {entries:?}&quot;</span>);
         <span class="prelude-val">Ok</span>((object_store, entries))
     }
 
