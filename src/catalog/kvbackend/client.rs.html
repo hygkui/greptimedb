@@ -330,6 +330,7 @@
 <a href="#330" id="330">330</a>
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -350,6 +351,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_error::ext::BoxedError;
+<span class="kw">use </span>common_meta::cache_invalidator::KvCacheInvalidator;
 <span class="kw">use </span>common_meta::error::Error::{CacheNotGet, GetKvCache};
 <span class="kw">use </span>common_meta::error::{CacheNotGetSnafu, Error, ExternalSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>common_meta::kv_backend::{KvBackend, KvBackendRef, TxnService};
@@ -360,12 +362,11 @@
     RangeRequest, RangeResponse,
 };
 <span class="kw">use </span>common_meta::rpc::KeyValue;
-<span class="kw">use </span>common_telemetry::timer;
+<span class="kw">use </span>common_telemetry::{debug, timer};
 <span class="kw">use </span>meta_client::client::MetaClient;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
-<span class="kw">use </span><span class="kw">super</span>::KvCacheInvalidator;
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{METRIC_CATALOG_KV_GET, METRIC_CATALOG_KV_REMOTE_GET};
 
 <span class="kw">const </span>CACHE_MAX_CAPACITY: u64 = <span class="number">10000</span>;
@@ -529,8 +530,9 @@
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>KvCacheInvalidator <span class="kw">for </span>CachedMetaKvBackend {
     <span class="kw">async fn </span>invalidate_key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) {
-        <span class="self">self</span>.cache.invalidate(key).<span class="kw">await
-    </span>}
+        <span class="self">self</span>.cache.invalidate(key).<span class="kw">await</span>;
+        <span class="macro">debug!</span>(<span class="string">&quot;invalidated cache key: {}&quot;</span>, String::from_utf8_lossy(key));
+    }
 }
 
 <span class="kw">impl </span>CachedMetaKvBackend {

@@ -299,30 +299,6 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -343,18 +319,17 @@
 
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME, NUMBERS_TABLE_ID};
 <span class="kw">use </span>common_error::ext::BoxedError;
-<span class="kw">use </span>common_meta::cache_invalidator::{CacheInvalidator, Context};
+<span class="kw">use </span>common_meta::cache_invalidator::{
+    CacheInvalidator, Context, KvCacheInvalidatorRef, TableMetadataCacheInvalidator,
+};
 <span class="kw">use </span>common_meta::datanode_manager::DatanodeManagerRef;
 <span class="kw">use </span>common_meta::error::Result <span class="kw">as </span>MetaResult;
 <span class="kw">use </span>common_meta::key::catalog_name::CatalogNameKey;
 <span class="kw">use </span>common_meta::key::schema_name::SchemaNameKey;
-<span class="kw">use </span>common_meta::key::table_info::TableInfoKey;
 <span class="kw">use </span>common_meta::key::table_name::TableNameKey;
-<span class="kw">use </span>common_meta::key::table_route::TableRouteKey;
-<span class="kw">use </span>common_meta::key::{TableMetaKey, TableMetadataManager, TableMetadataManagerRef};
+<span class="kw">use </span>common_meta::key::{TableMetadataManager, TableMetadataManagerRef};
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_meta::table_name::TableName;
-<span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>futures_util::TryStreamExt;
 <span class="kw">use </span>partition::manager::{PartitionRuleManager, PartitionRuleManagerRef};
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
@@ -368,7 +343,6 @@
     TableMetadataManagerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::information_schema::{InformationSchemaProvider, COLUMNS, TABLES};
-<span class="kw">use </span><span class="kw">crate</span>::kvbackend::KvCacheInvalidatorRef;
 <span class="kw">use </span><span class="kw">crate</span>::CatalogManager;
 
 <span class="doccomment">/// Access all existing catalog, schema and tables.
@@ -381,7 +355,7 @@
     <span class="comment">// TODO(LFC): Maybe use a real implementation for Standalone mode.
     // Now we use `NoopKvCacheInvalidator` for Standalone mode. In Standalone mode, the KV backend
     // is implemented by RaftEngine. Maybe we need a cache for it?
-    </span>backend_cache_invalidator: KvCacheInvalidatorRef,
+    </span>table_metadata_cache_invalidator: TableMetadataCacheInvalidator,
     partition_manager: PartitionRuleManagerRef,
     table_metadata_manager: TableMetadataManagerRef,
     datanode_manager: DatanodeManagerRef,
@@ -391,41 +365,17 @@
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>CacheInvalidator <span class="kw">for </span>KvBackendCatalogManager {
-    <span class="kw">async fn </span>invalidate_table_name(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_name: TableName) -&gt; MetaResult&lt;()&gt; {
-        <span class="kw">let </span>key: TableNameKey = (<span class="kw-2">&amp;</span>table_name).into();
+    <span class="kw">async fn </span>invalidate_table_name(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context, table_name: TableName) -&gt; MetaResult&lt;()&gt; {
+        <span class="self">self</span>.table_metadata_cache_invalidator
+            .invalidate_table_name(ctx, table_name)
+            .<span class="kw">await
+    </span>}
 
-        <span class="self">self</span>.backend_cache_invalidator
-            .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())
-            .<span class="kw">await</span>;
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;invalidated cache key: {}&quot;</span>,
-            String::from_utf8_lossy(<span class="kw-2">&amp;</span>key.as_raw_key())
-        );
-
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">async fn </span>invalidate_table_id(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_id: TableId) -&gt; MetaResult&lt;()&gt; {
-        <span class="kw">let </span>key = TableInfoKey::new(table_id);
-        <span class="self">self</span>.backend_cache_invalidator
-            .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())
-            .<span class="kw">await</span>;
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;invalidated cache key: {}&quot;</span>,
-            String::from_utf8_lossy(<span class="kw-2">&amp;</span>key.as_raw_key())
-        );
-
-        <span class="kw">let </span>key = <span class="kw-2">&amp;</span>TableRouteKey { table_id };
-        <span class="self">self</span>.backend_cache_invalidator
-            .invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key())
-            .<span class="kw">await</span>;
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;invalidated cache key: {}&quot;</span>,
-            String::from_utf8_lossy(<span class="kw-2">&amp;</span>key.as_raw_key())
-        );
-
-        <span class="prelude-val">Ok</span>(())
-    }
+    <span class="kw">async fn </span>invalidate_table_id(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context, table_id: TableId) -&gt; MetaResult&lt;()&gt; {
+        <span class="self">self</span>.table_metadata_cache_invalidator
+            .invalidate_table_id(ctx, table_id)
+            .<span class="kw">await
+    </span>}
 }
 
 <span class="kw">impl </span>KvBackendCatalogManager {
@@ -435,9 +385,11 @@
         datanode_manager: DatanodeManagerRef,
     ) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
         Arc::new_cyclic(|me| <span class="self">Self </span>{
-            backend_cache_invalidator,
             partition_manager: Arc::new(PartitionRuleManager::new(backend.clone())),
             table_metadata_manager: Arc::new(TableMetadataManager::new(backend)),
+            table_metadata_cache_invalidator: TableMetadataCacheInvalidator::new(
+                backend_cache_invalidator.clone(),
+            ),
             datanode_manager,
             system_catalog: SystemCatalog {
                 catalog_manager: me.clone(),
@@ -458,10 +410,10 @@
     }
 
     <span class="kw">pub async fn </span>invalidate_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>key = SchemaNameKey::new(catalog, schema).as_raw_key();
-
-        <span class="self">self</span>.backend_cache_invalidator.invalidate_key(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
-    }
+        <span class="self">self</span>.table_metadata_cache_invalidator
+            .invalidate_schema(catalog, schema)
+            .<span class="kw">await
+    </span>}
 }
 
 <span class="attr">#[async_trait::async_trait]

@@ -587,6 +587,7 @@
 <a href="#587" id="587">587</a>
 <a href="#588" id="588">588</a>
 <a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -603,11 +604,12 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>catalog::kvbackend::{DummyKvCacheInvalidator, KvBackendCatalogManager};
+<span class="kw">use </span>catalog::kvbackend::KvBackendCatalogManager;
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_config::{kv_store_dir, KvStoreConfig, WalConfig};
+<span class="kw">use </span>common_meta::cache_invalidator::DummyKvCacheInvalidator;
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::info;
