@@ -57,9 +57,7 @@ directly without extra in-memory buffer.</p>
 
 <span class="attr">#[tokio::main]
 </span><span class="kw">async fn </span>sink_example(op: Operator) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>w = op
-        .writer_with(<span class="string">&quot;path/to/file&quot;</span>)
-        .<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>w = op.writer_with(<span class="string">&quot;path/to/file&quot;</span>).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let </span>stream = stream::iter(<span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>; <span class="number">4096</span>], <span class="macro">vec!</span>[<span class="number">1</span>; <span class="number">4096</span>]]).map(<span class="prelude-val">Ok</span>);
     w.sink(stream).<span class="kw">await</span><span class="question-mark">?</span>;
     w.close().<span class="kw">await</span><span class="question-mark">?</span>;
