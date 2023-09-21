@@ -111,7 +111,7 @@
 
 <span class="kw">pub fn </span>region_dir(path: <span class="kw-2">&amp;</span>str, region_id: RegionId) -&gt; String {
     <span class="macro">format!</span>(
-        <span class="string">&quot;{}{}&quot;</span>,
+        <span class="string">&quot;{}{}/&quot;</span>,
         table_dir(path, region_id.table_id()),
         region_name(region_id.table_id(), region_id.region_number())
     )
@@ -126,7 +126,7 @@
         <span class="kw">let </span>region_id = RegionId::new(<span class="number">42</span>, <span class="number">1</span>);
         <span class="macro">assert_eq!</span>(
             region_dir(<span class="string">&quot;my_catalog/my_schema&quot;</span>, region_id),
-            <span class="string">&quot;data/my_catalog/my_schema/42/42_0000000001&quot;
+            <span class="string">&quot;data/my_catalog/my_schema/42/42_0000000001/&quot;
         </span>);
     }
 }
