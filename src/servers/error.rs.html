@@ -542,11 +542,6 @@
 <a href="#542" id="542">542</a>
 <a href="#543" id="543">543</a>
 <a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -575,7 +570,7 @@
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>query::parser::PromQuery;
 <span class="kw">use </span>serde_json::json;
-<span class="kw">use </span>snafu::{Location, Snafu};
+<span class="kw">use </span>snafu::{ErrorCompat, Location, Snafu};
 <span class="kw">use </span>tonic::Code;
 
 <span class="attr">#[derive(Debug, Snafu)]
@@ -584,78 +579,78 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Internal error: {}&quot;</span>, err_msg))]
     </span>Internal { err_msg: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Internal IO error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Internal IO error&quot;</span>))]
     </span>InternalIo { source: std::io::Error },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Tokio IO error: {}, source: {}&quot;</span>, err_msg, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Tokio IO error: {}&quot;</span>, err_msg))]
     </span>TokioIo {
         err_msg: String,
         source: std::io::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to collect recordbatch, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to collect recordbatch&quot;</span>))]
     </span>CollectRecordbatch {
         location: Location,
         source: common_recordbatch::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start HTTP server, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start HTTP server&quot;</span>))]
     </span>StartHttp { source: hyper::Error },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start gRPC server, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start gRPC server&quot;</span>))]
     </span>StartGrpc { source: tonic::transport::Error },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;{} server is already started&quot;</span>, server))]
     </span>AlreadyStarted { server: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to bind address {}, source: {}&quot;</span>, addr, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to bind address {}&quot;</span>, addr))]
     </span>TcpBind {
         addr: SocketAddr,
         source: std::io::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute query, source: {}, query: {}&quot;</span>, source, query))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute query, query: {}&quot;</span>, query))]
     </span>ExecuteQuery {
         query: String,
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute plan&quot;</span>))]
     </span>ExecutePlan {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;{source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Execute gRPC query error&quot;</span>))]
     </span>ExecuteGrpcQuery {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;{source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Execute gRPC request error&quot;</span>))]
     </span>ExecuteGrpcRequest {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to check database validity, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to check database validity&quot;</span>))]
     </span>CheckDatabaseValidity {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to describe statement, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to describe statement&quot;</span>))]
     </span>DescribeStatement { source: BoxedError },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert script with name: {}, source: {}&quot;</span>, name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert script with name: {}&quot;</span>, name))]
     </span>InsertScript {
         name: String,
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute script by name: {}, source: {}&quot;</span>, name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute script by name: {}&quot;</span>, name))]
     </span>ExecuteScript {
         name: String,
         location: Location,
@@ -671,25 +666,25 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid query: {}&quot;</span>, reason))]
     </span>InvalidQuery { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse InfluxDB line protocol, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse InfluxDB line protocol&quot;</span>))]
     </span>InfluxdbLineProtocol {
         location: Location,
         source: influxdb_line_protocol::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write InfluxDB line protocol, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write InfluxDB line protocol&quot;</span>))]
     </span>InfluxdbLinesWrite {
         location: Location,
         source: common_grpc::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write prometheus series, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write prometheus series&quot;</span>))]
     </span>PromSeriesWrite {
         location: Location,
         source: common_grpc::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write OTLP metrics, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write OTLP metrics&quot;</span>))]
     </span>OtlpMetricsWrite {
         location: Location,
         source: common_grpc::error::Error,
@@ -701,34 +696,34 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Connection reset by peer&quot;</span>))]
     </span>ConnResetByPeer { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Hyper error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Hyper error&quot;</span>))]
     </span>Hyper { source: hyper::Error },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid OpenTSDB line, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid OpenTSDB line&quot;</span>))]
     </span>InvalidOpentsdbLine {
         source: FromUtf8Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid OpenTSDB Json request, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid OpenTSDB Json request&quot;</span>))]
     </span>InvalidOpentsdbJsonRequest {
         source: serde_json::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode prometheus remote request, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode prometheus remote request&quot;</span>))]
     </span>DecodePromRemoteRequest {
         location: Location,
         source: prost::DecodeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode OTLP request, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode OTLP request&quot;</span>))]
     </span>DecodeOtlpRequest {
         location: Location,
         source: prost::DecodeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decompress prometheus remote request, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decompress prometheus remote request&quot;</span>))]
     </span>DecompressPromRemoteRequest {
         location: Location,
         source: snap::Error,
@@ -740,7 +735,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid prometheus remote read query result, msg: {}&quot;</span>, msg))]
     </span>InvalidPromRemoteReadQueryResult { msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid Flight ticket, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid Flight ticket&quot;</span>))]
     </span>InvalidFlightTicket {
         source: api::DecodeError,
         location: Location,
@@ -749,7 +744,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Tls is required for {}, plain connection is rejected&quot;</span>, server))]
     </span>TlsRequired { server: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get user info, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get user info&quot;</span>))]
     </span>Auth {
         location: Location,
         source: auth::error::Error,
@@ -761,7 +756,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Not found influx http authorization info&quot;</span>))]
     </span>NotFoundInfluxAuth {},
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid visibility ASCII chars, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid visibility ASCII chars&quot;</span>))]
     </span>InvisibleASCII {
         source: hyper::header::ToStrError,
         location: Location,
@@ -773,26 +768,26 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid http authorization header&quot;</span>))]
     </span>InvalidAuthorizationHeader { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid base64 value, source: {:?}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid base64 value&quot;</span>))]
     </span>InvalidBase64Value {
         source: DecodeError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid utf-8 value, source: {:?}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid utf-8 value&quot;</span>))]
     </span>InvalidUtf8Value {
         source: FromUtf8Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Error accessing catalog: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Error accessing catalog&quot;</span>))]
     </span>CatalogError { source: catalog::error::Error },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find requested database: {}-{}&quot;</span>, catalog, schema))]
     </span>DatabaseNotFound { catalog: String, schema: String },
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;mem-prof&quot;</span>)]
-    #[snafu(display(<span class="string">&quot;Failed to dump profile data, source: {}&quot;</span>, source))]
+    #[snafu(display(<span class="string">&quot;Failed to dump profile data&quot;</span>))]
     </span>DumpProfileData {
         location: Location,
         source: common_mem_prof::error::Error,
@@ -804,26 +799,26 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid flush argument: {}&quot;</span>, err_msg))]
     </span>InvalidFlushArgument { err_msg: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build gRPC reflection service, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build gRPC reflection service&quot;</span>))]
     </span>GrpcReflectionService {
         source: tonic_reflection::server::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build HTTP response, source: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build HTTP response&quot;</span>))]
     </span>BuildHttpResponse {
         source: http::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse PromQL: {query:?}, source: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse PromQL: {query:?}&quot;</span>))]
     </span>ParsePromQL {
         query: PromQuery,
         location: Location,
         source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get param types, source: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get param types&quot;</span>))]
     </span>GetPreparedStmtParams {
         source: query::error::Error,
         location: Location,
@@ -834,50 +829,44 @@
 
     <span class="comment">// this error is used for custom error mapping
     // please do not delete it
-    </span><span class="attr">#[snafu(display(<span class="string">&quot;Other error, source: {}&quot;</span>, source))]
+    </span><span class="attr">#[snafu(display(<span class="string">&quot;Other error&quot;</span>))]
     </span>Other {
         source: BoxedError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task&quot;</span>))]
     </span>JoinTask {
         source: tokio::task::JoinError,
         location: Location,
     },
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;pprof&quot;</span>)]
-    #[snafu(display(<span class="string">&quot;Failed to dump pprof data, source: {}&quot;</span>, source))]
+    #[snafu(display(<span class="string">&quot;Failed to dump pprof data&quot;</span>))]
     </span>DumpPprof { source: common_pprof::Error },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;{source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
     </span>Metrics { source: BoxedError },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;DataFrame operation error, source: {source}, location: {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;DataFrame operation error&quot;</span>))]
     </span>DataFrame {
         source: datafusion::error::DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to replace params with values in prepared statement, source: {source}, location: {location}&quot;
-    </span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to replace params with values in prepared statement&quot;</span>))]
     </span>ReplacePreparedStmtParams {
         source: query::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert scalar value, source: {source}, location: {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert scalar value&quot;</span>))]
     </span>ConvertScalarValue {
         source: datatypes::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Expected type: {:?}, actual: {:?}, location: {location}&quot;</span>,
-        expected,
-        actual
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Expected type: {:?}, actual: {:?}&quot;</span>, expected, actual))]
     </span>PreparedStmtTypeMismatch {
         expected: ConcreteDataType,
         actual: opensrv_mysql::ColumnType,
@@ -1072,7 +1061,8 @@
 
 <span class="kw">impl </span>IntoResponse <span class="kw">for </span>Error {
     <span class="kw">fn </span>into_response(<span class="self">self</span>) -&gt; Response {
-        <span class="kw">let </span>(status, error_message) = <span class="kw">match </span><span class="self">self </span>{
+        <span class="kw">let </span>error_msg = <span class="self">self</span>.iter_chain().last().unwrap().to_string();
+        <span class="kw">let </span>status = <span class="kw">match </span><span class="self">self </span>{
             Error::InfluxdbLineProtocol { .. }
             | Error::InfluxdbLinesWrite { .. }
             | Error::PromSeriesWrite { .. }
@@ -1083,15 +1073,15 @@
             | Error::DecompressPromRemoteRequest { .. }
             | Error::InvalidPromRemoteRequest { .. }
             | Error::InvalidQuery { .. }
-            | Error::TimePrecision { .. } =&gt; (HttpStatusCode::BAD_REQUEST, <span class="self">self</span>.to_string()),
+            | Error::TimePrecision { .. } =&gt; HttpStatusCode::BAD_REQUEST,
             <span class="kw">_ </span>=&gt; {
                 <span class="macro">logging::error!</span>(<span class="self">self</span>; <span class="string">&quot;Failed to handle HTTP request&quot;</span>);
 
-                (HttpStatusCode::INTERNAL_SERVER_ERROR, <span class="self">self</span>.to_string())
+                HttpStatusCode::INTERNAL_SERVER_ERROR
             }
         };
         <span class="kw">let </span>body = Json(<span class="macro">json!</span>({
-            <span class="string">&quot;error&quot;</span>: error_message,
+            <span class="string">&quot;error&quot;</span>: error_msg,
         }));
         (status, body).into_response()
     }

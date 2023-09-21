@@ -260,82 +260,82 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;empty host: {}&quot;</span>, url))]
     </span>EmptyHostPath { url: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid url: {}, error :{}&quot;</span>, url, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid url: {}&quot;</span>, url))]
     </span>InvalidUrl {
         url: String,
         source: ParseError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build backend, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build backend&quot;</span>))]
     </span>BuildBackend {
         source: object_store::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build orc reader, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build orc reader&quot;</span>))]
     </span>OrcReader {
         location: Location,
         source: orc_rust::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read object from path: {}, source: {}&quot;</span>, path, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read object from path: {}&quot;</span>, path))]
     </span>ReadObject {
         path: String,
         location: Location,
         source: object_store::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write object to path: {}, source: {}&quot;</span>, path, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write object to path: {}&quot;</span>, path))]
     </span>WriteObject {
         path: String,
         location: Location,
         source: object_store::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write&quot;</span>))]
     </span>AsyncWrite {
         source: std::io::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write record batch: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to write record batch&quot;</span>))]
     </span>WriteRecordBatch {
         location: Location,
         source: ArrowError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode record batch: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode record batch&quot;</span>))]
     </span>EncodeRecordBatch {
         location: Location,
         source: ParquetError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read record batch: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read record batch&quot;</span>))]
     </span>ReadRecordBatch {
         location: Location,
         source: datafusion::error::DataFusionError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read parquet source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read parquet&quot;</span>))]
     </span>ReadParquetSnafu {
         location: Location,
         source: datafusion::parquet::errors::ParquetError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert parquet to schema: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert parquet to schema&quot;</span>))]
     </span>ParquetToSchema {
         location: Location,
         source: datafusion::parquet::errors::ParquetError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to infer schema from file, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to infer schema from file&quot;</span>))]
     </span>InferSchema {
         location: Location,
         source: arrow_schema::ArrowError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to list object in path: {}, source: {}&quot;</span>, path, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to list object in path: {}&quot;</span>, path))]
     </span>ListObjects {
         path: String,
         location: Location,
@@ -345,7 +345,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid connection: {}&quot;</span>, msg))]
     </span>InvalidConnection { msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join handle: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join handle&quot;</span>))]
     </span>JoinHandle {
         location: Location,
         source: tokio::task::JoinError,
@@ -358,7 +358,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to merge schema: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to merge schema&quot;</span>))]
     </span>MergeSchema {
         source: arrow_schema::ArrowError,
         location: Location,

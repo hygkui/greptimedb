@@ -118,13 +118,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Internal state error: {}&quot;</span>, msg))]
     </span>InternalState { msg: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;IO error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;IO error&quot;</span>))]
     </span>Io {
         source: std::io::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Auth failed, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Auth failed&quot;</span>))]
     </span>AuthBackend {
         location: Location,
         source: BoxedError,

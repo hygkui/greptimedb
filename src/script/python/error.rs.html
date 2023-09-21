@@ -251,25 +251,25 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>(<span class="kw">crate</span>)))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Datatype error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Datatype error&quot;</span>))]
     </span>TypeCast {
         location: SnafuLocation,
         source: DataTypeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to query, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to query&quot;</span>))]
     </span>DatabaseQuery {
         location: SnafuLocation,
         source: QueryError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse script, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse script&quot;</span>))]
     </span>PyParse {
         location: SnafuLocation,
         source: ParseError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to compile script, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to compile script&quot;</span>))]
     </span>PyCompile {
         location: SnafuLocation,
         source: CodegenError,
@@ -282,13 +282,13 @@
         location: SnafuLocation,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Arrow error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Arrow error&quot;</span>))]
     </span>Arrow {
         location: SnafuLocation,
         source: ArrowError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;DataFusion error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;DataFusion error&quot;</span>))]
     </span>DataFusion {
         location: SnafuLocation,
         source: DataFusionError,
@@ -321,18 +321,18 @@
         location: SnafuLocation,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to retrieve record batches, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to retrieve record batches&quot;</span>))]
     </span>RecordBatch {
         location: SnafuLocation,
         source: common_recordbatch::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create record batch, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create record batch&quot;</span>))]
     </span>NewRecordBatch {
         location: SnafuLocation,
         source: common_recordbatch::error::Error,
     },
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create tokio task, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create tokio task&quot;</span>))]
     </span>TokioJoin { source: tokio::task::JoinError },
 }
 

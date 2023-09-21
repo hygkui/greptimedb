@@ -158,7 +158,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;No leader, should ask leader first&quot;</span>))]
     </span>NoLeader { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create gRPC channel, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create gRPC channel&quot;</span>))]
     </span>CreateChannel {
         location: Location,
         source: common_grpc::error::Error,
@@ -173,19 +173,19 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed create heartbeat stream to server&quot;</span>))]
     </span>CreateHeartbeatStream { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid response header, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid response header&quot;</span>))]
     </span>InvalidResponseHeader {
         location: Location,
         source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv request, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv request&quot;</span>))]
     </span>ConvertMetaRequest {
         location: Location,
         source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv response, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Metasrv response&quot;</span>))]
     </span>ConvertMetaResponse {
         location: Location,
         source: common_meta::error::Error,

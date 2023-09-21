@@ -63,14 +63,6 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -107,22 +99,14 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to convert column default constraint, column: {}, source: {}&quot;</span>,
-        column,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert column default constraint, column: {}&quot;</span>, column))]
     </span>ConvertColumnDefaultConstraint {
         column: String,
         location: Location,
         source: datatypes::error::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Invalid column default constraint, column: {}, source: {}&quot;</span>,
-        column,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid column default constraint, column: {}&quot;</span>, column))]
     </span>InvalidColumnDefaultConstraint {
         column: String,
         location: Location,

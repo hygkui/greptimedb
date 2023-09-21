@@ -366,17 +366,6 @@
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
 <a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -403,61 +392,61 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to invalidate table cache, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to invalidate table cache&quot;</span>))]
     </span>InvalidateTableCache {
         location: Location,
         source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open raft engine backend, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open raft engine backend&quot;</span>))]
     </span>OpenRaftEngineBackend {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response&quot;</span>))]
     </span>HandleHeartbeatResponse {
         location: Location,
         source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;{source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
     </span>External {
         <span class="attr">#[snafu(backtrace)]
         </span>source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to query, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to query&quot;</span>))]
     </span>RequestQuery {
         <span class="attr">#[snafu(backtrace)]
         </span>source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Runtime resource error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Runtime resource error&quot;</span>))]
     </span>RuntimeResource {
         <span class="attr">#[snafu(backtrace)]
         </span>source: common_runtime::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start server, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start server&quot;</span>))]
     </span>StartServer {
         <span class="attr">#[snafu(backtrace)]
         </span>source: servers::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown server, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown server&quot;</span>))]
     </span>ShutdownServer {
         <span class="attr">#[snafu(backtrace)]
         </span>source: servers::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}, source: {}&quot;</span>, addr, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}&quot;</span>, addr))]
     </span>ParseAddr {
         addr: String,
         source: std::net::AddrParseError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL&quot;</span>))]
     </span>ParseSql {
         <span class="attr">#[snafu(backtrace)]
         </span>source: sql::error::Error,
@@ -484,35 +473,31 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid DeleteRequest, reason: {}&quot;</span>, reason))]
     </span>InvalidDeleteRequest { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid system table definition: {err_msg}, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid system table definition: {err_msg}&quot;</span>))]
     </span>InvalidSystemTableDef { err_msg: String, location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Table not found: {}&quot;</span>, table_name))]
     </span>TableNotFound { table_name: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;General catalog error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;General catalog error&quot;</span>))]
     </span>Catalog {
         <span class="attr">#[snafu(backtrace)]
         </span>source: catalog::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start Meta client, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start Meta client&quot;</span>))]
     </span>StartMetaClient {
         <span class="attr">#[snafu(backtrace)]
         </span>source: meta_client::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create heartbeat stream to Metasrv, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create heartbeat stream to Metasrv&quot;</span>))]
     </span>CreateMetaHeartbeatStream {
         source: meta_client::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to find table route for table id {}, source: {}&quot;</span>,
-        table_id,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to find table route for table id {}&quot;</span>, table_id))]
     </span>FindTableRoute {
         table_id: u32,
         <span class="attr">#[snafu(backtrace)]
@@ -522,7 +507,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Schema {} already exists&quot;</span>, name))]
     </span>SchemaExists { name: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table occurs error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table occurs error&quot;</span>))]
     </span>Table {
         <span class="attr">#[snafu(backtrace)]
         </span>source: table::error::Error,
@@ -531,26 +516,26 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find column by name: {}&quot;</span>, msg))]
     </span>ColumnNotFound { msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to plan statement, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to plan statement&quot;</span>))]
     </span>PlanStatement {
         <span class="attr">#[snafu(backtrace)]
         </span>source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read table: {table_name}, source: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read table: {table_name}&quot;</span>))]
     </span>ReadTable {
         table_name: String,
         <span class="attr">#[snafu(backtrace)]
         </span>source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute logical plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute logical plan&quot;</span>))]
     </span>ExecLogicalPlan {
         <span class="attr">#[snafu(backtrace)]
         </span>source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;{source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
     </span>InvokeRegionServer {
         <span class="attr">#[snafu(backtrace)]
         </span>source: servers::error::Error,
@@ -571,30 +556,27 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Not supported: {}&quot;</span>, feat))]
     </span>NotSupported { feat: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;SQL execution intercepted, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;SQL execution intercepted&quot;</span>))]
     </span>SqlExecIntercepted {
         <span class="attr">#[snafu(backtrace)]
         </span>source: BoxedError,
     },
 
     <span class="comment">// TODO(ruihang): merge all query execution error kinds
-    </span><span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute PromQL query {}, source: {}&quot;</span>, query, source))]
+    </span><span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute PromQL query {}&quot;</span>, query))]
     </span>ExecutePromql {
         query: String,
         <span class="attr">#[snafu(backtrace)]
         </span>source: servers::error::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to create logical plan for prometheus query, source: {}&quot;</span>,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create logical plan for prometheus query&quot;</span>))]
     </span>PromStoreRemoteQueryPlan {
         <span class="attr">#[snafu(backtrace)]
         </span>source: servers::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to describe schema for given statement, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to describe schema for given statement&quot;</span>))]
     </span>DescribeStatement {
         <span class="attr">#[snafu(backtrace)]
         </span>source: query::error::Error,
@@ -603,24 +585,20 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Illegal primary keys definition: {}&quot;</span>, msg))]
     </span>IllegalPrimaryKeysDef { msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start script manager, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start script manager&quot;</span>))]
     </span>StartScriptManager {
         <span class="attr">#[snafu(backtrace)]
         </span>source: script::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to copy table: {}, source: {}&quot;</span>, table_name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to copy table: {}&quot;</span>, table_name))]
     </span>CopyTable {
         table_name: String,
         <span class="attr">#[snafu(backtrace)]
         </span>source: table::error::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to insert value into table: {}, source: {}&quot;</span>,
-        table_name,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert value into table: {}&quot;</span>, table_name))]
     </span>Insert {
         table_name: String,
         <span class="attr">#[snafu(backtrace)]
@@ -630,13 +608,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported format: {:?}&quot;</span>, format))]
     </span>UnsupportedFormat { location: Location, format: Format },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table metadata manager error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table metadata manager error&quot;</span>))]
     </span>TableMetadataManager {
         source: common_meta::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to pass permission check, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to pass permission check&quot;</span>))]
     </span>Permission {
         source: auth::error::Error,
         location: Location,
@@ -654,7 +632,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid region request, reason: {}&quot;</span>, reason))]
     </span>InvalidRegionRequest { reason: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;{}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table operation error&quot;</span>))]
     </span>TableOperation {
         source: operator::error::Error,
         location: Location,

@@ -128,10 +128,6 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -155,13 +151,13 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize data, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize data&quot;</span>))]
     </span>Serialize {
         source: serde_json::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to deserialize data, source: {}, json: {}&quot;</span>, source, json))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to deserialize data, json: {}&quot;</span>, json))]
     </span>Deserialize {
         source: serde_json::Error,
         location: Location,
@@ -194,11 +190,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to parse version in schema meta, value: {}, source: {}&quot;</span>,
-        value,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse version in schema meta, value: {}&quot;</span>, value))]
     </span>ParseSchemaVersion {
         value: String,
         source: std::num::ParseIntError,
@@ -217,13 +209,13 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Arrow failed to compute, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Arrow failed to compute&quot;</span>))]
     </span>ArrowCompute {
         source: arrow::error::ArrowError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to project arrow schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to project arrow schema&quot;</span>))]
     </span>ProjectArrowSchema {
         source: arrow::error::ArrowError,
         location: Location,

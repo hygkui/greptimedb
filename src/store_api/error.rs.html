@@ -74,17 +74,17 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid raw region request: {err}, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid raw region request: {err}&quot;</span>))]
     </span>InvalidRawRegionRequest { err: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid default constraint: {constraint}, source: {source}, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid default constraint: {constraint}&quot;</span>))]
     </span>InvalidDefaultConstraint {
         constraint: String,
         source: datatypes::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build column descriptor: {source}, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build column descriptor: &quot;</span>))]
     </span>BuildColumnDescriptor {
         source: ColumnDescriptorBuilderError,
         location: Location,

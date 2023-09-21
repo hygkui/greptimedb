@@ -123,7 +123,7 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse string to date, raw: {}, source: {}&quot;</span>, raw, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse string to date, raw: {}&quot;</span>, raw))]
     </span>ParseDateStr { raw: String, source: ParseError },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid date string, raw: {}&quot;</span>, raw))]
@@ -135,7 +135,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse a string into Interval, raw string: {}&quot;</span>, raw))]
     </span>ParseInterval { raw: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Current timestamp overflow, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Current timestamp overflow&quot;</span>))]
     </span>TimestampOverflow {
         source: TryFromIntError,
         location: Location,
@@ -151,7 +151,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid offset string {raw}: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid offset string {raw}: &quot;</span>))]
     </span>ParseOffsetStr {
         raw: String,
         source: ParseIntError,

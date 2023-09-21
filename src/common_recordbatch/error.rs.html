@@ -127,8 +127,6 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -156,19 +154,19 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to create datafusion record batch, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to create datafusion record batch&quot;</span>))]
     </span>NewDfRecordBatch {
         source: datatypes::arrow::error::ArrowError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Data types error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Data types error&quot;</span>))]
     </span>DataTypes {
         location: Location,
         source: datatypes::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;External error, location: {}, source: {}&quot;</span>, location, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;External error&quot;</span>))]
     </span>External {
         location: Location,
         source: BoxedError,
@@ -177,35 +175,34 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatches, reason: {}&quot;</span>, reason))]
     </span>CreateRecordBatches { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow schema&quot;</span>))]
     </span>SchemaConversion {
         source: datatypes::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to poll stream, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to poll stream&quot;</span>))]
     </span>PollStream {
         source: datafusion::error::DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to format record batch, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to format record batch&quot;</span>))]
     </span>Format {
         source: datatypes::arrow::error::ArrowError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init Recordbatch stream, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init Recordbatch stream&quot;</span>))]
     </span>InitRecordbatchStream {
         source: datafusion_common::DataFusionError,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to project Arrow RecordBatch with schema {:?} and projection {:?}, source: {}&quot;</span>,
+        <span class="string">&quot;Failed to project Arrow RecordBatch with schema {:?} and projection {:?}&quot;</span>,
         schema,
         projection,
-        source
     ))]
     </span>ProjectArrowRecordBatch {
         source: datatypes::arrow::error::ArrowError,
@@ -222,10 +219,9 @@
     },
 
     <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to cast vector of type &#39;{:?}&#39; to type &#39;{:?}&#39;, source: {}&quot;</span>,
+        <span class="string">&quot;Failed to cast vector of type &#39;{:?}&#39; to type &#39;{:?}&#39;&quot;</span>,
         from_type,
         to_type,
-        source
     ))]
     </span>CastVector {
         from_type: ConcreteDataType,

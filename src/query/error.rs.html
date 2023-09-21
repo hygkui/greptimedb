@@ -321,10 +321,6 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -362,7 +358,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;General catalog error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;General catalog error&quot;</span>))]
     </span>Catalog {
         source: catalog::error::Error,
         location: Location,
@@ -377,37 +373,37 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Table not found: {}&quot;</span>, table))]
     </span>TableNotFound { table: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to do vector computation, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to do vector computation&quot;</span>))]
     </span>VectorComputation {
         source: datatypes::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatch, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatch&quot;</span>))]
     </span>CreateRecordBatch {
         source: common_recordbatch::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create Schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create Schema&quot;</span>))]
     </span>CreateSchema {
         source: datatypes::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failure during query execution, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failure during query execution&quot;</span>))]
     </span>QueryExecution {
         source: BoxedError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failure during query planning, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failure during query planning&quot;</span>))]
     </span>QueryPlan {
         source: BoxedError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failure during query parsing, query: {}, source: {}&quot;</span>, query, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failure during query parsing, query: {}&quot;</span>, query))]
     </span>QueryParse {
         query: String,
         source: BoxedError,
@@ -424,45 +420,45 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;The SQL string has multiple statements, query: {}&quot;</span>, query))]
     </span>MultipleStatements { query: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Datafusion schema: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Datafusion schema&quot;</span>))]
     </span>ConvertDatafusionSchema {
         source: datatypes::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse timestamp `{}`: {}&quot;</span>, raw, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse timestamp `{}`&quot;</span>, raw))]
     </span>ParseTimestamp {
         raw: String,
         source: chrono::ParseError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse float number `{}`: {}&quot;</span>, raw, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse float number `{}`&quot;</span>, raw))]
     </span>ParseFloat {
         raw: String,
         source: std::num::ParseFloatError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;DataFusion error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;DataFusion error&quot;</span>))]
     </span>DataFusion {
         source: DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode Substrait logical plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode Substrait logical plan&quot;</span>))]
     </span>EncodeSubstraitLogicalPlan {
         source: substrait::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;General SQL error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;General SQL error&quot;</span>))]
     </span>Sql {
         location: Location,
         source: sql::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Cannot plan SQL: {}, source: {}&quot;</span>, sql, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Cannot plan SQL: {}&quot;</span>, sql))]
     </span>PlanSql {
         sql: String,
         source: DataFusionError,
@@ -489,20 +485,20 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to route partition of table {}, source: {}&quot;</span>, table, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to route partition of table {}&quot;</span>, table))]
     </span>RoutePartition {
         table: TableName,
         source: partition::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL&quot;</span>))]
     </span>ParseSql {
         source: sql::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request remote peer, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request remote peer&quot;</span>))]
     </span>RemoteRequest {
         source: client::Error,
         location: Location,
@@ -518,49 +514,45 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field: {}&quot;</span>, name))]
     </span>MissingRequiredField { name: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to regex, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to regex&quot;</span>))]
     </span>BuildRegex {
         location: Location,
         source: regex::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build data source backend, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build data source backend&quot;</span>))]
     </span>BuildBackend {
         source: common_datasource::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to list objects, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to list objects&quot;</span>))]
     </span>ListObjects {
         source: common_datasource::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse file format: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse file format&quot;</span>))]
     </span>ParseFileFormat {
         source: common_datasource::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to infer schema: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to infer schema&quot;</span>))]
     </span>InferSchema {
         source: common_datasource::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert datafusion schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert datafusion schema&quot;</span>))]
     </span>ConvertSchema {
         source: datatypes::error::Error,
         location: Location,
     },
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unknown table type, downcast failed, location: {}&quot;</span>, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unknown table type, downcast failed&quot;</span>))]
     </span>UnknownTable { location: Location },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Cannot find time index column in table {}, location: {}&quot;</span>,
-        table,
-        location
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find time index column in table {}&quot;</span>, table))]
     </span>TimeIndexNotFound { table: String, location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to add duration &#39;{:?}&#39; to SystemTime, overflowed&quot;</span>, duration))]

@@ -67,10 +67,6 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -95,7 +91,7 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read OPT_PROF, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to read OPT_PROF&quot;</span>))]
     </span>ReadOptProf { source: tikv_jemalloc_ctl::Error },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Memory profiling is not enabled&quot;</span>))]
@@ -104,17 +100,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build temp file from given path: {:?}&quot;</span>, path))]
     </span>BuildTempPath { path: PathBuf, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open temp file: {}, source: {}&quot;</span>, path, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open temp file: {}&quot;</span>, path))]
     </span>OpenTempFile {
         path: String,
         source: std::io::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to dump profiling data to temp file: {:?}, source: {}&quot;</span>,
-        path,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to dump profiling data to temp file: {:?}&quot;</span>, path))]
     </span>DumpProfileData {
         path: PathBuf,
         source: tikv_jemalloc_ctl::Error,

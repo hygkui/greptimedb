@@ -94,10 +94,6 @@
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -127,25 +123,21 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Scripts table not found&quot;</span>))]
     </span>ScriptsTableNotFound { location: Location },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to insert script to scripts table, name: {}, source: {}&quot;</span>,
-        name,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert script to scripts table, name: {}&quot;</span>, name))]
     </span>InsertScript {
         name: String,
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to compile python script, name: {}, source: {}&quot;</span>, name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to compile python script, name: {}&quot;</span>, name))]
     </span>CompilePython {
         name: String,
         location: Location,
         source: <span class="kw">crate</span>::python::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute python script {}, source: {}&quot;</span>, name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute python script {}&quot;</span>, name))]
     </span>ExecutePython {
         name: String,
         location: Location,
@@ -155,7 +147,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Script not found, name: {}&quot;</span>, name))]
     </span>ScriptNotFound { location: Location, name: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to collect record batch, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to collect record batch&quot;</span>))]
     </span>CollectRecords {
         location: Location,
         source: common_recordbatch::error::Error,
@@ -164,13 +156,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cast type, msg: {}&quot;</span>, msg))]
     </span>CastType { msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build DataFusion logical plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build DataFusion logical plan&quot;</span>))]
     </span>BuildDfLogicalPlan {
         source: datafusion_common::DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute internal statement, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute internal statement&quot;</span>))]
     </span>ExecuteInternalStatement {
         source: query::error::Error,
         location: Location,

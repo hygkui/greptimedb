@@ -520,38 +520,6 @@
 <a href="#520" id="520">520</a>
 <a href="#521" id="521">521</a>
 <a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
-<a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -581,43 +549,43 @@
 </span><span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response&quot;</span>))]
     </span>HandleHeartbeatResponse {
         location: Location,
         source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get info from meta server, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get info from meta server&quot;</span>))]
     </span>GetMetadata {
         location: Location,
         source: common_meta::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute sql, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute sql&quot;</span>))]
     </span>ExecuteSql {
         location: Location,
         source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to plan statement, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to plan statement&quot;</span>))]
     </span>PlanStatement {
         location: Location,
         source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute statement, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute statement&quot;</span>))]
     </span>ExecuteStatement {
         location: Location,
         source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute logical plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute logical plan&quot;</span>))]
     </span>ExecuteLogicalPlan {
         location: Location,
         source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode logical plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode logical plan&quot;</span>))]
     </span>DecodeLogicalPlan {
         location: Location,
         source: substrait::error::Error,
@@ -632,32 +600,28 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Schema not found: {}&quot;</span>, name))]
     </span>SchemaNotFound { name: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create table: {}, source: {}&quot;</span>, table_name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create table: {}&quot;</span>, table_name))]
     </span>CreateTable {
         table_name: String,
         location: Location,
         source: TableError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to drop table {}, source: {}&quot;</span>, table_name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to drop table {}&quot;</span>, table_name))]
     </span>DropTable {
         table_name: String,
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table engine not found: {}, source: {}&quot;</span>, engine_name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table engine not found: {}&quot;</span>, engine_name))]
     </span>TableEngineNotFound {
         engine_name: String,
         location: Location,
         source: table::error::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Table engine procedure not found: {}, source: {}&quot;</span>,
-        engine_name,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table engine procedure not found: {}&quot;</span>, engine_name))]
     </span>EngineProcedureNotFound {
         engine_name: String,
         location: Location,
@@ -686,74 +650,70 @@
     ))]
     </span>ColumnValuesNumberMismatch { columns: usize, values: usize },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Missing insert body, source: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Missing insert body&quot;</span>))]
     </span>MissingInsertBody {
         source: sql::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert value to table: {}, source: {}&quot;</span>, table_name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert value to table: {}&quot;</span>, table_name))]
     </span>Insert {
         table_name: String,
         location: Location,
         source: TableError,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to delete value from table: {}, source: {}&quot;</span>,
-        table_name,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to delete value from table: {}&quot;</span>, table_name))]
     </span>Delete {
         table_name: String,
         location: Location,
         source: TableError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to flush table: {}, source: {}&quot;</span>, table_name, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to flush table: {}&quot;</span>, table_name))]
     </span>FlushTable {
         table_name: String,
         location: Location,
         source: TableError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start server, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start server&quot;</span>))]
     </span>StartServer {
         location: Location,
         source: servers::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait for GRPC serving, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait for GRPC serving&quot;</span>))]
     </span>WaitForGrpcServing {
         source: servers::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}, source: {}&quot;</span>, addr, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}&quot;</span>, addr))]
     </span>ParseAddr {
         addr: String,
         source: std::net::AddrParseError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create directory {}, source: {}&quot;</span>, dir, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create directory {}&quot;</span>, dir))]
     </span>CreateDir { dir: String, source: std::io::Error },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to remove directory {}, source: {}&quot;</span>, dir, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to remove directory {}&quot;</span>, dir))]
     </span>RemoveDir { dir: String, source: std::io::Error },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open log store, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open log store&quot;</span>))]
     </span>OpenLogStore {
         location: Location,
         source: Box&lt;log_store::error::Error&gt;,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init backend, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init backend&quot;</span>))]
     </span>InitBackend {
         source: object_store::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Runtime resource error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Runtime resource error&quot;</span>))]
     </span>RuntimeResource {
         location: Location,
         source: common_runtime::error::Error,
@@ -762,7 +722,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Expect KvBackend but not found&quot;</span>))]
     </span>MissingKvBackend { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Expect MetaClient but not found, location: {}&quot;</span>, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Expect MetaClient but not found&quot;</span>))]
     </span>MissingMetaClient { location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid SQL, error: {}&quot;</span>, msg))]
@@ -786,7 +746,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to register a new schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to register a new schema&quot;</span>))]
     </span>RegisterSchema {
         location: Location,
         source: catalog::error::Error,
@@ -795,37 +755,37 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Schema {} already exists&quot;</span>, name))]
     </span>SchemaExists { name: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert delete expr to request: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert delete expr to request&quot;</span>))]
     </span>DeleteExprToRequest {
         location: Location,
         source: common_grpc_expr::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse SQL&quot;</span>))]
     </span>ParseSql {
         location: Location,
         source: sql::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to prepare immutable table: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to prepare immutable table&quot;</span>))]
     </span>PrepareImmutableTable {
         location: Location,
         source: query::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to access catalog, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to access catalog&quot;</span>))]
     </span>Catalog {
         location: Location,
         source: catalog::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to initialize meta client, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to initialize meta client&quot;</span>))]
     </span>MetaClientInit {
         location: Location,
         source: meta_client::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert data, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to insert data&quot;</span>))]
     </span>InsertData {
         location: Location,
         source: common_grpc_expr::error::Error,
@@ -836,16 +796,16 @@
     </span>))]
     </span>TableIdProviderNotFound { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to bump table id, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to bump table id&quot;</span>))]
     </span>BumpTableId {
         location: Location,
         source: table::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id in Datanode config, location: {}&quot;</span>, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id in Datanode config&quot;</span>))]
     </span>MissingNodeId { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id option in distributed mode, location: {}&quot;</span>, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id option in distributed mode&quot;</span>))]
     </span>MissingMetasrvOpts { location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field: {}&quot;</span>, name))]
@@ -854,11 +814,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Cannot find requested database: {}-{}&quot;</span>, catalog, schema))]
     </span>DatabaseNotFound { catalog: String, schema: String },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to build default value, column: {}, source: {}&quot;</span>,
-        column,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build default value, column: {}&quot;</span>, column))]
     </span>ColumnDefaultValue {
         column: String,
         location: Location,
@@ -871,39 +827,39 @@
     ))]
     </span>ColumnNoneDefaultValue { column: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unrecognized table option: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unrecognized table option&quot;</span>))]
     </span>UnrecognizedTableOption {
         location: Location,
         source: table::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to submit procedure {}, source: {}&quot;</span>, procedure_id, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to submit procedure {}&quot;</span>, procedure_id))]
     </span>SubmitProcedure {
         procedure_id: ProcedureId,
         location: Location,
         source: common_procedure::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait procedure {} done, source: {}&quot;</span>, procedure_id, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait procedure {} done&quot;</span>, procedure_id))]
     </span>WaitProcedure {
         procedure_id: ProcedureId,
         location: Location,
         source: common_procedure::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown server, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown server&quot;</span>))]
     </span>ShutdownServer {
         location: Location,
         source: servers::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown instance, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown instance&quot;</span>))]
     </span>ShutdownInstance {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json&quot;</span>))]
     </span>EncodeJson {
         location: Location,
         source: JsonError,
@@ -915,13 +871,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing WAL dir config&quot;</span>))]
     </span>MissingWalDirConfig { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task&quot;</span>))]
     </span>JoinTask {
         source: common_runtime::JoinError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Column datatype error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Column datatype error&quot;</span>))]
     </span>ColumnDataType {
         location: Location,
         source: api::error::Error,
@@ -933,46 +889,35 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to handle request for region {}, source: {}, location: {}&quot;</span>,
-        region_id,
-        source,
-        location
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle request for region {}&quot;</span>, region_id))]
     </span>HandleRegionRequest {
         region_id: RegionId,
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;RegionId {} not found, location: {}&quot;</span>, region_id, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;RegionId {} not found&quot;</span>, region_id))]
     </span>RegionNotFound {
         region_id: RegionId,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Region engine {} is not registered, location: {}&quot;</span>, name, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Region engine {} is not registered&quot;</span>, name))]
     </span>RegionEngineNotFound { name: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported gRPC request, kind: {}, location: {}&quot;</span>, kind, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported gRPC request, kind: {}&quot;</span>, kind))]
     </span>UnsupportedGrpcRequest { kind: String, location: Location },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Unsupported output type, expected: {}, location: {}&quot;</span>,
-        expected,
-        location
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported output type, expected: {}&quot;</span>, expected))]
     </span>UnsupportedOutput {
         expected: String,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to get metadata from engine {} for region_id {}, location: {}, source: {}&quot;</span>,
+        <span class="string">&quot;Failed to get metadata from engine {} for region_id {}&quot;</span>,
         engine,
         region_id,
-        location,
-        source
     ))]
     </span>GetRegionMetadata {
         engine: String,
@@ -981,22 +926,13 @@
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to build region requests, location:{}, source: {}&quot;</span>,
-        location,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build region requests&quot;</span>))]
     </span>BuildRegionRequests {
         location: Location,
         source: store_api::metadata::MetadataError,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to stop region engine {}, location:{}, source: {}&quot;</span>,
-        name,
-        location,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop region engine {}&quot;</span>, name))]
     </span>StopRegionEngine {
         name: String,
         location: Location,

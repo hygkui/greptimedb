@@ -131,7 +131,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid client tls config, {}&quot;</span>, msg))]
     </span>InvalidTlsConfig { msg: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid config file path, {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid config file path&quot;</span>))]
     </span>InvalidConfigFilePath {
         source: io::Error,
         location: Location,
@@ -150,13 +150,13 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create gRPC channel, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create gRPC channel&quot;</span>))]
     </span>CreateChannel {
         source: tonic::transport::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatch, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create RecordBatch&quot;</span>))]
     </span>CreateRecordBatch {
         location: Location,
         source: common_recordbatch::error::Error,
@@ -165,7 +165,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow type: {}&quot;</span>, from))]
     </span>Conversion { from: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode FlightData, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode FlightData&quot;</span>))]
     </span>DecodeFlightData {
         source: api::DecodeError,
         location: Location,
@@ -174,7 +174,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid FlightData, reason: {}&quot;</span>, reason))]
     </span>InvalidFlightData { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow Schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow Schema&quot;</span>))]
     </span>ConvertArrowSchema {
         location: Location,
         source: datatypes::error::Error,

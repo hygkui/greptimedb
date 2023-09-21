@@ -312,14 +312,6 @@
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -368,56 +360,48 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to register procedure loader, type name: {}, source: {}&quot;</span>,
-        type_name,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to register procedure loader, type name: {}&quot;</span>, type_name))]
     </span>RegisterProcedureLoader {
         type_name: String,
         location: Location,
         source: common_procedure::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to submit procedure, source: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to submit procedure&quot;</span>))]
     </span>SubmitProcedure {
         location: Location,
         source: common_procedure::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported operation {}, location: {}&quot;</span>, operation, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported operation {}&quot;</span>, operation))]
     </span>Unsupported {
         operation: String,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait procedure done, source: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait procedure done&quot;</span>))]
     </span>WaitProcedure {
         location: Location,
         source: common_procedure::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert RawTableInfo into TableInfo: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert RawTableInfo into TableInfo&quot;</span>))]
     </span>ConvertRawTableInfo {
         location: Location,
         source: datatypes::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Primary key &#39;{key}&#39; not found when creating region request, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Primary key &#39;{key}&#39; not found when creating region request&quot;</span>))]
     </span>PrimaryKeyNotFound { key: String, location: Location },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to build table meta for table: {}, source: {}&quot;</span>,
-        table_name,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build table meta for table: {}&quot;</span>, table_name))]
     </span>BuildTableMeta {
         table_name: String,
         source: table::metadata::TableMetaBuilderError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table occurs error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table occurs error&quot;</span>))]
     </span>Table {
         location: Location,
         source: table::error::Error,
@@ -429,19 +413,19 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode protobuf, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode protobuf&quot;</span>))]
     </span>DecodeProto {
         location: Location,
         source: prost::DecodeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json&quot;</span>))]
     </span>EncodeJson {
         location: Location,
         source: JsonError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode object from json, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode object from json&quot;</span>))]
     </span>DecodeJson {
         location: Location,
         source: JsonError,
@@ -453,7 +437,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to send message: {err_msg}&quot;</span>))]
     </span>SendMessage { err_msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serde json, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serde json&quot;</span>))]
     </span>SerdeJson {
         source: serde_json::error::Error,
         location: Location,
@@ -476,13 +460,13 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert alter table request, source: {source}, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert alter table request&quot;</span>))]
     </span>ConvertAlterTableRequest {
         source: common_grpc_expr::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid protobuf message: {err_msg}, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid protobuf message: {err_msg}&quot;</span>))]
     </span>InvalidProtoMsg { err_msg: String, location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Unexpected: {err_msg}&quot;</span>))]
@@ -504,7 +488,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert raw key to str, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert raw key to str&quot;</span>))]
     </span>ConvertRawKey {
         location: Location,
         source: Utf8Error,
@@ -544,29 +528,29 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid catalog value, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid catalog value&quot;</span>))]
     </span>InvalidCatalogValue {
         source: common_catalog::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;{}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;External error&quot;</span>))]
     </span>External {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid heartbeat response, location: {}&quot;</span>, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid heartbeat response&quot;</span>))]
     </span>InvalidHeartbeatResponse { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to operate on datanode: {}, source: {}&quot;</span>, peer, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to operate on datanode: {}&quot;</span>, peer))]
     </span>OperateDatanode {
         location: Location,
         peer: Peer,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Retry later, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Retry later&quot;</span>))]
     </span>RetryLater { source: BoxedError },
 }
 

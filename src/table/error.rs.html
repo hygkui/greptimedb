@@ -179,7 +179,6 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -210,13 +209,13 @@
 </span><span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Datafusion error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Datafusion error&quot;</span>))]
     </span>Datafusion {
         source: DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert Arrow schema&quot;</span>))]
     </span>SchemaConversion {
         source: datatypes::error::Error,
         location: Location,
@@ -228,26 +227,26 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Engine exist: {}&quot;</span>, engine))]
     </span>EngineExist { engine: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table projection error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table projection error&quot;</span>))]
     </span>TableProjection {
         source: ArrowError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create record batch for Tables, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create record batch for Tables&quot;</span>))]
     </span>TablesRecordBatch {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Column {column_name} already exists in table {table_name}, at {location}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Column {column_name} already exists in table {table_name}&quot;</span>))]
     </span>ColumnExists {
         column_name: String,
         table_name: String,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build schema, msg: {}, source: {}&quot;</span>, msg, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build schema, msg: {}&quot;</span>, msg))]
     </span>SchemaBuild {
         location: Location,
         source: datatypes::error::Error,
@@ -276,10 +275,9 @@
     },
 
     <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to build column descriptor for table: {}, column: {}, source: {}&quot;</span>,
+        <span class="string">&quot;Failed to build column descriptor for table: {}, column: {}&quot;</span>,
         table_name,
         column_name,
-        source,
     ))]
     </span>BuildColumnDescriptor {
         source: store_api::storage::ColumnDescriptorBuilderError,
@@ -291,7 +289,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Regions schemas mismatch in table: {}&quot;</span>, table))]
     </span>RegionSchemaMismatch { table: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to operate table, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to operate table&quot;</span>))]
     </span>TableOperation { source: BoxedError },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported operation: {}&quot;</span>, operation))]

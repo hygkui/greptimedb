@@ -190,10 +190,6 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -232,11 +228,10 @@
     </span>Unsupported { sql: String, keyword: String },
 
     <span class="attr">#[snafu(display(
-        <span class="string">&quot;Unexpected token while parsing SQL statement: {}, expected: &#39;{}&#39;, found: {}, source: {}&quot;</span>,
+        <span class="string">&quot;Unexpected token while parsing SQL statement: {}, expected: &#39;{}&#39;, found: {}&quot;</span>,
         sql,
         expected,
         actual,
-        source
     ))]
     </span>Unexpected {
         sql: String,
@@ -253,7 +248,7 @@
     </span>UnsupportedDefaultValue { column_name: String, expr: Expr },
 
     <span class="comment">// Syntax error from sql parser.
-    </span><span class="attr">#[snafu(display(<span class="string">&quot;Syntax error, source: {}, sql: {}&quot;</span>, source, sql))]
+    </span><span class="attr">#[snafu(display(<span class="string">&quot;Syntax error, sql: {}&quot;</span>, sql))]
     </span>Syntax { sql: String, source: ParserError },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing time index constraint&quot;</span>))]
@@ -292,7 +287,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid table name: {}&quot;</span>, name))]
     </span>InvalidTableName { name: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid default constraint, column: {}, source: {}&quot;</span>, column, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid default constraint, column: {}&quot;</span>, column))]
     </span>InvalidDefault {
         column: String,
         location: Location,
@@ -310,16 +305,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid table option key: {}&quot;</span>, key))]
     </span>InvalidTableOption { key: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize column default constraint, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize column default constraint&quot;</span>))]
     </span>SerializeColumnDefaultConstraint {
         location: Location,
         source: datatypes::error::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to convert data type to gRPC data type defined in proto, source: {}&quot;</span>,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert data type to gRPC data type defined in proto&quot;</span>))]
     </span>ConvertToGrpcDataType {
         location: Location,
         source: api::error::Error,

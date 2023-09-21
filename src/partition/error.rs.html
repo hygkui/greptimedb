@@ -150,10 +150,6 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -181,7 +177,7 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table route manager error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table route manager error&quot;</span>))]
     </span>TableRouteManager {
         source: common_meta::error::Error,
         location: Location,
@@ -190,7 +186,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get meta info from cache, error: {}&quot;</span>, err_msg))]
     </span>GetCache { err_msg: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request Meta, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to request Meta&quot;</span>))]
     </span>RequestMeta {
         location: Location,
         source: meta_client::error::Error,
@@ -220,13 +216,13 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize value to json, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize value to json&quot;</span>))]
     </span>SerializeJson {
         source: serde_json::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to deserialize value from json, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to deserialize value from json&quot;</span>))]
     </span>DeserializeJson {
         source: serde_json::Error,
         location: Location,
@@ -264,11 +260,7 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to convert DataFusion&#39;s ScalarValue: {:?}, source: {}&quot;</span>,
-        value,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert DataFusion&#39;s ScalarValue: {:?}&quot;</span>, value))]
     </span>ConvertScalarValue {
         value: ScalarValue,
         location: Location,

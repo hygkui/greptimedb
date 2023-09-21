@@ -100,10 +100,6 @@
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
 <a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -130,7 +126,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Illegal delete request, reason: {reason}&quot;</span>))]
     </span>IllegalDeleteRequest { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Column datatype error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Column datatype error&quot;</span>))]
     </span>ColumnDataType {
         location: Location,
         source: api::error::Error,
@@ -155,7 +151,7 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid column proto: {}&quot;</span>, err_msg))]
     </span>InvalidColumnProto { err_msg: String, location: Location },
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create vector, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create vector&quot;</span>))]
     </span>CreateVector {
         location: Location,
         source: datatypes::error::Error,
@@ -164,11 +160,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field in protobuf, field: {}&quot;</span>, field))]
     </span>MissingField { field: String, location: Location },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Invalid column proto definition, column: {}, source: {}&quot;</span>,
-        column,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid column proto definition, column: {}&quot;</span>, column))]
     </span>InvalidColumnDef {
         column: String,
         location: Location,

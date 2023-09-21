@@ -69,9 +69,6 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -97,7 +94,7 @@
 </span><span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>InnerError {
-    <span class="attr">#[snafu(display(<span class="string">&quot;{}: {}&quot;</span>, msg, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;msg: {}&quot;</span>, msg))]
     </span>Datafusion {
         msg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
         source: DataFusionError,
@@ -107,22 +104,19 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;PhysicalPlan downcast failed&quot;</span>))]
     </span>PhysicalPlanDowncast { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to convert arrow schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to convert arrow schema&quot;</span>))]
     </span>ConvertSchema {
         location: Location,
         source: datatypes::error::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to convert DataFusion&#39;s recordbatch stream, source: {}&quot;</span>,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert DataFusion&#39;s recordbatch stream&quot;</span>))]
     </span>ConvertDfRecordBatchStream {
         location: Location,
         source: common_recordbatch::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute physical plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute physical plan&quot;</span>))]
     </span>ExecutePhysicalPlan {
         location: Location,
         source: common_query::error::Error,

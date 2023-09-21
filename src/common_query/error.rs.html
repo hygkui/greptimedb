@@ -207,15 +207,6 @@
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -247,23 +238,20 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>Error {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to execute Python UDF, source: {}&quot;</span>, msg))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute Python UDF: {}&quot;</span>, msg))]
     </span>PyUdf {
         <span class="comment">// TODO(discord9): find a way that prevent circle depend(query&lt;-script&lt;-query) and can use script&#39;s error type
         </span>msg: String,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Fail to create temporary recordbatch when eval Python UDF, source: {}&quot;</span>,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create temporary recordbatch when eval Python UDF&quot;</span>))]
     </span>UdfTempRecordBatch {
         location: Location,
         source: RecordbatchError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to execute function, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute function&quot;</span>))]
     </span>ExecuteFunction {
         source: DataFusionError,
         location: Location,
@@ -276,25 +264,25 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to generate function, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to generate function&quot;</span>))]
     </span>GenerateFunction {
         source: StatsError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to cast scalar value into vector: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cast scalar value into vector&quot;</span>))]
     </span>FromScalarValue {
         location: Location,
         source: DataTypeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to cast arrow array into vector: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cast arrow array into vector&quot;</span>))]
     </span>FromArrowArray {
         location: Location,
         source: DataTypeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Fail to cast arrow array into vector: {:?}, {}&quot;</span>, data_type, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cast arrow array into vector: {:?}&quot;</span>, data_type))]
     </span>IntoVector {
         location: Location,
         source: DataTypeError,
@@ -328,56 +316,50 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Not expected to run ExecutionPlan more than once&quot;</span>))]
     </span>ExecuteRepeatedly { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;General DataFusion error, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;General DataFusion error&quot;</span>))]
     </span>GeneralDataFusion {
         source: DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to convert DataFusion&#39;s recordbatch stream, source: {}&quot;</span>,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert DataFusion&#39;s recordbatch stream&quot;</span>))]
     </span>ConvertDfRecordBatchStream {
         location: Location,
         source: common_recordbatch::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert arrow schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert arrow schema&quot;</span>))]
     </span>ConvertArrowSchema {
         location: Location,
         source: DataTypeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute physical plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute physical plan&quot;</span>))]
     </span>ExecutePhysicalPlan {
         location: Location,
         source: BoxedError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cast array to {:?}, source: {}&quot;</span>, typ, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cast array to {:?}&quot;</span>, typ))]
     </span>TypeCast {
         source: ArrowError,
         typ: arrow::datatypes::DataType,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to perform compute operation on arrow arrays, source: {}&quot;</span>,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to perform compute operation on arrow arrays&quot;</span>))]
     </span>ArrowCompute {
         source: ArrowError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Query engine fail to cast value: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Query engine fail to cast value&quot;</span>))]
     </span>ToScalarValue {
         location: Location,
         source: DataTypeError,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get scalar vector, {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get scalar vector&quot;</span>))]
     </span>GetScalarVector {
         location: Location,
         source: DataTypeError,

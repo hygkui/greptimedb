@@ -1110,19 +1110,6 @@
 <a href="#1110" id="1110">1110</a>
 <a href="#1111" id="1111">1111</a>
 <a href="#1112" id="1112">1112</a>
-<a href="#1113" id="1113">1113</a>
-<a href="#1114" id="1114">1114</a>
-<a href="#1115" id="1115">1115</a>
-<a href="#1116" id="1116">1116</a>
-<a href="#1117" id="1117">1117</a>
-<a href="#1118" id="1118">1118</a>
-<a href="#1119" id="1119">1119</a>
-<a href="#1120" id="1120">1120</a>
-<a href="#1121" id="1121">1121</a>
-<a href="#1122" id="1122">1122</a>
-<a href="#1123" id="1123">1123</a>
-<a href="#1124" id="1124">1124</a>
-<a href="#1125" id="1125">1125</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1690,44 +1677,31 @@
 <span class="attr">#[derive(Debug, Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
 </span><span class="kw">pub enum </span>MetadataError {
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid schema, source: {}, location: {}&quot;</span>, source, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid schema&quot;</span>))]
     </span>InvalidSchema {
         source: datatypes::error::Error,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid metadata, {}, location: {}&quot;</span>, reason, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid metadata, {}&quot;</span>, reason))]
     </span>InvalidMeta { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to ser/de json object. Location: {}, source: {}&quot;</span>,
-        location,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to ser/de json object&quot;</span>))]
     </span>SerdeJson {
         location: Location,
         source: serde_json::Error,
     },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Failed to convert struct from datatypes, location: {}, source: {}&quot;</span>,
-        location,
-        source
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert struct from datatypes&quot;</span>))]
     </span>ConvertDatatypes {
         location: Location,
         source: datatypes::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid raw region request, err: {}, location: {}&quot;</span>, err, location))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid raw region request, err: {}&quot;</span>, err))]
     </span>InvalidRawRegionRequest { err: String, location: Location },
 
-    <span class="attr">#[snafu(display(
-        <span class="string">&quot;Invalid region request, region_id: {}, err: {}, location: {}&quot;</span>,
-        region_id,
-        err,
-        location
-    ))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Invalid region request, region_id: {}, err: {}&quot;</span>, region_id, err))]
     </span>InvalidRegionRequest {
         region_id: RegionId,
         err: String,

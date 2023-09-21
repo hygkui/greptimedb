@@ -192,13 +192,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported substrait type: {}&quot;</span>, ty))]
     </span>UnsupportedSubstraitType { ty: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode substrait relation, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode substrait relation&quot;</span>))]
     </span>DecodeRel {
         source: DecodeError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode substrait relation, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode substrait relation&quot;</span>))]
     </span>EncodeRel {
         source: EncodeError,
         location: Location,
@@ -220,13 +220,13 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid parameters: {}&quot;</span>, reason))]
     </span>InvalidParameters { reason: String, location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Internal error from DataFusion: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Internal error from DataFusion&quot;</span>))]
     </span>DFInternal {
         source: DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Internal error: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Internal error&quot;</span>))]
     </span>Internal {
         location: Location,
         source: BoxedError,
@@ -248,26 +248,26 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert DataFusion schema, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert DataFusion schema&quot;</span>))]
     </span>ConvertDfSchema {
         location: Location,
         source: datatypes::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Unable to resolve table: {table_name}, error: {source}&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Unable to resolve table: {table_name}, error: &quot;</span>))]
     </span>ResolveTable {
         table_name: String,
         location: Location,
         source: catalog::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode DataFusion plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode DataFusion plan&quot;</span>))]
     </span>EncodeDfPlan {
         source: datafusion::error::DataFusionError,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode DataFusion plan, source: {}&quot;</span>, source))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode DataFusion plan&quot;</span>))]
     </span>DecodeDfPlan {
         source: datafusion::error::DataFusionError,
         location: Location,
