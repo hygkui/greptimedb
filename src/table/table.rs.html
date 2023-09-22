@@ -137,15 +137,6 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -178,7 +169,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::metadata::{FilterPushDownType, TableId, TableInfoRef, TableType};
 <span class="kw">use </span><span class="kw">crate</span>::requests::{AlterTableRequest, DeleteRequest, InsertRequest};
 <span class="kw">use </span><span class="kw">crate</span>::stats::TableStatistics;
-<span class="kw">use </span><span class="kw">crate</span>::RegionStat;
 
 <span class="kw">pub type </span>AlterContext = anymap::Map&lt;<span class="kw">dyn </span>Any + Send + Sync&gt;;
 
@@ -248,14 +238,6 @@
     </span><span class="kw">async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>, _regions: <span class="kw-2">&amp;</span>[RegionNumber]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="prelude-val">Ok</span>(())
     }
-
-    <span class="doccomment">/// Get region stats in this table.
-    </span><span class="kw">fn </span>region_stats(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;RegionStat&gt;&gt; {
-        UnsupportedSnafu {
-            operation: <span class="string">&quot;REGION_STATS&quot;</span>,
-        }
-        .fail()<span class="question-mark">?
-    </span>}
 
     <span class="doccomment">/// Return true if contains the region
     </span><span class="kw">fn </span>contains_region(<span class="kw-2">&amp;</span><span class="self">self</span>, _region: RegionNumber) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
