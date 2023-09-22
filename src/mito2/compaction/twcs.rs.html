@@ -836,6 +836,11 @@
 <a href="#836" id="836">836</a>
 <a href="#837" id="837">837</a>
 <a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -958,7 +963,6 @@
         <span class="kw">let </span>CompactionRequest {
             current_version,
             access_layer,
-            compaction_time_window,
             request_sender,
             waiters,
             file_purger,
@@ -976,6 +980,9 @@
             </span>expired_ssts.iter().for_each(|f| f.set_compacting(<span class="bool-val">true</span>));
         }
 
+        <span class="kw">let </span>compaction_time_window = current_version
+            .compaction_time_window
+            .map(|window| window.as_secs() <span class="kw">as </span>i64);
         <span class="kw">let </span>time_window_size = compaction_time_window
             .or(<span class="self">self</span>.time_window_seconds)
             .unwrap_or_else(|| {
@@ -1007,7 +1014,7 @@
             outputs,
             expired_ssts,
             sst_write_buffer_size: ReadableSize::mb(<span class="number">4</span>),
-            compaction_time_window: <span class="prelude-val">None</span>,
+            compaction_time_window: <span class="prelude-val">Some</span>(time_window_size),
             request_sender,
             waiters,
             file_purger,
@@ -1195,6 +1202,9 @@
                     compacted_files: deleted,
                     senders: std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.waiters),
                     file_purger: <span class="self">self</span>.file_purger.clone(),
+                    compaction_time_window: <span class="self">self
+                        </span>.compaction_time_window
+                        .map(|seconds| Duration::from_secs(seconds <span class="kw">as </span>u64)),
                 })
             }
             <span class="prelude-val">Err</span>(e) =&gt; {

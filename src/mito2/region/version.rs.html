@@ -339,6 +339,22 @@
 <a href="#339" id="339">339</a>
 <a href="#340" id="340">340</a>
 <a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -365,6 +381,7 @@
 //! and became invisible between step 1 and 2, so need to acquire version at first.
 
 </span><span class="kw">use </span>std::sync::{Arc, RwLock};
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::storage::SequenceNumber;
@@ -546,6 +563,8 @@
     ///
     /// Used to check if it is a flush task during the truncating table.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) truncated_entry_id: <span class="prelude-ty">Option</span>&lt;EntryId&gt;,
+    <span class="doccomment">/// Inferred compaction time window.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) compaction_time_window: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="doccomment">/// Options of the region.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) options: RegionOptions,
 }
@@ -560,6 +579,7 @@
     flushed_entry_id: EntryId,
     flushed_sequence: SequenceNumber,
     truncated_entry_id: <span class="prelude-ty">Option</span>&lt;EntryId&gt;,
+    compaction_time_window: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     options: RegionOptions,
 }
 
@@ -573,6 +593,7 @@
             flushed_entry_id: <span class="number">0</span>,
             flushed_sequence: <span class="number">0</span>,
             truncated_entry_id: <span class="prelude-val">None</span>,
+            compaction_time_window: <span class="prelude-val">None</span>,
             options: RegionOptions::default(),
         }
     }
@@ -586,6 +607,7 @@
             flushed_entry_id: version.flushed_entry_id,
             flushed_sequence: version.flushed_sequence,
             truncated_entry_id: version.truncated_entry_id,
+            compaction_time_window: version.compaction_time_window,
             options: version.options.clone(),
         }
     }
@@ -620,6 +642,12 @@
         <span class="self">self
     </span>}
 
+    <span class="doccomment">/// Sets compaction time window.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compaction_time_window(<span class="kw-2">mut </span><span class="self">self</span>, window: <span class="prelude-ty">Option</span>&lt;Duration&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.compaction_time_window = window;
+        <span class="self">self
+    </span>}
+
     <span class="doccomment">/// Sets options.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>options(<span class="kw-2">mut </span><span class="self">self</span>, options: RegionOptions) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.options = options;
@@ -633,6 +661,9 @@
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(sequence) = edit.flushed_sequence {
             <span class="self">self</span>.flushed_sequence = <span class="self">self</span>.flushed_sequence.max(sequence);
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(window) = edit.compaction_time_window {
+            <span class="self">self</span>.compaction_time_window = <span class="prelude-val">Some</span>(window);
         }
         <span class="kw">if </span>!edit.files_to_add.is_empty() || !edit.files_to_remove.is_empty() {
             <span class="kw">let </span><span class="kw-2">mut </span>ssts = (<span class="kw-2">*</span><span class="self">self</span>.ssts).clone();
@@ -676,6 +707,7 @@
             flushed_entry_id: <span class="self">self</span>.flushed_entry_id,
             flushed_sequence: <span class="self">self</span>.flushed_sequence,
             truncated_entry_id: <span class="self">self</span>.truncated_entry_id,
+            compaction_time_window: <span class="self">self</span>.compaction_time_window,
             options: <span class="self">self</span>.options,
         }
     }

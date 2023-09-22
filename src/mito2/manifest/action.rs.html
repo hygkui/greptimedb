@@ -287,6 +287,17 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -304,6 +315,7 @@
 </span><span class="doccomment">//! Defines [RegionMetaAction] related structs and [RegionCheckpoint].
 
 </span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -338,7 +350,8 @@
 </span><span class="kw">pub struct </span>RegionEdit {
     <span class="kw">pub </span>files_to_add: Vec&lt;FileMeta&gt;,
     <span class="kw">pub </span>files_to_remove: Vec&lt;FileMeta&gt;,
-    <span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;i64&gt;,
+    <span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     <span class="kw">pub </span>flushed_entry_id: <span class="prelude-ty">Option</span>&lt;EntryId&gt;,
     <span class="kw">pub </span>flushed_sequence: <span class="prelude-ty">Option</span>&lt;SequenceNumber&gt;,
 }
@@ -373,6 +386,9 @@
     </span><span class="kw">pub </span>manifest_version: ManifestVersion,
     <span class="doccomment">/// Last WAL entry id of truncated data.
     </span><span class="kw">pub </span>truncated_entry_id: <span class="prelude-ty">Option</span>&lt;EntryId&gt;,
+    <span class="doccomment">/// Inferred compaction time window.
+    </span><span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>compaction_time_window: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
 }
 
 <span class="attr">#[derive(Debug, Default)]
@@ -383,6 +399,7 @@
     flushed_sequence: SequenceNumber,
     manifest_version: ManifestVersion,
     truncated_entry_id: <span class="prelude-ty">Option</span>&lt;EntryId&gt;,
+    compaction_time_window: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
 }
 
 <span class="kw">impl </span>RegionManifestBuilder {
@@ -396,6 +413,7 @@
                 manifest_version: s.manifest_version,
                 flushed_sequence: s.flushed_sequence,
                 truncated_entry_id: s.truncated_entry_id,
+                compaction_time_window: s.compaction_time_window,
             }
         } <span class="kw">else </span>{
             Default::default()
@@ -421,6 +439,9 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(flushed_sequence) = edit.flushed_sequence {
             <span class="self">self</span>.flushed_sequence = <span class="self">self</span>.flushed_sequence.max(flushed_sequence);
         }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(window) = edit.compaction_time_window {
+            <span class="self">self</span>.compaction_time_window = <span class="prelude-val">Some</span>(window);
+        }
     }
 
     <span class="kw">pub fn </span>apply_truncate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, manifest_version: ManifestVersion, truncate: RegionTruncate) {
@@ -445,6 +466,7 @@
             flushed_sequence: <span class="self">self</span>.flushed_sequence,
             manifest_version: <span class="self">self</span>.manifest_version,
             truncated_entry_id: <span class="self">self</span>.truncated_entry_id,
+            compaction_time_window: <span class="self">self</span>.compaction_time_window,
         })
     }
 }

@@ -153,8 +153,8 @@
         </span><span class="kw">let </span>edit = RegionEdit {
             files_to_add: std::mem::take(<span class="kw-2">&amp;mut </span>request.compaction_outputs),
             files_to_remove: std::mem::take(<span class="kw-2">&amp;mut </span>request.compacted_files),
-            compaction_time_window: <span class="prelude-val">None</span>, <span class="comment">// TODO(hl): update window maybe
-            </span>flushed_entry_id: <span class="prelude-val">None</span>,
+            compaction_time_window: request.compaction_time_window,
+            flushed_entry_id: <span class="prelude-val">None</span>,
             flushed_sequence: <span class="prelude-val">None</span>,
         };
         <span class="kw">let </span>action_list = RegionMetaActionList::with_action(RegionMetaAction::Edit(edit.clone()));
