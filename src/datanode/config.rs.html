@@ -411,6 +411,15 @@
 <a href="#411" id="411">411</a>
 <a href="#412" id="412">412</a>
 <a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -431,6 +440,9 @@
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_config::WalConfig;
+<span class="kw">use </span>common_grpc::channel_manager::{
+    DEFAULT_MAX_GRPC_RECV_MESSAGE_SIZE, DEFAULT_MAX_GRPC_SEND_MESSAGE_SIZE,
+};
 <span class="kw">pub use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>file_engine::config::EngineConfig <span class="kw">as </span>FileEngineConfig;
@@ -737,6 +749,10 @@
     <span class="kw">pub </span>rpc_addr: String,
     <span class="kw">pub </span>rpc_hostname: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>rpc_runtime_size: usize,
+    <span class="comment">// Max gRPC receiving(decoding) message size
+    </span><span class="kw">pub </span>rpc_max_recv_message_size: usize,
+    <span class="comment">// Max gRPC sending(encoding) message size
+    </span><span class="kw">pub </span>rpc_max_send_message_size: usize,
     <span class="kw">pub </span>heartbeat: HeartbeatOptions,
     <span class="kw">pub </span>http: HttpOptions,
     <span class="kw">pub </span>meta_client: <span class="prelude-ty">Option</span>&lt;MetaClientOptions&gt;,
@@ -757,6 +773,8 @@
             rpc_addr: <span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(),
             rpc_hostname: <span class="prelude-val">None</span>,
             rpc_runtime_size: <span class="number">8</span>,
+            rpc_max_recv_message_size: DEFAULT_MAX_GRPC_RECV_MESSAGE_SIZE,
+            rpc_max_send_message_size: DEFAULT_MAX_GRPC_SEND_MESSAGE_SIZE,
             http: HttpOptions::default(),
             meta_client: <span class="prelude-val">None</span>,
             wal: WalConfig::default(),

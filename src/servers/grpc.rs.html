@@ -270,6 +270,19 @@
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -305,7 +318,9 @@
 <span class="kw">use </span>arrow_flight::flight_service_server::FlightServiceServer;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>auth::UserProviderRef;
-<span class="kw">use </span>common_grpc::channel_manager::DEFAULT_MAX_GRPC_MESSAGE_SIZE;
+<span class="kw">use </span>common_grpc::channel_manager::{
+    DEFAULT_MAX_GRPC_RECV_MESSAGE_SIZE, DEFAULT_MAX_GRPC_SEND_MESSAGE_SIZE,
+};
 <span class="kw">use </span>common_runtime::Runtime;
 <span class="kw">use </span>common_telemetry::logging::info;
 <span class="kw">use </span>common_telemetry::{error, warn};
@@ -354,21 +369,24 @@
 <span class="doccomment">/// Grpc Server configuration
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>GrpcServerConfig {
-    <span class="comment">// Max gRPC message size
-    // TODO(dennis): make it configurable
-    </span><span class="kw">pub </span>max_message_size: usize,
+    <span class="comment">// Max gRPC receiving(decoding) message size
+    </span><span class="kw">pub </span>max_recv_message_size: usize,
+    <span class="comment">// Max gRPC sending(encoding) message size
+    </span><span class="kw">pub </span>max_send_message_size: usize,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>GrpcServerConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            max_message_size: DEFAULT_MAX_GRPC_MESSAGE_SIZE,
+            max_recv_message_size: DEFAULT_MAX_GRPC_RECV_MESSAGE_SIZE,
+            max_send_message_size: DEFAULT_MAX_GRPC_SEND_MESSAGE_SIZE,
         }
     }
 }
 
 <span class="kw">impl </span>GrpcServer {
     <span class="kw">pub fn </span>new(
+        config: <span class="prelude-ty">Option</span>&lt;GrpcServerConfig&gt;,
         query_handler: <span class="prelude-ty">Option</span>&lt;ServerGrpcQueryHandlerRef&gt;,
         prometheus_handler: <span class="prelude-ty">Option</span>&lt;PrometheusHandlerRef&gt;,
         flight_handler: <span class="prelude-ty">Option</span>&lt;FlightCraftRef&gt;,
@@ -382,7 +400,7 @@
         <span class="kw">let </span>region_server_handler = region_server_handler
             .map(|handler| RegionServerRequestHandler::new(handler, runtime.clone()));
         <span class="self">Self </span>{
-            config: GrpcServerConfig::default(),
+            config: config.unwrap_or_default(),
             shutdown_tx: Mutex::new(<span class="prelude-val">None</span>),
             user_provider,
             serve_state: Mutex::new(<span class="prelude-val">None</span>),
@@ -473,7 +491,8 @@
     }
 
     <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>, addr: SocketAddr) -&gt; <span class="prelude-ty">Result</span>&lt;SocketAddr&gt; {
-        <span class="kw">let </span>max_message_size = <span class="self">self</span>.config.max_message_size;
+        <span class="kw">let </span>max_recv_message_size = <span class="self">self</span>.config.max_recv_message_size;
+        <span class="kw">let </span>max_send_message_size = <span class="self">self</span>.config.max_send_message_size;
         <span class="kw">let </span>(tx, rx) = oneshot::channel();
         <span class="kw">let </span>(listener, addr) = {
             <span class="kw">let </span><span class="kw-2">mut </span>shutdown_tx = <span class="self">self</span>.shutdown_tx.lock().<span class="kw">await</span>;
@@ -499,7 +518,8 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(database_handler) = <span class="kw-2">&amp;</span><span class="self">self</span>.database_handler {
             builder = builder.add_service(
                 GreptimeDatabaseServer::new(DatabaseService::new(database_handler.clone()))
-                    .max_decoding_message_size(max_message_size),
+                    .max_decoding_message_size(max_recv_message_size)
+                    .max_encoding_message_size(max_send_message_size),
             )
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(prometheus_handler) = <span class="kw-2">&amp;</span><span class="self">self</span>.prometheus_handler {
@@ -509,18 +529,24 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(flight_handler) = <span class="kw-2">&amp;</span><span class="self">self</span>.flight_handler {
             builder = builder.add_service(
                 FlightServiceServer::new(FlightCraftWrapper(flight_handler.clone()))
-                    .max_decoding_message_size(max_message_size),
+                    .max_decoding_message_size(max_recv_message_size)
+                    .max_encoding_message_size(max_send_message_size),
             )
         } <span class="kw">else </span>{
             <span class="comment">// TODO(ruihang): this is a temporary workaround before region server is ready.
-            </span>builder = builder.add_service(FlightServiceServer::new(FlightCraftWrapper(
-                <span class="self">self</span>.database_handler.clone().unwrap(),
-            )))
+            </span>builder = builder.add_service(
+                FlightServiceServer::new(FlightCraftWrapper(
+                    <span class="self">self</span>.database_handler.clone().unwrap(),
+                ))
+                .max_decoding_message_size(max_recv_message_size)
+                .max_encoding_message_size(max_send_message_size),
+            )
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(region_server_handler) = <span class="kw-2">&amp;</span><span class="self">self</span>.region_server_handler {
             builder = builder.add_service(
                 RegionServer::new(region_server_handler.clone())
-                    .max_decoding_message_size(max_message_size),
+                    .max_decoding_message_size(max_recv_message_size)
+                    .max_encoding_message_size(max_send_message_size),
             );
         }
 

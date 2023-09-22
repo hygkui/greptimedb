@@ -317,6 +317,7 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -591,6 +592,7 @@
     <span class="kw">let </span>flight_handler = <span class="prelude-val">Some</span>(Arc::new(datanode.region_server()) <span class="kw">as _</span>);
     <span class="kw">let </span>region_server_handler = <span class="prelude-val">Some</span>(Arc::new(datanode.region_server()) <span class="kw">as _</span>);
     <span class="kw">let </span>grpc_server = GrpcServer::new(
+        <span class="prelude-val">None</span>,
         <span class="prelude-val">None</span>,
         <span class="prelude-val">None</span>,
         flight_handler,

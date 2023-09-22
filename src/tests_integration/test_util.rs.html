@@ -604,6 +604,17 @@
 <a href="#604" id="604">604</a>
 <a href="#605" id="605">605</a>
 <a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -645,7 +656,7 @@
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>secrecy::ExposeSecret;
 <span class="kw">use </span>servers::grpc::greptime_handler::GreptimeRequestHandler;
-<span class="kw">use </span>servers::grpc::GrpcServer;
+<span class="kw">use </span>servers::grpc::{GrpcServer, GrpcServerConfig};
 <span class="kw">use </span>servers::http::{HttpOptions, HttpServerBuilder};
 <span class="kw">use </span>servers::metrics_handler::MetricsHandler;
 <span class="kw">use </span>servers::mysql::server::{MysqlServer, MysqlSpawnConfig, MysqlSpawnRef};
@@ -1029,13 +1040,22 @@ CREATE TABLE IF NOT EXISTS {table_name} (
     store_type: StorageType,
     name: <span class="kw-2">&amp;</span>str,
 ) -&gt; (String, TestGuard, Arc&lt;GrpcServer&gt;) {
-    setup_grpc_server_with_user_provider(store_type, name, <span class="prelude-val">None</span>).<span class="kw">await
+    setup_grpc_server_with(store_type, name, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="kw">await
 </span>}
 
 <span class="kw">pub async fn </span>setup_grpc_server_with_user_provider(
     store_type: StorageType,
     name: <span class="kw-2">&amp;</span>str,
     user_provider: <span class="prelude-ty">Option</span>&lt;UserProviderRef&gt;,
+) -&gt; (String, TestGuard, Arc&lt;GrpcServer&gt;) {
+    setup_grpc_server_with(store_type, name, user_provider, <span class="prelude-val">None</span>).<span class="kw">await
+</span>}
+
+<span class="kw">pub async fn </span>setup_grpc_server_with(
+    store_type: StorageType,
+    name: <span class="kw-2">&amp;</span>str,
+    user_provider: <span class="prelude-ty">Option</span>&lt;UserProviderRef&gt;,
+    grpc_config: <span class="prelude-ty">Option</span>&lt;GrpcServerConfig&gt;,
 ) -&gt; (String, TestGuard, Arc&lt;GrpcServer&gt;) {
     <span class="kw">let </span>instance = setup_standalone_instance(name, store_type).<span class="kw">await</span>;
 
@@ -1053,7 +1073,9 @@ CREATE TABLE IF NOT EXISTS {table_name} (
         user_provider.clone(),
         runtime.clone(),
     ));
+
     <span class="kw">let </span>fe_grpc_server = Arc::new(GrpcServer::new(
+        grpc_config,
         <span class="prelude-val">Some</span>(ServerGrpcQueryHandlerAdaptor::arc(fe_instance_ref.clone())),
         <span class="prelude-val">Some</span>(fe_instance_ref.clone()),
         <span class="prelude-val">Some</span>(flight_handler),

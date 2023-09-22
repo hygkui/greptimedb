@@ -213,6 +213,11 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -237,7 +242,7 @@
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>servers::configurator::ConfiguratorRef;
 <span class="kw">use </span>servers::error::Error::InternalIo;
-<span class="kw">use </span>servers::grpc::GrpcServer;
+<span class="kw">use </span>servers::grpc::{GrpcServer, GrpcServerConfig};
 <span class="kw">use </span>servers::http::HttpServerBuilder;
 <span class="kw">use </span>servers::metrics_handler::MetricsHandler;
 <span class="kw">use </span>servers::mysql::server::{MysqlServer, MysqlSpawnConfig, MysqlSpawnRef};
@@ -284,7 +289,12 @@
                     .context(error::RuntimeResourceSnafu)<span class="question-mark">?</span>,
             );
 
+            <span class="kw">let </span>grpc_config = GrpcServerConfig {
+                max_recv_message_size: opts.max_recv_message_size,
+                max_send_message_size: opts.max_send_message_size,
+            };
             <span class="kw">let </span>grpc_server = GrpcServer::new(
+                <span class="prelude-val">Some</span>(grpc_config),
                 <span class="prelude-val">Some</span>(ServerGrpcQueryHandlerAdaptor::arc(instance.clone())),
                 <span class="prelude-val">Some</span>(instance.clone()),
                 <span class="prelude-val">None</span>,
