@@ -1107,9 +1107,6 @@
 <a href="#1107" id="1107">1107</a>
 <a href="#1108" id="1108">1108</a>
 <a href="#1109" id="1109">1109</a>
-<a href="#1110" id="1110">1110</a>
-<a href="#1111" id="1111">1111</a>
-<a href="#1112" id="1112">1112</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1138,7 +1135,6 @@
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>datatypes::arrow::datatypes::FieldRef;
-<span class="kw">use </span>datatypes::prelude::DataType;
 <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, Schema, SchemaRef};
 <span class="kw">use </span>serde::de::Error;
 <span class="kw">use </span>serde::{Deserialize, Deserializer, Serialize};
@@ -1467,13 +1463,10 @@
     </span><span class="kw">fn </span>validate_column_metadata(column_metadata: <span class="kw-2">&amp;</span>ColumnMetadata) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">if </span>column_metadata.semantic_type == SemanticType::Timestamp {
             <span class="macro">ensure!</span>(
-                column_metadata
-                    .column_schema
-                    .data_type
-                    .is_timestamp_compatible(),
+                column_metadata.column_schema.data_type.is_timestamp(),
                 InvalidMetaSnafu {
                     reason: <span class="macro">format!</span>(
-                        <span class="string">&quot;{} is not timestamp compatible&quot;</span>,
+                        <span class="string">&quot;column `{}` is not timestamp type&quot;</span>,
                         column_metadata.column_schema.name
                     ),
                 }
@@ -1787,7 +1780,8 @@
         builder.push_column_metadata(col);
         <span class="kw">let </span>err = builder.build().unwrap_err();
         <span class="macro">assert!</span>(
-            err.to_string().contains(<span class="string">&quot;ts is not timestamp compatible&quot;</span>),
+            err.to_string()
+                .contains(<span class="string">&quot;column `ts` is not timestamp type&quot;</span>),
             <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
     }

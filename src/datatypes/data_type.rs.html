@@ -810,44 +810,6 @@
 <a href="#810" id="810">810</a>
 <a href="#811" id="811">811</a>
 <a href="#812" id="812">812</a>
-<a href="#813" id="813">813</a>
-<a href="#814" id="814">814</a>
-<a href="#815" id="815">815</a>
-<a href="#816" id="816">816</a>
-<a href="#817" id="817">817</a>
-<a href="#818" id="818">818</a>
-<a href="#819" id="819">819</a>
-<a href="#820" id="820">820</a>
-<a href="#821" id="821">821</a>
-<a href="#822" id="822">822</a>
-<a href="#823" id="823">823</a>
-<a href="#824" id="824">824</a>
-<a href="#825" id="825">825</a>
-<a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a>
-<a href="#828" id="828">828</a>
-<a href="#829" id="829">829</a>
-<a href="#830" id="830">830</a>
-<a href="#831" id="831">831</a>
-<a href="#832" id="832">832</a>
-<a href="#833" id="833">833</a>
-<a href="#834" id="834">834</a>
-<a href="#835" id="835">835</a>
-<a href="#836" id="836">836</a>
-<a href="#837" id="837">837</a>
-<a href="#838" id="838">838</a>
-<a href="#839" id="839">839</a>
-<a href="#840" id="840">840</a>
-<a href="#841" id="841">841</a>
-<a href="#842" id="842">842</a>
-<a href="#843" id="843">843</a>
-<a href="#844" id="844">844</a>
-<a href="#845" id="845">845</a>
-<a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
-<a href="#849" id="849">849</a>
-<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1029,6 +991,10 @@
         )
     }
 
+    <span class="kw">pub fn </span>is_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, ConcreteDataType::Timestamp(<span class="kw">_</span>))
+    }
+
     <span class="kw">pub fn </span>numerics() -&gt; Vec&lt;ConcreteDataType&gt; {
         <span class="macro">vec!</span>[
             ConcreteDataType::int8_datatype(),
@@ -1067,9 +1033,6 @@
     <span class="doccomment">/// Try to cast data type as a [`TimestampType`].
     </span><span class="kw">pub fn </span>as_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TimestampType&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            ConcreteDataType::Int64(<span class="kw">_</span>) =&gt; {
-                <span class="prelude-val">Some</span>(TimestampType::Millisecond(TimestampMillisecondType))
-            }
             ConcreteDataType::Timestamp(t) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>t),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
@@ -1323,10 +1286,6 @@
     <span class="doccomment">/// Creates a mutable vector with given `capacity` of this type.
     </span><span class="kw">fn </span>create_mutable_vector(<span class="kw-2">&amp;</span><span class="self">self</span>, capacity: usize) -&gt; Box&lt;<span class="kw">dyn </span>MutableVector&gt;;
 
-    <span class="doccomment">/// Returns true if the data type is compatible with timestamp type so we can
-    /// use it as a timestamp.
-    </span><span class="kw">fn </span>is_timestamp_compatible(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
-
     <span class="doccomment">/// Casts the value to specific DataType.
     /// Return None if cast failed.
     </span><span class="kw">fn </span>try_cast(<span class="kw-2">&amp;</span><span class="self">self</span>, from: Value) -&gt; <span class="prelude-ty">Option</span>&lt;Value&gt;;
@@ -1444,41 +1403,6 @@
             ConcreteDataType::timestamp_second_datatype(),
             ConcreteDataType::from_arrow_time_unit(<span class="kw-2">&amp;</span>ArrowTimeUnit::Second)
         );
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_is_timestamp_compatible() {
-        <span class="macro">assert!</span>(ConcreteDataType::timestamp_datatype(TimeUnit::Second).is_timestamp_compatible());
-        <span class="macro">assert!</span>(
-            ConcreteDataType::timestamp_datatype(TimeUnit::Millisecond).is_timestamp_compatible()
-        );
-        <span class="macro">assert!</span>(
-            ConcreteDataType::timestamp_datatype(TimeUnit::Microsecond).is_timestamp_compatible()
-        );
-        <span class="macro">assert!</span>(
-            ConcreteDataType::timestamp_datatype(TimeUnit::Nanosecond).is_timestamp_compatible()
-        );
-        <span class="macro">assert!</span>(ConcreteDataType::timestamp_second_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(ConcreteDataType::timestamp_millisecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(ConcreteDataType::timestamp_microsecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(ConcreteDataType::timestamp_nanosecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(ConcreteDataType::int64_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::null_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::binary_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::boolean_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::date_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::datetime_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::string_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::int32_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::uint64_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::time_second_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::time_millisecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::time_microsecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::time_nanosecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::duration_second_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::duration_millisecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::duration_microsecond_datatype().is_timestamp_compatible());
-        <span class="macro">assert!</span>(!ConcreteDataType::duration_nanosecond_datatype().is_timestamp_compatible());
     }
 
     <span class="attr">#[test]

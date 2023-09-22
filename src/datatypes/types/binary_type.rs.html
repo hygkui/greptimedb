@@ -62,10 +62,6 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -121,10 +117,6 @@
     <span class="kw">fn </span>create_mutable_vector(<span class="kw-2">&amp;</span><span class="self">self</span>, capacity: usize) -&gt; Box&lt;<span class="kw">dyn </span>MutableVector&gt; {
         Box::new(BinaryVectorBuilder::with_capacity(capacity))
     }
-
-    <span class="kw">fn </span>is_timestamp_compatible(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="bool-val">false
-    </span>}
 
     <span class="kw">fn </span>try_cast(<span class="kw-2">&amp;</span><span class="self">self</span>, from: Value) -&gt; <span class="prelude-ty">Option</span>&lt;Value&gt; {
         <span class="kw">match </span>from {

@@ -371,13 +371,6 @@
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
 <a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
-<a href="#380" id="380">380</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -461,7 +454,7 @@
                     error::UnsupportedDefaultExprSnafu { expr }
                 );
                 <span class="macro">ensure!</span>(
-                    data_type.is_timestamp_compatible(),
+                    data_type.is_timestamp(),
                     error::DefaultValueTypeSnafu {
                         reason: <span class="string">&quot;return value of the function must has timestamp type&quot;</span>,
                     }
@@ -579,7 +572,7 @@
     <span class="kw">let </span>current_timestamp_vector = TimestampMillisecondVector::from_values(
         std::iter::repeat(util::current_time_millis()).take(num_rows),
     );
-    <span class="kw">if </span>data_type.is_timestamp_compatible() {
+    <span class="kw">if </span>data_type.is_timestamp() {
         current_timestamp_vector.cast(data_type)
     } <span class="kw">else </span>{
         error::DefaultValueTypeSnafu {
@@ -730,15 +723,8 @@
 
         <span class="comment">// Int64 type.
         </span><span class="kw">let </span>data_type = ConcreteDataType::int64_datatype();
-        <span class="kw">let </span>v = constraint
-            .create_default_vector(<span class="kw-2">&amp;</span>data_type, <span class="bool-val">false</span>, <span class="number">4</span>)
-            .unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">4</span>, v.len());
-        <span class="macro">assert!</span>(
-            <span class="macro">matches!</span>(v.get(<span class="number">0</span>), Value::Int64(<span class="kw">_</span>)),
-            <span class="string">&quot;v {:?} is not timestamp&quot;</span>,
-            v.get(<span class="number">0</span>)
-        );
+        <span class="kw">let </span>v = constraint.create_default_vector(<span class="kw-2">&amp;</span>data_type, <span class="bool-val">false</span>, <span class="number">4</span>);
+        <span class="macro">assert!</span>(v.is_err());
 
         <span class="kw">let </span>constraint = ColumnDefaultConstraint::Function(<span class="string">&quot;no&quot;</span>.to_string());
         <span class="kw">let </span>data_type = ConcreteDataType::timestamp_millisecond_datatype();

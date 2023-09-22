@@ -871,8 +871,6 @@
 <a href="#871" id="871">871</a>
 <a href="#872" id="872">872</a>
 <a href="#873" id="873">873</a>
-<a href="#874" id="874">874</a>
-<a href="#875" id="875">875</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1257,9 +1255,7 @@
     </span><span class="kw">fn </span>get_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; Timestamp {
         <span class="kw">match </span><span class="self">self</span>.timestamps.get_ref(index) {
             ValueRef::Timestamp(timestamp) =&gt; timestamp,
-            <span class="comment">// Int64 is always millisecond.
-            // TODO(yingwen): Don&#39;t allow using int64 as time index.
-            </span>ValueRef::Int64(v) =&gt; Timestamp::new_millisecond(v),
+
             <span class="comment">// We have check the data type is timestamp compatible in the [BatchBuilder] so it&#39;s safe to panic.
             </span>value =&gt; <span class="macro">panic!</span>(<span class="string">&quot;{:?} is not a timestamp&quot;</span>, value),
         }
@@ -1358,9 +1354,9 @@
     </span><span class="kw">pub fn </span>timestamps_array(<span class="kw-2">&amp;mut </span><span class="self">self</span>, array: ArrayRef) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt; {
         <span class="kw">let </span>vector = Helper::try_into_vector(array).context(ConvertVectorSnafu)<span class="question-mark">?</span>;
         <span class="macro">ensure!</span>(
-            vector.data_type().is_timestamp_compatible(),
+            vector.data_type().is_timestamp(),
             InvalidBatchSnafu {
-                reason: <span class="macro">format!</span>(<span class="string">&quot;{:?} is a timestamp type&quot;</span>, vector.data_type()),
+                reason: <span class="macro">format!</span>(<span class="string">&quot;{:?} is not a timestamp type&quot;</span>, vector.data_type()),
             }
         );
 
