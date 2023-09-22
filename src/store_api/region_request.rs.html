@@ -736,10 +736,6 @@
 <a href="#736" id="736">736</a>
 <a href="#737" id="737">737</a>
 <a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -821,7 +817,6 @@
                         engine: create.engine,
                         column_metadatas,
                         primary_key: create.primary_key,
-                        create_if_not_exists: create.create_if_not_exists,
                         options: create.options,
                         region_dir,
                     }),
@@ -892,9 +887,6 @@
     </span><span class="kw">pub </span>column_metadatas: Vec&lt;ColumnMetadata&gt;,
     <span class="doccomment">/// Columns in the primary key.
     </span><span class="kw">pub </span>primary_key: Vec&lt;ColumnId&gt;,
-    <span class="doccomment">/// Create region if not exists.
-    </span><span class="comment">// TODO(yingwen): Remove this.
-    </span><span class="kw">pub </span>create_if_not_exists: bool,
     <span class="doccomment">/// Options of the created region.
     </span><span class="kw">pub </span>options: HashMap&lt;String, String&gt;,
     <span class="doccomment">/// Directory for region&#39;s data home. Usually is composed by catalog and table id
