@@ -1118,7 +1118,7 @@
                 <span class="kw">if </span>label.name == METRIC_NAME_LABEL {
                     <span class="prelude-val">None
                 </span>} <span class="kw">else </span>{
-                    <span class="prelude-val">Some</span>((label.name.as_str(), label.value.as_str()))
+                    <span class="prelude-val">Some</span>((label.name.to_string(), label.value.as_str()))
                 }
             });
             row_writer::write_tags(table_data, kvs, <span class="kw-2">&amp;mut </span>one_row)<span class="question-mark">?</span>;

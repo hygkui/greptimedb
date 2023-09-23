@@ -358,7 +358,7 @@
 
             <span class="comment">// tags
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(tags) = tags {
-                <span class="kw">let </span>kvs = tags.iter().map(|(k, v)| (k.as_str(), v.as_str()));
+                <span class="kw">let </span>kvs = tags.iter().map(|(k, v)| (k.to_string(), v.as_str()));
                 row_writer::write_tags(table_data, kvs, <span class="kw-2">&amp;mut </span>one_row)<span class="question-mark">?</span>;
             }
 
@@ -374,7 +374,7 @@
                     ),
                     FieldValue::Boolean(v) =&gt; (ColumnDataType::Boolean, ValueData::BoolValue(<span class="kw-2">*</span>v)),
                 };
-                (k.as_str(), datatype, value)
+                (k.to_string(), datatype, value)
             });
             row_writer::write_fields(table_data, fields, <span class="kw-2">&amp;mut </span>one_row)<span class="question-mark">?</span>;
 
