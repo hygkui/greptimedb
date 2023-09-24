@@ -293,11 +293,11 @@
 <span class="doccomment">/// Options mixed up from datanode, frontend and metasrv.
 </span><span class="kw">pub struct </span>MixOptions {
     <span class="kw">pub </span>data_home: String,
-    <span class="kw">pub </span>procedure_cfg: ProcedureConfig,
-    <span class="kw">pub </span>kv_store_cfg: KvStoreConfig,
-    <span class="kw">pub </span>fe_opts: FrontendOptions,
-    <span class="kw">pub </span>dn_opts: DatanodeOptions,
-    <span class="kw">pub </span>logging_opts: LoggingOptions,
+    <span class="kw">pub </span>procedure: ProcedureConfig,
+    <span class="kw">pub </span>kv_store: KvStoreConfig,
+    <span class="kw">pub </span>frontend: FrontendOptions,
+    <span class="kw">pub </span>datanode: DatanodeOptions,
+    <span class="kw">pub </span>logging: LoggingOptions,
 }
 
 <span class="kw">pub enum </span>Options {
@@ -320,7 +320,7 @@
             Options::Datanode(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
             Options::Frontend(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
             Options::Metasrv(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
-            Options::Standalone(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging_opts,
+            Options::Standalone(opts) =&gt; <span class="kw-2">&amp;</span>opts.logging,
             Options::Cli(opts) =&gt; opts,
         }
     }
