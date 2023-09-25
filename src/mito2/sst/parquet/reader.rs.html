@@ -354,7 +354,7 @@
 
         <span class="prelude-val">Ok</span>(ParquetReader {
             file_path,
-            file_handle: <span class="self">self</span>.file_handle,
+            _file_handle: <span class="self">self</span>.file_handle,
             stream,
             read_format,
             batches: Vec::new(),
@@ -459,7 +459,7 @@
     <span class="doccomment">/// SST file to read.
     ///
     /// Holds the file handle to avoid the file purge purge it.
-    </span>file_handle: FileHandle,
+    </span>_file_handle: FileHandle,
     <span class="doccomment">/// Inner parquet record batch stream.
     </span>stream: BoxedRecordBatchStream,
     <span class="doccomment">/// Helper to read record batches.

@@ -696,6 +696,10 @@
 <a href="#696" id="696">696</a>
 <a href="#697" id="697">697</a>
 <a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -720,6 +724,7 @@
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
+<span class="kw">use </span>strum::AsRefStr;
 <span class="kw">use </span>tokio::sync::mpsc;
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
@@ -795,7 +800,7 @@
     }
 
     <span class="doccomment">/// Returns memory usage of mutable memtables.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mutable_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+    </span><span class="kw">pub fn </span>mutable_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.memory_active.load(Ordering::Relaxed)
     }
 
@@ -860,6 +865,7 @@
 }
 
 <span class="doccomment">/// Reason of a flush task.
+</span><span class="attr">#[derive(Debug, AsRefStr)]
 </span><span class="kw">pub enum </span>FlushReason {
     <span class="doccomment">/// Other reasons.
     </span>Others,
@@ -1000,8 +1006,10 @@
 
         <span class="kw">let </span>file_ids: Vec&lt;<span class="kw">_</span>&gt; = file_metas.iter().map(|f| f.file_id).collect();
         <span class="macro">info!</span>(
-            <span class="string">&quot;Successfully flush memtables, region: {}, files: {:?}&quot;</span>,
-            version.metadata.region_id, file_ids
+            <span class="string">&quot;Successfully flush memtables, region: {}, reason: {}, files: {:?}&quot;</span>,
+            version.metadata.region_id,
+            <span class="self">self</span>.reason.as_ref(),
+            file_ids
         );
 
         <span class="prelude-val">Ok</span>(file_metas)

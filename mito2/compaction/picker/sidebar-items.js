@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["PickerContext"],"trait":["CompactionTask","Picker"],"type":["CompactionPickerRef"]};
+window.SIDEBAR_ITEMS = {"trait":["CompactionTask","Picker"],"type":["CompactionPickerRef"]};

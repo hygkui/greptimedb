@@ -1079,11 +1079,6 @@
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
-<a href="#1082" id="1082">1082</a>
-<a href="#1083" id="1083">1083</a>
-<a href="#1084" id="1084">1084</a>
-<a href="#1085" id="1085">1085</a>
-<a href="#1086" id="1086">1086</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1211,7 +1206,7 @@
     }
 
     <span class="doccomment">/// Gets column index by name.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>column_index_by_name(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+    </span><span class="kw">pub fn </span>column_index_by_name(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="self">self</span>.name_to_index.get(name).copied()
     }
 
@@ -1497,11 +1492,6 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(sender) = <span class="self">self</span>.<span class="number">0</span>.take() {
             sender.send(result);
         }
-    }
-
-    <span class="doccomment">/// Takes the sender.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>take(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; OptionOutputTx {
-        OptionOutputTx(<span class="self">self</span>.<span class="number">0</span>.take())
     }
 
     <span class="doccomment">/// Takes the inner sender.
