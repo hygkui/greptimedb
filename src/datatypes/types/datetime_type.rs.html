@@ -254,7 +254,7 @@
         );
 
         <span class="comment">// cast from Timestamp
-        </span><span class="kw">let </span>val = Value::Timestamp(Timestamp::from_str(<span class="string">&quot;2020-09-08 21:42:29.042+0800&quot;</span>).unwrap());
+        </span><span class="kw">let </span>val = Value::Timestamp(Timestamp::from_str(<span class="string">&quot;2020-09-08 21:42:29+0800&quot;</span>).unwrap());
         <span class="kw">let </span>dt = ConcreteDataType::datetime_datatype().try_cast(val).unwrap();
         <span class="macro">assert_eq!</span>(
             dt,
