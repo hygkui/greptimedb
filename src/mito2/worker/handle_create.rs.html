@@ -79,6 +79,7 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -146,6 +147,7 @@
         )
         .metadata(metadata)
         .options(request.options)
+        .cache(<span class="prelude-val">Some</span>(<span class="self">self</span>.cache_manager.clone()))
         .create_or_open(<span class="kw-2">&amp;</span><span class="self">self</span>.config, <span class="kw-2">&amp;</span><span class="self">self</span>.wal)
         .<span class="kw">await</span><span class="question-mark">?</span>;
 

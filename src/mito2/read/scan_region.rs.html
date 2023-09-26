@@ -210,6 +210,12 @@
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -234,6 +240,7 @@
 <span class="kw">use </span>table::predicate::{Predicate, TimeRangePredicateBuilder};
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
+<span class="kw">use </span><span class="kw">crate</span>::cache::CacheManagerRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{BuildPredicateSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::read::projection::ProjectionMapper;
 <span class="kw">use </span><span class="kw">crate</span>::read::seq_scan::SeqScan;
@@ -325,6 +332,8 @@
     </span>access_layer: AccessLayerRef,
     <span class="doccomment">/// Scan request.
     </span>request: ScanRequest,
+    <span class="doccomment">/// Cache.
+    </span>cache_manager: <span class="prelude-ty">Option</span>&lt;CacheManagerRef&gt;,
 }
 
 <span class="kw">impl </span>ScanRegion {
@@ -333,11 +342,13 @@
         version: VersionRef,
         access_layer: AccessLayerRef,
         request: ScanRequest,
+        cache_manager: <span class="prelude-ty">Option</span>&lt;CacheManagerRef&gt;,
     ) -&gt; ScanRegion {
         ScanRegion {
             version,
             access_layer,
             request,
+            cache_manager,
         }
     }
 
@@ -393,7 +404,8 @@
             .with_time_range(<span class="prelude-val">Some</span>(time_range))
             .with_predicate(<span class="prelude-val">Some</span>(predicate))
             .with_memtables(memtables)
-            .with_files(files);
+            .with_files(files)
+            .with_cache(<span class="self">self</span>.cache_manager);
 
         <span class="prelude-val">Ok</span>(seq_scan)
     }

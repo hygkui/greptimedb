@@ -110,6 +110,11 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -168,6 +173,10 @@
     </span><span class="kw">pub </span>global_write_buffer_size: ReadableSize,
     <span class="doccomment">/// Global write buffer size threshold to reject write requests (default 2G).
     </span><span class="kw">pub </span>global_write_buffer_reject_size: ReadableSize,
+
+    <span class="comment">// Cache configs:
+    </span><span class="doccomment">/// Cache size for SST metadata (default 128MB). Setting it to 0 to disable cache.
+    </span><span class="kw">pub </span>sst_meta_cache_size: ReadableSize,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>MitoConfig {
@@ -182,6 +191,7 @@
             auto_flush_interval: Duration::from_secs(<span class="number">30 </span>* <span class="number">60</span>),
             global_write_buffer_size: ReadableSize::gb(<span class="number">1</span>),
             global_write_buffer_reject_size: ReadableSize::gb(<span class="number">2</span>),
+            sst_meta_cache_size: ReadableSize::mb(<span class="number">128</span>),
         }
     }
 }

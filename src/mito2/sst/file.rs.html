@@ -248,6 +248,12 @@
 <a href="#248" id="248">248</a>
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -368,6 +374,12 @@
             inner: Arc::new(FileHandleInner::new(meta, file_purger)),
         }
     }
+
+    <span class="doccomment">/// Returns the region id of the file.
+    </span><span class="kw">pub fn </span>region_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionId {
+        <span class="self">self</span>.inner.meta.region_id
+    }
+
     <span class="doccomment">/// Returns the file id.
     </span><span class="kw">pub fn </span>file_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FileId {
         <span class="self">self</span>.inner.meta.file_id

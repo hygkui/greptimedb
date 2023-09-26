@@ -162,6 +162,17 @@
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -189,6 +200,7 @@
 <span class="kw">use </span>table::predicate::Predicate;
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
+<span class="kw">use </span><span class="kw">crate</span>::cache::CacheManagerRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableRef;
 <span class="kw">use </span><span class="kw">crate</span>::read::compat::{<span class="self">self</span>, CompatReader};
@@ -213,6 +225,8 @@
     </span>memtables: Vec&lt;MemtableRef&gt;,
     <span class="doccomment">/// Handles to SST files to scan.
     </span>files: Vec&lt;FileHandle&gt;,
+    <span class="doccomment">/// Cache.
+    </span>cache_manager: <span class="prelude-ty">Option</span>&lt;CacheManagerRef&gt;,
 }
 
 <span class="kw">impl </span>SeqScan {
@@ -226,34 +240,41 @@
             predicate: <span class="prelude-val">None</span>,
             memtables: Vec::new(),
             files: Vec::new(),
+            cache_manager: <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="doccomment">/// Set time range filter for time index.
+    <span class="doccomment">/// Sets time range filter for time index.
     </span><span class="attr">#[must_use]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_time_range(<span class="kw-2">mut </span><span class="self">self</span>, time_range: <span class="prelude-ty">Option</span>&lt;TimestampRange&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.time_range = time_range;
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Set predicate to push down.
+    <span class="doccomment">/// Sets predicate to push down.
     </span><span class="attr">#[must_use]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_predicate(<span class="kw-2">mut </span><span class="self">self</span>, predicate: <span class="prelude-ty">Option</span>&lt;Predicate&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.predicate = predicate;
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Set memtables to read.
+    <span class="doccomment">/// Sets memtables to read.
     </span><span class="attr">#[must_use]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_memtables(<span class="kw-2">mut </span><span class="self">self</span>, memtables: Vec&lt;MemtableRef&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.memtables = memtables;
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Set files to read.
+    <span class="doccomment">/// Sets files to read.
     </span><span class="attr">#[must_use]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_files(<span class="kw-2">mut </span><span class="self">self</span>, files: Vec&lt;FileHandle&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.files = files;
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Sets cache for this query.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_cache(<span class="kw-2">mut </span><span class="self">self</span>, cache: <span class="prelude-ty">Option</span>&lt;CacheManagerRef&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.cache_manager = cache;
         <span class="self">self
     </span>}
 
@@ -293,6 +314,7 @@
                 .predicate(<span class="self">self</span>.predicate.clone())
                 .time_range(<span class="self">self</span>.time_range)
                 .projection(<span class="prelude-val">Some</span>(<span class="self">self</span>.mapper.column_ids().to_vec()))
+                .cache(<span class="self">self</span>.cache_manager.clone())
                 .build()
                 .<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="kw">if </span>compat::has_same_columns(<span class="self">self</span>.mapper.metadata(), reader.metadata()) {
