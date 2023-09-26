@@ -356,6 +356,8 @@
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -603,6 +605,8 @@
                             <span class="prelude-val">Ok</span>(new_tx) =&gt; {
                                 <span class="macro">info!</span>(<span class="string">&quot;Reconnected to metasrv&quot;</span>);
                                 tx = new_tx;
+                                <span class="comment">// Triggers to send heartbeat immediately.
+                                </span>sleep.as_mut().reset(Instant::now());
                             }
                             <span class="prelude-val">Err</span>(e) =&gt; {
                                 <span class="macro">error!</span>(e;<span class="string">&quot;Failed to reconnect to metasrv!&quot;</span>);

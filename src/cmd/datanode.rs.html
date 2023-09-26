@@ -458,6 +458,7 @@
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -715,6 +716,7 @@
             connect_timeout_millis,
             tcp_nodelay,
             ddl_timeout_millis,
+            ..
         } = options.meta_client.unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()], metasrv_addr);

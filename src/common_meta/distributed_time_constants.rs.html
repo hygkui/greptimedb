@@ -29,6 +29,12 @@
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
 <a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -60,4 +66,10 @@
 <span class="doccomment">/// When creating table or region failover, a target node needs to be selected.
 /// If the node&#39;s lease has expired, the `Selector` will not select it.
 </span><span class="kw">pub const </span>DATANODE_LEASE_SECS: u64 = REGION_LEASE_SECS;
+
+<span class="doccomment">/// The lease seconds of metasrv leader.
+</span><span class="kw">pub const </span>META_LEASE_SECS: u64 = <span class="number">3</span>;
+
+<span class="comment">// In a lease, there are two opportunities for renewal.
+</span><span class="kw">pub const </span>META_KEEP_ALIVE_INTERVAL_SECS: u64 = META_LEASE_SECS / <span class="number">2</span>;
 </code></pre></div></section></main></body></html>
