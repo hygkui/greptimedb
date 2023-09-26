@@ -1107,6 +1107,9 @@
 <a href="#1107" id="1107">1107</a>
 <a href="#1108" id="1108">1108</a>
 <a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1134,6 +1137,7 @@
 <span class="kw">use </span>api::v1::SemanticType;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>datatypes::arrow::datatypes::FieldRef;
 <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, Schema, SchemaRef};
 <span class="kw">use </span>serde::de::Error;
@@ -1667,8 +1671,9 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Snafu)]
+<span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
+#[stack_trace_debug]
 </span><span class="kw">pub enum </span>MetadataError {
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid schema&quot;</span>))]
     </span>InvalidSchema {
@@ -1682,7 +1687,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to ser/de json object&quot;</span>))]
     </span>SerdeJson {
         location: Location,
-        source: serde_json::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: serde_json::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert struct from datatypes&quot;</span>))]

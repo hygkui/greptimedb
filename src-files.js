@@ -13,7 +13,7 @@ var srcIndex = JSON.parse('{\
 "common_greptimedb_telemetry":["",[],["lib.rs"]],\
 "common_grpc":["",[],["channel_manager.rs","error.rs","flight.rs","lib.rs","select.rs","writer.rs"]],\
 "common_grpc_expr":["",[],["alter.rs","delete.rs","error.rs","insert.rs","lib.rs","util.rs"]],\
-"common_macro":["",[],["aggr_func.rs","lib.rs","print_caller.rs","range_fn.rs"]],\
+"common_macro":["",[],["aggr_func.rs","lib.rs","print_caller.rs","range_fn.rs","stack_trace_debug.rs"]],\
 "common_mem_prof":["",[["jemalloc",[],["error.rs"]]],["error.rs","jemalloc.rs","lib.rs"]],\
 "common_meta":["",[["ddl",[],["alter_table.rs","create_table.rs","drop_table.rs","truncate_table.rs","utils.rs"]],["heartbeat",[["handler",[],["parse_mailbox_message.rs"]]],["handler.rs","mailbox.rs","utils.rs"]],["key",[],["catalog_name.rs","datanode_table.rs","schema_name.rs","table_info.rs","table_name.rs","table_region.rs","table_route.rs"]],["kv_backend",[["txn",[],["etcd.rs"]]],["memory.rs","txn.rs"]],["rpc",[],["ddl.rs","lock.rs","router.rs","store.rs","util.rs"]]],["cache_invalidator.rs","datanode_manager.rs","ddl.rs","ddl_manager.rs","distributed_time_constants.rs","error.rs","heartbeat.rs","instruction.rs","key.rs","kv_backend.rs","lib.rs","metrics.rs","peer.rs","range_stream.rs","rpc.rs","sequence.rs","state_store.rs","table_name.rs","util.rs"]],\
 "common_procedure":["",[["local",[],["lock.rs","runner.rs"]],["store",[],["state_store.rs"]]],["error.rs","lib.rs","local.rs","options.rs","procedure.rs","store.rs","watcher.rs"]],\

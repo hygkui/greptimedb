@@ -312,6 +312,14 @@
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -330,6 +338,7 @@
 
 <span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
 <span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>serde_json::error::Error <span class="kw">as </span>JsonError;
 <span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>store_api::storage::RegionNumber;
@@ -337,8 +346,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::peer::Peer;
 
-<span class="attr">#[derive(Debug, Snafu)]
+<span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
+#[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to get sequence: {}&quot;</span>, err_msg))]
     </span>NextSequence { err_msg: String, location: Location },
@@ -397,7 +407,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build table meta for table: {}&quot;</span>, table_name))]
     </span>BuildTableMeta {
         table_name: String,
-        source: table::metadata::TableMetaBuilderError,
+        <span class="attr">#[snafu(source)]
+        </span>error: table::metadata::TableMetaBuilderError,
         location: Location,
     },
 
@@ -416,19 +427,22 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode protobuf&quot;</span>))]
     </span>DecodeProto {
         location: Location,
-        source: prost::DecodeError,
+        <span class="attr">#[snafu(source)]
+        </span>error: prost::DecodeError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json&quot;</span>))]
     </span>EncodeJson {
         location: Location,
-        source: JsonError,
+        <span class="attr">#[snafu(source)]
+        </span>error: JsonError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode object from json&quot;</span>))]
     </span>DecodeJson {
         location: Location,
-        source: JsonError,
+        <span class="attr">#[snafu(source)]
+        </span>error: JsonError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Payload not exist&quot;</span>))]
@@ -439,7 +453,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serde json&quot;</span>))]
     </span>SerdeJson {
-        source: serde_json::error::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: serde_json::error::Error,
         location: Location,
     },
 
@@ -491,7 +506,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert raw key to str&quot;</span>))]
     </span>ConvertRawKey {
         location: Location,
-        source: Utf8Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: Utf8Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Table nod found, table: {}&quot;</span>, table_name))]

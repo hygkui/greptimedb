@@ -655,7 +655,7 @@
                 source: BoxedError::new(ServerSnafu { code, msg }.build()),
             };
             <span class="macro">logging::error!</span>(
-                <span class="string">&quot;Failed to do Flight get, addr: {}, code: {}, source: {}&quot;</span>,
+                <span class="string">&quot;Failed to do Flight get, addr: {}, code: {}, source: {:?}&quot;</span>,
                 client.addr(),
                 tonic_code,
                 error

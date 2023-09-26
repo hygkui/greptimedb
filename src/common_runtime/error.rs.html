@@ -53,6 +53,10 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -70,17 +74,20 @@
 </span><span class="kw">use </span>std::any::Any;
 
 <span class="kw">use </span>common_error::ext::ErrorExt;
+<span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>tokio::task::JoinError;
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
 
-<span class="attr">#[derive(Debug, Snafu)]
+<span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>(<span class="kw">crate</span>)))]
+#[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build runtime&quot;</span>))]
     </span>BuildRuntime {
-        source: std::io::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::io::Error,
         location: Location,
     },
 
@@ -90,7 +97,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to wait for repeated task {} to stop&quot;</span>, name))]
     </span>WaitGcTaskStop {
         name: String,
-        source: JoinError,
+        <span class="attr">#[snafu(source)]
+        </span>error: JoinError,
         location: Location,
     },
 }

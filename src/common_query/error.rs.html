@@ -207,6 +207,13 @@
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -226,6 +233,7 @@
 <span class="kw">use </span>arrow::error::ArrowError;
 <span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
 <span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>common_recordbatch::error::Error <span class="kw">as </span>RecordbatchError;
 <span class="kw">use </span>datafusion_common::DataFusionError;
 <span class="kw">use </span>datatypes::arrow;
@@ -235,8 +243,9 @@
 <span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>statrs::StatsError;
 
-<span class="attr">#[derive(Debug, Snafu)]
+<span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
+#[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute Python UDF: {}&quot;</span>, msg))]
     </span>PyUdf {
@@ -253,7 +262,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute function&quot;</span>))]
     </span>ExecuteFunction {
-        source: DataFusionError,
+        <span class="attr">#[snafu(source)]
+        </span>error: DataFusionError,
         location: Location,
     },
 
@@ -266,7 +276,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to generate function&quot;</span>))]
     </span>GenerateFunction {
-        source: StatsError,
+        <span class="attr">#[snafu(source)]
+        </span>error: StatsError,
         location: Location,
     },
 
@@ -318,7 +329,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;General DataFusion error&quot;</span>))]
     </span>GeneralDataFusion {
-        source: DataFusionError,
+        <span class="attr">#[snafu(source)]
+        </span>error: DataFusionError,
         location: Location,
     },
 
@@ -342,14 +354,16 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to cast array to {:?}&quot;</span>, typ))]
     </span>TypeCast {
-        source: ArrowError,
+        <span class="attr">#[snafu(source)]
+        </span>error: ArrowError,
         typ: arrow::datatypes::DataType,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to perform compute operation on arrow arrays&quot;</span>))]
     </span>ArrowCompute {
-        source: ArrowError,
+        <span class="attr">#[snafu(source)]
+        </span>error: ArrowError,
         location: Location,
     },
 

@@ -639,6 +639,34 @@
 <a href="#639" id="639">639</a>
 <a href="#640" id="640">640</a>
 <a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -655,6 +683,7 @@
 
 </span><span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
 <span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_runtime::JoinError;
 <span class="kw">use </span>servers::define_into_tonic_status;
@@ -665,8 +694,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::pubsub::Message;
 
-<span class="attr">#[derive(Debug, Snafu)]
+<span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
+#[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create default catalog and schema&quot;</span>))]
     </span>InitMetadata {
@@ -715,7 +745,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join a future&quot;</span>))]
     </span>Join {
         location: Location,
-        source: JoinError,
+        <span class="attr">#[snafu(source)]
+        </span>error: JoinError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute transaction: {}&quot;</span>, msg))]
@@ -751,7 +782,10 @@
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to send shutdown signal&quot;</span>))]
-    </span>SendShutdownSignal { source: SendError&lt;()&gt; },
+    </span>SendShutdownSignal {
+        <span class="attr">#[snafu(source)]
+        </span>error: SendError&lt;()&gt;,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to shutdown {} server&quot;</span>, server))]
     </span>ShutdownServer {
@@ -765,26 +799,30 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute via Etcd&quot;</span>))]
     </span>EtcdFailed {
-        source: etcd_client::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: etcd_client::Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to connect to Etcd&quot;</span>))]
     </span>ConnectEtcd {
-        source: etcd_client::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: etcd_client::Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to bind address {}&quot;</span>, addr))]
     </span>TcpBind {
         addr: String,
-        source: std::io::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::io::Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start gRPC server&quot;</span>))]
     </span>StartGrpc {
-        source: tonic::transport::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: tonic::transport::Error,
         location: Location,
     },
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start http server&quot;</span>))]
@@ -795,7 +833,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}&quot;</span>, addr))]
     </span>ParseAddr {
         addr: String,
-        source: std::net::AddrParseError,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::net::AddrParseError,
     },
     <span class="attr">#[snafu(display(<span class="string">&quot;Empty table name&quot;</span>))]
     </span>EmptyTableName { location: Location },
@@ -811,52 +850,60 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse datanode lease key from utf8&quot;</span>))]
     </span>LeaseKeyFromUtf8 {
-        source: std::string::FromUtf8Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::string::FromUtf8Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse datanode lease value from utf8&quot;</span>))]
     </span>LeaseValueFromUtf8 {
-        source: std::string::FromUtf8Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::string::FromUtf8Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse datanode stat key from utf8&quot;</span>))]
     </span>StatKeyFromUtf8 {
-        source: std::string::FromUtf8Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::string::FromUtf8Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse datanode stat value from utf8&quot;</span>))]
     </span>StatValueFromUtf8 {
-        source: std::string::FromUtf8Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::string::FromUtf8Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse invalid region key from utf8&quot;</span>))]
     </span>InvalidRegionKeyFromUtf8 {
-        source: std::string::FromUtf8Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::string::FromUtf8Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize to json: {}&quot;</span>, input))]
     </span>SerializeToJson {
         input: String,
-        source: serde_json::error::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: serde_json::error::Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to deserialize from json: {}&quot;</span>, input))]
     </span>DeserializeFromJson {
         input: String,
-        source: serde_json::error::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: serde_json::error::Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse number: {}&quot;</span>, err_msg))]
     </span>ParseNum {
         err_msg: String,
-        source: std::num::ParseIntError,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::num::ParseIntError,
         location: Location,
     },
 
@@ -880,7 +927,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to decode table route&quot;</span>))]
     </span>DecodeTableRoute {
-        source: prost::DecodeError,
+        <span class="attr">#[snafu(source)]
+        </span>error: prost::DecodeError,
         location: Location,
     },
 
@@ -935,13 +983,15 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to batch get KVs from leader&#39;s in_memory kv store&quot;</span>))]
     </span>BatchGet {
-        source: tonic::Status,
+        <span class="attr">#[snafu(source)]
+        </span>error: tonic::Status,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to batch range KVs from leader&#39;s in_memory kv store&quot;</span>))]
     </span>Range {
-        source: tonic::Status,
+        <span class="attr">#[snafu(source)]
+        </span>error: tonic::Status,
         location: Location,
     },
 
@@ -956,7 +1006,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid http body&quot;</span>))]
     </span>InvalidHttpBody {
-        source: http::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: http::Error,
         location: Location,
     },
 
@@ -973,19 +1024,22 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to lock based on etcd&quot;</span>))]
     </span>Lock {
-        source: etcd_client::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: etcd_client::Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to unlock based on etcd&quot;</span>))]
     </span>Unlock {
-        source: etcd_client::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: etcd_client::Error,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to grant lease&quot;</span>))]
     </span>LeaseGrant {
-        source: etcd_client::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: etcd_client::Error,
         location: Location,
     },
 
@@ -994,7 +1048,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid utf-8 value&quot;</span>))]
     </span>InvalidUtf8Value {
-        source: std::string::FromUtf8Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::string::FromUtf8Error,
         location: Location,
     },
 
@@ -1135,7 +1190,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to publish message&quot;</span>))]
     </span>PublishMessage {
-        source: SendError&lt;Message&gt;,
+        <span class="attr">#[snafu(source)]
+        </span>error: SendError&lt;Message&gt;,
         location: Location,
     },
 

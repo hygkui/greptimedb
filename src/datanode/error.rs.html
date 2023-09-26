@@ -520,6 +520,20 @@
 <a href="#520" id="520">520</a>
 <a href="#521" id="521">521</a>
 <a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -538,6 +552,7 @@
 
 <span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
 <span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>common_procedure::ProcedureId;
 <span class="kw">use </span>serde_json::error::Error <span class="kw">as </span>JsonError;
 <span class="kw">use </span>servers::define_into_tonic_status;
@@ -546,8 +561,9 @@
 <span class="kw">use </span>table::error::Error <span class="kw">as </span>TableError;
 
 <span class="doccomment">/// Business error of datanode.
-</span><span class="attr">#[derive(Debug, Snafu)]
+</span><span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
+#[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to handle heartbeat response&quot;</span>))]
     </span>HandleHeartbeatResponse {
@@ -692,14 +708,23 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse address {}&quot;</span>, addr))]
     </span>ParseAddr {
         addr: String,
-        source: std::net::AddrParseError,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::net::AddrParseError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create directory {}&quot;</span>, dir))]
-    </span>CreateDir { dir: String, source: std::io::Error },
+    </span>CreateDir {
+        dir: String,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::io::Error,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to remove directory {}&quot;</span>, dir))]
-    </span>RemoveDir { dir: String, source: std::io::Error },
+    </span>RemoveDir {
+        dir: String,
+        <span class="attr">#[snafu(source)]
+        </span>error: std::io::Error,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to open log store&quot;</span>))]
     </span>OpenLogStore {
@@ -709,7 +734,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to init backend&quot;</span>))]
     </span>InitBackend {
-        source: object_store::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: object_store::Error,
         location: Location,
     },
 
@@ -862,7 +888,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to encode object into json&quot;</span>))]
     </span>EncodeJson {
         location: Location,
-        source: JsonError,
+        <span class="attr">#[snafu(source)]
+        </span>error: JsonError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Payload not exist&quot;</span>))]
@@ -873,7 +900,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to join task&quot;</span>))]
     </span>JoinTask {
-        source: common_runtime::JoinError,
+        <span class="attr">#[snafu(source)]
+        </span>error: common_runtime::JoinError,
         location: Location,
     },
 

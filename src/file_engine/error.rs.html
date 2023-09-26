@@ -216,6 +216,19 @@
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -234,14 +247,16 @@
 
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
+<span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>datafusion::arrow::error::ArrowError;
 <span class="kw">use </span>datafusion::error::DataFusionError;
 <span class="kw">use </span>serde_json::error::Error <span class="kw">as </span>JsonError;
 <span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>store_api::storage::RegionId;
 
-<span class="attr">#[derive(Debug, Snafu)]
+<span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
+#[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Unsupported operation: {}&quot;</span>, operation))]
     </span>Unsupported {
@@ -268,38 +283,44 @@
     </span>CheckObject {
         path: String,
         location: Location,
-        source: object_store::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: object_store::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Fail to encode object into json&quot;</span>))]
     </span>EncodeJson {
         location: Location,
-        source: JsonError,
+        <span class="attr">#[snafu(source)]
+        </span>error: JsonError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Fail to decode object from json&quot;</span>))]
     </span>DecodeJson {
         location: Location,
-        source: JsonError,
+        <span class="attr">#[snafu(source)]
+        </span>error: JsonError,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to store region manifest, region_id: {}&quot;</span>, region_id))]
     </span>StoreRegionManifest {
-        source: object_store::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: object_store::Error,
         region_id: RegionId,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to load region manifest, region_id: {}&quot;</span>, region_id))]
     </span>LoadRegionManifest {
-        source: object_store::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: object_store::Error,
         region_id: RegionId,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to delete region manifest, region_id: {},&quot;</span>, region_id))]
     </span>DeleteRegionManifest {
-        source: object_store::Error,
+        <span class="attr">#[snafu(source)]
+        </span>error: object_store::Error,
         region_id: RegionId,
         location: Location,
     },
@@ -318,19 +339,22 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build csv config&quot;</span>))]
     </span>BuildCsvConfig {
-        source: common_datasource::file_format::csv::CsvConfigBuilderError,
+        <span class="attr">#[snafu(source)]
+        </span>error: common_datasource::file_format::csv::CsvConfigBuilderError,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to build stream&quot;</span>))]
     </span>BuildStream {
-        source: DataFusionError,
+        <span class="attr">#[snafu(source)]
+        </span>error: DataFusionError,
         location: Location,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to project schema&quot;</span>))]
     </span>ProjectArrowSchema {
-        source: ArrowError,
+        <span class="attr">#[snafu(source)]
+        </span>error: ArrowError,
         location: Location,
     },
 
@@ -354,7 +378,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to generate parquet scan plan&quot;</span>))]
     </span>ParquetScanPlan {
-        source: DataFusionError,
+        <span class="attr">#[snafu(source)]
+        </span>error: DataFusionError,
         location: Location,
     },
 
@@ -371,7 +396,8 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to extract column from filter&quot;</span>))]
     </span>ExtractColumnFromFilter {
-        source: DataFusionError,
+        <span class="attr">#[snafu(source)]
+        </span>error: DataFusionError,
         location: Location,
     },
 
