@@ -163,6 +163,17 @@
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -267,7 +278,7 @@
     </span>}
 
     <span class="kw">pub fn </span>to_chrono_datetime(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;NaiveDateTime&gt; {
-        NaiveDateTime::from_timestamp_opt(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0</span>)
+        NaiveDateTime::from_timestamp_millis(<span class="self">self</span>.<span class="number">0</span>)
     }
 
     <span class="kw">pub fn </span>to_date(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Date&gt; {
@@ -326,6 +337,17 @@
         <span class="kw">let </span>date = Date::new(i32::MAX);
         <span class="kw">let </span>datetime = DateTime::from(date);
         <span class="macro">assert_eq!</span>(datetime.val(), <span class="number">185542587100800000</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_conversion_between_datetime_and_chrono_datetime() {
+        <span class="kw">let </span>cases = [<span class="number">1</span>, <span class="number">10</span>, <span class="number">100</span>, <span class="number">1000</span>, <span class="number">100000</span>];
+        <span class="kw">for </span>case <span class="kw">in </span>cases {
+            <span class="kw">let </span>dt = DateTime::new(case);
+            <span class="kw">let </span>ndt = dt.to_chrono_datetime().unwrap();
+            <span class="kw">let </span>dt2 = DateTime::from(ndt);
+            <span class="macro">assert_eq!</span>(dt, dt2);
+        }
     }
 }
 </code></pre></div></section></main></body></html>
