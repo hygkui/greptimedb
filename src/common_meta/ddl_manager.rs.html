@@ -378,6 +378,29 @@
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -395,7 +418,7 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_procedure::{watcher, ProcedureId, ProcedureManagerRef, ProcedureWithId};
-<span class="kw">use </span>common_telemetry::{error, info};
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::cache_invalidator::CacheInvalidatorRef;
@@ -403,13 +426,14 @@
 <span class="kw">use </span><span class="kw">crate</span>::ddl::alter_table::AlterTableProcedure;
 <span class="kw">use </span><span class="kw">crate</span>::ddl::create_table::CreateTableProcedure;
 <span class="kw">use </span><span class="kw">crate</span>::ddl::drop_table::DropTableProcedure;
+<span class="kw">use </span><span class="kw">crate</span>::ddl::truncate_table::TruncateTableProcedure;
 <span class="kw">use </span><span class="kw">crate</span>::ddl::{
     DdlContext, DdlTaskExecutor, ExecutorContext, TableMetadataAllocatorContext,
     TableMetadataAllocatorRef,
 };
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     <span class="self">self</span>, RegisterProcedureLoaderSnafu, <span class="prelude-ty">Result</span>, SubmitProcedureSnafu, TableNotFoundSnafu,
-    UnsupportedSnafu, WaitProcedureSnafu,
+    WaitProcedureSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::key::table_info::TableInfoValue;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_name::TableNameKey;
@@ -502,6 +526,20 @@
             )
             .context(RegisterProcedureLoaderSnafu {
                 type_name: AlterTableProcedure::TYPE_NAME,
+            })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>context = <span class="self">self</span>.create_context();
+
+        <span class="self">self</span>.procedure_manager
+            .register_loader(
+                TruncateTableProcedure::TYPE_NAME,
+                Box::new(<span class="kw">move </span>|json| {
+                    <span class="kw">let </span>context = context.clone();
+                    TruncateTableProcedure::from_json(json, context).map(|p| Box::new(p) <span class="kw">as _</span>)
+                }),
+            )
+            .context(RegisterProcedureLoaderSnafu {
+                type_name: TruncateTableProcedure::TYPE_NAME,
             })
     }
 
@@ -563,16 +601,22 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         truncate_table_task: TruncateTableTask,
+        table_info_value: TableInfoValue,
         region_routes: Vec&lt;RegionRoute&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProcedureId&gt; {
-        <span class="macro">error!</span>(<span class="string">&quot;Truncate table procedure is not supported, cluster_id = {}, truncate_table_task = {:?}, region_routes = {:?}&quot;</span>,
-            cluster_id, truncate_table_task, region_routes);
+        <span class="kw">let </span>context = <span class="self">self</span>.create_context();
+        <span class="kw">let </span>procedure = TruncateTableProcedure::new(
+            cluster_id,
+            truncate_table_task,
+            table_info_value,
+            region_routes,
+            context,
+        );
 
-        UnsupportedSnafu {
-            operation: <span class="string">&quot;TRUNCATE TABLE&quot;</span>,
-        }
-        .fail()
-    }
+        <span class="kw">let </span>procedure_with_id = ProcedureWithId::with_random_id(Box::new(procedure));
+
+        <span class="self">self</span>.submit_procedure(procedure_with_id).<span class="kw">await
+    </span>}
 
     <span class="kw">async fn </span>submit_procedure(<span class="kw-2">&amp;</span><span class="self">self</span>, procedure_with_id: ProcedureWithId) -&gt; <span class="prelude-ty">Result</span>&lt;ProcedureId&gt; {
         <span class="kw">let </span>procedure_id = procedure_with_id.id;
@@ -596,31 +640,33 @@
     cluster_id: u64,
     truncate_table_task: TruncateTableTask,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;SubmitDdlTaskResponse&gt; {
-    <span class="kw">let </span>truncate_table = <span class="kw-2">&amp;</span>truncate_table_task.truncate_table;
-    <span class="kw">let </span>table_id = truncate_table
-        .table_id
-        .as_ref()
-        .context(error::UnexpectedSnafu {
-            err_msg: <span class="string">&quot;expected table id &quot;</span>,
-        })<span class="question-mark">?
-        </span>.id;
-
+    <span class="kw">let </span>table_id = truncate_table_task.table_id;
+    <span class="kw">let </span>table_metadata_manager = <span class="kw-2">&amp;</span>ddl_manager.table_metadata_manager();
     <span class="kw">let </span>table_ref = truncate_table_task.table_ref();
 
-    <span class="kw">let </span>table_route_value = ddl_manager
-        .table_metadata_manager()
-        .table_route_manager()
-        .get(table_id)
-        .<span class="kw">await</span><span class="question-mark">?
-        </span>.with_context(|| error::TableRouteNotFoundSnafu {
-            table_name: table_ref.to_string(),
-        })<span class="question-mark">?</span>;
+    <span class="kw">let </span>(table_info_value, table_route_value) =
+        table_metadata_manager.get_full_table_info(table_id).<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="kw">let </span>table_info_value = table_info_value.with_context(|| error::TableInfoNotFoundSnafu {
+        table_name: table_ref.to_string(),
+    })<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>table_route_value = table_route_value.with_context(|| error::TableRouteNotFoundSnafu {
+        table_name: table_ref.to_string(),
+    })<span class="question-mark">?</span>;
 
     <span class="kw">let </span>table_route = table_route_value.region_routes;
 
     <span class="kw">let </span>id = ddl_manager
-        .submit_truncate_table_task(cluster_id, truncate_table_task, table_route)
+        .submit_truncate_table_task(
+            cluster_id,
+            truncate_table_task,
+            table_info_value,
+            table_route,
+        )
         .<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="macro">info!</span>(<span class="string">&quot;Table: {table_id} is truncated via procedure_id {id:?}&quot;</span>);
 
     <span class="prelude-val">Ok</span>(SubmitDdlTaskResponse {
         key: id.to_string().into(),

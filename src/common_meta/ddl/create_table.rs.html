@@ -521,8 +521,8 @@
             <span class="kw">for </span>request <span class="kw">in </span>requests {
                 <span class="kw">let </span>request = RegionRequest {
                     header: <span class="prelude-val">Some</span>(RegionRequestHeader {
-                        trace_id: <span class="number">0</span>,
-                        span_id: <span class="number">0</span>,
+                        trace_id: common_telemetry::trace_id().unwrap_or_default(),
+                        ..Default::default()
                     }),
                     body: <span class="prelude-val">Some</span>(request),
                 };

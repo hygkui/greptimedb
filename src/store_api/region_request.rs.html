@@ -736,6 +736,11 @@
 <a href="#736" id="736">736</a>
 <a href="#737" id="737">737</a>
 <a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -853,6 +858,10 @@
             region_request::Body::Compact(compact) =&gt; <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[(
                 compact.region_id.into(),
                 <span class="self">Self</span>::Compact(RegionCompactRequest {}),
+            )]),
+            region_request::Body::Truncate(truncate) =&gt; <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[(
+                truncate.region_id.into(),
+                <span class="self">Self</span>::Truncate(RegionTruncateRequest {}),
             )]),
         }
     }
@@ -1155,7 +1164,8 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>RegionCompactRequest {}
 
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// Truncate region request.
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>RegionTruncateRequest {}
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>RegionRequest {

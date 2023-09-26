@@ -622,7 +622,6 @@
 <a href="#622" id="622">622</a>
 <a href="#623" id="623">623</a>
 <a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -641,7 +640,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
-<span class="kw">use </span>api::v1::{column_def, AlterExpr, CreateTableExpr, TruncateTableExpr};
+<span class="kw">use </span>api::v1::{column_def, AlterExpr, CreateTableExpr};
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>chrono::DateTime;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
@@ -794,15 +793,8 @@
             </span>.with_context(|| TableNotFoundSnafu {
                 table_name: table_name.to_string(),
             })<span class="question-mark">?</span>;
-        <span class="kw">let </span>table_id = table.table_info().ident.table_id;
-
-        <span class="kw">let </span>expr = TruncateTableExpr {
-            catalog_name: table_name.catalog_name.clone(),
-            schema_name: table_name.schema_name.clone(),
-            table_name: table_name.table_name.clone(),
-            table_id: <span class="prelude-val">Some</span>(api::v1::TableId { id: table_id }),
-        };
-        <span class="self">self</span>.truncate_table_procedure(<span class="kw-2">&amp;</span>expr).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>table_id = table.table_info().table_id();
+        <span class="self">self</span>.truncate_table_procedure(<span class="kw-2">&amp;</span>table_name, table_id).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
     }
@@ -937,10 +929,16 @@
 
     <span class="kw">async fn </span>truncate_table_procedure(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        truncate_table: <span class="kw-2">&amp;</span>TruncateTableExpr,
+        table_name: <span class="kw-2">&amp;</span>TableName,
+        table_id: TableId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SubmitDdlTaskResponse&gt; {
         <span class="kw">let </span>request = SubmitDdlTaskRequest {
-            task: DdlTask::new_truncate_table(truncate_table.clone()),
+            task: DdlTask::new_truncate_table(
+                table_name.catalog_name.to_string(),
+                table_name.schema_name.to_string(),
+                table_name.table_name.to_string(),
+                table_id,
+            ),
         };
 
         <span class="self">self</span>.ddl_executor
