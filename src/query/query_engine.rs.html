@@ -138,6 +138,11 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -178,6 +183,7 @@
 <span class="kw">pub use </span><span class="kw">crate</span>::query_engine::context::QueryEngineContext;
 <span class="kw">pub use </span><span class="kw">crate</span>::query_engine::state::QueryEngineState;
 <span class="kw">use </span><span class="kw">crate</span>::region_query::RegionQueryHandlerRef;
+<span class="kw">use </span><span class="kw">crate</span>::table_mutation::TableMutationHandlerRef;
 
 <span class="doccomment">/// Describe statement result
 </span><span class="attr">#[derive(Debug)]
@@ -220,11 +226,13 @@
     <span class="kw">pub fn </span>new(
         catalog_manager: CatalogManagerRef,
         region_query_handler: <span class="prelude-ty">Option</span>&lt;RegionQueryHandlerRef&gt;,
+        table_mutation_handler: <span class="prelude-ty">Option</span>&lt;TableMutationHandlerRef&gt;,
         with_dist_planner: bool,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::new_with_plugins(
             catalog_manager,
             region_query_handler,
+            table_mutation_handler,
             with_dist_planner,
             Default::default(),
         )
@@ -233,12 +241,14 @@
     <span class="kw">pub fn </span>new_with_plugins(
         catalog_manager: CatalogManagerRef,
         region_query_handler: <span class="prelude-ty">Option</span>&lt;RegionQueryHandlerRef&gt;,
+        table_mutation_handler: <span class="prelude-ty">Option</span>&lt;TableMutationHandlerRef&gt;,
         with_dist_planner: bool,
         plugins: Arc&lt;Plugins&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>state = Arc::new(QueryEngineState::new(
             catalog_manager,
             region_query_handler,
+            table_mutation_handler,
             with_dist_planner,
             plugins.clone(),
         ));
@@ -271,7 +281,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_query_engine_factory() {
         <span class="kw">let </span>catalog_list = catalog::memory::new_memory_catalog_manager().unwrap();
-        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list, <span class="prelude-val">None</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>factory = QueryEngineFactory::new(catalog_list, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="bool-val">false</span>);
 
         <span class="kw">let </span>engine = factory.query_engine();
 

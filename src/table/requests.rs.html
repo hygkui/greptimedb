@@ -410,8 +410,6 @@
 <a href="#410" id="410">410</a>
 <a href="#411" id="411">411</a>
 <a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -660,7 +658,6 @@
     <span class="kw">pub </span>schema_name: String,
     <span class="kw">pub </span>table_name: String,
     <span class="kw">pub </span>columns_values: HashMap&lt;String, VectorRef&gt;,
-    <span class="kw">pub </span>region_number: RegionNumber,
 }
 
 <span class="doccomment">/// Delete (by primary key) request
@@ -741,7 +738,6 @@
             <span class="macro-nonterminal">$req</span>.catalog_name.to_string(),
             <span class="macro-nonterminal">$req</span>.schema_name.to_string(),
             <span class="macro-nonterminal">$req</span>.table_name.to_string(),
-            <span class="macro-nonterminal">$req</span>.region_number,
             <span class="macro-nonterminal">$req
         </span>);
     };

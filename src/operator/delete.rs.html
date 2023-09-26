@@ -253,6 +253,8 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -353,7 +355,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         request: TableDeleteRequest,
         ctx: QueryContextRef,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
         <span class="kw">let </span>catalog = request.catalog_name.as_str();
         <span class="kw">let </span>schema = request.schema_name.as_str();
         <span class="kw">let </span>table = request.table_name.as_str();
@@ -363,8 +365,10 @@
         <span class="kw">let </span>deletes = TableToRegion::new(<span class="kw-2">&amp;</span>table_info, <span class="kw-2">&amp;</span><span class="self">self</span>.partition_manager)
             .convert(request)
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="self">self</span>.do_request(deletes, ctx.trace_id(), <span class="number">0</span>).<span class="kw">await
-    </span>}
+
+        <span class="kw">let </span>affected_rows = <span class="self">self</span>.do_request(deletes, ctx.trace_id(), <span class="number">0</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(affected_rows <span class="kw">as _</span>)
+    }
 }
 
 <span class="kw">impl </span>Deleter {

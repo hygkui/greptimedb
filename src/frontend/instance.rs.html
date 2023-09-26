@@ -767,6 +767,13 @@
 <a href="#767" id="767">767</a>
 <a href="#768" id="768">768</a>
 <a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -822,7 +829,7 @@
 <span class="kw">use </span>operator::delete::{Deleter, DeleterRef};
 <span class="kw">use </span>operator::insert::{Inserter, InserterRef};
 <span class="kw">use </span>operator::statement::StatementExecutor;
-<span class="kw">use </span>operator::table::table_idents_to_full_name;
+<span class="kw">use </span>operator::table::{table_idents_to_full_name, TableMutationOperator};
 <span class="kw">use </span>partition::manager::PartitionRuleManager;
 <span class="kw">use </span>query::parser::{PromQuery, QueryLanguageParser, QueryStatement};
 <span class="kw">use </span>query::plan::LogicalPlan;
@@ -932,14 +939,6 @@
             catalog_manager.datanode_manager().clone(),
         );
 
-        <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
-            catalog_manager.clone(),
-            <span class="prelude-val">Some</span>(region_query_handler.clone()),
-            <span class="bool-val">true</span>,
-            plugins.clone(),
-        )
-        .query_engine();
-
         <span class="kw">let </span>inserter = Arc::new(Inserter::new(
             catalog_manager.clone(),
             partition_manager.clone(),
@@ -951,6 +950,20 @@
             datanode_clients,
         ));
 
+        <span class="kw">let </span>table_mutation_handler = Arc::new(TableMutationOperator::new(
+            inserter.clone(),
+            deleter.clone(),
+        ));
+
+        <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
+            catalog_manager.clone(),
+            <span class="prelude-val">Some</span>(region_query_handler.clone()),
+            <span class="prelude-val">Some</span>(table_mutation_handler),
+            <span class="bool-val">true</span>,
+            plugins.clone(),
+        )
+        .query_engine();
+
         <span class="kw">let </span>statement_executor = Arc::new(StatementExecutor::new(
             catalog_manager.clone(),
             query_engine.clone(),
@@ -958,7 +971,6 @@
             meta_backend.clone(),
             catalog_manager.clone(),
             inserter.clone(),
-            deleter.clone(),
         ));
 
         plugins.insert::&lt;StatementExecutorRef&gt;(statement_executor.clone());
@@ -1070,9 +1082,25 @@
         <span class="kw">let </span>region_query_handler =
             FrontendRegionQueryHandler::arc(partition_manager.clone(), datanode_manager.clone());
 
+        <span class="kw">let </span>inserter = Arc::new(Inserter::new(
+            catalog_manager.clone(),
+            partition_manager.clone(),
+            datanode_manager.clone(),
+        ));
+        <span class="kw">let </span>deleter = Arc::new(Deleter::new(
+            catalog_manager.clone(),
+            partition_manager,
+            datanode_manager.clone(),
+        ));
+        <span class="kw">let </span>table_mutation_handler = Arc::new(TableMutationOperator::new(
+            inserter.clone(),
+            deleter.clone(),
+        ));
+
         <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
             catalog_manager.clone(),
             <span class="prelude-val">Some</span>(region_query_handler),
+            <span class="prelude-val">Some</span>(table_mutation_handler),
             <span class="bool-val">true</span>,
             plugins.clone(),
         )
@@ -1086,23 +1114,10 @@
         <span class="kw">let </span>cache_invalidator = Arc::new(DummyCacheInvalidator);
         <span class="kw">let </span>ddl_executor = Arc::new(DdlManager::new(
             procedure_manager,
-            datanode_manager.clone(),
+            datanode_manager,
             cache_invalidator.clone(),
             table_metadata_manager.clone(),
             Arc::new(StandaloneTableMetadataCreator::new(kv_backend.clone())),
-        ));
-
-        <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(kv_backend.clone()));
-
-        <span class="kw">let </span>inserter = Arc::new(Inserter::new(
-            catalog_manager.clone(),
-            partition_manager.clone(),
-            datanode_manager.clone(),
-        ));
-        <span class="kw">let </span>deleter = Arc::new(Deleter::new(
-            catalog_manager.clone(),
-            partition_manager,
-            datanode_manager,
         ));
 
         <span class="kw">let </span>statement_executor = Arc::new(StatementExecutor::new(
@@ -1112,7 +1127,6 @@
             kv_backend.clone(),
             cache_invalidator,
             inserter.clone(),
-            deleter.clone(),
         ));
 
         <span class="prelude-val">Ok</span>(Instance {
