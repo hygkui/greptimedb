@@ -68,7 +68,6 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -85,7 +84,6 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="kw">use </span>common_catalog::parse_full_table_name;
 <span class="kw">use </span>common_meta::key::table_name::TableNameKey;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -106,15 +104,15 @@
         _path: <span class="kw-2">&amp;</span>str,
         params: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;http::Response&lt;String&gt;&gt; {
-        <span class="kw">let </span>table_name =
-            params
-                .get(<span class="string">&quot;full_table_name&quot;</span>)
-                .context(error::MissingRequiredParameterSnafu {
-                    param: <span class="string">&quot;full_table_name&quot;</span>,
-                })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>(catalog, schema, table) =
-            parse_full_table_name(table_name).context(error::InvalidFullTableNameSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>catalog = params
+            .get(<span class="string">&quot;catalog&quot;</span>)
+            .context(error::MissingRequiredParameterSnafu { param: <span class="string">&quot;catalog&quot; </span>})<span class="question-mark">?</span>;
+        <span class="kw">let </span>schema = params
+            .get(<span class="string">&quot;schema&quot;</span>)
+            .context(error::MissingRequiredParameterSnafu { param: <span class="string">&quot;schema&quot; </span>})<span class="question-mark">?</span>;
+        <span class="kw">let </span>table = params
+            .get(<span class="string">&quot;table&quot;</span>)
+            .context(error::MissingRequiredParameterSnafu { param: <span class="string">&quot;table&quot; </span>})<span class="question-mark">?</span>;
 
         <span class="kw">let </span>key = TableNameKey::new(catalog, schema, table);
 
@@ -125,7 +123,7 @@
             .<span class="kw">await
             </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.map(|x| x.table_id())
-            .context(TableNotFoundSnafu { name: table_name })<span class="question-mark">?</span>;
+            .context(TableNotFoundSnafu { name: table })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>table_route_value = <span class="self">self
             </span>.table_metadata_manager
