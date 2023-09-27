@@ -499,6 +499,13 @@
 <a href="#499" id="499">499</a>
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -537,7 +544,7 @@
 <span class="kw">use </span>datafusion::error::Result <span class="kw">as </span>DfResult;
 <span class="kw">use </span>datafusion::execution::context::SessionState;
 <span class="kw">use </span>datafusion_common::DataFusionError;
-<span class="kw">use </span>datafusion_expr::{Expr <span class="kw">as </span>DfExpr, TableType};
+<span class="kw">use </span>datafusion_expr::{Expr <span class="kw">as </span>DfExpr, TableProviderFilterPushDown, TableType};
 <span class="kw">use </span>datatypes::arrow::datatypes::SchemaRef;
 <span class="kw">use </span>futures_util::future::try_join_all;
 <span class="kw">use </span>prost::Message;
@@ -998,6 +1005,13 @@
         <span class="prelude-val">Ok</span>(Arc::new(DfPhysicalPlanAdapter(Arc::new(
             StreamScanAdapter::new(stream),
         ))))
+    }
+
+    <span class="kw">fn </span>supports_filters_pushdown(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        filters: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>DfExpr],
+    ) -&gt; DfResult&lt;Vec&lt;TableProviderFilterPushDown&gt;&gt; {
+        <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[TableProviderFilterPushDown::Inexact; filters.len()])
     }
 }
 </code></pre></div></section></main></body></html>
