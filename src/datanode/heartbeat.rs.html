@@ -358,6 +358,30 @@
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
 <a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -378,6 +402,7 @@
 
 <span class="kw">use </span>api::v1::meta::{HeartbeatRequest, Peer, RegionStat, Role};
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
+<span class="kw">use </span>common_meta::distributed_time_constants::META_KEEP_ALIVE_INTERVAL_SECS;
 <span class="kw">use </span>common_meta::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
 <span class="kw">use </span>common_meta::heartbeat::handler::{
     HandlerGroupExecutor, HeartbeatResponseHandlerContext, HeartbeatResponseHandlerExecutorRef,
@@ -457,6 +482,7 @@
         handler_executor: HeartbeatResponseHandlerExecutorRef,
         mailbox: MailboxRef,
         <span class="kw-2">mut </span>notify: <span class="prelude-ty">Option</span>&lt;Arc&lt;Notify&gt;&gt;,
+        quit_signal: Arc&lt;Notify&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;HeartbeatSender&gt; {
         <span class="kw">let </span>client_id = meta_client.id();
 
@@ -483,7 +509,8 @@
                     <span class="macro">info!</span>(<span class="string">&quot;Heartbeat task shutdown&quot;</span>);
                 }
             }
-            <span class="macro">info!</span>(<span class="string">&quot;Heartbeat handling loop exit.&quot;</span>)
+            quit_signal.notify_one();
+            <span class="macro">info!</span>(<span class="string">&quot;Heartbeat handling loop exit.&quot;</span>);
         });
         <span class="prelude-val">Ok</span>(tx)
     }
@@ -527,12 +554,15 @@
         <span class="kw">let </span>(outgoing_tx, <span class="kw-2">mut </span>outgoing_rx) = mpsc::channel(<span class="number">16</span>);
         <span class="kw">let </span>mailbox = Arc::new(HeartbeatMailbox::new(outgoing_tx));
 
+        <span class="kw">let </span>quit_signal = Arc::new(tokio::sync::Notify::new());
+
         <span class="kw">let </span><span class="kw-2">mut </span>tx = <span class="self">Self</span>::create_streams(
             <span class="kw-2">&amp;</span>meta_client,
             running.clone(),
             handler_executor.clone(),
             mailbox.clone(),
             notify,
+            quit_signal.clone(),
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -547,7 +577,6 @@
         common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>sleep = tokio::time::sleep(Duration::from_millis(<span class="number">0</span>));
             <span class="macro">tokio::pin!</span>(sleep);
-
             <span class="kw">loop </span>{
                 <span class="kw">if </span>!running.load(Ordering::Relaxed) {
                     <span class="macro">info!</span>(<span class="string">&quot;shutdown heartbeat task&quot;</span>);
@@ -588,6 +617,11 @@
                         sleep.as_mut().reset(now + Duration::from_millis(interval));
                         <span class="prelude-val">Some</span>(req)
                     }
+                    <span class="comment">// If the heartbeat stream is broken, send a dummy heartbeat request to re-create the heartbeat stream.
+                    </span><span class="kw">_ </span>= quit_signal.notified() =&gt; {
+                        <span class="kw">let </span>req = HeartbeatRequest::default();
+                        <span class="prelude-val">Some</span>(req)
+                    }
                 };
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(req) = req {
                     <span class="macro">debug!</span>(<span class="string">&quot;Sending heartbeat request: {:?}&quot;</span>, req);
@@ -599,6 +633,7 @@
                             handler_executor.clone(),
                             mailbox.clone(),
                             <span class="prelude-val">None</span>,
+                            quit_signal.clone(),
                         )
                         .<span class="kw">await
                         </span>{
@@ -609,6 +644,13 @@
                                 </span>sleep.as_mut().reset(Instant::now());
                             }
                             <span class="prelude-val">Err</span>(e) =&gt; {
+                                <span class="comment">// Before the META_LEASE_SECS expires,
+                                // any retries are meaningless, it always reads the old meta leader address.
+                                // Triggers to retry after META_KEEP_ALIVE_INTERVAL_SECS.
+                                </span>sleep.as_mut().reset(
+                                    Instant::now()
+                                        + Duration::from_secs(META_KEEP_ALIVE_INTERVAL_SECS),
+                                );
                                 <span class="macro">error!</span>(e;<span class="string">&quot;Failed to reconnect to metasrv!&quot;</span>);
                             }
                         }
@@ -677,13 +719,19 @@
         .timeout(Duration::from_millis(meta_config.timeout_millis))
         .connect_timeout(Duration::from_millis(meta_config.connect_timeout_millis))
         .tcp_nodelay(meta_config.tcp_nodelay);
-    <span class="kw">let </span>channel_manager = ChannelManager::with_config(config);
+    <span class="kw">let </span>channel_manager = ChannelManager::with_config(config.clone());
+    <span class="kw">let </span>heartbeat_channel_manager = ChannelManager::with_config(
+        config
+            .timeout(Duration::from_millis(meta_config.heartbeat_timeout_millis))
+            .connect_timeout(Duration::from_millis(meta_config.heartbeat_timeout_millis)),
+    );
 
     <span class="kw">let </span><span class="kw-2">mut </span>meta_client = MetaClientBuilder::new(cluster_id, member_id, Role::Datanode)
         .enable_heartbeat()
         .enable_router()
         .enable_store()
         .channel_manager(channel_manager)
+        .heartbeat_channel_manager(heartbeat_channel_manager)
         .build();
     meta_client
         .start(<span class="kw-2">&amp;</span>meta_config.metasrv_addrs)
