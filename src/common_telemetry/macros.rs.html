@@ -229,6 +229,12 @@
 <a href="#229" id="229">229</a>
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -269,35 +275,38 @@
 
     <span class="comment">// error!(e; target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
     </span>(<span class="macro-nonterminal">$e</span>:expr; target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::common_error::ext::ErrorExt</span>;
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::common_error::ext::StackError</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>stacks = <span class="macro">vec!</span>[];
-        <span class="macro-nonterminal">$e</span>.debug_fmt(<span class="number">0</span>, <span class="kw-2">&amp;mut </span>stacks);
-        <span class="kw">let </span>stacks = stacks.join(<span class="string">&quot;\n&quot;</span>);
-
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
             <span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>,
             <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
-            err.msg = %stacks,
-            err.code = %<span class="macro-nonterminal">$e</span>.status_code(),
+            err = <span class="question-mark">?</span><span class="macro-nonterminal">$e</span>,
+            $(<span class="macro-nonterminal">$arg</span>)+
+        )
+    });
+
+    <span class="comment">// error!(%e; target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
+    </span>(%<span class="macro-nonterminal">$e</span>:expr; target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
+            <span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>,
+            <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
+            err = %<span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
     });
 
     <span class="comment">// error!(e; &quot;a {} event&quot;, &quot;log&quot;)
     </span>(<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::common_error::ext::ErrorExt</span>;
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::common_error::ext::StackError</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>stacks = <span class="macro">vec!</span>[];
-        <span class="macro-nonterminal">$e</span>.debug_fmt(<span class="number">0</span>, <span class="kw-2">&amp;mut </span>stacks);
-        <span class="kw">let </span>stacks = stacks.join(<span class="string">&quot;\n&quot;</span>);
-
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
             <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
-            err.msg = %stacks,
-            err.code = %<span class="macro-nonterminal">$e</span>.status_code(),
+            err = <span class="question-mark">?</span><span class="macro-nonterminal">$e</span>,
+            $(<span class="macro-nonterminal">$arg</span>)+
+        )
+    });
+
+    <span class="comment">// error!(%e; &quot;a {} event&quot;, &quot;log&quot;)
+    </span>(%<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
+            <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
+            err = %<span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
     });
@@ -318,17 +327,18 @@
 
     <span class="comment">// warn!(e; &quot;a {} event&quot;, &quot;log&quot;)
     </span>(<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::common_error::ext::ErrorExt</span>;
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::common_error::ext::StackError</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>stacks = <span class="macro">vec!</span>[];
-        <span class="macro-nonterminal">$e</span>.debug_fmt(<span class="number">0</span>, <span class="kw-2">&amp;mut </span>stacks);
-        <span class="kw">let </span>stacks = stacks.join(<span class="string">&quot;\n&quot;</span>);
-
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
             <span class="macro-nonterminal">$crate::logging::Level::WARN</span>,
-            err.msg = %<span class="macro-nonterminal">$e</span>,
-            err.code = %<span class="macro-nonterminal">$e</span>.status_code(),
+            err = <span class="question-mark">?</span><span class="macro-nonterminal">$e</span>,
+            $(<span class="macro-nonterminal">$arg</span>)+
+        )
+    });
+
+    <span class="comment">// warn!(%e; &quot;a {} event&quot;, &quot;log&quot;)
+    </span>(%<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
+            <span class="macro-nonterminal">$crate::logging::Level::WARN</span>,
+            err = %<span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
     });
@@ -452,8 +462,10 @@
         <span class="macro">error!</span>(target: <span class="string">&quot;my_target&quot;</span>, <span class="string">&quot;hello {}&quot;</span>, <span class="string">&quot;world&quot;</span>);
         <span class="comment">// Supports both owned and reference type.
         </span><span class="macro">error!</span>(err; target: <span class="string">&quot;my_target&quot;</span>, <span class="string">&quot;hello {}&quot;</span>, <span class="string">&quot;world&quot;</span>);
+        <span class="macro">error!</span>(%err; target: <span class="string">&quot;my_target&quot;</span>, <span class="string">&quot;hello {}&quot;</span>, <span class="string">&quot;world&quot;</span>);
         <span class="macro">error!</span>(err_ref; target: <span class="string">&quot;my_target&quot;</span>, <span class="string">&quot;hello {}&quot;</span>, <span class="string">&quot;world&quot;</span>);
         <span class="macro">error!</span>(err_ref2; <span class="string">&quot;hello {}&quot;</span>, <span class="string">&quot;world&quot;</span>);
+        <span class="macro">error!</span>(%err_ref2; <span class="string">&quot;hello {}&quot;</span>, <span class="string">&quot;world&quot;</span>);
         <span class="macro">error!</span>(<span class="string">&quot;hello {}&quot;</span>, <span class="string">&quot;world&quot;</span>);
 
         <span class="kw">let </span>root_err = MockError::with_source(err);
