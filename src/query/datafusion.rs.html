@@ -703,22 +703,6 @@
 <a href="#703" id="703">703</a>
 <a href="#704" id="704">704</a>
 <a href="#705" id="705">705</a>
-<a href="#706" id="706">706</a>
-<a href="#707" id="707">707</a>
-<a href="#708" id="708">708</a>
-<a href="#709" id="709">709</a>
-<a href="#710" id="710">710</a>
-<a href="#711" id="711">711</a>
-<a href="#712" id="712">712</a>
-<a href="#713" id="713">713</a>
-<a href="#714" id="714">714</a>
-<a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a>
-<a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
-<a href="#719" id="719">719</a>
-<a href="#720" id="720">720</a>
-<a href="#721" id="721">721</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -998,9 +982,7 @@
         <span class="prelude-val">Ok</span>(DataFrame::DataFusion(
             <span class="self">self</span>.state
                 .read_table(table)
-                .context(error::DatafusionSnafu {
-                    msg: <span class="string">&quot;Fail to create dataframe for table&quot;</span>,
-                })
+                .context(error::DatafusionSnafu)
                 .map_err(BoxedError::new)
                 .context(QueryExecutionSnafu)<span class="question-mark">?</span>,
         ))
@@ -1016,9 +998,7 @@
                     </span>.state
                     .session_state()
                     .optimize(df_plan)
-                    .context(error::DatafusionSnafu {
-                        msg: <span class="string">&quot;Fail to optimize logical plan&quot;</span>,
-                    })
+                    .context(error::DatafusionSnafu)
                     .map_err(BoxedError::new)
                     .context(QueryExecutionSnafu)<span class="question-mark">?</span>;
 
@@ -1042,9 +1022,7 @@
                 <span class="kw">let </span>physical_plan = state
                     .create_physical_plan(df_plan)
                     .<span class="kw">await
-                    </span>.context(error::DatafusionSnafu {
-                        msg: <span class="string">&quot;Fail to create physical plan&quot;</span>,
-                    })
+                    </span>.context(error::DatafusionSnafu)
                     .map_err(BoxedError::new)
                     .context(QueryExecutionSnafu)<span class="question-mark">?</span>;
 
@@ -1115,9 +1093,7 @@
                 </span><span class="macro">assert_eq!</span>(<span class="number">1</span>, plan.output_partitioning().partition_count());
                 <span class="kw">let </span>df_stream = plan
                     .execute(<span class="number">0</span>, task_ctx)
-                    .context(error::DatafusionSnafu {
-                        msg: <span class="string">&quot;Failed to execute DataFusion merge exec&quot;</span>,
-                    })
+                    .context(error::DatafusionSnafu)
                     .map_err(BoxedError::new)
                     .context(QueryExecutionSnafu)<span class="question-mark">?</span>;
                 <span class="kw">let </span>stream = RecordBatchStreamAdapter::try_new(df_stream)
@@ -1168,35 +1144,27 @@
     <span class="kw">let </span>context = SessionContext::new();
     context
         .register_batch(table_name, record_batch.into_df_record_batch())
-        .context(error::DatafusionSnafu {
-            msg: <span class="string">&quot;Fail to register a record batch as a table&quot;</span>,
-        })
+        .context(error::DatafusionSnafu)
         .map_err(BoxedError::new)
         .context(QueryExecutionSnafu)<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>dataframe = context
         .sql(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;SELECT * FROM {table_name}&quot;</span>))
         .<span class="kw">await
-        </span>.context(error::DatafusionSnafu {
-            msg: <span class="string">&quot;Fail to execute a sql&quot;</span>,
-        })
+        </span>.context(error::DatafusionSnafu)
         .map_err(BoxedError::new)
         .context(QueryExecutionSnafu)<span class="question-mark">?</span>;
     <span class="kw">if let </span><span class="prelude-val">Some</span>(filter) = filter {
         <span class="kw">let </span>filter = convert_filter_to_df_filter(filter)<span class="question-mark">?</span>;
         dataframe = dataframe
             .filter(filter)
-            .context(error::DatafusionSnafu {
-                msg: <span class="string">&quot;Fail to filter&quot;</span>,
-            })
+            .context(error::DatafusionSnafu)
             .map_err(BoxedError::new)
             .context(QueryExecutionSnafu)<span class="question-mark">?
     </span>}
     <span class="kw">let </span>df_batches = dataframe
         .collect()
         .<span class="kw">await
-        </span>.context(error::DatafusionSnafu {
-            msg: <span class="string">&quot;Fail to collect the record batches&quot;</span>,
-        })
+        </span>.context(error::DatafusionSnafu)
         .map_err(BoxedError::new)
         .context(QueryExecutionSnafu)<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>batches = Vec::with_capacity(df_batches.len());

@@ -917,9 +917,6 @@
 <a href="#917" id="917">917</a>
 <a href="#918" id="918">918</a>
 <a href="#919" id="919">919</a>
-<a href="#920" id="920">920</a>
-<a href="#921" id="921">921</a>
-<a href="#922" id="922">922</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -974,7 +971,7 @@
 <span class="kw">use </span>schemars::JsonSchema;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_json::Value;
-<span class="kw">use </span>snafu::{ensure, ErrorCompat, ResultExt};
+<span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>tokio::sync::oneshot::{<span class="self">self</span>, Sender};
 <span class="kw">use </span>tokio::sync::Mutex;
 <span class="kw">use </span>tower::timeout::TimeoutLayer;
@@ -1236,10 +1233,7 @@
                     }
                 },
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="kw">return </span><span class="self">Self</span>::with_error(
-                        e.iter_chain().last().unwrap().to_string(),
-                        e.status_code(),
-                    );
+                    <span class="kw">return </span><span class="self">Self</span>::with_error(e.output_msg(), e.status_code());
                 }
             }
         }

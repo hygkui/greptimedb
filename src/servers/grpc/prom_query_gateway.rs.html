@@ -265,7 +265,7 @@
                 <span class="prelude-val">Err</span>(err) =&gt; {
                     <span class="kw">return </span>PrometheusJsonResponse::error(
                         err.status_code().to_string(),
-                        err.to_string(),
+                        err.output_msg(),
                     )
                     .<span class="number">0
                 </span>}

@@ -292,18 +292,6 @@
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -351,8 +339,7 @@
                             &amp;&amp; w.quote_style.is_none() =&gt;
                     {
                         <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
-                        <span class="self">self</span>.parse_tql_eval()
-                            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })
+                        <span class="self">self</span>.parse_tql_eval().context(error::SyntaxSnafu)
                     }
 
                     Keyword::EXPLAIN =&gt; {
@@ -362,8 +349,7 @@
 
                     Keyword::ANALYZE =&gt; {
                         <span class="kw">let _ </span>= <span class="self">self</span>.parser.next_token();
-                        <span class="self">self</span>.parse_tql_analyze()
-                            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })
+                        <span class="self">self</span>.parse_tql_analyze().context(error::SyntaxSnafu)
                     }
                     <span class="kw">_ </span>=&gt; <span class="self">self</span>.unsupported(<span class="self">self</span>.peek_token_as_string()),
                 }
@@ -442,8 +428,8 @@
         <span class="kw">let </span>start = <span class="self">Self</span>::parse_string_or_number(parser, Token::Comma).unwrap_or(<span class="string">&quot;0&quot;</span>.to_string());
         <span class="kw">let </span>end = <span class="self">Self</span>::parse_string_or_number(parser, Token::Comma).unwrap_or(<span class="string">&quot;0&quot;</span>.to_string());
         <span class="kw">let </span>step = <span class="self">Self</span>::parse_string_or_number(parser, Token::RParen).unwrap_or(<span class="string">&quot;5m&quot;</span>.to_string());
-        <span class="kw">let </span>query = <span class="self">Self</span>::parse_tql_query(parser, <span class="self">self</span>.sql, delimiter)
-            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
+        <span class="kw">let </span>query =
+            <span class="self">Self</span>::parse_tql_query(parser, <span class="self">self</span>.sql, delimiter).context(error::SyntaxSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Statement::Tql(Tql::Explain(TqlExplain {
             query,
@@ -472,7 +458,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>snafu::ErrorCompat;
+    <span class="kw">use </span>common_error::ext::ErrorExt;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::dialect::GreptimeDbDialect;
@@ -592,22 +578,12 @@
         <span class="comment">// Invalid duration
         </span><span class="kw">let </span>sql = <span class="string">&quot;TQL EVAL (1676887657, 1676887659, 1m) http_requests_total{environment=~&#39;staging|testing|development&#39;,method!=&#39;GET&#39;} @ 1609746000 offset 5m&quot;</span>;
         <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap_err();
-        <span class="macro">assert!</span>(result
-            .iter_chain()
-            .last()
-            .unwrap()
-            .to_string()
-            .contains(<span class="string">&quot;Expected ), found: m&quot;</span>));
+        <span class="macro">assert!</span>(result.output_msg().contains(<span class="string">&quot;Expected ), found: m&quot;</span>));
 
         <span class="comment">// missing end
         </span><span class="kw">let </span>sql = <span class="string">&quot;TQL EVAL (1676887657, &#39;1m&#39;) http_requests_total{environment=~&#39;staging|testing|development&#39;,method!=&#39;GET&#39;} @ 1609746000 offset 5m&quot;</span>;
         <span class="kw">let </span>result = ParserContext::create_with_dialect(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap_err();
-        <span class="macro">assert!</span>(result
-            .iter_chain()
-            .last()
-            .unwrap()
-            .to_string()
-            .contains(<span class="string">&quot;Expected ,, found: )&quot;</span>));
+        <span class="macro">assert!</span>(result.output_msg().contains(<span class="string">&quot;Expected ,, found: )&quot;</span>));
     }
 }
 </code></pre></div></section></main></body></html>

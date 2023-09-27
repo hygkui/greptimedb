@@ -306,6 +306,7 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::error::Result <span class="kw">as </span>RecordBatchResult;
 <span class="kw">use </span>common_recordbatch::RecordBatch;
@@ -322,7 +323,6 @@
 <span class="kw">use </span>pgwire::error::{ErrorInfo, PgWireError, PgWireResult};
 <span class="kw">use </span>query::query_engine::DescribeResult;
 <span class="kw">use </span>session::Session;
-<span class="kw">use </span>snafu::ErrorCompat;
 <span class="kw">use </span>sql::dialect::PostgreSqlDialect;
 <span class="kw">use </span>sql::parser::ParserContext;
 
@@ -382,7 +382,7 @@
         <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Ok</span>(Response::Error(Box::new(ErrorInfo::new(
             <span class="string">&quot;ERROR&quot;</span>.to_string(),
             <span class="string">&quot;XX000&quot;</span>.to_string(),
-            e.iter_chain().last().unwrap().to_string(),
+            e.output_msg(),
         )))),
     }
 }

@@ -368,7 +368,6 @@
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -587,9 +586,8 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Illegal access to catalog: {} and schema: {}&quot;</span>, catalog, schema))]
     </span>QueryAccessDenied { catalog: String, schema: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;msg: {}&quot;</span>, msg))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
     </span>Datafusion {
-        msg: String,
         <span class="attr">#[snafu(source)]
         </span>error: DataFusionError,
         location: Location,

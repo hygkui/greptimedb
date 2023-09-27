@@ -572,7 +572,6 @@
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -602,7 +601,7 @@
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>query::parser::PromQuery;
 <span class="kw">use </span>serde_json::json;
-<span class="kw">use </span>snafu::{ErrorCompat, Location, Snafu};
+<span class="kw">use </span>snafu::{Location, Snafu};
 <span class="kw">use </span>tonic::Code;
 
 <span class="attr">#[derive(Snafu)]
@@ -1086,7 +1085,6 @@
         <span class="kw">impl </span>From&lt;<span class="macro-nonterminal">$Error</span>&gt; <span class="kw">for </span>tonic::Status {
             <span class="kw">fn </span>from(err: <span class="macro-nonterminal">$Error</span>) -&gt; <span class="self">Self </span>{
                 <span class="kw">use </span>common_error::{GREPTIME_ERROR_CODE, GREPTIME_ERROR_MSG};
-                <span class="kw">use </span>snafu::ErrorCompat;
                 <span class="kw">use </span>tonic::codegen::http::{HeaderMap, HeaderValue};
                 <span class="kw">use </span>tonic::metadata::MetadataMap;
 
@@ -1096,16 +1094,16 @@
                 // (which is a very rare case), just ignore. Client will use Tonic status code and message.
                 </span><span class="kw">let </span>status_code = err.status_code();
                 headers.insert(GREPTIME_ERROR_CODE, HeaderValue::from(status_code <span class="kw">as </span>u32));
-                <span class="kw">let </span>root_error = err.iter_chain().last().unwrap();
+                <span class="kw">let </span>root_error = err.output_msg();
 
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(err_msg) = HeaderValue::from_bytes(root_error.to_string().as_bytes()) {
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(err_msg) = HeaderValue::from_bytes(root_error.as_bytes()) {
                     <span class="kw">let _ </span>= headers.insert(GREPTIME_ERROR_MSG, err_msg);
                 }
 
                 <span class="kw">let </span>metadata = MetadataMap::from_headers(headers);
                 tonic::Status::with_metadata(
                     <span class="macro-nonterminal">$crate::error::status_to_tonic_code</span>(status_code),
-                    err.to_string(),
+                    root_error,
                     metadata,
                 )
             }
@@ -1123,7 +1121,7 @@
 
 <span class="kw">impl </span>IntoResponse <span class="kw">for </span>Error {
     <span class="kw">fn </span>into_response(<span class="self">self</span>) -&gt; Response {
-        <span class="kw">let </span>error_msg = <span class="self">self</span>.iter_chain().last().unwrap().to_string();
+        <span class="kw">let </span>error_msg = <span class="self">self</span>.output_msg();
         <span class="kw">let </span>status = <span class="kw">match </span><span class="self">self </span>{
             Error::InfluxdbLineProtocol { .. }
             | Error::InfluxdbLinesWrite { .. }

@@ -453,7 +453,7 @@
 
         <span class="self">self</span>.parser
             .expect_keyword(Keyword::TO)
-            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
+            .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(with, connection, location) = <span class="self">self</span>.parse_copy_to()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(CopyDatabaseArgument {
@@ -485,7 +485,7 @@
         } <span class="kw">else </span>{
             <span class="self">self</span>.parser
                 .expect_keyword(Keyword::FROM)
-                .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
+                .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(CopyTable::From(<span class="self">self</span>.parse_copy_table_from(table_name)<span class="question-mark">?</span>))
         }
     }
@@ -503,7 +503,7 @@
         <span class="kw">let </span>options = <span class="self">self
             </span>.parser
             .parse_options(Keyword::WITH)
-            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
+            .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>with = options
             .into_iter()
@@ -515,7 +515,7 @@
         <span class="kw">let </span>connection_options = <span class="self">self
             </span>.parser
             .parse_options(Keyword::CONNECTION)
-            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
+            .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>connection = connection_options
             .into_iter()
@@ -544,7 +544,7 @@
         <span class="kw">let </span>options = <span class="self">self
             </span>.parser
             .parse_options(Keyword::WITH)
-            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
+            .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>with = options
             .into_iter()
@@ -556,7 +556,7 @@
         <span class="kw">let </span>connection_options = <span class="self">self
             </span>.parser
             .parse_options(Keyword::CONNECTION)
-            .context(error::SyntaxSnafu { sql: <span class="self">self</span>.sql })<span class="question-mark">?</span>;
+            .context(error::SyntaxSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>connection = connection_options
             .into_iter()

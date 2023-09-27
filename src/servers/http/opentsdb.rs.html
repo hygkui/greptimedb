@@ -258,12 +258,13 @@
 <span class="kw">use </span>axum::extract::{Query, RawBody, State};
 <span class="kw">use </span>axum::http::StatusCode <span class="kw">as </span>HttpStatusCode;
 <span class="kw">use </span>axum::{Extension, Json};
+<span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>hyper::Body;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>session::context::QueryContextRef;
-<span class="kw">use </span>snafu::{ErrorCompat, ResultExt};
+<span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, Error, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::opentsdb::codec::DataPoint;
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::OpentsdbProtocolHandlerRef;
 
@@ -395,13 +396,13 @@
         <span class="self">self</span>.success += <span class="number">1</span>;
     }
 
-    <span class="kw">fn </span>on_failed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, datapoint: DataPointRequest, error: Error) {
+    <span class="kw">fn </span>on_failed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, datapoint: DataPointRequest, error: <span class="kw">impl </span>ErrorExt) {
         <span class="self">self</span>.failed += <span class="number">1</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(details) = <span class="self">self</span>.errors.as_mut() {
             <span class="kw">let </span>error = OpentsdbDetailError {
                 datapoint,
-                error: error.iter_chain().last().unwrap().to_string(),
+                error: error.output_msg(),
             };
             details.push(error);
         };
@@ -410,7 +411,6 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
-    <span class="kw">use </span>snafu::ErrorCompat;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -470,13 +470,13 @@
         <span class="kw">let </span>body = Body::from(<span class="string">&quot;&quot;</span>);
         <span class="kw">let </span>result = parse_data_points(body).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_err());
-        <span class="kw">let </span>err = result.unwrap_err().iter_chain().last().unwrap().to_string();
+        <span class="kw">let </span>err = result.unwrap_err().output_msg();
         <span class="macro">assert!</span>(err.contains(<span class="string">&quot;EOF while parsing a value at line 1 column 0&quot;</span>));
 
         <span class="kw">let </span>body = Body::from(<span class="string">&quot;hello world&quot;</span>);
         <span class="kw">let </span>result = parse_data_points(body).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_err());
-        <span class="kw">let </span>err = result.unwrap_err().iter_chain().last().unwrap().to_string();
+        <span class="kw">let </span>err = result.unwrap_err().output_msg();
         <span class="macro">assert!</span>(err.contains(<span class="string">&quot;expected value at line 1 column 1&quot;</span>));
     }
 }

@@ -305,7 +305,7 @@
 <span class="kw">use </span>rustyline::error::ReadlineError;
 <span class="kw">use </span>rustyline::Editor;
 <span class="kw">use </span>session::context::QueryContext;
-<span class="kw">use </span>snafu::{ErrorCompat, ResultExt};
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>substrait::{DFLogicalSubstraitConvertor, SubstraitPlan};
 
 <span class="kw">use </span><span class="kw">crate</span>::cli::cmd::ReplCommand;
@@ -418,7 +418,7 @@
             .<span class="kw">await
             </span>.map_err(|e| {
                 <span class="kw">let </span>status_code = e.status_code();
-                <span class="kw">let </span>root_cause = e.iter_chain().last().unwrap();
+                <span class="kw">let </span>root_cause = e.output_msg();
                 <span class="macro">println!</span>(<span class="string">&quot;Error: {}({status_code}), {root_cause}&quot;</span>, status_code <span class="kw">as </span>u32)
             })
             .is_ok()

@@ -321,7 +321,7 @@
     <span class="kw">use </span>std::io::Write;
 
     <span class="kw">use </span>bytes::BufMut;
-    <span class="kw">use </span>snafu::ErrorCompat;
+    <span class="kw">use </span>common_error::ext::ErrorExt;
     <span class="kw">use </span>tokio_test::io::Builder;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -392,7 +392,7 @@
         buffer.writer().write_all(<span class="string">b&quot;Hello Wor\xffld.\r\n&quot;</span>).unwrap();
         <span class="kw">let </span>result = conn.parse_line();
         <span class="macro">assert!</span>(result.is_err());
-        <span class="kw">let </span>err = result.unwrap_err().iter_chain().last().unwrap().to_string();
+        <span class="kw">let </span>err = result.unwrap_err().output_msg();
         <span class="macro">assert!</span>(err.contains(<span class="string">&quot;invalid utf-8 sequence&quot;</span>));
     }
 
