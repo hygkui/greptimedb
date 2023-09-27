@@ -217,9 +217,9 @@
         }
     }
 
-    <span class="doccomment">/// Mark all SSTs in this version as deleted.
+    <span class="doccomment">/// Marks all SSTs in this version as deleted.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mark_all_deleted(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">for </span>level_meta <span class="kw">in </span><span class="self">self</span>.levels.iter() {
+        <span class="kw">for </span>level_meta <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.levels {
             <span class="kw">for </span>file_handle <span class="kw">in </span>level_meta.files.values() {
                 file_handle.mark_deleted();
             }

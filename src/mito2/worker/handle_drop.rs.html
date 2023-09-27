@@ -146,6 +146,29 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -204,7 +227,7 @@
         </span><span class="self">self</span>.compaction_scheduler.on_region_dropped(region_id);
 
         <span class="comment">// mark region version as dropped
-        </span>region.version_control.mark_dropped();
+        </span>region.version_control.mark_dropped(<span class="kw-2">&amp;</span><span class="self">self</span>.memtable_builder);
         <span class="macro">info!</span>(
             <span class="string">&quot;Region {} is dropped logically, but some files are not deleted yet&quot;</span>,
             region_id
@@ -214,8 +237,20 @@
         </span><span class="kw">let </span>region_dir = region.access_layer.region_dir().to_owned();
         <span class="kw">let </span>object_store = <span class="self">self</span>.object_store.clone();
         <span class="kw">let </span>dropping_regions = <span class="self">self</span>.dropping_regions.clone();
+        <span class="kw">let </span>listener = <span class="self">self</span>.listener.clone();
         common_runtime::spawn_bg(<span class="kw">async move </span>{
-            later_drop_task(region_id, region_dir, object_store, dropping_regions).<span class="kw">await</span>;
+            <span class="kw">let </span>gc_duration = listener
+                .on_later_drop_begin(region_id)
+                .unwrap_or(Duration::from_secs(GC_TASK_INTERVAL_SEC));
+            <span class="kw">let </span>removed = later_drop_task(
+                region_id,
+                region_dir,
+                object_store,
+                dropping_regions,
+                gc_duration,
+            )
+            .<span class="kw">await</span>;
+            listener.on_later_drop_end(region_id, removed);
         });
 
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
@@ -223,7 +258,7 @@
 }
 
 <span class="doccomment">/// Background GC task to remove the entire region path once it find there is no
-/// parquet file left.
+/// parquet file left. Returns whether the path is removed.
 ///
 /// This task will keep running until finished. Any resource captured by it will
 /// not be released before then. Be sure to only pass weak reference if something
@@ -233,18 +268,24 @@
     region_path: String,
     object_store: ObjectStore,
     dropping_regions: RegionMapRef,
-) {
+    gc_duration: Duration,
+) -&gt; bool {
     <span class="kw">for _ in </span><span class="number">0</span>..MAX_RETRY_TIMES {
-        sleep(Duration::from_secs(GC_TASK_INTERVAL_SEC)).<span class="kw">await</span>;
+        sleep(gc_duration).<span class="kw">await</span>;
         <span class="kw">let </span>result = remove_region_dir_once(<span class="kw-2">&amp;</span>region_path, <span class="kw-2">&amp;</span>object_store).<span class="kw">await</span>;
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = result {
-            <span class="macro">warn!</span>(
-                <span class="string">&quot;Error occurs during trying to GC region dir {}: {}&quot;</span>,
-                region_path, err
-            );
-        } <span class="kw">else </span>{
-            dropping_regions.remove_region(region_id);
-            <span class="macro">info!</span>(<span class="string">&quot;Region {} is dropped&quot;</span>, region_path);
+        <span class="kw">match </span>result {
+            <span class="prelude-val">Err</span>(err) =&gt; {
+                <span class="macro">warn!</span>(
+                    <span class="string">&quot;Error occurs during trying to GC region dir {}: {}&quot;</span>,
+                    region_path, err
+                );
+            }
+            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; {
+                dropping_regions.remove_region(region_id);
+                <span class="macro">info!</span>(<span class="string">&quot;Region {} is dropped&quot;</span>, region_path);
+                <span class="kw">return </span><span class="bool-val">true</span>;
+            }
+            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; (),
         }
     }
 
@@ -252,13 +293,16 @@
         <span class="string">&quot;Failed to GC region dir {} after {} retries, giving up&quot;</span>,
         region_path, MAX_RETRY_TIMES
     );
-}
+
+    <span class="bool-val">false
+</span>}
 
 <span class="comment">// TODO(ruihang): place the marker in a separate dir
+</span><span class="doccomment">/// Removes region dir if there is no parquet files, returns whether the directory is removed.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>remove_region_dir_once(
     region_path: <span class="kw-2">&amp;</span>str,
     object_store: <span class="kw-2">&amp;</span>ObjectStore,
-) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
     <span class="comment">// list all files under the given region path to check if there are un-deleted parquet files
     </span><span class="kw">let </span><span class="kw-2">mut </span>has_parquet_file = <span class="bool-val">false</span>;
     <span class="comment">// record all paths that neither ends with .parquet nor the marker file
@@ -291,7 +335,9 @@
             .remove_all(region_path)
             .<span class="kw">await
             </span>.context(OpenDalSnafu)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
     }
-    <span class="prelude-val">Ok</span>(())
 }
 </code></pre></div></section></main></body></html>

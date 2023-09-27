@@ -480,7 +480,7 @@
         <span class="kw-2">mut </span>config: MitoConfig,
         log_store: Arc&lt;S&gt;,
         object_store: ObjectStore,
-        write_buffer_manager: <span class="kw">crate</span>::flush::WriteBufferManagerRef,
+        write_buffer_manager: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::flush::WriteBufferManagerRef&gt;,
         listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
     ) -&gt; MitoEngine {
         config.sanitize();
