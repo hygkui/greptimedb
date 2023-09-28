@@ -438,15 +438,6 @@
 <a href="#438" id="438">438</a>
 <a href="#439" id="439">439</a>
 <a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -591,7 +582,7 @@
             <span class="kw">return </span><span class="bool-val">true</span>;
         }
 
-        <span class="kw">match </span>Categorizer::check_plan(plan) {
+        <span class="kw">match </span>Categorizer::check_plan(plan, <span class="self">self</span>.partition_cols.clone()) {
             Commutativity::Commutative =&gt; {}
             Commutativity::PartialCommutative =&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(plan) = partial_commutative_transformer(plan) {
@@ -610,7 +601,6 @@
                     <span class="self">self</span>.stage.push(plan)
                 }
             },
-            Commutativity::CheckPartition
             | Commutativity::NonCommutative
             | Commutativity::Unimplemented
             | Commutativity::Unsupported =&gt; {
@@ -800,11 +790,7 @@
 
         <span class="kw">let </span>config = ConfigOptions::default();
         <span class="kw">let </span>result = DistPlannerAnalyzer {}.analyze(plan, <span class="kw-2">&amp;</span>config).unwrap();
-        <span class="kw">let </span>expected = [
-            <span class="string">&quot;Aggregate: groupBy=[[]], aggr=[[AVG(t.number)]]&quot;</span>,
-            <span class="string">&quot;  MergeScan [is_placeholder=false]&quot;</span>,
-        ]
-        .join(<span class="string">&quot;\n&quot;</span>);
+        <span class="kw">let </span>expected = <span class="string">&quot;MergeScan [is_placeholder=false]&quot;</span>;
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
     }
 
@@ -851,11 +837,7 @@
 
         <span class="kw">let </span>config = ConfigOptions::default();
         <span class="kw">let </span>result = DistPlannerAnalyzer {}.analyze(plan, <span class="kw-2">&amp;</span>config).unwrap();
-        <span class="kw">let </span>expected = [
-            <span class="string">&quot;Limit: skip=0, fetch=1&quot;</span>,
-            <span class="string">&quot;  MergeScan [is_placeholder=false]&quot;</span>,
-        ]
-        .join(<span class="string">&quot;\n&quot;</span>);
+        <span class="kw">let </span>expected = <span class="string">&quot;MergeScan [is_placeholder=false]&quot;</span>;
         <span class="macro">assert_eq!</span>(expected, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result));
     }
 

@@ -504,6 +504,10 @@
 <a href="#504" id="504">504</a>
 <a href="#505" id="505">505</a>
 <a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -645,7 +649,7 @@
 
     <span class="kw">fn </span>required_input_ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;PhysicalSortRequirement&gt;&gt;&gt; {
         <span class="kw">let </span>input_schema = <span class="self">self</span>.input.schema();
-        <span class="kw">let </span>exprs = <span class="self">self
+        <span class="kw">let </span>exprs: Vec&lt;PhysicalSortRequirement&gt; = <span class="self">self
             </span>.tag_columns
             .iter()
             .map(|tag| PhysicalSortRequirement {
@@ -654,7 +658,11 @@
                 options: <span class="prelude-val">None</span>,
             })
             .collect();
-        <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(exprs)]
+        <span class="kw">if </span>!exprs.is_empty() {
+            <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(exprs)]
+        } <span class="kw">else </span>{
+            <span class="macro">vec!</span>[<span class="prelude-val">None</span>]
+        }
     }
 
     <span class="kw">fn </span>output_ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[PhysicalSortExpr]&gt; {

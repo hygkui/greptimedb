@@ -385,7 +385,7 @@
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e)  = <span class="self">Self</span>::do_handle(stream, spawn_ref, spawn_config).<span class="kw">await </span>{
                 <span class="comment">// TODO(LFC): Write this error to client as well, in MySQL text protocol.
                 // Looks like we have to expose opensrv-mysql&#39;s `PacketWriter`?
-                </span><span class="macro">warn!</span>(<span class="string">&quot;Internal error occurred during query exec, server actively close the channel to let client try next time: {}.&quot;</span>, e)
+                </span><span class="macro">warn!</span>(e; <span class="string">&quot;Internal error occurred during query exec, server actively close the channel to let client try next time&quot;</span>)
             }
             <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_MYSQL_CONNECTIONS, <span class="number">1.0</span>);
         });
