@@ -229,6 +229,35 @@
 <a href="#229" id="229">229</a>
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -256,6 +285,7 @@
 <span class="kw">use </span>common_recordbatch::error::{CastVectorSnafu, ExternalSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>RecordBatchResult};
 <span class="kw">use </span>common_recordbatch::{RecordBatch, RecordBatchStream, SendableRecordBatchStream};
 <span class="kw">use </span>datafusion::logical_expr::utils <span class="kw">as </span>df_logical_expr_utils;
+<span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>datatypes::schema::{ColumnSchema, Schema, SchemaRef};
 <span class="kw">use </span>datatypes::vectors::VectorRef;
 <span class="kw">use </span>futures::Stream;
@@ -391,38 +421,13 @@
             Poll::Pending =&gt; Poll::Pending,
             Poll::Ready(<span class="prelude-val">Some</span>(file_record_batch)) =&gt; {
                 <span class="kw">let </span>file_record_batch = file_record_batch<span class="question-mark">?</span>;
+                <span class="kw">let </span>scan_record_batch = <span class="kw">if </span><span class="self">self</span>.schema_eq(<span class="kw-2">&amp;</span>file_record_batch) {
+                    <span class="prelude-val">Ok</span>(file_record_batch)
+                } <span class="kw">else </span>{
+                    <span class="self">self</span>.convert_record_batch(<span class="kw-2">&amp;</span>file_record_batch)
+                };
 
-                <span class="kw">if </span><span class="self">self</span>.schema_type_match(<span class="kw-2">&amp;</span>file_record_batch) {
-                    <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(file_record_batch)));
-                }
-
-                <span class="kw">let </span>file_row_count = file_record_batch.num_rows();
-                <span class="kw">let </span>scan_schema = <span class="self">self</span>.scan_schema.clone();
-                <span class="kw">let </span><span class="kw-2">mut </span>columns = Vec::with_capacity(scan_schema.num_columns());
-                <span class="kw">for </span>scan_column_schema <span class="kw">in </span>scan_schema.column_schemas() {
-                    <span class="kw">let </span>scan_data_type = <span class="kw-2">&amp;</span>scan_column_schema.data_type;
-
-                    <span class="kw">let </span>file_column = file_record_batch.column_by_name(<span class="kw-2">&amp;</span>scan_column_schema.name);
-                    <span class="kw">let </span>column = <span class="kw">if let </span><span class="prelude-val">Some</span>(file_column) = file_column {
-                        <span class="kw">if </span><span class="kw-2">&amp;</span>file_column.data_type() == scan_data_type {
-                            file_column.clone()
-                        } <span class="kw">else </span>{
-                            file_column.cast(scan_data_type).context(CastVectorSnafu {
-                                from_type: file_column.data_type(),
-                                to_type: scan_data_type.clone(),
-                            })<span class="question-mark">?
-                        </span>}
-                    } <span class="kw">else </span>{
-                        <span class="self">Self</span>::create_default_vector(scan_column_schema, file_row_count)
-                            .map_err(BoxedError::new)
-                            .context(ExternalSnafu)<span class="question-mark">?
-                    </span>};
-
-                    columns.push(column);
-                }
-
-                <span class="kw">let </span>scan_record_batch = RecordBatch::new(scan_schema, columns)<span class="question-mark">?</span>;
-                Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(scan_record_batch)))
+                Poll::Ready(<span class="prelude-val">Some</span>(scan_record_batch))
             }
             Poll::Ready(<span class="prelude-val">None</span>) =&gt; Poll::Ready(<span class="prelude-val">None</span>),
         }
@@ -437,7 +442,7 @@
         }
     }
 
-    <span class="kw">fn </span>schema_type_match(<span class="kw-2">&amp;</span><span class="self">self</span>, file_record_batch: <span class="kw-2">&amp;</span>RecordBatch) -&gt; bool {
+    <span class="kw">fn </span>schema_eq(<span class="kw-2">&amp;</span><span class="self">self</span>, file_record_batch: <span class="kw-2">&amp;</span>RecordBatch) -&gt; bool {
         <span class="self">self</span>.scan_schema
             .column_schemas()
             .iter()
@@ -447,6 +452,59 @@
                     .map(|rb| rb.data_type() == scan_column_schema.data_type)
                     .unwrap_or_default()
             })
+    }
+
+    <span class="doccomment">/// Converts a RecordBatch from file schema to scan schema.
+    ///
+    /// This function performs the following operations:
+    /// - Projection: Only columns present in scan schema are retained.
+    /// - Cast Type: Columns present in both file schema and scan schema but with different types are cast to the type in scan schema.
+    /// - Backfill: Columns present in scan schema but not in file schema are backfilled with default values.
+    </span><span class="kw">fn </span>convert_record_batch(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        file_record_batch: <span class="kw-2">&amp;</span>RecordBatch,
+    ) -&gt; RecordBatchResult&lt;RecordBatch&gt; {
+        <span class="kw">let </span>file_row_count = file_record_batch.num_rows();
+        <span class="kw">let </span>columns = <span class="self">self
+            </span>.scan_schema
+            .column_schemas()
+            .iter()
+            .map(|scan_column_schema| {
+                <span class="kw">let </span>file_column = file_record_batch.column_by_name(<span class="kw-2">&amp;</span>scan_column_schema.name);
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(file_column) = file_column {
+                    <span class="self">Self</span>::cast_column_type(file_column, <span class="kw-2">&amp;</span>scan_column_schema.data_type)
+                } <span class="kw">else </span>{
+                    <span class="self">Self</span>::backfill_column(scan_column_schema, file_row_count)
+                }
+            })
+            .collect::&lt;RecordBatchResult&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
+
+        RecordBatch::new(<span class="self">self</span>.scan_schema.clone(), columns)
+    }
+
+    <span class="kw">fn </span>cast_column_type(
+        source_column: <span class="kw-2">&amp;</span>VectorRef,
+        target_data_type: <span class="kw-2">&amp;</span>ConcreteDataType,
+    ) -&gt; RecordBatchResult&lt;VectorRef&gt; {
+        <span class="kw">if </span><span class="kw-2">&amp;</span>source_column.data_type() == target_data_type {
+            <span class="prelude-val">Ok</span>(source_column.clone())
+        } <span class="kw">else </span>{
+            source_column
+                .cast(target_data_type)
+                .context(CastVectorSnafu {
+                    from_type: source_column.data_type(),
+                    to_type: target_data_type.clone(),
+                })
+        }
+    }
+
+    <span class="kw">fn </span>backfill_column(
+        column_schema: <span class="kw-2">&amp;</span>ColumnSchema,
+        num_rows: usize,
+    ) -&gt; RecordBatchResult&lt;VectorRef&gt; {
+        <span class="self">Self</span>::create_default_vector(column_schema, num_rows)
+            .map_err(BoxedError::new)
+            .context(ExternalSnafu)
     }
 
     <span class="kw">fn </span>create_default_vector(column_schema: <span class="kw-2">&amp;</span>ColumnSchema, num_rows: usize) -&gt; <span class="prelude-ty">Result</span>&lt;VectorRef&gt; {
