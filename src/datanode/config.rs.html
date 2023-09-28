@@ -508,7 +508,7 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Clone, Serialize, Default, Deserialize)]
+<span class="attr">#[derive(Debug, Clone, Serialize, Default, Deserialize, Eq, PartialEq)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>FileConfig {}
 
@@ -800,7 +800,7 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Serialize, Deserialize, Clone)]
+<span class="attr">#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 </span><span class="kw">pub enum </span>RegionEngineConfig {
     <span class="attr">#[serde(rename = <span class="string">&quot;mito&quot;</span>)]
     </span>Mito(MitoConfig),

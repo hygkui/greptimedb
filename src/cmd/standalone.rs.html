@@ -594,6 +594,27 @@
 <a href="#594" id="594">594</a>
 <a href="#595" id="595">595</a>
 <a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1188,6 +1209,27 @@
                 </span><span class="macro">assert_eq!</span>(opts.frontend.grpc.addr, GrpcOptions::default().addr);
             },
         );
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_load_default_standalone_options() {
+        <span class="kw">let </span>options: StandaloneOptions =
+            Options::load_layered_options(<span class="prelude-val">None</span>, <span class="string">&quot;GREPTIMEDB_FRONTEND&quot;</span>, <span class="prelude-val">None</span>).unwrap();
+        <span class="kw">let </span>default_options = StandaloneOptions::default();
+        <span class="macro">assert_eq!</span>(options.mode, default_options.mode);
+        <span class="macro">assert_eq!</span>(options.enable_telemetry, default_options.enable_telemetry);
+        <span class="macro">assert_eq!</span>(options.http, default_options.http);
+        <span class="macro">assert_eq!</span>(options.grpc, default_options.grpc);
+        <span class="macro">assert_eq!</span>(options.mysql, default_options.mysql);
+        <span class="macro">assert_eq!</span>(options.postgres, default_options.postgres);
+        <span class="macro">assert_eq!</span>(options.opentsdb, default_options.opentsdb);
+        <span class="macro">assert_eq!</span>(options.influxdb, default_options.influxdb);
+        <span class="macro">assert_eq!</span>(options.prom_store, default_options.prom_store);
+        <span class="macro">assert_eq!</span>(options.wal, default_options.wal);
+        <span class="macro">assert_eq!</span>(options.kv_store, default_options.kv_store);
+        <span class="macro">assert_eq!</span>(options.procedure, default_options.procedure);
+        <span class="macro">assert_eq!</span>(options.logging, default_options.logging);
+        <span class="macro">assert_eq!</span>(options.region_engine, default_options.region_engine);
     }
 }
 </code></pre></div></section></main></body></html>

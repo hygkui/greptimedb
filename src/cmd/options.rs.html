@@ -262,6 +262,13 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -285,7 +292,7 @@
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{LoadLayeredConfigSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{LoadLayeredConfigSnafu, <span class="prelude-ty">Result</span>, SerdeJsonSnafu};
 
 <span class="kw">pub const </span>ENV_VAR_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__&quot;</span>;
 <span class="kw">pub const </span>ENV_LIST_SEP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;,&quot;</span>;
@@ -358,9 +365,16 @@
                 .ignore_empty(<span class="bool-val">true</span>)
         };
 
+        <span class="comment">// Workaround: Replacement for `Config::try_from(&amp;default_opts)` due to
+        // `ConfigSerializer` cannot handle the case of an empty struct contained
+        // within an iterative structure.
+        // See: https://github.com/mehcode/config-rs/issues/461
+        </span><span class="kw">let </span>json_str = serde_json::to_string(<span class="kw-2">&amp;</span>default_opts).context(SerdeJsonSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>default_config = File::from_str(<span class="kw-2">&amp;</span>json_str, FileFormat::Json);
+
         <span class="comment">// Add default values and environment variables as the sources of the configuration.
         </span><span class="kw">let </span><span class="kw-2">mut </span>layered_config = Config::builder()
-            .add_source(Config::try_from(<span class="kw-2">&amp;</span>default_opts).context(LoadLayeredConfigSnafu)<span class="question-mark">?</span>)
+            .add_source(default_config)
             .add_source(env_source);
 
         <span class="comment">// Add config file as the source of the configuration if it is specified.

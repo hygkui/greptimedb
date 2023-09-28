@@ -61,7 +61,7 @@
 </span><span class="kw">use </span>common_meta::distributed_time_constants;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>HeartbeatOptions {
     <span class="kw">pub </span>interval_millis: u64,

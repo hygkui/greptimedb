@@ -87,7 +87,7 @@
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>WalConfig {
     <span class="comment">// wal file size in bytes
@@ -119,7 +119,7 @@
     <span class="macro">format!</span>(<span class="string">&quot;{store_dir}/kv&quot;</span>)
 }
 
-<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>KvStoreConfig {
     <span class="comment">// Kv file size in bytes
