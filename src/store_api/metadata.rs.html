@@ -1110,6 +1110,36 @@
 <a href="#1110" id="1110">1110</a>
 <a href="#1111" id="1111">1111</a>
 <a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1130,6 +1160,7 @@
 
 </span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::collections::{HashMap, HashSet};
+<span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
@@ -1151,7 +1182,7 @@
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, MetadataError&gt;;
 
 <span class="doccomment">/// Metadata of a column.
-</span><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>ColumnMetadata {
     <span class="doccomment">/// Schema of this column. Is the same as `column_schema` in [SchemaRef].
     </span><span class="kw">pub </span>column_schema: ColumnSchema,
@@ -1159,6 +1190,16 @@
     </span><span class="kw">pub </span>semantic_type: SemanticType,
     <span class="doccomment">/// Immutable and unique id of a region.
     </span><span class="kw">pub </span>column_id: ColumnId,
+}
+
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>ColumnMetadata {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(
+            f,
+            <span class="string">&quot;[{:?} {:?} {:?}]&quot;</span>,
+            <span class="self">self</span>.column_schema, <span class="self">self</span>.semantic_type, <span class="self">self</span>.column_id,
+        )
+    }
 }
 
 <span class="kw">impl </span>ColumnMetadata {
@@ -1218,7 +1259,7 @@
 /// RegionMetadata o-- ColumnMetadata
 /// ColumnMetadata o-- SemanticType
 /// ```
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+</span><span class="attr">#[derive(Clone, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub struct </span>RegionMetadata {
     <span class="doccomment">/// Latest schema constructed from [column_metadatas](RegionMetadata::column_metadatas).
     </span><span class="attr">#[serde(skip)]
@@ -1245,6 +1286,18 @@
     ///
     /// The version starts from 0. Altering the schema bumps the version.
     </span><span class="kw">pub </span>schema_version: u64,
+}
+
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>RegionMetadata {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;RegionMetadata&quot;</span>)
+            .field(<span class="string">&quot;column_metadatas&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.column_metadatas)
+            .field(<span class="string">&quot;time_index&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.time_index)
+            .field(<span class="string">&quot;primary_key&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.primary_key)
+            .field(<span class="string">&quot;region_id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.region_id)
+            .field(<span class="string">&quot;schema_version&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.schema_version)
+            .finish()
+    }
 }
 
 <span class="kw">pub type </span>RegionMetadataRef = Arc&lt;RegionMetadata&gt;;
@@ -2220,6 +2273,13 @@
                 .contains(<span class="string">&quot;internal column name that can not be used&quot;</span>),
             <span class="string">&quot;unexpected err: {err}&quot;</span>,
         );
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_debug_for_column_metadata() {
+        <span class="kw">let </span>region_metadata = build_test_region_metadata();
+        <span class="kw">let </span>formatted = <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, region_metadata);
+        <span class="macro">assert_eq!</span>(formatted, <span class="string">&quot;RegionMetadata { column_metadatas: [[a Int64 not null Tag 1], [b Float64 not null Field 2], [c Timestamp not null Timestamp 3]], time_index: 3, primary_key: [1], region_id: 5299989648942(1234, 5678), schema_version: 0 }&quot;</span>);
     }
 }
 </code></pre></div></section></main></body></html>

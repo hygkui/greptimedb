@@ -468,6 +468,18 @@
 <a href="#468" id="468">468</a>
 <a href="#469" id="469">469</a>
 <a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -487,6 +499,7 @@
 <span class="kw">mod </span>raw;
 
 <span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::fmt;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>arrow::datatypes::{Field, Schema <span class="kw">as </span>ArrowSchema};
@@ -502,7 +515,7 @@
 </span><span class="kw">pub const </span>VERSION_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;greptime:version&quot;</span>;
 
 <span class="doccomment">/// A common schema, should be immutable.
-</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>Schema {
     column_schemas: Vec&lt;ColumnSchema&gt;,
     name_to_index: HashMap&lt;String, usize&gt;,
@@ -516,6 +529,17 @@
     ///
     /// Initial value is zero. The version should bump after altering schema.
     </span>version: u32,
+}
+
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Schema {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Schema&quot;</span>)
+            .field(<span class="string">&quot;column_schemas&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.column_schemas)
+            .field(<span class="string">&quot;name_to_index&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name_to_index)
+            .field(<span class="string">&quot;timestamp_index&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.timestamp_index)
+            .field(<span class="string">&quot;version&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.version)
+            .finish()
+    }
 }
 
 <span class="kw">impl </span>Schema {
