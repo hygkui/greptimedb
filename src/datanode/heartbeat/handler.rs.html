@@ -153,7 +153,6 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -168,9 +167,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::collections::HashMap;
-
-<span class="kw">use </span>async_trait::async_trait;
+</span><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_meta::error::{InvalidHeartbeatResponseSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>MetaResult};
@@ -205,12 +202,13 @@
             Instruction::OpenRegion(OpenRegion {
                 region_ident,
                 region_storage_path,
+                options,
             }) =&gt; {
                 <span class="kw">let </span>region_id = <span class="self">Self</span>::region_ident_to_region_id(<span class="kw-2">&amp;</span>region_ident);
                 <span class="kw">let </span>open_region_req = RegionRequest::Open(RegionOpenRequest {
                     engine: region_ident.engine,
                     region_dir: region_dir(<span class="kw-2">&amp;</span>region_storage_path, region_id),
-                    options: HashMap::new(),
+                    options,
                 });
                 <span class="prelude-val">Ok</span>((region_id, open_region_req))
             }

@@ -306,8 +306,6 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -322,7 +320,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>futures::stream::BoxStream;
 <span class="kw">use </span>futures::StreamExt;
@@ -341,6 +340,21 @@
 <span class="kw">use </span><span class="kw">crate</span>::rpc::store::RangeRequest;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::KeyValue;
 <span class="kw">use </span><span class="kw">crate</span>::DatanodeId;
+
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+</span><span class="doccomment">/// RegionInfo
+/// For compatible reason, DON&#39;T modify the field name.
+</span><span class="kw">pub struct </span>RegionInfo {
+    <span class="attr">#[serde(default)]
+    </span><span class="comment">// The table engine, it SHOULD be immutable after created.
+    </span><span class="kw">pub </span>engine: String,
+    <span class="comment">// The region storage path, it SHOULD be immutable after created.
+    </span><span class="attr">#[serde(default)]
+    </span><span class="kw">pub </span>region_storage_path: String,
+    <span class="comment">// The region options.
+    </span><span class="attr">#[serde(default)]
+    </span><span class="kw">pub </span>region_options: HashMap&lt;String, String&gt;,
+}
 
 <span class="kw">pub struct </span>DatanodeTableKey {
     datanode_id: DatanodeId,
@@ -395,25 +409,17 @@
 </span><span class="kw">pub struct </span>DatanodeTableValue {
     <span class="kw">pub </span>table_id: TableId,
     <span class="kw">pub </span>regions: Vec&lt;RegionNumber&gt;,
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>engine: String,
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>region_storage_path: String,
+    <span class="attr">#[serde(flatten)]
+    </span><span class="kw">pub </span>region_info: RegionInfo,
     version: u64,
 }
 
 <span class="kw">impl </span>DatanodeTableValue {
-    <span class="kw">pub fn </span>new(
-        table_id: TableId,
-        regions: Vec&lt;RegionNumber&gt;,
-        engine: String,
-        region_storage_path: String,
-    ) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(table_id: TableId, regions: Vec&lt;RegionNumber&gt;, region_info: RegionInfo) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             table_id,
             regions,
-            engine,
-            region_storage_path,
+            region_info,
             version: <span class="number">0</span>,
         }
     }
@@ -466,6 +472,7 @@
         table_id: TableId,
         engine: <span class="kw-2">&amp;</span>str,
         region_storage_path: <span class="kw-2">&amp;</span>str,
+        region_options: HashMap&lt;String, String&gt;,
         distribution: RegionDistribution,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Txn&gt; {
         <span class="kw">let </span>txns = distribution
@@ -475,8 +482,11 @@
                 <span class="kw">let </span>val = DatanodeTableValue::new(
                     table_id,
                     regions,
-                    engine.to_string(),
-                    region_storage_path.to_string(),
+                    RegionInfo {
+                        engine: engine.to_string(),
+                        region_storage_path: region_storage_path.to_string(),
+                        region_options: region_options.clone(),
+                    },
                 );
 
                 <span class="prelude-val">Ok</span>(TxnOp::Put(key.as_raw_key(), val.try_as_raw_value()<span class="question-mark">?</span>))
@@ -492,10 +502,10 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>build_update_txn(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_id: TableId,
-        engine: <span class="kw-2">&amp;</span>str,
-        region_storage_path: <span class="kw-2">&amp;</span>str,
+        region_info: RegionInfo,
         current_region_distribution: RegionDistribution,
         new_region_distribution: RegionDistribution,
+        new_region_options: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Txn&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>opts = Vec::new();
 
@@ -507,33 +517,20 @@
                 opts.push(TxnOp::Delete(raw_key))
             }
         }
-
+        <span class="kw">let </span>need_update_options = region_info.region_options != <span class="kw-2">*</span>new_region_options;
         <span class="kw">for </span>(datanode, regions) <span class="kw">in </span>new_region_distribution.into_iter() {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(current_region) = current_region_distribution.get(<span class="kw-2">&amp;</span>datanode) {
-                <span class="comment">// Updates if need.
-                </span><span class="kw">if </span><span class="kw-2">*</span>current_region != regions {
-                    <span class="kw">let </span>key = DatanodeTableKey::new(datanode, table_id);
-                    <span class="kw">let </span>raw_key = key.as_raw_key();
-                    <span class="kw">let </span>val = DatanodeTableValue::new(
-                        table_id,
-                        regions,
-                        engine.to_string(),
-                        region_storage_path.to_string(),
-                    )
-                    .try_as_raw_value()<span class="question-mark">?</span>;
-                    opts.push(TxnOp::Put(raw_key, val));
-                }
-            } <span class="kw">else </span>{
-                <span class="comment">// New datanodes
-                </span><span class="kw">let </span>key = DatanodeTableKey::new(datanode, table_id);
+            <span class="kw">let </span>need_update =
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(current_region) = current_region_distribution.get(<span class="kw-2">&amp;</span>datanode) {
+                    <span class="comment">// Updates if need.
+                    </span><span class="kw-2">*</span>current_region != regions || need_update_options
+                } <span class="kw">else </span>{
+                    <span class="bool-val">true
+                </span>};
+            <span class="kw">if </span>need_update {
+                <span class="kw">let </span>key = DatanodeTableKey::new(datanode, table_id);
                 <span class="kw">let </span>raw_key = key.as_raw_key();
-                <span class="kw">let </span>val = DatanodeTableValue::new(
-                    table_id,
-                    regions,
-                    engine.to_string(),
-                    region_storage_path.to_string(),
-                )
-                .try_as_raw_value()<span class="question-mark">?</span>;
+                <span class="kw">let </span>val = DatanodeTableValue::new(table_id, regions, region_info.clone())
+                    .try_as_raw_value()<span class="question-mark">?</span>;
                 opts.push(TxnOp::Put(raw_key, val));
             }
         }
@@ -580,11 +577,10 @@
         <span class="kw">let </span>value = DatanodeTableValue {
             table_id: <span class="number">42</span>,
             regions: <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],
-            engine: Default::default(),
-            region_storage_path: Default::default(),
+            region_info: RegionInfo::default(),
             version: <span class="number">1</span>,
         };
-        <span class="kw">let </span>literal = <span class="string">br#&quot;{&quot;table_id&quot;:42,&quot;regions&quot;:[1,2,3],&quot;engine&quot;:&quot;&quot;,&quot;region_storage_path&quot;:&quot;&quot;,&quot;version&quot;:1}&quot;#</span>;
+        <span class="kw">let </span>literal = <span class="string">br#&quot;{&quot;table_id&quot;:42,&quot;regions&quot;:[1,2,3],&quot;engine&quot;:&quot;&quot;,&quot;region_storage_path&quot;:&quot;&quot;,&quot;region_options&quot;:{},&quot;version&quot;:1}&quot;#</span>;
 
         <span class="kw">let </span>raw_value = value.try_as_raw_value().unwrap();
         <span class="macro">assert_eq!</span>(raw_value, literal);

@@ -312,6 +312,19 @@
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -326,7 +339,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::time::Duration;
+</span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::v1::meta::MailboxMessage;
 <span class="kw">use </span>async_trait::async_trait;
@@ -356,6 +370,7 @@
     // to prevent it from renewing the lease.
     </span>remark_inactive_region: bool,
     region_storage_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    region_options: <span class="prelude-ty">Option</span>&lt;HashMap&lt;String, String&gt;&gt;,
 }
 
 <span class="kw">impl </span>ActivateRegion {
@@ -364,6 +379,7 @@
             candidate,
             remark_inactive_region: <span class="bool-val">false</span>,
             region_storage_path: <span class="prelude-val">None</span>,
+            region_options: <span class="prelude-val">None</span>,
         }
     }
 
@@ -391,14 +407,15 @@
             ..failed_region.clone()
         };
         <span class="macro">info!</span>(<span class="string">&quot;Activating region: {candidate_ident:?}&quot;</span>);
-
+        <span class="kw">let </span>region_options: HashMap&lt;String, String&gt; = (<span class="kw-2">&amp;</span>table_info.meta.options).into();
         <span class="kw">let </span>instruction = Instruction::OpenRegion(OpenRegion::new(
             candidate_ident.clone(),
             <span class="kw-2">&amp;</span>region_storage_path,
+            region_options.clone(),
         ));
 
         <span class="self">self</span>.region_storage_path = <span class="prelude-val">Some</span>(region_storage_path);
-
+        <span class="self">self</span>.region_options = <span class="prelude-val">Some</span>(region_options);
         <span class="kw">let </span>msg = MailboxMessage::json_message(
             <span class="string">&quot;Activate Region&quot;</span>,
             <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Metasrv@{}&quot;</span>, ctx.selector_ctx.server_addr),
@@ -452,6 +469,11 @@
                             .clone()
                             .context(error::UnexpectedSnafu {
                                 violated: <span class="string">&quot;expected region_storage_path&quot;</span>,
+                            })<span class="question-mark">?</span>,
+                        <span class="self">self</span>.region_options
+                            .clone()
+                            .context(error::UnexpectedSnafu {
+                                violated: <span class="string">&quot;expected region_options&quot;</span>,
                             })<span class="question-mark">?</span>,
                     )))
                 } <span class="kw">else </span>{
@@ -507,6 +529,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::collections::HashMap;
+
     <span class="kw">use </span>api::v1::meta::mailbox_message::Payload;
     <span class="kw">use </span>common_meta::instruction::SimpleReply;
 
@@ -545,7 +569,8 @@
                         datanode_id: candidate,
                         ..failed_region.clone()
                     },
-                    <span class="kw-2">&amp;</span>env.path
+                    <span class="kw-2">&amp;</span>env.path,
+                    HashMap::new(),
                 )))
                 .unwrap(),
             ))
@@ -580,7 +605,7 @@
             </span>.unwrap();
         <span class="macro">assert_eq!</span>(
             <span class="macro">format!</span>(<span class="string">&quot;{next_state:?}&quot;</span>),
-            <span class="string">r#&quot;UpdateRegionMetadata { candidate: Peer { id: 2, addr: &quot;&quot; }, region_storage_path: &quot;greptime/public&quot; }&quot;#
+            <span class="string">r#&quot;UpdateRegionMetadata { candidate: Peer { id: 2, addr: &quot;&quot; }, region_storage_path: &quot;greptime/public&quot;, region_options: {} }&quot;#
         </span>);
     }
 
@@ -614,7 +639,8 @@
                         datanode_id: candidate,
                         ..failed_region.clone()
                     },
-                    <span class="kw-2">&amp;</span>env.path
+                    <span class="kw-2">&amp;</span>env.path,
+                    HashMap::new(),
                 )))
                 .unwrap(),
             ))

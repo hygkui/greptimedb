@@ -568,6 +568,9 @@
 <a href="#568" id="568">568</a>
 <a href="#569" id="569">569</a>
 <a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -590,7 +593,7 @@
 <span class="kw">use </span>common_meta::ddl::utils::region_storage_path;
 <span class="kw">use </span>common_meta::error <span class="kw">as </span>MetaError;
 <span class="kw">use </span>common_meta::key::catalog_name::{CatalogNameKey, CatalogNameValue};
-<span class="kw">use </span>common_meta::key::datanode_table::{DatanodeTableKey, DatanodeTableValue};
+<span class="kw">use </span>common_meta::key::datanode_table::{DatanodeTableKey, DatanodeTableValue, RegionInfo};
 <span class="kw">use </span>common_meta::key::schema_name::{SchemaNameKey, SchemaNameValue};
 <span class="kw">use </span>common_meta::key::table_info::{TableInfoKey, TableInfoValue};
 <span class="kw">use </span>common_meta::key::table_name::{TableNameKey, TableNameValue};
@@ -975,8 +978,11 @@
                     DatanodeTableValue::new(
                         table_id,
                         regions,
-                        engine.to_string(),
-                        region_storage_path.clone(),
+                        RegionInfo {
+                            engine: engine.to_string(),
+                            region_storage_path: region_storage_path.clone(),
+                            region_options: (<span class="kw-2">&amp;</span>value.table_info.meta.options).into(),
+                        },
                     ),
                 )
             })

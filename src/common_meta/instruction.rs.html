@@ -152,6 +152,10 @@
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -166,7 +170,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::fmt::{Display, Formatter};
+</span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::fmt::{Display, Formatter};
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
@@ -227,13 +232,15 @@
 </span><span class="kw">pub struct </span>OpenRegion {
     <span class="kw">pub </span>region_ident: RegionIdent,
     <span class="kw">pub </span>region_storage_path: String,
+    <span class="kw">pub </span>options: HashMap&lt;String, String&gt;,
 }
 
 <span class="kw">impl </span>OpenRegion {
-    <span class="kw">pub fn </span>new(region_ident: RegionIdent, path: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(region_ident: RegionIdent, path: <span class="kw-2">&amp;</span>str, options: HashMap&lt;String, String&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             region_ident,
             region_storage_path: path.to_string(),
+            options,
         }
     }
 }
@@ -281,12 +288,13 @@
                 engine: <span class="string">&quot;mito2&quot;</span>.to_string(),
             },
             <span class="string">&quot;test/foo&quot;</span>,
+            HashMap::new(),
         ));
 
         <span class="kw">let </span>serialized = serde_json::to_string(<span class="kw-2">&amp;</span>open_region).unwrap();
 
         <span class="macro">assert_eq!</span>(
-            <span class="string">r#&quot;{&quot;OpenRegion&quot;:{&quot;region_ident&quot;:{&quot;cluster_id&quot;:1,&quot;datanode_id&quot;:2,&quot;table_id&quot;:1024,&quot;region_number&quot;:1,&quot;engine&quot;:&quot;mito2&quot;},&quot;region_storage_path&quot;:&quot;test/foo&quot;}}&quot;#</span>,
+            <span class="string">r#&quot;{&quot;OpenRegion&quot;:{&quot;region_ident&quot;:{&quot;cluster_id&quot;:1,&quot;datanode_id&quot;:2,&quot;table_id&quot;:1024,&quot;region_number&quot;:1,&quot;engine&quot;:&quot;mito2&quot;},&quot;region_storage_path&quot;:&quot;test/foo&quot;,&quot;options&quot;:{}}}&quot;#</span>,
             serialized
         );
 

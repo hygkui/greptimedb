@@ -950,6 +950,26 @@
 <a href="#950" id="950">950</a>
 <a href="#951" id="951">951</a>
 <a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1007,7 +1027,7 @@
 </span><span class="attr">#[allow(deprecated)]
 </span><span class="kw">pub mod </span>table_route;
 
-<span class="kw">use </span>std::collections::BTreeMap;
+<span class="kw">use </span>std::collections::{BTreeMap, HashMap};
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
@@ -1021,6 +1041,7 @@
 <span class="kw">use </span>table_name::{TableNameKey, TableNameManager, TableNameValue};
 
 <span class="kw">use </span><span class="self">self</span>::catalog_name::{CatalogManager, CatalogNameKey, CatalogNameValue};
+<span class="kw">use </span><span class="self">self</span>::datanode_table::RegionInfo;
 <span class="kw">use </span><span class="self">self</span>::schema_name::{SchemaManager, SchemaNameKey, SchemaNameValue};
 <span class="kw">use </span><span class="self">self</span>::table_route::{TableRouteManager, TableRouteValue};
 <span class="kw">use </span><span class="kw">crate</span>::ddl::utils::region_storage_path;
@@ -1208,6 +1229,7 @@
             </span>.table_name_manager()
             .build_create_txn(<span class="kw-2">&amp;</span>table_name, table_id)<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>region_options = (<span class="kw-2">&amp;</span>table_info.meta.options).into();
         <span class="comment">// Creates table info.
         </span><span class="kw">let </span>table_info_value = TableInfoValue::new(table_info);
         <span class="kw">let </span>(create_table_info_txn, on_create_table_info_failure) = <span class="self">self
@@ -1220,6 +1242,7 @@
             table_id,
             <span class="kw-2">&amp;</span>engine,
             <span class="kw-2">&amp;</span>region_storage_path,
+            region_options,
             distribution,
         )<span class="question-mark">?</span>;
 
@@ -1398,10 +1421,10 @@
     <span class="kw">pub async fn </span>update_table_route(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_id: TableId,
-        engine: <span class="kw-2">&amp;</span>str,
-        region_storage_path: <span class="kw-2">&amp;</span>str,
+        region_info: RegionInfo,
         current_table_route_value: TableRouteValue,
         new_region_routes: Vec&lt;RegionRoute&gt;,
+        new_region_options: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// Updates the datanode table key value pairs.
         </span><span class="kw">let </span>current_region_distribution =
@@ -1410,10 +1433,10 @@
 
         <span class="kw">let </span>update_datanode_table_txn = <span class="self">self</span>.datanode_table_manager().build_update_txn(
             table_id,
-            engine,
-            region_storage_path,
+            region_info,
             current_region_distribution,
             new_region_distribution,
+            new_region_options,
         )<span class="question-mark">?</span>;
 
         <span class="comment">// Updates the table_route.
@@ -1505,7 +1528,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::collections::BTreeMap;
+    <span class="kw">use </span>std::collections::{BTreeMap, HashMap};
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
@@ -1515,6 +1538,7 @@
 
     <span class="kw">use </span><span class="kw">super</span>::datanode_table::DatanodeTableKey;
     <span class="kw">use </span><span class="kw">crate</span>::ddl::utils::region_storage_path;
+    <span class="kw">use </span><span class="kw">crate</span>::key::datanode_table::RegionInfo;
     <span class="kw">use </span><span class="kw">crate</span>::key::table_info::TableInfoValue;
     <span class="kw">use </span><span class="kw">crate</span>::key::table_name::TableNameKey;
     <span class="kw">use </span><span class="kw">crate</span>::key::table_route::TableRouteValue;
@@ -1846,10 +1870,14 @@
         </span>table_metadata_manager
             .update_table_route(
                 table_id,
-                engine,
-                <span class="kw-2">&amp;</span>region_storage_path,
+                RegionInfo {
+                    engine: engine.to_string(),
+                    region_storage_path: region_storage_path.to_string(),
+                    region_options: HashMap::new(),
+                },
                 current_table_route_value.clone(),
                 new_region_routes.clone(),
+                <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
             </span>.unwrap();
@@ -1859,10 +1887,14 @@
         </span>table_metadata_manager
             .update_table_route(
                 table_id,
-                engine,
-                <span class="kw-2">&amp;</span>region_storage_path,
+                RegionInfo {
+                    engine: engine.to_string(),
+                    region_storage_path: region_storage_path.to_string(),
+                    region_options: HashMap::new(),
+                },
                 current_table_route_value.clone(),
                 new_region_routes.clone(),
+                <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
             </span>.unwrap();
@@ -1873,10 +1905,14 @@
         </span>table_metadata_manager
             .update_table_route(
                 table_id,
-                engine,
-                <span class="kw-2">&amp;</span>region_storage_path,
+                RegionInfo {
+                    engine: engine.to_string(),
+                    region_storage_path: region_storage_path.to_string(),
+                    region_options: HashMap::new(),
+                },
                 current_table_route_value.clone(),
                 new_region_routes.clone(),
+                <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
             </span>.unwrap();
@@ -1893,10 +1929,14 @@
         <span class="macro">assert!</span>(table_metadata_manager
             .update_table_route(
                 table_id,
-                engine,
-                <span class="kw-2">&amp;</span>region_storage_path,
+                RegionInfo {
+                    engine: engine.to_string(),
+                    region_storage_path: region_storage_path.to_string(),
+                    region_options: HashMap::new(),
+                },
                 wrong_table_route_value,
-                new_region_routes
+                new_region_routes,
+                <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
             </span>.is_err());
