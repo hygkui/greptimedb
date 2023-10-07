@@ -572,6 +572,13 @@
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -650,6 +657,12 @@
         addr: SocketAddr,
         <span class="attr">#[snafu(source)]
         </span>error: std::io::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert to TcpIncoming&quot;</span>))]
+    </span>TcpIncoming {
+        <span class="attr">#[snafu(source)]
+        </span>error: Box&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync&gt;,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to execute query, query: {}&quot;</span>, query))]
@@ -965,6 +978,7 @@
             | AlreadyStarted { .. }
             | InvalidPromRemoteReadQueryResult { .. }
             | TcpBind { .. }
+            | TcpIncoming { .. }
             | CatalogError { .. }
             | GrpcReflectionService { .. }
             | BuildHttpResponse { .. } =&gt; StatusCode::Internal,

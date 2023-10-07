@@ -283,6 +283,10 @@
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -329,14 +333,16 @@
 <span class="kw">use </span>tokio::net::TcpListener;
 <span class="kw">use </span>tokio::sync::oneshot::{<span class="self">self</span>, Receiver, Sender};
 <span class="kw">use </span>tokio::sync::Mutex;
-<span class="kw">use </span>tokio_stream::wrappers::TcpListenerStream;
+<span class="kw">use </span>tonic::transport::server::TcpIncoming;
 <span class="kw">use </span>tonic::{Request, Response, Status};
 <span class="kw">use </span>tonic_reflection::server::{ServerReflection, ServerReflectionServer};
 
 <span class="kw">use </span><span class="self">self</span>::flight::{FlightCraftRef, FlightCraftWrapper};
 <span class="kw">use </span><span class="self">self</span>::prom_query_gateway::PrometheusGatewayService;
 <span class="kw">use </span><span class="self">self</span>::region_server::{RegionServerHandlerRef, RegionServerRequestHandler};
-<span class="kw">use </span><span class="kw">crate</span>::error::{AlreadyStartedSnafu, InternalSnafu, <span class="prelude-ty">Result</span>, StartGrpcSnafu, TcpBindSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    AlreadyStartedSnafu, InternalSnafu, <span class="prelude-ty">Result</span>, StartGrpcSnafu, TcpBindSnafu, TcpIncomingSnafu,
+};
 <span class="kw">use </span><span class="kw">crate</span>::grpc::database::DatabaseService;
 <span class="kw">use </span><span class="kw">crate</span>::grpc::greptime_handler::GreptimeRequestHandler;
 <span class="kw">use </span><span class="kw">crate</span>::prometheus_handler::PrometheusHandlerRef;
@@ -494,7 +500,7 @@
         <span class="kw">let </span>max_recv_message_size = <span class="self">self</span>.config.max_recv_message_size;
         <span class="kw">let </span>max_send_message_size = <span class="self">self</span>.config.max_send_message_size;
         <span class="kw">let </span>(tx, rx) = oneshot::channel();
-        <span class="kw">let </span>(listener, addr) = {
+        <span class="kw">let </span>(incoming, addr) = {
             <span class="kw">let </span><span class="kw-2">mut </span>shutdown_tx = <span class="self">self</span>.shutdown_tx.lock().<span class="kw">await</span>;
             <span class="macro">ensure!</span>(
                 shutdown_tx.is_none(),
@@ -505,11 +511,13 @@
                 .<span class="kw">await
                 </span>.context(TcpBindSnafu { addr })<span class="question-mark">?</span>;
             <span class="kw">let </span>addr = listener.local_addr().context(TcpBindSnafu { addr })<span class="question-mark">?</span>;
+            <span class="kw">let </span>incoming =
+                TcpIncoming::from_listener(listener, <span class="bool-val">true</span>, <span class="prelude-val">None</span>).context(TcpIncomingSnafu)<span class="question-mark">?</span>;
             <span class="macro">info!</span>(<span class="string">&quot;gRPC server is bound to {}&quot;</span>, addr);
 
             <span class="kw-2">*</span>shutdown_tx = <span class="prelude-val">Some</span>(tx);
 
-            (listener, addr)
+            (incoming, addr)
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>builder = tonic::transport::Server::builder()
@@ -556,7 +564,7 @@
 
         <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="kw">let </span>result = builder
-                .serve_with_incoming_shutdown(TcpListenerStream::new(listener), rx.map(drop))
+                .serve_with_incoming_shutdown(incoming, rx.map(drop))
                 .<span class="kw">await
                 </span>.context(StartGrpcSnafu);
             serve_state_tx.send(result)

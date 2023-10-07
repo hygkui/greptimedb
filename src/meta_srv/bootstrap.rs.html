@@ -189,6 +189,7 @@
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -219,8 +220,7 @@
 <span class="kw">use </span>tokio::net::TcpListener;
 <span class="kw">use </span>tokio::select;
 <span class="kw">use </span>tokio::sync::mpsc::{<span class="self">self</span>, Receiver, Sender};
-<span class="kw">use </span>tokio_stream::wrappers::TcpListenerStream;
-<span class="kw">use </span>tonic::transport::server::Router;
+<span class="kw">use </span>tonic::transport::server::{Router, TcpIncoming};
 
 <span class="kw">use </span><span class="kw">crate</span>::election::etcd::EtcdElection;
 <span class="kw">use </span><span class="kw">crate</span>::lock::etcd::EtcdLock;
@@ -312,10 +312,12 @@
     <span class="kw">let </span>listener = TcpListener::bind(bind_addr)
         .<span class="kw">await
         </span>.context(error::TcpBindSnafu { addr: bind_addr })<span class="question-mark">?</span>;
-    <span class="kw">let </span>listener = TcpListenerStream::new(listener);
+
+    <span class="kw">let </span>incoming =
+        TcpIncoming::from_listener(listener, <span class="bool-val">true</span>, <span class="prelude-val">None</span>).context(error::TcpIncomingSnafu)<span class="question-mark">?</span>;
 
     router
-        .serve_with_incoming_shutdown(listener, <span class="kw">async </span>{
+        .serve_with_incoming_shutdown(incoming, <span class="kw">async </span>{
             <span class="kw">let _ </span>= signal.recv().<span class="kw">await</span>;
         })
         .<span class="kw">await
