@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["BatchMerger","CompareFirst","MergeReader","MergeReaderBuilder","Node"]};
+window.SIDEBAR_ITEMS = {"fn":["output_batch","push_remaining_to_heap"],"struct":["BatchMerger","CompareFirst","CompareTimeSeq","MergeReader","MergeReaderBuilder","Node"]};
