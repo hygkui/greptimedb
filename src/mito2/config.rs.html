@@ -115,6 +115,9 @@
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -175,8 +178,10 @@
     </span><span class="kw">pub </span>global_write_buffer_reject_size: ReadableSize,
 
     <span class="comment">// Cache configs:
-    </span><span class="doccomment">/// Cache size for SST metadata (default 128MB). Setting it to 0 to disable cache.
+    </span><span class="doccomment">/// Cache size for SST metadata (default 128MB). Setting it to 0 to disable the cache.
     </span><span class="kw">pub </span>sst_meta_cache_size: ReadableSize,
+    <span class="doccomment">/// Cache size for vectors and arrow arrays (default 512MB). Setting it to 0 to disable the cache.
+    </span><span class="kw">pub </span>vector_cache_size: ReadableSize,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>MitoConfig {
@@ -192,6 +197,7 @@
             global_write_buffer_size: ReadableSize::gb(<span class="number">1</span>),
             global_write_buffer_reject_size: ReadableSize::gb(<span class="number">2</span>),
             sst_meta_cache_size: ReadableSize::mb(<span class="number">128</span>),
+            vector_cache_size: ReadableSize::mb(<span class="number">512</span>),
         }
     }
 }

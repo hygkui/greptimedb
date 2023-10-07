@@ -129,6 +129,62 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -152,6 +208,8 @@
 <span class="kw">use </span>std::mem;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>datatypes::value::Value;
+<span class="kw">use </span>datatypes::vectors::VectorRef;
 <span class="kw">use </span>moka::sync::Cache;
 <span class="kw">use </span>parquet::file::metadata::ParquetMetaData;
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -163,13 +221,15 @@
 </span><span class="kw">pub struct </span>CacheManager {
     <span class="doccomment">/// Cache for SST metadata.
     </span>sst_meta_cache: <span class="prelude-ty">Option</span>&lt;SstMetaCache&gt;,
+    <span class="doccomment">/// Cache for vectors.
+    </span>vector_cache: <span class="prelude-ty">Option</span>&lt;VectorCache&gt;,
 }
 
 <span class="kw">pub type </span>CacheManagerRef = Arc&lt;CacheManager&gt;;
 
 <span class="kw">impl </span>CacheManager {
     <span class="doccomment">/// Creates a new manager with specific cache size in bytes.
-    </span><span class="kw">pub fn </span>new(sst_meta_cache_size: u64) -&gt; CacheManager {
+    </span><span class="kw">pub fn </span>new(sst_meta_cache_size: u64, vector_cache_size: u64) -&gt; CacheManager {
         <span class="kw">let </span>sst_meta_cache = <span class="kw">if </span>sst_meta_cache_size == <span class="number">0 </span>{
             <span class="prelude-val">None
         </span>} <span class="kw">else </span>{
@@ -182,8 +242,23 @@
                 .build();
             <span class="prelude-val">Some</span>(cache)
         };
+        <span class="kw">let </span>vector_cache = <span class="kw">if </span>vector_cache_size == <span class="number">0 </span>{
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="kw">let </span>cache = Cache::builder()
+                .max_capacity(vector_cache_size)
+                .weigher(|_k, v: <span class="kw-2">&amp;</span>VectorRef| {
+                    <span class="comment">// We ignore the heap size of `Value`.
+                    </span>(mem::size_of::&lt;Value&gt;() + v.memory_size()) <span class="kw">as </span>u32
+                })
+                .build();
+            <span class="prelude-val">Some</span>(cache)
+        };
 
-        CacheManager { sst_meta_cache }
+        CacheManager {
+            sst_meta_cache,
+            vector_cache,
+        }
     }
 
     <span class="doccomment">/// Gets cached [ParquetMetaData].
@@ -215,9 +290,23 @@
             cache.remove(<span class="kw-2">&amp;</span>SstMetaKey(region_id, file_id));
         }
     }
+
+    <span class="doccomment">/// Gets a vector with repeated value for specific `key`.
+    </span><span class="kw">pub fn </span>get_repeated_vector(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Value) -&gt; <span class="prelude-ty">Option</span>&lt;VectorRef&gt; {
+        <span class="self">self</span>.vector_cache
+            .as_ref()
+            .and_then(|vector_cache| vector_cache.get(key))
+    }
+
+    <span class="doccomment">/// Puts a vector with repeated value into the cache.
+    </span><span class="kw">pub fn </span>put_repeated_vector(<span class="kw-2">&amp;</span><span class="self">self</span>, key: Value, vector: VectorRef) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(cache) = <span class="kw-2">&amp;</span><span class="self">self</span>.vector_cache {
+            cache.insert(key, vector);
+        }
+    }
 }
 
-<span class="doccomment">/// Cache key for SST meta.
+<span class="doccomment">/// Cache key (region id, file id) for SST meta.
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 </span><span class="kw">struct </span>SstMetaKey(RegionId, FileId);
 
@@ -228,16 +317,23 @@
     }
 }
 
-<span class="kw">type </span>SstMetaCache = Cache&lt;SstMetaKey, Arc&lt;ParquetMetaData&gt;&gt;;
+<span class="doccomment">/// Maps (region id, file id) to [ParquetMetaData].
+</span><span class="kw">type </span>SstMetaCache = Cache&lt;SstMetaKey, Arc&lt;ParquetMetaData&gt;&gt;;
+<span class="doccomment">/// Maps [Value] to a vector that holds this value repeatedly.
+///
+/// e.g. `&quot;hello&quot; =&gt; [&quot;hello&quot;, &quot;hello&quot;, &quot;hello&quot;]`
+</span><span class="kw">type </span>VectorCache = Cache&lt;Value, VectorRef&gt;;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>datatypes::vectors::Int64Vector;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::cache::test_util::parquet_meta;
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_disable_meta_cache() {
-        <span class="kw">let </span>cache = CacheManager::new(<span class="number">0</span>);
+    </span><span class="kw">fn </span>test_disable_cache() {
+        <span class="kw">let </span>cache = CacheManager::new(<span class="number">0</span>, <span class="number">0</span>);
         <span class="macro">assert!</span>(cache.sst_meta_cache.is_none());
 
         <span class="kw">let </span>region_id = RegionId::new(<span class="number">1</span>, <span class="number">1</span>);
@@ -245,11 +341,16 @@
         <span class="kw">let </span>metadata = parquet_meta();
         cache.put_parquet_meta_data(region_id, file_id, metadata);
         <span class="macro">assert!</span>(cache.get_parquet_meta_data(region_id, file_id).is_none());
+
+        <span class="kw">let </span>value = Value::Int64(<span class="number">10</span>);
+        <span class="kw">let </span>vector: VectorRef = Arc::new(Int64Vector::from_slice([<span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>]));
+        cache.put_repeated_vector(value.clone(), vector.clone());
+        <span class="macro">assert!</span>(cache.get_repeated_vector(<span class="kw-2">&amp;</span>value).is_none());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_parquet_meta_cache() {
-        <span class="kw">let </span>cache = CacheManager::new(<span class="number">2000</span>);
+        <span class="kw">let </span>cache = CacheManager::new(<span class="number">2000</span>, <span class="number">0</span>);
         <span class="kw">let </span>region_id = RegionId::new(<span class="number">1</span>, <span class="number">1</span>);
         <span class="kw">let </span>file_id = FileId::random();
         <span class="macro">assert!</span>(cache.get_parquet_meta_data(region_id, file_id).is_none());
@@ -258,6 +359,17 @@
         <span class="macro">assert!</span>(cache.get_parquet_meta_data(region_id, file_id).is_some());
         cache.remove_parquet_meta_data(region_id, file_id);
         <span class="macro">assert!</span>(cache.get_parquet_meta_data(region_id, file_id).is_none());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_repeated_vector_cache() {
+        <span class="kw">let </span>cache = CacheManager::new(<span class="number">0</span>, <span class="number">4096</span>);
+        <span class="kw">let </span>value = Value::Int64(<span class="number">10</span>);
+        <span class="macro">assert!</span>(cache.get_repeated_vector(<span class="kw-2">&amp;</span>value).is_none());
+        <span class="kw">let </span>vector: VectorRef = Arc::new(Int64Vector::from_slice([<span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>]));
+        cache.put_repeated_vector(value.clone(), vector.clone());
+        <span class="kw">let </span>cached = cache.get_repeated_vector(<span class="kw-2">&amp;</span>value).unwrap();
+        <span class="macro">assert_eq!</span>(vector, cached);
     }
 }
 </code></pre></div></section></main></body></html>

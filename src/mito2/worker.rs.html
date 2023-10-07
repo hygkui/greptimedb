@@ -668,6 +668,12 @@
 <a href="#668" id="668">668</a>
 <a href="#669" id="669">669</a>
 <a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -790,7 +796,10 @@
             config.global_write_buffer_size.as_bytes() <span class="kw">as </span>usize,
         ));
         <span class="kw">let </span>scheduler = Arc::new(LocalScheduler::new(config.max_background_jobs));
-        <span class="kw">let </span>cache_manager = Arc::new(CacheManager::new(config.sst_meta_cache_size.as_bytes()));
+        <span class="kw">let </span>cache_manager = Arc::new(CacheManager::new(
+            config.sst_meta_cache_size.as_bytes(),
+            config.vector_cache_size.as_bytes(),
+        ));
 
         <span class="kw">let </span>workers = (<span class="number">0</span>..config.num_workers)
             .map(|id| {
@@ -885,7 +894,10 @@
             ))
         });
         <span class="kw">let </span>scheduler = Arc::new(LocalScheduler::new(config.max_background_jobs));
-        <span class="kw">let </span>cache_manager = Arc::new(CacheManager::new(config.sst_meta_cache_size.as_bytes()));
+        <span class="kw">let </span>cache_manager = Arc::new(CacheManager::new(
+            config.sst_meta_cache_size.as_bytes(),
+            config.vector_cache_size.as_bytes(),
+        ));
 
         <span class="kw">let </span>workers = (<span class="number">0</span>..config.num_workers)
             .map(|id| {

@@ -333,44 +333,6 @@
 <a href="#333" id="333">333</a>
 <a href="#334" id="334">334</a>
 <a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -561,59 +523,21 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>api::v1;
     <span class="kw">use </span>api::v1::ColumnDataType;
-    <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
-    <span class="kw">use </span>datatypes::schema::ColumnSchema;
-    <span class="kw">use </span>store_api::metadata::{ColumnMetadata, RegionMetadataBuilder};
-    <span class="kw">use </span>store_api::storage::RegionId;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::test_util::i64_value;
+    <span class="kw">use </span><span class="kw">crate</span>::test_util::meta_util::TestRegionMetadataBuilder;
 
     <span class="kw">const </span>TS_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;ts&quot;</span>;
     <span class="kw">const </span>START_SEQ: SequenceNumber = <span class="number">100</span>;
 
     <span class="doccomment">/// Creates a region: `ts, k0, k1, ..., v0, v1, ...`
-    </span><span class="kw">fn </span>new_region_metadata(num_tag: usize, num_field: usize) -&gt; RegionMetadata {
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = RegionMetadataBuilder::new(RegionId::new(<span class="number">1</span>, <span class="number">1</span>));
-        <span class="kw">let </span><span class="kw-2">mut </span>column_id = <span class="number">0</span>;
-        builder.push_column_metadata(ColumnMetadata {
-            column_schema: ColumnSchema::new(
-                TS_NAME,
-                ConcreteDataType::timestamp_millisecond_datatype(),
-                <span class="bool-val">false</span>,
-            ),
-            semantic_type: SemanticType::Timestamp,
-            column_id,
-        });
-        <span class="comment">// For simplicity, we use the same data type for tag/field columns.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>primary_key = Vec::with_capacity(num_tag);
-        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..num_tag {
-            column_id += <span class="number">1</span>;
-            builder.push_column_metadata(ColumnMetadata {
-                column_schema: ColumnSchema::new(
-                    <span class="macro">format!</span>(<span class="string">&quot;k{i}&quot;</span>),
-                    ConcreteDataType::int64_datatype(),
-                    <span class="bool-val">true</span>,
-                ),
-                semantic_type: SemanticType::Tag,
-                column_id,
-            });
-            primary_key.push(i <span class="kw">as </span>u32 + <span class="number">1</span>);
-        }
-        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..num_field {
-            column_id += <span class="number">1</span>;
-            builder.push_column_metadata(ColumnMetadata {
-                column_schema: ColumnSchema::new(
-                    <span class="macro">format!</span>(<span class="string">&quot;v{i}&quot;</span>),
-                    ConcreteDataType::int64_datatype(),
-                    <span class="bool-val">true</span>,
-                ),
-                semantic_type: SemanticType::Field,
-                column_id,
-            });
-        }
-        builder.primary_key(primary_key);
-        builder.build().unwrap()
+    </span><span class="kw">fn </span>new_region_metadata(num_tags: usize, num_fields: usize) -&gt; RegionMetadata {
+        TestRegionMetadataBuilder::default()
+            .ts_name(TS_NAME)
+            .num_tags(num_tags)
+            .num_fields(num_fields)
+            .build()
     }
 
     <span class="doccomment">/// Creates rows `[ 0, 1, ..., n ] x num_rows`
