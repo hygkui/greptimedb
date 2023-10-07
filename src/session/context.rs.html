@@ -233,13 +233,6 @@
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
 <a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -276,7 +269,7 @@
     current_catalog: String,
     current_schema: String,
     current_user: ArcSwap&lt;<span class="prelude-ty">Option</span>&lt;UserInfoRef&gt;&gt;,
-    time_zone: ArcSwap&lt;<span class="prelude-ty">Option</span>&lt;TimeZone&gt;&gt;,
+    time_zone: <span class="prelude-ty">Option</span>&lt;TimeZone&gt;,
     sql_dialect: Box&lt;<span class="kw">dyn </span>Dialect + Send + Sync&gt;,
     trace_id: u64,
 }
@@ -345,12 +338,7 @@
 
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>time_zone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TimeZone&gt; {
-        <span class="self">self</span>.time_zone.load().as_ref().clone()
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>set_time_zone(<span class="kw-2">&amp;</span><span class="self">self</span>, tz: <span class="prelude-ty">Option</span>&lt;TimeZone&gt;) {
-        <span class="kw">let _ </span>= <span class="self">self</span>.time_zone.swap(Arc::new(tz));
+        <span class="self">self</span>.time_zone.clone()
     }
 
     <span class="attr">#[inline]
@@ -381,9 +369,7 @@
             current_user: <span class="self">self
                 </span>.current_user
                 .unwrap_or_else(|| ArcSwap::new(Arc::new(<span class="prelude-val">None</span>))),
-            time_zone: <span class="self">self
-                </span>.time_zone
-                .unwrap_or_else(|| ArcSwap::new(Arc::new(<span class="prelude-val">None</span>))),
+            time_zone: <span class="self">self</span>.time_zone.unwrap_or(<span class="prelude-val">None</span>),
             sql_dialect: <span class="self">self
                 </span>.sql_dialect
                 .unwrap_or_else(|| Box::new(GreptimeDbDialect {})),
