@@ -226,6 +226,10 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -245,6 +249,7 @@
 </span><span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>common_time::util::current_time_millis;
 <span class="kw">use </span>store_api::logstore::LogStore;
+<span class="kw">use </span>store_api::region_request::RegionFlushRequest;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{RegionTruncatedSnafu, <span class="prelude-ty">Result</span>};
@@ -259,13 +264,14 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_flush_request(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         region_id: RegionId,
+        request: RegionFlushRequest,
         <span class="kw-2">mut </span>sender: OptionOutputTx,
     ) {
         <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>sender) <span class="kw">else </span>{
             <span class="kw">return</span>;
         };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Manual);
+        <span class="kw">let </span><span class="kw-2">mut </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Manual, request.row_group_size);
         task.push_sender(sender);
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
             <span class="self">self</span>.flush_scheduler
@@ -320,7 +326,7 @@
 
             <span class="kw">if </span>region.last_flush_millis() &lt; min_last_flush_time {
                 <span class="comment">// If flush time of this region is earlier than `min_last_flush_time`, we can flush this region.
-                </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull);
+                </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull, <span class="prelude-val">None</span>);
                 <span class="self">self</span>.flush_scheduler.schedule_flush(
                     region.region_id,
                     <span class="kw-2">&amp;</span>region.version_control,
@@ -333,7 +339,7 @@
         // TODO(yingwen): Maybe flush more tables to reduce write buffer size.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(region) = max_mem_region {
             <span class="kw">if </span>!<span class="self">self</span>.flush_scheduler.is_flush_requested(region.region_id) {
-                <span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull);
+                <span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull, <span class="prelude-val">None</span>);
                 <span class="self">self</span>.flush_scheduler.schedule_flush(
                     region.region_id,
                     <span class="kw-2">&amp;</span>region.version_control,
@@ -350,6 +356,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region: <span class="kw-2">&amp;</span>MitoRegionRef,
         reason: FlushReason,
+        row_group_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     ) -&gt; RegionFlushTask {
         <span class="comment">// TODO(yingwen): metrics for flush requested.
         </span>RegionFlushTask {
@@ -361,6 +368,7 @@
             memtable_builder: <span class="self">self</span>.memtable_builder.clone(),
             file_purger: region.file_purger.clone(),
             listener: <span class="self">self</span>.listener.clone(),
+            row_group_size,
         }
     }
 }

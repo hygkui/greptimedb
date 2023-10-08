@@ -741,6 +741,10 @@
 <a href="#741" id="741">741</a>
 <a href="#742" id="742">742</a>
 <a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -853,7 +857,9 @@
             )]),
             region_request::Body::Flush(flush) =&gt; <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[(
                 flush.region_id.into(),
-                <span class="self">Self</span>::Flush(RegionFlushRequest {}),
+                <span class="self">Self</span>::Flush(RegionFlushRequest {
+                    row_group_size: <span class="prelude-val">None</span>,
+                }),
             )]),
             region_request::Body::Compact(compact) =&gt; <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[(
                 compact.region_id.into(),
@@ -1158,8 +1164,10 @@
     }
 }
 
-<span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>RegionFlushRequest {}
+<span class="attr">#[derive(Debug, Default)]
+</span><span class="kw">pub struct </span>RegionFlushRequest {
+    <span class="kw">pub </span>row_group_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+}
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>RegionCompactRequest {}

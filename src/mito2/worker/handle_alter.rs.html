@@ -241,7 +241,7 @@
             </span><span class="macro">info!</span>(<span class="string">&quot;Flush region: {} before alteration&quot;</span>, region_id);
 
             <span class="comment">// Try to submit a flush task.
-            </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Alter);
+            </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Alter, <span class="prelude-val">None</span>);
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
                 <span class="self">self</span>.flush_scheduler
                     .schedule_flush(region.region_id, <span class="kw-2">&amp;</span>region.version_control, task)

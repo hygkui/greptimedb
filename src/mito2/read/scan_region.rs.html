@@ -216,6 +216,7 @@
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -383,8 +384,9 @@
             .collect();
 
         <span class="macro">debug!</span>(
-            <span class="string">&quot;Seq scan region {}, memtables: {}, ssts_to_read: {}, total_ssts: {}&quot;</span>,
+            <span class="string">&quot;Seq scan region {}, request: {:?}, memtables: {}, ssts_to_read: {}, total_ssts: {}&quot;</span>,
             <span class="self">self</span>.version.metadata.region_id,
+            <span class="self">self</span>.request,
             memtables.len(),
             files.len(),
             total_ssts

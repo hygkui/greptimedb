@@ -678,6 +678,31 @@
 <a href="#678" id="678">678</a>
 <a href="#679" id="679">679</a>
 <a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -700,7 +725,7 @@
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>common_time::Timestamp;
 <span class="kw">use </span>datafusion::parquet::file::metadata::RowGroupMetaData;
-<span class="kw">use </span>datafusion::physical_optimizer::pruning::PruningPredicate;
+<span class="kw">use </span>datafusion::physical_optimizer::pruning::{PruningPredicate, PruningStatistics};
 <span class="kw">use </span>datafusion_common::ToDFSchema;
 <span class="kw">use </span>datafusion_expr::expr::InList;
 <span class="kw">use </span>datafusion_expr::{Between, BinaryExpr, Operator};
@@ -717,7 +742,7 @@
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Predicate {
-    <span class="doccomment">/// The schema of underlying storage.
+    <span class="doccomment">/// The schema of the table that the expressions being applied.
     </span>schema: SchemaRef,
     <span class="doccomment">/// Physical expressions of this predicate.
     </span>exprs: Vec&lt;Arc&lt;<span class="kw">dyn </span>PhysicalExpr&gt;&gt;,
@@ -791,6 +816,31 @@
                         }
                     }
                 }
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">error!</span>(<span class="string">&quot;Failed to create predicate for expr, error: {:?}&quot;</span>, e);
+                }
+            }
+        }
+        res
+    }
+
+    <span class="doccomment">/// Evaluates the predicate against the `stats`.
+    /// Returns a vector of boolean values, among which `false` means the row group can be skipped.
+    </span><span class="kw">pub fn </span>prune_with_stats&lt;S: PruningStatistics&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, stats: <span class="kw-2">&amp;</span>S) -&gt; Vec&lt;bool&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="macro">vec!</span>[<span class="bool-val">true</span>; stats.num_containers()];
+        <span class="kw">let </span>arrow_schema = <span class="self">self</span>.schema.arrow_schema();
+        <span class="kw">for </span>expr <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.exprs {
+            <span class="kw">match </span>PruningPredicate::try_new(expr.clone(), arrow_schema.clone()) {
+                <span class="prelude-val">Ok</span>(p) =&gt; <span class="kw">match </span>p.prune(stats) {
+                    <span class="prelude-val">Ok</span>(r) =&gt; {
+                        <span class="kw">for </span>(curr_val, res) <span class="kw">in </span>r.into_iter().zip(res.iter_mut()) {
+                            <span class="kw-2">*</span>res &amp;= curr_val
+                        }
+                    }
+                    <span class="prelude-val">Err</span>(e) =&gt; {
+                        <span class="macro">warn!</span>(<span class="string">&quot;Failed to prune row groups, error: {:?}&quot;</span>, e);
+                    }
+                },
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">error!</span>(<span class="string">&quot;Failed to create predicate for expr, error: {:?}&quot;</span>, e);
                 }

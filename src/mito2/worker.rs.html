@@ -674,6 +674,7 @@
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
 <a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1210,8 +1211,9 @@
                         .<span class="kw">await</span>;
                     <span class="kw">continue</span>;
                 }
-                DdlRequest::Flush(<span class="kw">_</span>) =&gt; {
-                    <span class="self">self</span>.handle_flush_request(ddl.region_id, ddl.sender).<span class="kw">await</span>;
+                DdlRequest::Flush(req) =&gt; {
+                    <span class="self">self</span>.handle_flush_request(ddl.region_id, req, ddl.sender)
+                        .<span class="kw">await</span>;
                     <span class="kw">continue</span>;
                 }
                 DdlRequest::Compact(<span class="kw">_</span>) =&gt; {

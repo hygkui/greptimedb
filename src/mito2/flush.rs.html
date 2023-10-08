@@ -700,6 +700,11 @@
 <a href="#700" id="700">700</a>
 <a href="#701" id="701">701</a>
 <a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -892,6 +897,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) memtable_builder: MemtableBuilderRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) listener: WorkerListener,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) row_group_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 }
 
 <span class="kw">impl </span>RegionFlushTask {
@@ -974,7 +980,10 @@
     <span class="doccomment">/// Flushes memtables to level 0 SSTs.
     </span><span class="kw">async fn </span>flush_memtables(<span class="kw-2">&amp;</span><span class="self">self</span>, version: <span class="kw-2">&amp;</span>VersionRef) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;FileMeta&gt;&gt; {
         <span class="comment">// TODO(yingwen): Make it configurable.
-        </span><span class="kw">let </span>write_opts = WriteOptions::default();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>write_opts = WriteOptions::default();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(row_group_size) = <span class="self">self</span>.row_group_size {
+            write_opts.row_group_size = row_group_size;
+        }
         <span class="kw">let </span>memtables = version.memtables.immutables();
         <span class="kw">let </span><span class="kw-2">mut </span>file_metas = Vec::with_capacity(memtables.len());
 
@@ -1391,6 +1400,7 @@
             memtable_builder: builder.memtable_builder(),
             file_purger: builder.file_purger(),
             listener: WorkerListener::default(),
+            row_group_size: <span class="prelude-val">None</span>,
         };
         task.push_sender(OptionOutputTx::from(output_tx));
         scheduler
