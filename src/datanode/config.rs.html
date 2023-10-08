@@ -420,6 +420,11 @@
 <a href="#420" id="420">420</a>
 <a href="#421" id="421">421</a>
 <a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -459,7 +464,7 @@
 };
 <span class="kw">use </span>storage::scheduler::SchedulerConfig;
 
-<span class="kw">pub const </span>DEFAULT_OBJECT_STORE_CACHE_SIZE: ReadableSize = ReadableSize(<span class="number">1024</span>);
+<span class="kw">pub const </span>DEFAULT_OBJECT_STORE_CACHE_SIZE: ReadableSize = ReadableSize::mb(<span class="number">256</span>);
 
 <span class="doccomment">/// Default data home in file storage
 </span><span class="kw">const </span>DEFAULT_DATA_HOME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;/tmp/greptimedb&quot;</span>;
@@ -512,6 +517,15 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>FileConfig {}
 
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+</span><span class="kw">pub struct </span>ObjectStorageCacheConfig {
+    <span class="doccomment">/// The local file cache directory
+    </span><span class="kw">pub </span>cache_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="doccomment">/// The cache capacity in bytes
+    </span><span class="kw">pub </span>cache_capacity: <span class="prelude-ty">Option</span>&lt;ReadableSize&gt;,
+}
+
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>S3Config {
@@ -523,8 +537,8 @@
     </span><span class="kw">pub </span>secret_access_key: SecretString,
     <span class="kw">pub </span>endpoint: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>region: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>cache_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>cache_capacity: <span class="prelude-ty">Option</span>&lt;ReadableSize&gt;,
+    <span class="attr">#[serde(flatten)]
+    </span><span class="kw">pub </span>cache: ObjectStorageCacheConfig,
 }
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
@@ -537,8 +551,8 @@
     <span class="attr">#[serde(skip_serializing)]
     </span><span class="kw">pub </span>access_key_secret: SecretString,
     <span class="kw">pub </span>endpoint: String,
-    <span class="kw">pub </span>cache_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>cache_capacity: <span class="prelude-ty">Option</span>&lt;ReadableSize&gt;,
+    <span class="attr">#[serde(flatten)]
+    </span><span class="kw">pub </span>cache: ObjectStorageCacheConfig,
 }
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
@@ -552,8 +566,8 @@
     </span><span class="kw">pub </span>account_key: SecretString,
     <span class="kw">pub </span>endpoint: String,
     <span class="kw">pub </span>sas_token: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>cache_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>cache_capacity: <span class="prelude-ty">Option</span>&lt;ReadableSize&gt;,
+    <span class="attr">#[serde(flatten)]
+    </span><span class="kw">pub </span>cache: ObjectStorageCacheConfig,
 }
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
@@ -565,8 +579,8 @@
     <span class="attr">#[serde(skip_serializing)]
     </span><span class="kw">pub </span>credential_path: SecretString,
     <span class="kw">pub </span>endpoint: String,
-    <span class="kw">pub </span>cache_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="kw">pub </span>cache_capacity: <span class="prelude-ty">Option</span>&lt;ReadableSize&gt;,
+    <span class="attr">#[serde(flatten)]
+    </span><span class="kw">pub </span>cache: ObjectStorageCacheConfig,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>S3Config {
@@ -578,8 +592,7 @@
             secret_access_key: SecretString::from(String::default()),
             endpoint: Option::default(),
             region: Option::default(),
-            cache_path: Option::default(),
-            cache_capacity: Option::default(),
+            cache: ObjectStorageCacheConfig::default(),
         }
     }
 }
@@ -592,8 +605,7 @@
             access_key_id: SecretString::from(String::default()),
             access_key_secret: SecretString::from(String::default()),
             endpoint: String::default(),
-            cache_path: Option::default(),
-            cache_capacity: Option::default(),
+            cache: ObjectStorageCacheConfig::default(),
         }
     }
 }
@@ -606,9 +618,8 @@
             account_name: SecretString::from(String::default()),
             account_key: SecretString::from(String::default()),
             endpoint: String::default(),
-            cache_path: Option::default(),
-            cache_capacity: Option::default(),
             sas_token: Option::default(),
+            cache: ObjectStorageCacheConfig::default(),
         }
     }
 }
@@ -621,8 +632,7 @@
             scope: String::default(),
             credential_path: SecretString::from(String::default()),
             endpoint: String::default(),
-            cache_path: Option::default(),
-            cache_capacity: Option::default(),
+            cache: ObjectStorageCacheConfig::default(),
         }
     }
 }

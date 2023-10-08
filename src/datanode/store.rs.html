@@ -167,6 +167,16 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -245,29 +255,33 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;ObjectStore&gt; {
     <span class="kw">let </span>(cache_path, cache_capacity) = <span class="kw">match </span>store_config {
         ObjectStoreConfig::S3(s3_config) =&gt; {
-            <span class="kw">let </span>path = s3_config.cache_path.as_ref();
+            <span class="kw">let </span>path = s3_config.cache.cache_path.as_ref();
             <span class="kw">let </span>capacity = s3_config
+                .cache
                 .cache_capacity
                 .unwrap_or(DEFAULT_OBJECT_STORE_CACHE_SIZE);
             (path, capacity)
         }
         ObjectStoreConfig::Oss(oss_config) =&gt; {
-            <span class="kw">let </span>path = oss_config.cache_path.as_ref();
+            <span class="kw">let </span>path = oss_config.cache.cache_path.as_ref();
             <span class="kw">let </span>capacity = oss_config
+                .cache
                 .cache_capacity
                 .unwrap_or(DEFAULT_OBJECT_STORE_CACHE_SIZE);
             (path, capacity)
         }
         ObjectStoreConfig::Azblob(azblob_config) =&gt; {
-            <span class="kw">let </span>path = azblob_config.cache_path.as_ref();
+            <span class="kw">let </span>path = azblob_config.cache.cache_path.as_ref();
             <span class="kw">let </span>capacity = azblob_config
+                .cache
                 .cache_capacity
                 .unwrap_or(DEFAULT_OBJECT_STORE_CACHE_SIZE);
             (path, capacity)
         }
         ObjectStoreConfig::Gcs(gcs_config) =&gt; {
-            <span class="kw">let </span>path = gcs_config.cache_path.as_ref();
+            <span class="kw">let </span>path = gcs_config.cache.cache_path.as_ref();
             <span class="kw">let </span>capacity = gcs_config
+                .cache
                 .cache_capacity
                 .unwrap_or(DEFAULT_OBJECT_STORE_CACHE_SIZE);
             (path, capacity)
@@ -288,6 +302,12 @@
         <span class="kw">let </span>cache_layer = LruCacheLayer::new(Arc::new(cache_store), cache_capacity.<span class="number">0 </span><span class="kw">as </span>usize)
             .<span class="kw">await
             </span>.context(error::InitBackendSnafu)<span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(
+            <span class="string">&quot;Enabled local object storage cache, path: {}, capacity: {}.&quot;</span>,
+            path, cache_capacity
+        );
+
         <span class="prelude-val">Ok</span>(object_store.layer(cache_layer))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(object_store)

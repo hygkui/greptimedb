@@ -823,7 +823,7 @@
             <span class="kw">let </span><span class="kw-2">mut </span>s3_config = s3_test_config();
 
             <span class="kw">if </span><span class="kw-2">*</span>store_type == StorageType::S3WithCache {
-                s3_config.cache_path = <span class="prelude-val">Some</span>(<span class="string">&quot;/tmp/greptimedb_cache&quot;</span>.to_string());
+                s3_config.cache.cache_path = <span class="prelude-val">Some</span>(<span class="string">&quot;/tmp/greptimedb_cache&quot;</span>.to_string());
             }
 
             <span class="kw">let </span><span class="kw-2">mut </span>builder = S3::default();

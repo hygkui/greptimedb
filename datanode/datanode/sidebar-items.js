@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_OBJECT_STORE_CACHE_SIZE","OPEN_REGION_PARALLELISM"],"struct":["Datanode","DatanodeBuilder","ProcedureConfig"]};
+window.SIDEBAR_ITEMS = {"constant":["OPEN_REGION_PARALLELISM"],"struct":["Datanode","DatanodeBuilder","ProcedureConfig"]};

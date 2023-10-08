@@ -18,6 +18,12 @@
 <a href="#18" id="18">18</a>
 <a href="#19" id="19">19</a>
 <a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -34,8 +40,14 @@
 
 </span><span class="doccomment">//! object-store metrics
 
+/// Cache hit counter, no matter what the cache result is.
 </span><span class="kw">pub const </span>OBJECT_STORE_LRU_CACHE_HIT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;object_store.lru_cache.hit&quot;</span>;
-<span class="kw">pub const </span>OBJECT_STORE_LRU_CACHE_MISS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;object_store.lru_cache.miss&quot;</span>;
-<span class="kw">pub const </span>OBJECT_STORE_LRU_CACHE_ERROR: <span class="kw-2">&amp;</span>str = <span class="string">&quot;object_store.lru_cache.error&quot;</span>;
-<span class="kw">pub const </span>OBJECT_STORE_LRU_CACHE_ERROR_KIND: <span class="kw-2">&amp;</span>str = <span class="string">&quot;error&quot;</span>;
+<span class="doccomment">/// Cache miss counter
+</span><span class="kw">pub const </span>OBJECT_STORE_LRU_CACHE_MISS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;object_store.lru_cache.miss&quot;</span>;
+<span class="doccomment">/// Object store read error counter
+</span><span class="kw">pub const </span>OBJECT_STORE_READ_ERROR: <span class="kw-2">&amp;</span>str = <span class="string">&quot;object_store.read.errors&quot;</span>;
+<span class="doccomment">/// Cache entry number
+</span><span class="kw">pub const </span>OBJECT_STORE_LRU_CACHE_ENTRIES: <span class="kw-2">&amp;</span>str = <span class="string">&quot;object_store.lru_cache.entries&quot;</span>;
+<span class="doccomment">/// Cache size in bytes
+</span><span class="kw">pub const </span>OBJECT_STORE_LRU_CACHE_BYTES: <span class="kw-2">&amp;</span>str = <span class="string">&quot;object_store.lru_cache.bytes&quot;</span>;
 </code></pre></div></section></main></body></html>

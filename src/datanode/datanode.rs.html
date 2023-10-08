@@ -484,9 +484,6 @@
 <a href="#484" id="484">484</a>
 <a href="#485" id="485">485</a>
 <a href="#486" id="486">486</a>
-<a href="#487" id="487">487</a>
-<a href="#488" id="488">488</a>
-<a href="#489" id="489">489</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -508,7 +505,6 @@
 
 <span class="kw">use </span>catalog::kvbackend::MetaKvBackend;
 <span class="kw">use </span>catalog::memory::MemoryCatalogManager;
-<span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_greptimedb_telemetry::GreptimeDBTelemetryTask;
@@ -550,8 +546,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::region_server::RegionServer;
 <span class="kw">use </span><span class="kw">crate</span>::server::Services;
 <span class="kw">use </span><span class="kw">crate</span>::store;
-
-<span class="kw">pub const </span>DEFAULT_OBJECT_STORE_CACHE_SIZE: ReadableSize = ReadableSize(<span class="number">1024</span>);
 
 <span class="kw">const </span>OPEN_REGION_PARALLELISM: usize = <span class="number">16</span>;
 
