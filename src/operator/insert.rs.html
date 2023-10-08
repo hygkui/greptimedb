@@ -432,6 +432,7 @@
 <a href="#432" id="432">432</a>
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -463,6 +464,7 @@
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>datatypes::schema::Schema;
 <span class="kw">use </span>futures_util::future;
+<span class="kw">use </span>meter_macros::write_meter;
 <span class="kw">use </span>metrics::counter;
 <span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
 <span class="kw">use </span>session::context::QueryContextRef;
@@ -538,7 +540,7 @@
         .convert(requests)
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>affected_rows = <span class="self">self</span>.do_request(inserts, ctx.trace_id(), <span class="number">0</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>affected_rows = <span class="self">self</span>.do_request(inserts, <span class="kw-2">&amp;</span>ctx).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows <span class="kw">as _</span>))
     }
 
@@ -560,7 +562,7 @@
             .convert(request)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>affected_rows = <span class="self">self</span>.do_request(inserts, ctx.trace_id(), <span class="number">0</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>affected_rows = <span class="self">self</span>.do_request(inserts, <span class="kw-2">&amp;</span>ctx).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(affected_rows <span class="kw">as _</span>)
     }
 
@@ -574,7 +576,7 @@
                 .convert(insert)
                 .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>affected_rows = <span class="self">self</span>.do_request(inserts, ctx.trace_id(), <span class="number">0</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>affected_rows = <span class="self">self</span>.do_request(inserts, ctx).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Output::AffectedRows(affected_rows <span class="kw">as _</span>))
     }
 }
@@ -583,10 +585,10 @@
     <span class="kw">async fn </span>do_request(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         requests: RegionInsertRequests,
-        trace_id: u64,
-        span_id: u64,
+        ctx: <span class="kw-2">&amp;</span>QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
-        <span class="kw">let </span>header = RegionRequestHeader { trace_id, span_id };
+        <span class="macro">write_meter!</span>(ctx.current_catalog(), ctx.current_schema(), requests);
+        <span class="kw">let </span>header: RegionRequestHeader = ctx.as_ref().into();
         <span class="kw">let </span>request_factory = RegionRequestFactory::new(header);
 
         <span class="kw">let </span>tasks = <span class="self">self

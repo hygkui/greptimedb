@@ -93,10 +93,10 @@
     }
 
     <span class="kw">pub fn </span>build_task_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Arc&lt;TaskContext&gt; {
-        <span class="kw">let </span>task_id = <span class="self">self</span>.query_ctx.trace_id().to_string();
+        <span class="kw">let </span>dbname = <span class="self">self</span>.query_ctx.get_db_string();
         <span class="kw">let </span>state = <span class="kw-2">&amp;</span><span class="self">self</span>.state;
         Arc::new(TaskContext::new(
-            <span class="prelude-val">Some</span>(task_id),
+            <span class="prelude-val">Some</span>(dbname),
             state.session_id().to_string(),
             state.config().clone(),
             state.scalar_functions().clone(),

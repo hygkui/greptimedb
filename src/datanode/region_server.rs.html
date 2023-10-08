@@ -506,6 +506,11 @@
 <a href="#506" id="506">506</a>
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -552,7 +557,7 @@
 <span class="kw">use </span>servers::error::{<span class="self">self </span><span class="kw">as </span>servers_error, ExecuteGrpcRequestSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>ServerResult};
 <span class="kw">use </span>servers::grpc::flight::{FlightCraft, FlightRecordBatchStream, TonicStream};
 <span class="kw">use </span>servers::grpc::region_server::RegionServerHandler;
-<span class="kw">use </span>session::context::QueryContext;
+<span class="kw">use </span>session::context::{QueryContextBuilder, QueryContextRef};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::region_engine::RegionEngineRef;
@@ -793,11 +798,16 @@
         <span class="comment">// TODO(ruihang): add metrics and set trace id
 
         </span><span class="kw">let </span>QueryRequest {
-            header: <span class="kw">_</span>,
+            header,
             region_id,
             plan,
         } = request;
         <span class="kw">let </span>region_id = RegionId::from_u64(region_id);
+
+        <span class="kw">let </span>ctx: QueryContextRef = header
+            .as_ref()
+            .map(|h| Arc::new(h.into()))
+            .unwrap_or_else(|| QueryContextBuilder::default().build());
 
         <span class="comment">// build dummy catalog list
         </span><span class="kw">let </span>engine = <span class="self">self
@@ -814,7 +824,7 @@
             </span>.context(DecodeLogicalPlanSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>result = <span class="self">self
             </span>.query_engine
-            .execute(logical_plan.into(), QueryContext::arc())
+            .execute(logical_plan.into(), ctx)
             .<span class="kw">await
             </span>.context(ExecuteLogicalPlanSnafu)<span class="question-mark">?</span>;
 

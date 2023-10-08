@@ -313,6 +313,14 @@
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
 <a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -341,6 +349,7 @@
 <span class="kw">use </span>common_recordbatch::{
     DfSendableRecordBatchStream, RecordBatch, RecordBatchStreamAdaptor, SendableRecordBatchStream,
 };
+<span class="kw">use </span>common_telemetry::trace_id;
 <span class="kw">use </span>datafusion::physical_plan::metrics::{
     Count, ExecutionPlanMetricsSet, MetricBuilder, MetricsSet, Time,
 };
@@ -350,7 +359,7 @@
 <span class="kw">use </span>datafusion_physical_expr::PhysicalSortExpr;
 <span class="kw">use </span>datatypes::schema::{Schema, SchemaRef};
 <span class="kw">use </span>futures_util::StreamExt;
-<span class="kw">use </span>greptime_proto::v1::region::QueryRequest;
+<span class="kw">use </span>greptime_proto::v1::region::{QueryRequest, RegionRequestHeader};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
 
@@ -464,12 +473,15 @@
         })
     }
 
-    <span class="kw">pub fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, _context: Arc&lt;TaskContext&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
+    <span class="kw">pub fn </span>to_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, context: Arc&lt;TaskContext&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
         <span class="kw">let </span>substrait_plan = <span class="self">self</span>.substrait_plan.to_vec();
         <span class="kw">let </span>regions = <span class="self">self</span>.regions.clone();
         <span class="kw">let </span>region_query_handler = <span class="self">self</span>.region_query_handler.clone();
         <span class="kw">let </span>metric = MergeScanMetric::new(<span class="kw-2">&amp;</span><span class="self">self</span>.metric);
         <span class="kw">let </span>schema = <span class="self">Self</span>::arrow_schema_to_schema(<span class="self">self</span>.schema())<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>dbname = context.task_id().unwrap_or_default();
+        <span class="kw">let </span>trace_id = trace_id().unwrap_or_default();
 
         <span class="kw">let </span>stream = Box::pin(<span class="macro">stream!</span>({
             <span class="kw">let </span>_finish_timer = metric.finish_time().timer();
@@ -478,7 +490,11 @@
 
             <span class="kw">for </span>region_id <span class="kw">in </span>regions {
                 <span class="kw">let </span>request = QueryRequest {
-                    header: <span class="prelude-val">None</span>,
+                    header: <span class="prelude-val">Some</span>(RegionRequestHeader {
+                        trace_id,
+                        span_id: <span class="number">0</span>,
+                        dbname: dbname.clone(),
+                    }),
                     region_id: region_id.into(),
                     plan: substrait_plan.clone(),
                 };
