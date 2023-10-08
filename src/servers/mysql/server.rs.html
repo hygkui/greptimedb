@@ -223,6 +223,10 @@
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -244,6 +248,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>auth::UserProviderRef;
 <span class="kw">use </span>common_runtime::Runtime;
+<span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>common_telemetry::logging::{info, warn};
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
@@ -362,6 +367,9 @@
                 <span class="kw">match </span>tcp_stream {
                     <span class="prelude-val">Err</span>(error) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;Broken pipe: {}&quot;</span>, error), <span class="comment">// IoError doesn&#39;t impl ErrorExt.
                     </span><span class="prelude-val">Ok</span>(io_stream) =&gt; {
+                        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = io_stream.set_nodelay(<span class="bool-val">true</span>) {
+                            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to set TCP nodelay&quot;</span>);
+                        }
                         <span class="kw">if let </span><span class="prelude-val">Err</span>(error) =
                             <span class="self">Self</span>::handle(io_stream, io_runtime, spawn_ref, spawn_config).<span class="kw">await
                         </span>{
