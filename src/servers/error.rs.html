@@ -579,6 +579,7 @@
 <a href="#579" id="579">579</a>
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -859,8 +860,7 @@
     #[snafu(display(<span class="string">&quot;Failed to dump profile data&quot;</span>))]
     </span>DumpProfileData {
         location: Location,
-        <span class="attr">#[snafu(source)]
-        </span>error: common_mem_prof::error::Error,
+        source: common_mem_prof::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid prepare statement: {}&quot;</span>, err_msg))]
@@ -916,7 +916,9 @@
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;pprof&quot;</span>)]
     #[snafu(display(<span class="string">&quot;Failed to dump pprof data&quot;</span>))]
-    </span>DumpPprof { source: common_pprof::Error },
+    </span>DumpPprof {
+        source: <span class="kw">crate</span>::http::pprof::nix::Error,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
     </span>Metrics { source: BoxedError },
