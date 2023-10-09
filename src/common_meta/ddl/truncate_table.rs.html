@@ -232,6 +232,7 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -269,6 +270,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="prelude-ty">Result</span>, TableNotFoundSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::key::table_info::TableInfoValue;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_name::TableNameKey;
+<span class="kw">use </span><span class="kw">crate</span>::key::DeserializedValueWithBytes;
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::ddl::TruncateTableTask;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::router::{find_leader_regions, find_leaders, RegionRoute};
@@ -324,7 +326,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
         cluster_id: u64,
         task: TruncateTableTask,
-        table_info_value: TableInfoValue,
+        table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
         region_routes: Vec&lt;RegionRoute&gt;,
         context: DdlContext,
     ) -&gt; <span class="self">Self </span>{
@@ -422,7 +424,7 @@
     state: TruncateTableState,
     cluster_id: u64,
     task: TruncateTableTask,
-    table_info_value: TableInfoValue,
+    table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
     region_routes: Vec&lt;RegionRoute&gt;,
 }
 
@@ -430,7 +432,7 @@
     <span class="kw">pub fn </span>new(
         cluster_id: u64,
         task: TruncateTableTask,
-        table_info_value: TableInfoValue,
+        table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
         region_routes: Vec&lt;RegionRoute&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{

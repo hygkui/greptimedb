@@ -279,6 +279,7 @@
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
 <a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -320,6 +321,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::key::table_info::TableInfoValue;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_name::TableNameKey;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_route::TableRouteValue;
+<span class="kw">use </span><span class="kw">crate</span>::key::DeserializedValueWithBytes;
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::ddl::DropTableTask;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::router::{find_leader_regions, find_leaders, RegionRoute};
@@ -336,8 +338,8 @@
     <span class="kw">pub fn </span>new(
         cluster_id: u64,
         task: DropTableTask,
-        table_route_value: TableRouteValue,
-        table_info_value: TableInfoValue,
+        table_route_value: DeserializedValueWithBytes&lt;TableRouteValue&gt;,
+        table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
         context: DdlContext,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -512,16 +514,16 @@
     <span class="kw">pub </span>state: DropTableState,
     <span class="kw">pub </span>cluster_id: u64,
     <span class="kw">pub </span>task: DropTableTask,
-    <span class="kw">pub </span>table_route_value: TableRouteValue,
-    <span class="kw">pub </span>table_info_value: TableInfoValue,
+    <span class="kw">pub </span>table_route_value: DeserializedValueWithBytes&lt;TableRouteValue&gt;,
+    <span class="kw">pub </span>table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
 }
 
 <span class="kw">impl </span>DropTableData {
     <span class="kw">pub fn </span>new(
         cluster_id: u64,
         task: DropTableTask,
-        table_route_value: TableRouteValue,
-        table_info_value: TableInfoValue,
+        table_route_value: DeserializedValueWithBytes&lt;TableRouteValue&gt;,
+        table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             state: DropTableState::Prepare,

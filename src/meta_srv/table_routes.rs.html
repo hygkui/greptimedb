@@ -137,6 +137,8 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -171,7 +173,9 @@
         </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?</span>;
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(table_info) = table_info {
-        <span class="kw">let </span>table_route = table_route.context(TableRouteNotFoundSnafu { table_id })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_route = table_route
+            .context(TableRouteNotFoundSnafu { table_id })<span class="question-mark">?
+            </span>.into_inner();
 
         <span class="kw">let </span>table = Table {
             id: table_id <span class="kw">as </span>u64,
@@ -183,7 +187,7 @@
             .try_into()
             .context(error::TableRouteConversionSnafu)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((table_info, table_route_value)))
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((table_info.into_inner(), table_route_value)))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }

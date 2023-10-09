@@ -799,6 +799,7 @@
 <a href="#799" id="799">799</a>
 <a href="#800" id="800">800</a>
 <a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1317,7 +1318,8 @@ CREATE TABLE {table_name} (
             .get(table_id)
             .<span class="kw">await
             </span>.unwrap()
-            .unwrap();
+            .unwrap()
+            .into_inner();
 
         <span class="kw">let </span>region_to_dn_map = region_distribution(<span class="kw-2">&amp;</span>table_route_value.region_routes)
             .unwrap()

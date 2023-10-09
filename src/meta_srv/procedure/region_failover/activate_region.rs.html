@@ -325,6 +325,7 @@
 <a href="#325" id="325">325</a>
 <a href="#326" id="326">326</a>
 <a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -397,7 +398,8 @@
             .<span class="kw">await
             </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.context(error::TableInfoNotFoundSnafu { table_id })<span class="question-mark">?
-            </span>.table_info;
+            </span>.into_inner()
+            .table_info;
 
         <span class="kw">let </span>region_storage_path =
             region_storage_path(<span class="kw-2">&amp;</span>table_info.catalog_name, <span class="kw-2">&amp;</span>table_info.schema_name);

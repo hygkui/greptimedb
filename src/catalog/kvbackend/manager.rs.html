@@ -290,15 +290,6 @@
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -319,9 +310,7 @@
 
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME, NUMBERS_TABLE_ID};
 <span class="kw">use </span>common_error::ext::BoxedError;
-<span class="kw">use </span>common_meta::cache_invalidator::{
-    CacheInvalidator, Context, KvCacheInvalidatorRef, TableMetadataCacheInvalidator,
-};
+<span class="kw">use </span>common_meta::cache_invalidator::{CacheInvalidator, CacheInvalidatorRef, Context};
 <span class="kw">use </span>common_meta::datanode_manager::DatanodeManagerRef;
 <span class="kw">use </span>common_meta::error::Result <span class="kw">as </span>MetaResult;
 <span class="kw">use </span>common_meta::key::catalog_name::CatalogNameKey;
@@ -355,7 +344,7 @@
     <span class="comment">// TODO(LFC): Maybe use a real implementation for Standalone mode.
     // Now we use `NoopKvCacheInvalidator` for Standalone mode. In Standalone mode, the KV backend
     // is implemented by RaftEngine. Maybe we need a cache for it?
-    </span>table_metadata_cache_invalidator: TableMetadataCacheInvalidator,
+    </span>cache_invalidator: CacheInvalidatorRef,
     partition_manager: PartitionRuleManagerRef,
     table_metadata_manager: TableMetadataManagerRef,
     datanode_manager: DatanodeManagerRef,
@@ -366,13 +355,13 @@
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>CacheInvalidator <span class="kw">for </span>KvBackendCatalogManager {
     <span class="kw">async fn </span>invalidate_table_name(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context, table_name: TableName) -&gt; MetaResult&lt;()&gt; {
-        <span class="self">self</span>.table_metadata_cache_invalidator
+        <span class="self">self</span>.cache_invalidator
             .invalidate_table_name(ctx, table_name)
             .<span class="kw">await
     </span>}
 
     <span class="kw">async fn </span>invalidate_table_id(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Context, table_id: TableId) -&gt; MetaResult&lt;()&gt; {
-        <span class="self">self</span>.table_metadata_cache_invalidator
+        <span class="self">self</span>.cache_invalidator
             .invalidate_table_id(ctx, table_id)
             .<span class="kw">await
     </span>}
@@ -381,15 +370,13 @@
 <span class="kw">impl </span>KvBackendCatalogManager {
     <span class="kw">pub fn </span>new(
         backend: KvBackendRef,
-        backend_cache_invalidator: KvCacheInvalidatorRef,
+        cache_invalidator: CacheInvalidatorRef,
         datanode_manager: DatanodeManagerRef,
     ) -&gt; Arc&lt;<span class="self">Self</span>&gt; {
         Arc::new_cyclic(|me| <span class="self">Self </span>{
             partition_manager: Arc::new(PartitionRuleManager::new(backend.clone())),
             table_metadata_manager: Arc::new(TableMetadataManager::new(backend)),
-            table_metadata_cache_invalidator: TableMetadataCacheInvalidator::new(
-                backend_cache_invalidator.clone(),
-            ),
+            cache_invalidator,
             datanode_manager,
             system_catalog: SystemCatalog {
                 catalog_manager: me.clone(),
@@ -408,12 +395,6 @@
     <span class="kw">pub fn </span>datanode_manager(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DatanodeManagerRef {
         <span class="self">self</span>.datanode_manager.clone()
     }
-
-    <span class="kw">pub async fn </span>invalidate_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) {
-        <span class="self">self</span>.table_metadata_cache_invalidator
-            .invalidate_schema(catalog, schema)
-            .<span class="kw">await
-    </span>}
 }
 
 <span class="attr">#[async_trait::async_trait]
@@ -530,7 +511,8 @@
             .get(table_id)
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
-        </span><span class="kw">else </span>{
+            </span>.map(|v| v.into_inner())
+        <span class="kw">else </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         };
         <span class="kw">let </span>table_info = Arc::new(

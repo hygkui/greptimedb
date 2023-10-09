@@ -438,7 +438,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::key::table_info::TableInfoValue;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_name::TableNameKey;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_route::TableRouteValue;
-<span class="kw">use </span><span class="kw">crate</span>::key::TableMetadataManagerRef;
+<span class="kw">use </span><span class="kw">crate</span>::key::{DeserializedValueWithBytes, TableMetadataManagerRef};
 <span class="kw">use </span><span class="kw">crate</span>::rpc::ddl::DdlTask::{AlterTable, CreateTable, DropTable, TruncateTable};
 <span class="kw">use </span><span class="kw">crate</span>::rpc::ddl::{
     AlterTableTask, CreateTableTask, DropTableTask, SubmitDdlTaskRequest, SubmitDdlTaskResponse,
@@ -547,7 +547,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         alter_table_task: AlterTableTask,
-        table_info_value: TableInfoValue,
+        table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProcedureId&gt; {
         <span class="kw">let </span>context = <span class="self">self</span>.create_context();
 
@@ -579,8 +579,8 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         drop_table_task: DropTableTask,
-        table_info_value: TableInfoValue,
-        table_route_value: TableRouteValue,
+        table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
+        table_route_value: DeserializedValueWithBytes&lt;TableRouteValue&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProcedureId&gt; {
         <span class="kw">let </span>context = <span class="self">self</span>.create_context();
 
@@ -601,7 +601,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         truncate_table_task: TruncateTableTask,
-        table_info_value: TableInfoValue,
+        table_info_value: DeserializedValueWithBytes&lt;TableInfoValue&gt;,
         region_routes: Vec&lt;RegionRoute&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProcedureId&gt; {
         <span class="kw">let </span>context = <span class="self">self</span>.create_context();
@@ -655,7 +655,7 @@
         table_name: table_ref.to_string(),
     })<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>table_route = table_route_value.region_routes;
+    <span class="kw">let </span>table_route = table_route_value.into_inner().region_routes;
 
     <span class="kw">let </span>id = ddl_manager
         .submit_truncate_table_task(

@@ -90,18 +90,6 @@
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -121,7 +109,6 @@
 <span class="kw">use </span>table::metadata::TableId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::key::schema_name::SchemaNameKey;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_info::TableInfoKey;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_name::TableNameKey;
 <span class="kw">use </span><span class="kw">crate</span>::key::table_route::TableRouteKey;
@@ -172,36 +159,25 @@
     }
 }
 
-<span class="attr">#[derive(Clone)]
-</span><span class="kw">pub struct </span>TableMetadataCacheInvalidator(KvCacheInvalidatorRef);
-
-<span class="kw">impl </span>TableMetadataCacheInvalidator {
-    <span class="kw">pub fn </span>new(kv_cache_invalidator: KvCacheInvalidatorRef) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(kv_cache_invalidator)
-    }
-
-    <span class="kw">pub async fn </span>invalidate_schema(<span class="kw-2">&amp;</span><span class="self">self</span>, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>key = SchemaNameKey::new(catalog, schema).as_raw_key();
-        <span class="self">self</span>.<span class="number">0</span>.invalidate_key(<span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
-    }
-}
-
 <span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl </span>CacheInvalidator <span class="kw">for </span>TableMetadataCacheInvalidator {
+</span><span class="kw">impl</span>&lt;T&gt; CacheInvalidator <span class="kw">for </span>T
+<span class="kw">where
+    </span>T: KvCacheInvalidator,
+{
     <span class="kw">async fn </span>invalidate_table_name(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_name: TableName) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>key: TableNameKey = (<span class="kw-2">&amp;</span>table_name).into();
 
-        <span class="self">self</span>.<span class="number">0</span>.invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key()).<span class="kw">await</span>;
+        <span class="self">self</span>.invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key()).<span class="kw">await</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>invalidate_table_id(<span class="kw-2">&amp;</span><span class="self">self</span>, _ctx: <span class="kw-2">&amp;</span>Context, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>key = TableInfoKey::new(table_id);
-        <span class="self">self</span>.<span class="number">0</span>.invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key()).<span class="kw">await</span>;
+        <span class="self">self</span>.invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key()).<span class="kw">await</span>;
 
         <span class="kw">let </span>key = <span class="kw-2">&amp;</span>TableRouteKey { table_id };
-        <span class="self">self</span>.<span class="number">0</span>.invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key()).<span class="kw">await</span>;
+        <span class="self">self</span>.invalidate_key(<span class="kw-2">&amp;</span>key.as_raw_key()).<span class="kw">await</span>;
 
         <span class="prelude-val">Ok</span>(())
     }

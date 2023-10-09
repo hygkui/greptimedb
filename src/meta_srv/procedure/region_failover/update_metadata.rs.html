@@ -428,6 +428,9 @@
 <a href="#428" id="428">428</a>
 <a href="#429" id="429">429</a>
 <a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -650,6 +653,7 @@
                 .<span class="kw">await
                 </span>.unwrap()
                 .unwrap()
+                .into_inner()
                 .region_routes
         }
 
@@ -803,7 +807,8 @@
                 .get(table_id)
                 .<span class="kw">await
                 </span>.unwrap()
-                .unwrap();
+                .unwrap()
+                .into_inner();
 
             <span class="kw">let </span>peers = <span class="kw-2">&amp;</span>extract_all_peers(<span class="kw-2">&amp;</span>table_route_value.region_routes);
             <span class="kw">let </span>actual = <span class="kw-2">&amp;</span>table_route_value.region_routes;
@@ -822,7 +827,8 @@
                 .get(table_id)
                 .<span class="kw">await
                 </span>.unwrap()
-                .unwrap();
+                .unwrap()
+                .into_inner();
 
             <span class="kw">let </span>map = region_distribution(<span class="kw-2">&amp;</span>table_route_value.region_routes).unwrap();
             <span class="macro">assert_eq!</span>(map.len(), <span class="number">2</span>);

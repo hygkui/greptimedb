@@ -340,6 +340,10 @@
 <a href="#340" id="340">340</a>
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -413,7 +417,8 @@
             .get(table_id)
             .<span class="kw">await
             </span>.context(error::TableRouteManagerSnafu)<span class="question-mark">?
-            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?</span>;
+            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?
+            </span>.into_inner();
 
         <span class="prelude-val">Ok</span>(RegionRoutes(route.region_routes))
     }
@@ -429,7 +434,8 @@
             .get(table_id)
             .<span class="kw">await
             </span>.context(error::TableRouteManagerSnafu)<span class="question-mark">?
-            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?</span>;
+            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?
+            </span>.into_inner();
         <span class="kw">let </span><span class="kw-2">mut </span>datanodes = HashMap::with_capacity(regions.len());
         <span class="kw">let </span>region_map = convert_to_region_map(<span class="kw-2">&amp;</span>route.region_routes);
         <span class="kw">for </span>region <span class="kw">in </span>regions.iter() {
@@ -452,7 +458,8 @@
             .get(table_id)
             .<span class="kw">await
             </span>.context(error::TableRouteManagerSnafu)<span class="question-mark">?
-            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?</span>;
+            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?
+            </span>.into_inner();
         <span class="kw">let </span><span class="kw-2">mut </span>peers = Vec::with_capacity(route.region_routes.len());
 
         <span class="kw">for </span>peer <span class="kw">in </span><span class="kw-2">&amp;</span>route.region_routes {
@@ -471,7 +478,8 @@
             .get(table_id)
             .<span class="kw">await
             </span>.context(error::TableRouteManagerSnafu)<span class="question-mark">?
-            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?</span>;
+            </span>.context(error::FindTableRoutesSnafu { table_id })<span class="question-mark">?
+            </span>.into_inner();
         <span class="macro">ensure!</span>(
             !route.region_routes.is_empty(),
             error::FindTableRoutesSnafu { table_id }
