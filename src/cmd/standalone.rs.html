@@ -617,6 +617,9 @@
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
 <a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -637,7 +640,7 @@
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_base::Plugins;
-<span class="kw">use </span>common_config::{kv_store_dir, KvStoreConfig, WalConfig};
+<span class="kw">use </span>common_config::{metadata_store_dir, KvStoreConfig, WalConfig};
 <span class="kw">use </span>common_meta::cache_invalidator::DummyKvCacheInvalidator;
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
@@ -929,11 +932,14 @@
             fe_opts, dn_opts
         );
 
-        <span class="kw">let </span>kv_dir = kv_store_dir(<span class="kw-2">&amp;</span>opts.data_home);
-        <span class="kw">let </span>(kv_store, procedure_manager) =
-            FeInstance::try_build_standalone_components(kv_dir, opts.kv_store, opts.procedure)
-                .<span class="kw">await
-                </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>metadata_dir = metadata_store_dir(<span class="kw-2">&amp;</span>opts.data_home);
+        <span class="kw">let </span>(kv_store, procedure_manager) = FeInstance::try_build_standalone_components(
+            metadata_dir,
+            opts.kv_store,
+            opts.procedure,
+        )
+        .<span class="kw">await
+        </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>datanode =
             DatanodeBuilder::new(dn_opts.clone(), <span class="prelude-val">Some</span>(kv_store.clone()), Default::default())
