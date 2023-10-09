@@ -459,6 +459,14 @@
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
 <a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -492,6 +500,10 @@
 
 <span class="kw">impl </span>Instance {
     <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        plugins::start_datanode_plugins(<span class="self">self</span>.datanode.plugins())
+            .<span class="kw">await
+            </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+
         <span class="self">self</span>.datanode.start().<span class="kw">await</span>.context(StartDatanodeSnafu)
     }
 
@@ -620,11 +632,15 @@
         <span class="prelude-val">Ok</span>(Options::Datanode(Box::new(opts)))
     }
 
-    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+    <span class="kw">async fn </span>build(<span class="self">self</span>, <span class="kw-2">mut </span>opts: DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="kw">let </span>plugins = plugins::setup_datanode_plugins(<span class="kw-2">&amp;mut </span>opts)
+            .<span class="kw">await
+            </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+
         <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode start command: {:#?}&quot;</span>, <span class="self">self</span>);
         <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode options: {:#?}&quot;</span>, opts);
 
-        <span class="kw">let </span>datanode = DatanodeBuilder::new(opts, <span class="prelude-val">None</span>, Default::default())
+        <span class="kw">let </span>datanode = DatanodeBuilder::new(opts, <span class="prelude-val">None</span>, plugins)
             .build()
             .<span class="kw">await
             </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;

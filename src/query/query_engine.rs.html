@@ -243,7 +243,7 @@
         region_query_handler: <span class="prelude-ty">Option</span>&lt;RegionQueryHandlerRef&gt;,
         table_mutation_handler: <span class="prelude-ty">Option</span>&lt;TableMutationHandlerRef&gt;,
         with_dist_planner: bool,
-        plugins: Arc&lt;Plugins&gt;,
+        plugins: Plugins,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>state = Arc::new(QueryEngineState::new(
             catalog_manager,

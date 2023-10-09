@@ -306,7 +306,7 @@
     catalog_manager: CatalogManagerRef,
     table_mutation_handler: <span class="prelude-ty">Option</span>&lt;TableMutationHandlerRef&gt;,
     aggregate_functions: Arc&lt;RwLock&lt;HashMap&lt;String, AggregateFunctionMetaRef&gt;&gt;&gt;,
-    plugins: Arc&lt;Plugins&gt;,
+    plugins: Plugins,
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>QueryEngineState {
@@ -323,7 +323,7 @@
         region_query_handler: <span class="prelude-ty">Option</span>&lt;RegionQueryHandlerRef&gt;,
         table_mutation_handler: <span class="prelude-ty">Option</span>&lt;TableMutationHandlerRef&gt;,
         with_dist_planner: bool,
-        plugins: Arc&lt;Plugins&gt;,
+        plugins: Plugins,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>runtime_env = Arc::new(RuntimeEnv::default());
         <span class="kw">let </span>session_config = SessionConfig::new().with_create_default_catalog_and_schema(<span class="bool-val">false</span>);

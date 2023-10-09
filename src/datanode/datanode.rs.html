@@ -484,6 +484,10 @@
 <a href="#484" id="484">484</a>
 <a href="#485" id="485">485</a>
 <a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -558,6 +562,7 @@
     region_server: RegionServer,
     greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
     leases_notifier: <span class="prelude-ty">Option</span>&lt;Arc&lt;Notify&gt;&gt;,
+    plugins: Plugins,
 }
 
 <span class="kw">impl </span>Datanode {
@@ -623,11 +628,15 @@
     <span class="kw">pub fn </span>region_server(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RegionServer {
         <span class="self">self</span>.region_server.clone()
     }
+
+    <span class="kw">pub fn </span>plugins(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Plugins {
+        <span class="self">self</span>.plugins.clone()
+    }
 }
 
 <span class="kw">pub struct </span>DatanodeBuilder {
     opts: DatanodeOptions,
-    plugins: Arc&lt;Plugins&gt;,
+    plugins: Plugins,
     meta_client: <span class="prelude-ty">Option</span>&lt;MetaClient&gt;,
     kv_backend: <span class="prelude-ty">Option</span>&lt;KvBackendRef&gt;,
 }
@@ -635,11 +644,7 @@
 <span class="kw">impl </span>DatanodeBuilder {
     <span class="doccomment">/// `kv_backend` is optional. If absent, the builder will try to build one
     /// by using the given `opts`
-    </span><span class="kw">pub fn </span>new(
-        opts: DatanodeOptions,
-        kv_backend: <span class="prelude-ty">Option</span>&lt;KvBackendRef&gt;,
-        plugins: Arc&lt;Plugins&gt;,
-    ) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(opts: DatanodeOptions, kv_backend: <span class="prelude-ty">Option</span>&lt;KvBackendRef&gt;, plugins: Plugins) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             opts,
             plugins,
@@ -748,6 +753,7 @@
             greptimedb_telemetry_task,
             region_event_receiver,
             leases_notifier,
+            plugins: <span class="self">self</span>.plugins.clone(),
         })
     }
 
@@ -813,7 +819,7 @@
 
     <span class="kw">async fn </span>new_region_server(
         opts: <span class="kw-2">&amp;</span>DatanodeOptions,
-        plugins: Arc&lt;Plugins&gt;,
+        plugins: Plugins,
         log_store: Arc&lt;RaftEngineLogStore&gt;,
         event_listener: RegionServerEventListenerRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;RegionServer&gt; {
@@ -846,7 +852,9 @@
         <span class="prelude-val">Ok</span>(region_server)
     }
 
-    <span class="doccomment">/// Build [RaftEngineLogStore]
+    <span class="comment">// internal utils
+
+    </span><span class="doccomment">/// Build [RaftEngineLogStore]
     </span><span class="kw">async fn </span>build_log_store(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;RaftEngineLogStore&gt;&gt; {
         <span class="kw">let </span>data_home = normalize_dir(<span class="kw-2">&amp;</span>opts.storage.data_home);
         <span class="kw">let </span>wal_dir = <span class="macro">format!</span>(<span class="string">&quot;{}{WAL_DIR}&quot;</span>, data_home);
@@ -940,7 +948,7 @@
                 ..Default::default()
             },
             <span class="prelude-val">None</span>,
-            Arc::new(Plugins::default()),
+            Plugins::default(),
         );
 
         <span class="kw">let </span>kv = Arc::new(MemoryKvBackend::default()) <span class="kw">as _</span>;

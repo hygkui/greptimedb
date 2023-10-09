@@ -190,7 +190,7 @@
         .<span class="kw">await
         </span>.unwrap();
 
-        <span class="kw">let </span>plugins = Arc::new(<span class="self">self</span>.plugin.unwrap_or_default());
+        <span class="kw">let </span>plugins = <span class="self">self</span>.plugin.unwrap_or_default();
 
         <span class="kw">let </span>datanode = DatanodeBuilder::new(opts.clone(), <span class="prelude-val">Some</span>(kv_store.clone()), plugins.clone())
             .build()

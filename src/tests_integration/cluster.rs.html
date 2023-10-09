@@ -522,7 +522,7 @@
             .build();
         meta_client.start(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>meta_srv.server_addr]).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>datanode = DatanodeBuilder::new(opts, <span class="prelude-val">None</span>, Arc::new(Plugins::default()))
+        <span class="kw">let </span><span class="kw-2">mut </span>datanode = DatanodeBuilder::new(opts, <span class="prelude-val">None</span>, Plugins::default())
             .with_meta_client(meta_client)
             .build()
             .<span class="kw">await
@@ -554,7 +554,7 @@
             FeInstance::try_new_distributed_with(
                 meta_client,
                 datanode_clients,
-                Arc::new(Plugins::default()),
+                Plugins::default(),
                 <span class="kw-2">&amp;</span>frontend_opts,
             )
             .<span class="kw">await

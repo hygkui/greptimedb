@@ -387,6 +387,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>client::client_manager::DatanodeClients;
+<span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_grpc::channel_manager::ChannelConfig;
 <span class="kw">use </span>common_meta::ddl_manager::{DdlManager, DdlManagerRef};
 <span class="kw">use </span>common_meta::distributed_time_constants;
@@ -418,7 +419,7 @@
     ElectionRef, MetaSrv, MetaSrvOptions, MetasrvInfo, SelectorContext, SelectorRef, TABLE_ID_SEQ,
 };
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_failover::RegionFailoverManager;
-<span class="kw">use </span><span class="kw">crate</span>::pubsub::{PublishRef, SubscribeManagerRef};
+<span class="kw">use </span><span class="kw">crate</span>::pubsub::PublishRef;
 <span class="kw">use </span><span class="kw">crate</span>::selector::lease_based::LeaseBasedSelector;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::{CheckLeader, LeaderCachedKvStore};
@@ -437,7 +438,7 @@
     meta_peer_client: <span class="prelude-ty">Option</span>&lt;MetaPeerClientRef&gt;,
     lock: <span class="prelude-ty">Option</span>&lt;DistLockRef&gt;,
     datanode_clients: <span class="prelude-ty">Option</span>&lt;Arc&lt;DatanodeClients&gt;&gt;,
-    pubsub: <span class="prelude-ty">Option</span>&lt;(PublishRef, SubscribeManagerRef)&gt;,
+    plugins: <span class="prelude-ty">Option</span>&lt;Plugins&gt;,
 }
 
 <span class="kw">impl </span>MetaSrvBuilder {
@@ -452,7 +453,7 @@
             options: <span class="prelude-val">None</span>,
             lock: <span class="prelude-val">None</span>,
             datanode_clients: <span class="prelude-val">None</span>,
-            pubsub: <span class="prelude-val">None</span>,
+            plugins: <span class="prelude-val">None</span>,
         }
     }
 
@@ -501,8 +502,8 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>pubsub(<span class="kw-2">mut </span><span class="self">self</span>, publish: PublishRef, subscribe_manager: SubscribeManagerRef) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.pubsub = <span class="prelude-val">Some</span>((publish, subscribe_manager));
+    <span class="kw">pub fn </span>plugins(<span class="kw-2">mut </span><span class="self">self</span>, plugins: Plugins) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.plugins = <span class="prelude-val">Some</span>(plugins);
         <span class="self">self
     </span>}
 
@@ -519,7 +520,7 @@
             handler_group,
             lock,
             datanode_clients,
-            pubsub,
+            plugins,
         } = <span class="self">self</span>;
 
         <span class="kw">let </span>options = options.unwrap_or_default();
@@ -576,11 +577,10 @@
                     <span class="prelude-val">None
                 </span>};
 
-                <span class="kw">let </span>publish_heartbeat_handler = <span class="kw">if let </span><span class="prelude-val">Some</span>((publish, <span class="kw">_</span>)) = pubsub.as_ref() {
-                    <span class="prelude-val">Some</span>(PublishHeartbeatHandler::new(publish.clone()))
-                } <span class="kw">else </span>{
-                    <span class="prelude-val">None
-                </span>};
+                <span class="kw">let </span>publish_heartbeat_handler = plugins
+                    .clone()
+                    .and_then(|plugins| plugins.get::&lt;PublishRef&gt;())
+                    .map(|publish| PublishHeartbeatHandler::new(publish.clone()));
 
                 <span class="kw">let </span>region_lease_handler =
                     RegionLeaseHandler::new(distributed_time_constants::REGION_LEASE_SECS);
@@ -633,7 +633,7 @@
                 enable_telemetry,
             )
             .<span class="kw">await</span>,
-            pubsub,
+            plugins: plugins.unwrap_or_else(Plugins::default),
         })
     }
 }

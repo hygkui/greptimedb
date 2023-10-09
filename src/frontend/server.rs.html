@@ -215,7 +215,6 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -238,7 +237,6 @@
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_runtime::Builder <span class="kw">as </span>RuntimeBuilder;
 <span class="kw">use </span>common_telemetry::info;
-<span class="kw">use </span>servers::configurator::ConfiguratorRef;
 <span class="kw">use </span>servers::error::InternalIoSnafu;
 <span class="kw">use </span>servers::grpc::{GrpcServer, GrpcServerConfig};
 <span class="kw">use </span>servers::http::HttpServerBuilder;
@@ -265,7 +263,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>build&lt;T&gt;(
         opts: <span class="kw-2">&amp;</span>FrontendOptions,
         instance: Arc&lt;T&gt;,
-        plugins: Arc&lt;Plugins&gt;,
+        plugins: Plugins,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ServerHandlers&gt;
     <span class="kw">where
         </span>T: FrontendInstance,
@@ -338,7 +336,7 @@
             <span class="kw">let </span>http_server = http_server_builder
                 .with_metrics_handler(MetricsHandler)
                 .with_script_handler(instance.clone())
-                .with_configurator(plugins.get::&lt;ConfiguratorRef&gt;())
+                .with_plugins(plugins)
                 .with_greptime_config_options(opts.to_toml_string())
                 .build();
             result.push((Box::new(http_server), http_addr));

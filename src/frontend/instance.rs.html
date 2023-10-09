@@ -769,11 +769,6 @@
 <a href="#769" id="769">769</a>
 <a href="#770" id="770">770</a>
 <a href="#771" id="771">771</a>
-<a href="#772" id="772">772</a>
-<a href="#773" id="773">773</a>
-<a href="#774" id="774">774</a>
-<a href="#775" id="775">775</a>
-<a href="#776" id="776">776</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -898,9 +893,7 @@
     script_executor: Arc&lt;ScriptExecutor&gt;,
     statement_executor: Arc&lt;StatementExecutor&gt;,
     query_engine: QueryEngineRef,
-    <span class="doccomment">/// plugins: this map holds extensions to customize query or auth
-    /// behaviours.
-    </span>plugins: Arc&lt;Plugins&gt;,
+    plugins: Plugins,
     servers: Arc&lt;ServerHandlers&gt;,
     heartbeat_task: <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;,
     inserter: InserterRef,
@@ -908,10 +901,7 @@
 }
 
 <span class="kw">impl </span>Instance {
-    <span class="kw">pub async fn </span>try_new_distributed(
-        opts: <span class="kw-2">&amp;</span>FrontendOptions,
-        plugins: Arc&lt;Plugins&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub async fn </span>try_new_distributed(opts: <span class="kw-2">&amp;</span>FrontendOptions, plugins: Plugins) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>meta_client = <span class="self">Self</span>::create_meta_client(opts).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>datanode_clients = Arc::new(DatanodeClients::default());
@@ -922,7 +912,7 @@
     <span class="kw">pub async fn </span>try_new_distributed_with(
         meta_client: Arc&lt;MetaClient&gt;,
         datanode_clients: Arc&lt;DatanodeClients&gt;,
-        plugins: Arc&lt;Plugins&gt;,
+        plugins: Plugins,
         opts: <span class="kw-2">&amp;</span>FrontendOptions,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>meta_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
@@ -1073,7 +1063,7 @@
         kv_backend: KvBackendRef,
         procedure_manager: ProcedureManagerRef,
         catalog_manager: CatalogManagerRef,
-        plugins: Arc&lt;Plugins&gt;,
+        plugins: Plugins,
         region_server: RegionServer,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(kv_backend.clone()));
@@ -1153,7 +1143,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.catalog_manager
     }
 
-    <span class="kw">pub fn </span>plugins(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Arc&lt;Plugins&gt; {
+    <span class="kw">pub fn </span>plugins(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Plugins {
         <span class="self">self</span>.plugins.clone()
     }
 
@@ -1369,7 +1359,7 @@
 }
 
 <span class="kw">pub fn </span>check_permission(
-    plugins: Arc&lt;Plugins&gt;,
+    plugins: Plugins,
     stmt: <span class="kw-2">&amp;</span>Statement,
     query_ctx: <span class="kw-2">&amp;</span>QueryContextRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -1440,6 +1430,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::collections::HashMap;
 
+    <span class="kw">use </span>common_base::Plugins;
     <span class="kw">use </span>query::query_engine::options::QueryOptions;
     <span class="kw">use </span>session::context::QueryContext;
     <span class="kw">use </span>sql::dialect::GreptimeDbDialect;
@@ -1450,11 +1441,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_exec_validation() {
         <span class="kw">let </span>query_ctx = QueryContext::arc();
-        <span class="kw">let </span>plugins = Plugins::new();
+        <span class="kw">let </span>plugins: Plugins = Plugins::new();
         plugins.insert(QueryOptions {
             disallow_cross_schema_query: <span class="bool-val">true</span>,
         });
-        <span class="kw">let </span>plugins = Arc::new(plugins);
 
         <span class="kw">let </span>sql = <span class="string">r#&quot;
         SELECT * FROM demo;
@@ -1480,7 +1470,7 @@
             re.unwrap();
         }
 
-        <span class="kw">fn </span>replace_test(template_sql: <span class="kw-2">&amp;</span>str, plugins: Arc&lt;Plugins&gt;, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef) {
+        <span class="kw">fn </span>replace_test(template_sql: <span class="kw-2">&amp;</span>str, plugins: Plugins, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef) {
             <span class="comment">// test right
             </span><span class="kw">let </span>right = <span class="macro">vec!</span>[(<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>), (<span class="string">&quot;&quot;</span>, <span class="string">&quot;public.&quot;</span>), (<span class="string">&quot;greptime.&quot;</span>, <span class="string">&quot;public.&quot;</span>)];
             <span class="kw">for </span>(catalog, schema) <span class="kw">in </span>right {
@@ -1508,7 +1498,7 @@
             template.format(<span class="kw-2">&amp;</span>vars).unwrap()
         }
 
-        <span class="kw">fn </span>do_test(sql: <span class="kw-2">&amp;</span>str, plugins: Arc&lt;Plugins&gt;, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef, is_ok: bool) {
+        <span class="kw">fn </span>do_test(sql: <span class="kw-2">&amp;</span>str, plugins: Plugins, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef, is_ok: bool) {
             <span class="kw">let </span>stmt = <span class="kw-2">&amp;</span>parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap()[<span class="number">0</span>];
             <span class="kw">let </span>re = check_permission(plugins, stmt, query_ctx);
             <span class="kw">if </span>is_ok {

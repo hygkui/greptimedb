@@ -774,11 +774,11 @@
 
 <span class="kw">pub struct </span>DatafusionQueryEngine {
     state: Arc&lt;QueryEngineState&gt;,
-    plugins: Arc&lt;Plugins&gt;,
+    plugins: Plugins,
 }
 
 <span class="kw">impl </span>DatafusionQueryEngine {
-    <span class="kw">pub fn </span>new(state: Arc&lt;QueryEngineState&gt;, plugins: Arc&lt;Plugins&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(state: Arc&lt;QueryEngineState&gt;, plugins: Plugins) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ state, plugins }
     }
 

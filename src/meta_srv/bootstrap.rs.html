@@ -190,6 +190,14 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -212,7 +220,9 @@
 <span class="kw">use </span>api::v1::meta::lock_server::LockServer;
 <span class="kw">use </span>api::v1::meta::router_server::RouterServer;
 <span class="kw">use </span>api::v1::meta::store_server::StoreServer;
+<span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>etcd_client::Client;
+<span class="kw">use </span>servers::configurator::ConfiguratorRef;
 <span class="kw">use </span>servers::http::{HttpServer, HttpServerBuilder};
 <span class="kw">use </span>servers::metrics_handler::MetricsHandler;
 <span class="kw">use </span>servers::server::Server;
@@ -245,22 +255,27 @@
     opts: MetaSrvOptions,
 
     signal_sender: <span class="prelude-ty">Option</span>&lt;Sender&lt;()&gt;&gt;,
+
+    plugins: Plugins,
 }
 
 <span class="kw">impl </span>MetaSrvInstance {
-    <span class="kw">pub async fn </span>new(opts: MetaSrvOptions) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrvInstance&gt; {
-        <span class="kw">let </span>meta_srv = build_meta_srv(<span class="kw-2">&amp;</span>opts).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">pub async fn </span>new(opts: MetaSrvOptions, plugins: Plugins) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrvInstance&gt; {
+        <span class="kw">let </span>meta_srv = build_meta_srv(<span class="kw-2">&amp;</span>opts, plugins.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>http_srv = Arc::new(
             HttpServerBuilder::new(opts.http.clone())
                 .with_metrics_handler(MetricsHandler)
                 .with_greptime_config_options(opts.to_toml_string())
                 .build(),
         );
+        <span class="comment">// put meta_srv into plugins for later use
+        </span>plugins.insert::&lt;Arc&lt;MetaSrv&gt;&gt;(Arc::new(meta_srv.clone()));
         <span class="prelude-val">Ok</span>(MetaSrvInstance {
             meta_srv,
             http_srv,
             opts,
             signal_sender: <span class="prelude-val">None</span>,
+            plugins,
         })
     }
 
@@ -271,8 +286,12 @@
 
         <span class="self">self</span>.signal_sender = <span class="prelude-val">Some</span>(tx);
 
-        <span class="kw">let </span>meta_srv =
-            bootstrap_meta_srv_with_router(<span class="kw-2">&amp;</span><span class="self">self</span>.opts.bind_addr, router(<span class="self">self</span>.meta_srv.clone()), rx);
+        <span class="kw">let </span><span class="kw-2">mut </span>router = router(<span class="self">self</span>.meta_srv.clone());
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(configurator) = <span class="self">self</span>.meta_srv.plugins().get::&lt;ConfiguratorRef&gt;() {
+            router = configurator.config_grpc(router);
+        }
+
+        <span class="kw">let </span>meta_srv = bootstrap_meta_srv_with_router(<span class="kw-2">&amp;</span><span class="self">self</span>.opts.bind_addr, router, rx);
         <span class="kw">let </span>addr = <span class="self">self</span>.opts.http.addr.parse().context(error::ParseAddrSnafu {
             addr: <span class="kw-2">&amp;</span><span class="self">self</span>.opts.http.addr,
         })<span class="question-mark">?</span>;
@@ -301,6 +320,10 @@
                 server: <span class="self">self</span>.http_srv.name(),
             })<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>plugins(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Plugins {
+        <span class="self">self</span>.plugins.clone()
     }
 }
 
@@ -338,7 +361,7 @@
         .add_service(admin::make_admin_service(meta_srv))
 }
 
-<span class="kw">pub async fn </span>build_meta_srv(opts: <span class="kw-2">&amp;</span>MetaSrvOptions) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrv&gt; {
+<span class="kw">pub async fn </span>build_meta_srv(opts: <span class="kw-2">&amp;</span>MetaSrvOptions, plugins: Plugins) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrv&gt; {
     <span class="kw">let </span>(kv_store, election, lock) = <span class="kw">if </span>opts.use_memory_store {
         (
             Arc::new(MemStore::new()) <span class="kw">as _</span>,
@@ -371,15 +394,8 @@
         .selector(selector)
         .election(election)
         .lock(lock)
+        .plugins(plugins)
         .build()
         .<span class="kw">await
 </span>}
-
-<span class="kw">pub async fn </span>make_meta_srv(opts: <span class="kw-2">&amp;</span>MetaSrvOptions) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrv&gt; {
-    <span class="kw">let </span>meta_srv = build_meta_srv(opts).<span class="kw">await</span><span class="question-mark">?</span>;
-
-    meta_srv.try_start().<span class="kw">await</span><span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(meta_srv)
-}
 </code></pre></div></section></main></body></html>

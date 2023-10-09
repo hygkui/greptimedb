@@ -23,6 +23,11 @@
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -39,10 +44,15 @@
 
 </span><span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>axum::Router;
+<span class="kw">use </span>axum::Router <span class="kw">as </span>HttpRouter;
+<span class="kw">use </span>tonic::transport::server::Router <span class="kw">as </span>GrpcRouter;
 
 <span class="kw">pub trait </span>Configurator: Send + Sync {
-    <span class="kw">fn </span>config_http(<span class="kw-2">&amp;</span><span class="self">self</span>, route: Router) -&gt; Router {
+    <span class="kw">fn </span>config_http(<span class="kw-2">&amp;</span><span class="self">self</span>, route: HttpRouter) -&gt; HttpRouter {
+        route
+    }
+
+    <span class="kw">fn </span>config_grpc(<span class="kw-2">&amp;</span><span class="self">self</span>, route: GrpcRouter) -&gt; GrpcRouter {
         route
     }
 }

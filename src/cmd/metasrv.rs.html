@@ -326,6 +326,9 @@
 <a href="#326" id="326">326</a>
 <a href="#327" id="327">327</a>
 <a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -348,7 +351,7 @@
 <span class="kw">use </span>meta_srv::metasrv::MetaSrvOptions;
 <span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>, StartMetaServerSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::options::{Options, TopLevelOptions};
 
 <span class="kw">pub struct </span>Instance {
@@ -357,10 +360,10 @@
 
 <span class="kw">impl </span>Instance {
     <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.instance
-            .start()
+        plugins::start_meta_srv_plugins(<span class="self">self</span>.instance.plugins())
             .<span class="kw">await
-            </span>.context(error::StartMetaServerSnafu)
+            </span>.context(StartMetaServerSnafu)<span class="question-mark">?</span>;
+        <span class="self">self</span>.instance.start().<span class="kw">await</span>.context(StartMetaServerSnafu)
     }
 
     <span class="kw">pub async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -486,12 +489,15 @@
         <span class="prelude-val">Ok</span>(Options::Metasrv(Box::new(opts)))
     }
 
-    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: MetaSrvOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
-        <span class="macro">logging::info!</span>(<span class="string">&quot;MetaSrv start command: {:#?}&quot;</span>, <span class="self">self</span>);
+    <span class="kw">async fn </span>build(<span class="self">self</span>, <span class="kw-2">mut </span>opts: MetaSrvOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="kw">let </span>plugins = plugins::setup_meta_srv_plugins(<span class="kw-2">&amp;mut </span>opts)
+            .<span class="kw">await
+            </span>.context(StartMetaServerSnafu)<span class="question-mark">?</span>;
 
+        <span class="macro">logging::info!</span>(<span class="string">&quot;MetaSrv start command: {:#?}&quot;</span>, <span class="self">self</span>);
         <span class="macro">logging::info!</span>(<span class="string">&quot;MetaSrv options: {:#?}&quot;</span>, opts);
 
-        <span class="kw">let </span>instance = MetaSrvInstance::new(opts)
+        <span class="kw">let </span>instance = MetaSrvInstance::new(opts, plugins)
             .<span class="kw">await
             </span>.context(error::BuildMetaServerSnafu)<span class="question-mark">?</span>;
 
