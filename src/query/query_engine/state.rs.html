@@ -243,8 +243,6 @@
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -281,7 +279,8 @@
 <span class="kw">use </span>datafusion::physical_plan::ExecutionPlan;
 <span class="kw">use </span>datafusion::physical_planner::{DefaultPhysicalPlanner, ExtensionPlanner, PhysicalPlanner};
 <span class="kw">use </span>datafusion_expr::LogicalPlan <span class="kw">as </span>DfLogicalPlan;
-<span class="kw">use </span>datafusion_optimizer::analyzer::Analyzer;
+<span class="kw">use </span>datafusion_optimizer::analyzer::count_wildcard_rule::CountWildcardRule;
+<span class="kw">use </span>datafusion_optimizer::analyzer::{Analyzer, AnalyzerRule};
 <span class="kw">use </span>datafusion_optimizer::optimizer::Optimizer;
 <span class="kw">use </span>promql::extension_plan::PromExtensionPlanner;
 <span class="kw">use </span>substrait::extension_serializer::ExtensionSerializer;
@@ -335,6 +334,8 @@
         }
         analyzer.rules.insert(<span class="number">0</span>, Arc::new(TypeConversionRule));
         analyzer.rules.insert(<span class="number">0</span>, Arc::new(StringNormalizationRule));
+        <span class="self">Self</span>::remove_analyzer_rule(<span class="kw-2">&amp;mut </span>analyzer.rules, CountWildcardRule {}.name());
+        analyzer.rules.insert(<span class="number">0</span>, Arc::new(CountWildcardRule {}));
         <span class="kw">let </span><span class="kw-2">mut </span>optimizer = Optimizer::new();
         optimizer.rules.push(Arc::new(OrderHintRule));
 
@@ -379,20 +380,15 @@
         }
     }
 
+    <span class="kw">fn </span>remove_analyzer_rule(rules: <span class="kw-2">&amp;mut </span>Vec&lt;Arc&lt;<span class="kw">dyn </span>AnalyzerRule + Send + Sync&gt;&gt;, name: <span class="kw-2">&amp;</span>str) {
+        rules.retain(|rule| rule.name() != name);
+    }
+
     <span class="kw">fn </span>remove_physical_optimize_rule(
         rules: <span class="kw-2">&amp;mut </span>Vec&lt;Arc&lt;<span class="kw">dyn </span>PhysicalOptimizerRule + Send + Sync&gt;&gt;,
         name: <span class="kw-2">&amp;</span>str,
     ) {
-        <span class="kw">let </span><span class="kw-2">mut </span>index_to_move = <span class="prelude-val">None</span>;
-        <span class="kw">for </span>(i, rule) <span class="kw">in </span>rules.iter().enumerate() {
-            <span class="kw">if </span>rule.name() == name {
-                index_to_move = <span class="prelude-val">Some</span>(i);
-                <span class="kw">break</span>;
-            }
-        }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(index) = index_to_move {
-            <span class="kw">let _ </span>= rules.remove(index);
-        }
+        rules.retain(|rule| rule.name() != name);
     }
 
     <span class="doccomment">/// Register a udf function

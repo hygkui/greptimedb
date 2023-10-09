@@ -356,7 +356,9 @@
             | Expr::Negative(<span class="kw">_</span>)
             | Expr::Between(<span class="kw">_</span>)
             | Expr::Sort(<span class="kw">_</span>)
-            | Expr::Exists(<span class="kw">_</span>) =&gt; Commutativity::Commutative,
+            | Expr::Exists(<span class="kw">_</span>)
+            | Expr::ScalarFunction(<span class="kw">_</span>)
+            | Expr::ScalarUDF(<span class="kw">_</span>) =&gt; Commutativity::Commutative,
 
             Expr::Like(<span class="kw">_</span>)
             | Expr::SimilarTo(<span class="kw">_</span>)
@@ -366,8 +368,6 @@
             | Expr::Case(<span class="kw">_</span>)
             | Expr::Cast(<span class="kw">_</span>)
             | Expr::TryCast(<span class="kw">_</span>)
-            | Expr::ScalarFunction(<span class="kw">_</span>)
-            | Expr::ScalarUDF(<span class="kw">_</span>)
             | Expr::AggregateFunction(<span class="kw">_</span>)
             | Expr::WindowFunction(<span class="kw">_</span>)
             | Expr::AggregateUDF(<span class="kw">_</span>)
