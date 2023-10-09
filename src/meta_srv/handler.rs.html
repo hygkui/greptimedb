@@ -500,6 +500,14 @@
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -528,6 +536,7 @@
 <span class="kw">use </span>common_meta::sequence::Sequence;
 <span class="kw">use </span>common_telemetry::{debug, info, timer, warn};
 <span class="kw">use </span>dashmap::DashMap;
+<span class="kw">use </span>futures::future::join_all;
 <span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::mpsc::Sender;
@@ -651,17 +660,24 @@
             .range(range)
             .map(|(<span class="kw">_</span>, value)| value)
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::with_capacity(pushers.len());
+
         <span class="kw">for </span>pusher <span class="kw">in </span>pushers {
             <span class="kw">let </span><span class="kw-2">mut </span>mailbox_message = mailbox_message.clone();
             mailbox_message.id = <span class="number">0</span>; <span class="comment">// one-way message
-            </span>pusher
-                .push(HeartbeatResponse {
-                    header: <span class="prelude-val">Some</span>(pusher.header()),
-                    mailbox_message: <span class="prelude-val">Some</span>(mailbox_message),
-                    ..Default::default()
-                })
-                .<span class="kw">await</span><span class="question-mark">?</span>;
+
+            </span>results.push(pusher.push(HeartbeatResponse {
+                header: <span class="prelude-val">Some</span>(pusher.header()),
+                mailbox_message: <span class="prelude-val">Some</span>(mailbox_message),
+                ..Default::default()
+            }))
         }
+
+        <span class="comment">// Checks the error out of the loop.
+        </span><span class="kw">let _ </span>= join_all(results)
+            .<span class="kw">await
+            </span>.into_iter()
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
