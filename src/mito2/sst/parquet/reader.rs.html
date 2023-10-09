@@ -344,6 +344,7 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -392,7 +393,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::sst::file::{FileHandle, FileId};
 <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::format::ReadFormat;
 <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::stats::RowGroupPruningStats;
-<span class="kw">use </span><span class="kw">crate</span>::sst::parquet::PARQUET_METADATA_KEY;
+<span class="kw">use </span><span class="kw">crate</span>::sst::parquet::{DEFAULT_READ_BATCH_SIZE, PARQUET_METADATA_KEY};
 
 <span class="doccomment">/// Parquet SST reader builder.
 </span><span class="kw">pub struct </span>ParquetReaderBuilder {
@@ -493,7 +494,8 @@
         };
         <span class="kw">let </span><span class="kw-2">mut </span>builder = ParquetRecordBatchStreamBuilder::new(reader)
             .<span class="kw">await
-            </span>.context(ReadParquetSnafu { path: file_path })<span class="question-mark">?</span>;
+            </span>.context(ReadParquetSnafu { path: file_path })<span class="question-mark">?
+            </span>.with_batch_size(DEFAULT_READ_BATCH_SIZE);
 
         <span class="comment">// Decode region metadata.
         </span><span class="kw">let </span>key_value_meta = builder.metadata().file_metadata().key_value_metadata();
