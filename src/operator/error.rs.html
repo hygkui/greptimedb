@@ -606,6 +606,11 @@
 <a href="#606" id="606">606</a>
 <a href="#607" id="607">607</a>
 <a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -636,6 +641,9 @@
 #[snafu(visibility(<span class="kw">pub</span>))]
 #[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table already exists: `{}`&quot;</span>, table))]
+    </span>TableAlreadyExists { table: String, location: Location },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to invalidate table cache&quot;</span>))]
     </span>InvalidateTableCache {
         location: Location,
@@ -1119,6 +1127,8 @@
             | Error::PrepareFileTable { .. }
             | Error::InferFileTableSchema { .. }
             | Error::SchemaIncompatible { .. } =&gt; StatusCode::InvalidArguments,
+
+            Error::TableAlreadyExists { .. } =&gt; StatusCode::TableAlreadyExists,
 
             Error::NotSupported { .. } =&gt; StatusCode::Unsupported,
 
