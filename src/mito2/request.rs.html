@@ -1079,6 +1079,44 @@
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1226,6 +1264,7 @@
             .map(|column| (<span class="kw-2">&amp;</span>column.column_name, column))
             .collect();
 
+        <span class="kw">let </span><span class="kw-2">mut </span>need_fill_default = <span class="bool-val">false</span>;
         <span class="comment">// Checks all columns in this region.
         </span><span class="kw">for </span>column <span class="kw">in </span><span class="kw-2">&amp;</span>metadata.column_metadatas {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(input_col) = rows_columns.remove(<span class="kw-2">&amp;</span>column.column_schema.name) {
@@ -1280,7 +1319,7 @@
                 <span class="comment">// Rows don&#39;t have this column.
                 </span><span class="self">self</span>.check_missing_column(column)<span class="question-mark">?</span>;
 
-                <span class="kw">return </span>FillDefaultSnafu { region_id }.fail();
+                need_fill_default = <span class="bool-val">true</span>;
             }
         }
 
@@ -1293,6 +1332,9 @@
             }
             .fail();
         }
+
+        <span class="comment">// If we need to fill default values, return a special error.
+        </span><span class="macro">ensure!</span>(!need_fill_default, FillDefaultSnafu { region_id });
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1764,6 +1806,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>api::v1::value::ValueData;
     <span class="kw">use </span>api::v1::{Row, SemanticType};
     <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
     <span class="kw">use </span>datatypes::schema::ColumnDefaultConstraint;
@@ -2031,7 +2074,7 @@
         <span class="macro">assert_eq!</span>(expect_rows, request.rows);
     }
 
-    <span class="kw">fn </span>region_metadata_for_delete() -&gt; RegionMetadata {
+    <span class="kw">fn </span>region_metadata_two_fields() -&gt; RegionMetadata {
         <span class="kw">let </span><span class="kw-2">mut </span>builder = RegionMetadataBuilder::new(RegionId::new(<span class="number">1</span>, <span class="number">1</span>));
         builder
             .push_column_metadata(ColumnMetadata {
@@ -2091,7 +2134,7 @@
                 values: <span class="macro">vec!</span>[ts_ms_value(<span class="number">1</span>)],
             }],
         };
-        <span class="kw">let </span>metadata = region_metadata_for_delete();
+        <span class="kw">let </span>metadata = region_metadata_two_fields();
 
         <span class="kw">let </span><span class="kw-2">mut </span>request = WriteRequest::new(RegionId::new(<span class="number">1</span>, <span class="number">1</span>), OpType::Delete, rows).unwrap();
         <span class="kw">let </span>err = request.check_schema(<span class="kw-2">&amp;</span>metadata).unwrap_err();
@@ -2158,6 +2201,39 @@
         <span class="kw">let </span><span class="kw-2">mut </span>request = WriteRequest::new(RegionId::new(<span class="number">1</span>, <span class="number">1</span>), OpType::Put, rows).unwrap();
         <span class="kw">let </span>err = request.fill_missing_columns(<span class="kw-2">&amp;</span>metadata).unwrap_err();
         check_invalid_request(<span class="kw-2">&amp;</span>err, <span class="string">&quot;column ts does not have default value&quot;</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_missing_and_invalid() {
+        <span class="comment">// Missing f0 and f1 has invalid type (string).
+        </span><span class="kw">let </span>rows = Rows {
+            schema: <span class="macro">vec!</span>[
+                new_column_schema(<span class="string">&quot;k0&quot;</span>, ColumnDataType::Int64, SemanticType::Tag),
+                new_column_schema(
+                    <span class="string">&quot;ts&quot;</span>,
+                    ColumnDataType::TimestampMillisecond,
+                    SemanticType::Timestamp,
+                ),
+                new_column_schema(<span class="string">&quot;f1&quot;</span>, ColumnDataType::String, SemanticType::Field),
+            ],
+            rows: <span class="macro">vec!</span>[Row {
+                values: <span class="macro">vec!</span>[
+                    i64_value(<span class="number">100</span>),
+                    ts_ms_value(<span class="number">1</span>),
+                    Value {
+                        value_data: <span class="prelude-val">Some</span>(ValueData::StringValue(<span class="string">&quot;xxxxx&quot;</span>.to_string())),
+                    },
+                ],
+            }],
+        };
+        <span class="kw">let </span>metadata = region_metadata_two_fields();
+
+        <span class="kw">let </span>request = WriteRequest::new(RegionId::new(<span class="number">1</span>, <span class="number">1</span>), OpType::Put, rows).unwrap();
+        <span class="kw">let </span>err = request.check_schema(<span class="kw-2">&amp;</span>metadata).unwrap_err();
+        check_invalid_request(
+            <span class="kw-2">&amp;</span>err,
+            <span class="string">&quot;column f1 expect type Int64(Int64Type), given: STRING(12)&quot;</span>,
+        );
     }
 }
 </code></pre></div></section></main></body></html>

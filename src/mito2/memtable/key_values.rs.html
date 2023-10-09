@@ -330,9 +330,6 @@
 <a href="#330" id="330">330</a>
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -349,7 +346,7 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="kw">use </span>api::v1::{Mutation, OpType, Row, Rows, SemanticType};
+<span class="kw">use </span>api::v1::{Mutation, OpType, Row, Rows};
 <span class="kw">use </span>datatypes::value::ValueRef;
 <span class="kw">use </span>store_api::metadata::RegionMetadata;
 <span class="kw">use </span>store_api::storage::SequenceNumber;
@@ -504,12 +501,10 @@
             .unwrap();
         indices.push(<span class="kw-2">*</span>ts_index);
         <span class="comment">// Iterate columns and find field columns.
-        </span><span class="kw">for </span>column <span class="kw">in </span>metadata.column_metadatas.iter() {
-            <span class="kw">if </span>column.semantic_type == SemanticType::Field {
-                <span class="comment">// Get index in request for each field column.
-                </span><span class="kw">let </span>index = name_to_index.get(<span class="kw-2">&amp;</span>column.column_schema.name).unwrap();
-                indices.push(<span class="kw-2">*</span>index);
-            }
+        </span><span class="kw">for </span>column <span class="kw">in </span>metadata.field_columns() {
+            <span class="comment">// Get index in request for each field column.
+            </span><span class="kw">let </span>index = name_to_index.get(<span class="kw-2">&amp;</span>column.column_schema.name).unwrap();
+            indices.push(<span class="kw-2">*</span>index);
         }
 
         ReadRowHelper {
@@ -521,8 +516,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>api::v1;
-    <span class="kw">use </span>api::v1::ColumnDataType;
+    <span class="kw">use </span>api::v1::{<span class="self">self</span>, ColumnDataType, SemanticType};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::test_util::i64_value;
