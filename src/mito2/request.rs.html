@@ -1121,6 +1121,13 @@
 <a href="#1121" id="1121">1121</a>
 <a href="#1122" id="1122">1122</a>
 <a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1139,7 +1146,7 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::time::Duration;
+<span class="kw">use </span>std::time::{Duration, Instant};
 
 <span class="kw">use </span>api::helper::{
     is_column_type_value_eq, is_semantic_type_eq, proto_value_type, to_column_data_type,
@@ -1152,6 +1159,7 @@
 <span class="kw">use </span>common_telemetry::tracing::log::info;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>datatypes::prelude::DataType;
+<span class="kw">use </span>metrics::histogram;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -1168,6 +1176,7 @@
     InvalidRequestSnafu, <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableId;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::COMPACTION_ELAPSED_TOTAL;
 <span class="kw">use </span><span class="kw">crate</span>::sst::file::FileMeta;
 <span class="kw">use </span><span class="kw">crate</span>::sst::file_purger::{FilePurgerRef, PurgeRequest};
 <span class="kw">use </span><span class="kw">crate</span>::wal::EntryId;
@@ -1769,10 +1778,15 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
     <span class="doccomment">/// Inferred Compaction time window.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) compaction_time_window: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+    <span class="doccomment">/// Start time of compaction task.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) start_time: Instant,
 }
 
 <span class="kw">impl </span>CompactionFinished {
     <span class="kw">pub fn </span>on_success(<span class="self">self</span>) {
+        <span class="comment">// only update compaction time on success
+        </span><span class="macro">histogram!</span>(COMPACTION_ELAPSED_TOTAL, <span class="self">self</span>.start_time.elapsed());
+
         <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders {
             sender.send(<span class="prelude-val">Ok</span>(AffectedRows(<span class="number">0</span>)));
         }

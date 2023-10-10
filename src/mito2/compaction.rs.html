@@ -486,6 +486,13 @@
 <a href="#486" id="486">486</a>
 <a href="#487" id="487">487</a>
 <a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -508,8 +515,9 @@
 
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::time::Instant;
 
-<span class="kw">use </span>common_telemetry::{debug, error};
+<span class="kw">use </span>common_telemetry::{debug, error, timer};
 <span class="kw">pub use </span>picker::CompactionPickerRef;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -520,6 +528,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CompactRegionSnafu, Error, RegionClosedSnafu, RegionDroppedSnafu, RegionTruncatedSnafu, <span class="prelude-ty">Result</span>,
 };
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{COMPACTION_STAGE_ELAPSED, STAGE_LABEL};
 <span class="kw">use </span><span class="kw">crate</span>::region::options::CompactionOptions;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlRef, VersionRef};
 <span class="kw">use </span><span class="kw">crate</span>::request::{OptionOutputTx, OutputTx, WorkerRequest};
@@ -535,6 +544,8 @@
     <span class="doccomment">/// Waiters of the compaction request.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) waiters: Vec&lt;OutputTx&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
+    <span class="doccomment">/// Start time of compaction task.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) start_time: Instant,
 }
 
 <span class="kw">impl </span>CompactionRequest {
@@ -663,11 +674,14 @@
             <span class="string">&quot;Pick compaction strategy {:?} for region: {}&quot;</span>,
             picker, region_id
         );
+
+        <span class="kw">let </span>pick_timer = <span class="macro">timer!</span>(COMPACTION_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;pick&quot;</span>)]);
         <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>task) = picker.pick(request) <span class="kw">else </span>{
             <span class="comment">// Nothing to compact, remove it from the region status map.
             </span><span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region_id);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         };
+        drop(pick_timer);
 
         <span class="comment">// Submit the compaction task.
         </span><span class="self">self</span>.scheduler
@@ -676,10 +690,8 @@
             }))
             .map_err(|e| {
                 <span class="macro">error!</span>(e; <span class="string">&quot;Failed to submit compaction request for region {}&quot;</span>, region_id);
-
                 <span class="comment">// If failed to submit the job, we need to remove the region from the scheduler.
                 </span><span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region_id);
-
                 e
             })
     }
@@ -783,12 +795,14 @@
         waiter: OptionOutputTx,
     ) -&gt; CompactionRequest {
         <span class="kw">let </span>current_version = <span class="self">self</span>.version_control.current().version;
+        <span class="kw">let </span>start_time = Instant::now();
         <span class="kw">let </span><span class="kw-2">mut </span>req = CompactionRequest {
             current_version,
             access_layer: <span class="self">self</span>.access_layer.clone(),
             request_sender: request_sender.clone(),
             waiters: Vec::new(),
             file_purger: <span class="self">self</span>.file_purger.clone(),
+            start_time,
         };
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pending) = <span class="self">self</span>.pending_compaction.take() {

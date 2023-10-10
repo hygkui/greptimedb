@@ -90,6 +90,14 @@
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -104,11 +112,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>common_telemetry::{error, info};
+</span><span class="kw">use </span>common_telemetry::{error, info, timer};
+<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{RegionEdit, RegionMetaAction, RegionMetaActionList};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{COMPACTION_REQUEST_COUNT, COMPACTION_STAGE_ELAPSED, STAGE_LABEL};
 <span class="kw">use </span><span class="kw">crate</span>::request::{CompactionFailed, CompactionFinished, OnFailure, OptionOutputTx};
 <span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
 
@@ -122,7 +132,7 @@
         <span class="kw">let </span><span class="prelude-val">Some</span>(region) = <span class="self">self</span>.regions.writable_region_or(region_id, <span class="kw-2">&amp;mut </span>sender) <span class="kw">else </span>{
             <span class="kw">return</span>;
         };
-
+        <span class="macro">increment_counter!</span>(COMPACTION_REQUEST_COUNT);
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.compaction_scheduler.schedule_compaction(
             region.region_id,
             <span class="kw-2">&amp;</span>region.version_control,
@@ -149,27 +159,33 @@
             <span class="kw">return</span>;
         };
 
-        <span class="comment">// Write region edit to manifest.
-        </span><span class="kw">let </span>edit = RegionEdit {
-            files_to_add: std::mem::take(<span class="kw-2">&amp;mut </span>request.compaction_outputs),
-            files_to_remove: std::mem::take(<span class="kw-2">&amp;mut </span>request.compacted_files),
-            compaction_time_window: request.compaction_time_window,
-            flushed_entry_id: <span class="prelude-val">None</span>,
-            flushed_sequence: <span class="prelude-val">None</span>,
-        };
-        <span class="kw">let </span>action_list = RegionMetaActionList::with_action(RegionMetaAction::Edit(edit.clone()));
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region.manifest_manager.update(action_list).<span class="kw">await </span>{
-            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to update manifest, region: {}&quot;</span>, region_id);
-            request.on_failure(e);
-            <span class="kw">return</span>;
+        {
+            <span class="kw">let </span>manifest_timer =
+                <span class="macro">timer!</span>(COMPACTION_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;write_manifest&quot;</span>)]);
+            <span class="comment">// Write region edit to manifest.
+            </span><span class="kw">let </span>edit = RegionEdit {
+                files_to_add: std::mem::take(<span class="kw-2">&amp;mut </span>request.compaction_outputs),
+                files_to_remove: std::mem::take(<span class="kw-2">&amp;mut </span>request.compacted_files),
+                compaction_time_window: request.compaction_time_window,
+                flushed_entry_id: <span class="prelude-val">None</span>,
+                flushed_sequence: <span class="prelude-val">None</span>,
+            };
+            <span class="kw">let </span>action_list =
+                RegionMetaActionList::with_action(RegionMetaAction::Edit(edit.clone()));
+            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region.manifest_manager.update(action_list).<span class="kw">await </span>{
+                <span class="macro">error!</span>(e; <span class="string">&quot;Failed to update manifest, region: {}&quot;</span>, region_id);
+                manifest_timer.discard();
+                request.on_failure(e);
+                <span class="kw">return</span>;
+            }
+
+            <span class="comment">// Apply edit to region&#39;s version.
+            </span>region
+                .version_control
+                .apply_edit(edit, <span class="kw-2">&amp;</span>[], region.file_purger.clone());
         }
-
-        <span class="comment">// Apply edit to region&#39;s version.
-        </span>region
-            .version_control
-            .apply_edit(edit, <span class="kw-2">&amp;</span>[], region.file_purger.clone());
-        request.on_success();
-
+        <span class="comment">// compaction finished.
+        </span>request.on_success();
         <span class="comment">// Schedule next compaction if necessary.
         </span><span class="self">self</span>.compaction_scheduler.on_compaction_finished(region_id);
     }
