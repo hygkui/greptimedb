@@ -230,6 +230,8 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -418,8 +420,10 @@
 
         <span class="comment">// Delete wal.
         </span><span class="macro">info!</span>(
-            <span class="string">&quot;Region {} flush finished, tries to bump wal to {}&quot;</span>,
-            region_id, request.flushed_entry_id
+            <span class="string">&quot;Region {} flush finished, elapsed: {:?}, tries to bump wal to {}&quot;</span>,
+            region_id,
+            request.timer.elapsed(),
+            request.flushed_entry_id
         );
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.wal.obsolete(region_id, request.flushed_entry_id).<span class="kw">await </span>{
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to write wal, region: {}&quot;</span>, region_id);
@@ -427,7 +431,7 @@
             <span class="kw">return</span>;
         }
 
-        <span class="comment">// Notifies waiters.
+        <span class="comment">// Notifies waiters and observes the flush timer.
         </span>request.on_success();
 
         <span class="comment">// Handle pending requests for the region.

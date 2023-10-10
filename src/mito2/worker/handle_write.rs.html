@@ -173,6 +173,18 @@
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -192,11 +204,14 @@
 </span><span class="kw">use </span>std::collections::{hash_map, HashMap};
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>common_telemetry::timer;
+<span class="kw">use </span>metrics::counter;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::metadata::RegionMetadata;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{RejectWriteSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{STAGE_LABEL, WRITE_REJECT_TOTAL, WRITE_STAGE_ELAPSED, WRITE_STALL_TOTAL};
 <span class="kw">use </span><span class="kw">crate</span>::region_write_ctx::RegionWriteCtx;
 <span class="kw">use </span><span class="kw">crate</span>::request::{SenderWriteRequest, WriteRequest};
 <span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
@@ -225,8 +240,9 @@
         }
 
         <span class="kw">if </span><span class="self">self</span>.write_buffer_manager.should_stall() &amp;&amp; allow_stall {
-            <span class="comment">// TODO(yingwen): stalled metrics.
-            </span><span class="self">self</span>.stalled_requests.append(<span class="kw-2">&amp;mut </span>write_requests);
+            <span class="macro">counter!</span>(WRITE_STALL_TOTAL, write_requests.len() <span class="kw">as </span>u64);
+
+            <span class="self">self</span>.stalled_requests.append(<span class="kw-2">&amp;mut </span>write_requests);
             <span class="self">self</span>.listener.on_write_stall();
             <span class="kw">return</span>;
         }
@@ -234,23 +250,29 @@
         <span class="kw">let </span><span class="kw-2">mut </span>region_ctxs = <span class="self">self</span>.prepare_region_write_ctx(write_requests);
 
         <span class="comment">// Write to WAL.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>wal_writer = <span class="self">self</span>.wal.writer();
-        <span class="kw">for </span>region_ctx <span class="kw">in </span>region_ctxs.values_mut() {
-            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region_ctx.add_wal_entry(<span class="kw-2">&amp;mut </span>wal_writer).map_err(Arc::new) {
-                region_ctx.set_error(e);
+        </span>{
+            <span class="kw">let </span>_timer = <span class="macro">timer!</span>(WRITE_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;write_wal&quot;</span>)]);
+            <span class="kw">let </span><span class="kw-2">mut </span>wal_writer = <span class="self">self</span>.wal.writer();
+            <span class="kw">for </span>region_ctx <span class="kw">in </span>region_ctxs.values_mut() {
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region_ctx.add_wal_entry(<span class="kw-2">&amp;mut </span>wal_writer).map_err(Arc::new) {
+                    region_ctx.set_error(e);
+                }
             }
-        }
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = wal_writer.write_to_wal().<span class="kw">await</span>.map_err(Arc::new) {
-            <span class="comment">// Failed to write wal.
-            </span><span class="kw">for </span><span class="kw-2">mut </span>region_ctx <span class="kw">in </span>region_ctxs.into_values() {
-                region_ctx.set_error(e.clone());
+            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = wal_writer.write_to_wal().<span class="kw">await</span>.map_err(Arc::new) {
+                <span class="comment">// Failed to write wal.
+                </span><span class="kw">for </span><span class="kw-2">mut </span>region_ctx <span class="kw">in </span>region_ctxs.into_values() {
+                    region_ctx.set_error(e.clone());
+                }
+                <span class="kw">return</span>;
             }
-            <span class="kw">return</span>;
         }
 
         <span class="comment">// Write to memtables.
-        </span><span class="kw">for </span><span class="kw-2">mut </span>region_ctx <span class="kw">in </span>region_ctxs.into_values() {
-            region_ctx.write_memtable();
+        </span>{
+            <span class="kw">let </span>_timer = <span class="macro">timer!</span>(WRITE_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;write_memtable&quot;</span>)]);
+            <span class="kw">for </span><span class="kw-2">mut </span>region_ctx <span class="kw">in </span>region_ctxs.into_values() {
+                region_ctx.write_memtable();
+            }
         }
     }
 }
@@ -323,6 +345,8 @@
 
 <span class="doccomment">/// Send rejected error to all `write_requests`.
 </span><span class="kw">fn </span>reject_write_requests(write_requests: Vec&lt;SenderWriteRequest&gt;) {
+    <span class="macro">counter!</span>(WRITE_REJECT_TOTAL, write_requests.len() <span class="kw">as </span>u64);
+
     <span class="kw">for </span>req <span class="kw">in </span>write_requests {
         req.sender.send(
             RejectWriteSnafu {

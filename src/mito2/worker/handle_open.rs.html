@@ -75,6 +75,10 @@
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
 <a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -95,6 +99,7 @@
 
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>metrics::increment_gauge;
 <span class="kw">use </span>object_store::util::join_path;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
@@ -102,6 +107,7 @@
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{OpenDalSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::REGION_COUNT;
 <span class="kw">use </span><span class="kw">crate</span>::region::opener::RegionOpener;
 <span class="kw">use </span><span class="kw">crate</span>::worker::handle_drop::remove_region_dir_once;
 <span class="kw">use </span><span class="kw">crate</span>::worker::{RegionWorkerLoop, DROPPING_MARKER_FILE};
@@ -145,6 +151,8 @@
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;Region {} is opened&quot;</span>, region_id);
+
+        <span class="macro">increment_gauge!</span>(REGION_COUNT, <span class="number">1.0</span>);
 
         <span class="comment">// Insert the MitoRegion into the RegionMap.
         </span><span class="self">self</span>.regions.insert_region(Arc::new(region));

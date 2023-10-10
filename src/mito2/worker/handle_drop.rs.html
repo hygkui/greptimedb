@@ -169,6 +169,10 @@
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -191,6 +195,7 @@
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>common_telemetry::tracing::warn;
 <span class="kw">use </span>futures::TryStreamExt;
+<span class="kw">use </span>metrics::decrement_gauge;
 <span class="kw">use </span>object_store::util::join_path;
 <span class="kw">use </span>object_store::{EntryMode, ObjectStore};
 <span class="kw">use </span>snafu::ResultExt;
@@ -198,6 +203,7 @@
 <span class="kw">use </span>tokio::time::sleep;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{OpenDalSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::REGION_COUNT;
 <span class="kw">use </span><span class="kw">crate</span>::region::RegionMapRef;
 <span class="kw">use </span><span class="kw">crate</span>::worker::{RegionWorkerLoop, DROPPING_MARKER_FILE};
 
@@ -232,6 +238,8 @@
             <span class="string">&quot;Region {} is dropped logically, but some files are not deleted yet&quot;</span>,
             region_id
         );
+
+        <span class="macro">decrement_gauge!</span>(REGION_COUNT, <span class="number">1.0</span>);
 
         <span class="comment">// detach a background task to delete the region dir
         </span><span class="kw">let </span>region_dir = region.access_layer.region_dir().to_owned();

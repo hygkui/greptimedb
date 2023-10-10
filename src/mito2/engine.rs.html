@@ -250,6 +250,10 @@
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -297,6 +301,7 @@
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
+<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
@@ -307,6 +312,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{RecvSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{HANDLE_REQUEST_ELAPSED, TYPE_LABEL};
 <span class="kw">use </span><span class="kw">crate</span>::read::scan_region::{ScanRegion, Scanner};
 <span class="kw">use </span><span class="kw">crate</span>::request::WorkerRequest;
 <span class="kw">use </span><span class="kw">crate</span>::worker::WorkerGroup;
@@ -384,6 +390,8 @@
 
     <span class="doccomment">/// Handles [RegionRequest] and return its executed result.
     </span><span class="kw">async fn </span>handle_request(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, request: RegionRequest) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(HANDLE_REQUEST_ELAPSED, <span class="kw-2">&amp;</span>[(TYPE_LABEL, request.type_name())]);
+
         <span class="kw">let </span>(request, receiver) = WorkerRequest::try_from_region_request(region_id, request)<span class="question-mark">?</span>;
         <span class="self">self</span>.workers.submit_to_worker(region_id, request).<span class="kw">await</span><span class="question-mark">?</span>;
 

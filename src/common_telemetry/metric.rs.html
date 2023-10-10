@@ -164,6 +164,27 @@
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -180,7 +201,8 @@
 
 // metric stuffs, inspired by databend
 
-</span><span class="kw">use </span>std::sync::{Arc, Once, RwLock};
+</span><span class="kw">use </span>std::fmt;
+<span class="kw">use </span>std::sync::{Arc, Once, RwLock};
 <span class="kw">use </span>std::time::{Duration, Instant};
 
 <span class="kw">use </span>metrics::{register_histogram, Histogram, IntoLabels};
@@ -229,11 +251,21 @@
 </span><span class="kw">pub struct </span>Timer {
     start: Instant,
     histogram: Histogram,
+    observed: bool,
 }
 
 <span class="kw">impl </span>From&lt;Histogram&gt; <span class="kw">for </span>Timer {
     <span class="kw">fn </span>from(histogram: Histogram) -&gt; Timer {
         Timer::from_histogram(histogram)
+    }
+}
+
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Timer {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Timer&quot;</span>)
+            .field(<span class="string">&quot;start&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.start)
+            .field(<span class="string">&quot;observed&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.observed)
+            .finish()
     }
 }
 
@@ -243,6 +275,7 @@
         <span class="self">Self </span>{
             start: Instant::now(),
             histogram,
+            observed: <span class="bool-val">false</span>,
         }
     }
 
@@ -251,6 +284,7 @@
         <span class="self">Self </span>{
             start: Instant::now(),
             histogram: <span class="macro">register_histogram!</span>(name),
+            observed: <span class="bool-val">false</span>,
         }
     }
 
@@ -259,6 +293,7 @@
         <span class="self">Self </span>{
             start: Instant::now(),
             histogram: <span class="macro">register_histogram!</span>(name, labels),
+            observed: <span class="bool-val">false</span>,
         }
     }
 
@@ -266,11 +301,18 @@
     </span><span class="kw">pub fn </span>elapsed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Duration {
         <span class="self">self</span>.start.elapsed()
     }
+
+    <span class="doccomment">/// Discards the timer result.
+    </span><span class="kw">pub fn </span>discard(<span class="kw-2">mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.observed = <span class="bool-val">true</span>;
+    }
 }
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>Timer {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.histogram.record(<span class="self">self</span>.elapsed())
+        <span class="kw">if </span>!<span class="self">self</span>.observed {
+            <span class="self">self</span>.histogram.record(<span class="self">self</span>.elapsed())
+        }
     }
 }
 

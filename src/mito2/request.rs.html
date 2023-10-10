@@ -1117,6 +1117,10 @@
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
 <a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1144,6 +1148,7 @@
 <span class="kw">use </span>api::v1::{ColumnDataType, ColumnSchema, OpType, Rows, SemanticType, Value};
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_query::Output::AffectedRows;
+<span class="kw">use </span>common_telemetry::metric::Timer;
 <span class="kw">use </span>common_telemetry::tracing::log::info;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>datatypes::prelude::DataType;
@@ -1711,10 +1716,13 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) senders: Vec&lt;OutputTx&gt;,
     <span class="doccomment">/// File purger for cleaning files on failure.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
+    <span class="doccomment">/// Flush timer.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) timer: Timer,
 }
 
 <span class="kw">impl </span>FlushFinished {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_success(<span class="self">self</span>) {
+    <span class="doccomment">/// Marks the flush job as successful and observes the timer.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_success(<span class="self">self</span>) {
         <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders {
             sender.send(<span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>)));
         }
