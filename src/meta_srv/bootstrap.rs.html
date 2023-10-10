@@ -198,6 +198,11 @@
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -369,8 +374,13 @@
             <span class="prelude-val">Some</span>(Arc::new(MemLock::default()) <span class="kw">as _</span>),
         )
     } <span class="kw">else </span>{
-        <span class="kw">let </span>etcd_endpoints = [<span class="kw-2">&amp;</span>opts.store_addr];
-        <span class="kw">let </span>etcd_client = Client::connect(etcd_endpoints, <span class="prelude-val">None</span>)
+        <span class="kw">let </span>etcd_endpoints = opts
+            .store_addr
+            .split(<span class="string">&#39;,&#39;</span>)
+            .map(|x| x.trim())
+            .filter(|x| !x.is_empty())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>etcd_client = Client::connect(<span class="kw-2">&amp;</span>etcd_endpoints, <span class="prelude-val">None</span>)
             .<span class="kw">await
             </span>.context(error::ConnectEtcdSnafu)<span class="question-mark">?</span>;
         (
