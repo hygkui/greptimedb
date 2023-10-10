@@ -185,6 +185,15 @@
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -211,7 +220,10 @@
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{RejectWriteSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::metrics::{STAGE_LABEL, WRITE_REJECT_TOTAL, WRITE_STAGE_ELAPSED, WRITE_STALL_TOTAL};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{
+    STAGE_LABEL, TYPE_LABEL, WRITE_REJECT_TOTAL, WRITE_ROWS_TOTAL, WRITE_STAGE_ELAPSED,
+    WRITE_STALL_TOTAL,
+};
 <span class="kw">use </span><span class="kw">crate</span>::region_write_ctx::RegionWriteCtx;
 <span class="kw">use </span><span class="kw">crate</span>::request::{SenderWriteRequest, WriteRequest};
 <span class="kw">use </span><span class="kw">crate</span>::worker::RegionWorkerLoop;
@@ -267,13 +279,19 @@
             }
         }
 
+        <span class="kw">let </span>(<span class="kw-2">mut </span>put_rows, <span class="kw-2">mut </span>delete_rows) = (<span class="number">0</span>, <span class="number">0</span>);
         <span class="comment">// Write to memtables.
         </span>{
             <span class="kw">let </span>_timer = <span class="macro">timer!</span>(WRITE_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;write_memtable&quot;</span>)]);
             <span class="kw">for </span><span class="kw-2">mut </span>region_ctx <span class="kw">in </span>region_ctxs.into_values() {
                 region_ctx.write_memtable();
+                put_rows += region_ctx.put_num;
+                delete_rows += region_ctx.delete_num;
             }
         }
+
+        <span class="macro">counter!</span>(WRITE_ROWS_TOTAL, put_rows <span class="kw">as </span>u64, TYPE_LABEL =&gt; <span class="string">&quot;put&quot;</span>);
+        <span class="macro">counter!</span>(WRITE_ROWS_TOTAL, delete_rows <span class="kw">as </span>u64, TYPE_LABEL =&gt; <span class="string">&quot;delete&quot;</span>);
     }
 }
 
