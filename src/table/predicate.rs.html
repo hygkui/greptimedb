@@ -703,6 +703,41 @@
 <a href="#703" id="703">703</a>
 <a href="#704" id="704">704</a>
 <a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -720,17 +755,19 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_query::logical_plan::{DfExpr, Expr};
-<span class="kw">use </span>common_telemetry::{error, warn};
+<span class="kw">use </span>common_telemetry::{debug, error, warn};
 <span class="kw">use </span>common_time::range::TimestampRange;
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>common_time::Timestamp;
+<span class="kw">use </span>datafusion::arrow::record_batch::RecordBatch;
 <span class="kw">use </span>datafusion::parquet::file::metadata::RowGroupMetaData;
 <span class="kw">use </span>datafusion::physical_optimizer::pruning::{PruningPredicate, PruningStatistics};
-<span class="kw">use </span>datafusion_common::ToDFSchema;
+<span class="kw">use </span>datafusion_common::{ScalarValue, ToDFSchema};
 <span class="kw">use </span>datafusion_expr::expr::InList;
-<span class="kw">use </span>datafusion_expr::{Between, BinaryExpr, Operator};
+<span class="kw">use </span>datafusion_expr::{Between, BinaryExpr, ColumnarValue, Operator};
 <span class="kw">use </span>datafusion_physical_expr::execution_props::ExecutionProps;
 <span class="kw">use </span>datafusion_physical_expr::{create_physical_expr, PhysicalExpr};
+<span class="kw">use </span>datatypes::arrow::array::BooleanArray;
 <span class="kw">use </span>datatypes::schema::SchemaRef;
 <span class="kw">use </span>datatypes::value::scalar_value_to_timestamp;
 <span class="kw">use </span>snafu::ResultExt;
@@ -822,6 +859,39 @@
             }
         }
         res
+    }
+
+    <span class="doccomment">/// Prunes primary keys
+    </span><span class="kw">pub fn </span>prune_primary_key(<span class="kw-2">&amp;</span><span class="self">self</span>, primary_key: <span class="kw-2">&amp;</span>RecordBatch) -&gt; error::Result&lt;bool&gt; {
+        <span class="kw">for </span>expr <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.exprs {
+            <span class="comment">// evaluate every filter against primary key
+            </span><span class="kw">let </span><span class="prelude-val">Ok</span>(eva) = expr.evaluate(primary_key) <span class="kw">else </span>{
+                <span class="kw">continue</span>;
+            };
+            <span class="kw">let </span>result = <span class="kw">match </span>eva {
+                ColumnarValue::Array(array) =&gt; {
+                    <span class="kw">let </span>predicate_array = array.as_any().downcast_ref::&lt;BooleanArray&gt;().unwrap();
+                    predicate_array
+                        .into_iter()
+                        .map(|x| x.unwrap_or(<span class="bool-val">true</span>))
+                        .next()
+                        .unwrap_or(<span class="bool-val">true</span>)
+                }
+                <span class="comment">// result was a column
+                </span>ColumnarValue::Scalar(ScalarValue::Boolean(v)) =&gt; v.unwrap_or(<span class="bool-val">true</span>),
+                <span class="kw">_ </span>=&gt; {
+                    <span class="macro">unreachable!</span>(<span class="string">&quot;Unexpected primary key record batch evaluation result: {:?}, primary key: {:?}&quot;</span>, eva, primary_key);
+                }
+            };
+            <span class="macro">debug!</span>(
+                <span class="string">&quot;Evaluate primary key {:?} against filter: {:?}, result: {:?}&quot;</span>,
+                primary_key, expr, result
+            );
+            <span class="kw">if </span>!result {
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
+            }
+        }
+        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 
     <span class="doccomment">/// Evaluates the predicate against the `stats`.

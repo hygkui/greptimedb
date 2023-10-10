@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["INITIAL_BUILDER_CAPACITY"],"struct":["Iter","Series","SeriesSet","TimeSeriesMemtable","TimeSeriesMemtableBuilder","ValueBuilder","Values"],"type":["SeriesRwLockMap"]};
+window.SIDEBAR_ITEMS = {"constant":["INITIAL_BUILDER_CAPACITY"],"fn":["pk_to_record_batch","primary_key_builders","prune_primary_key"],"struct":["Iter","PrimaryKey","Series","SeriesSet","TimeSeriesMemtable","TimeSeriesMemtableBuilder","ValueBuilder","Values"],"type":["SeriesRwLockMap"]};
