@@ -123,7 +123,7 @@
             .into_iter()
             .map(|(k, v)| HumanLease {
                 name: k,
-                human_time: common_time::DateTime::new(v.timestamp_millis / <span class="number">1000</span>).to_string(),
+                human_time: common_time::DateTime::new(v.timestamp_millis).to_string(),
                 lease: v,
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
