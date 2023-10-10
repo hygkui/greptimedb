@@ -438,6 +438,14 @@
 <a href="#438" id="438">438</a>
 <a href="#439" id="439">439</a>
 <a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -452,7 +460,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>clap::Parser;
+</span><span class="kw">use </span>std::time::Duration;
+
+<span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance <span class="kw">as </span>FeInstance};
@@ -525,6 +535,8 @@
     <span class="attr">#[clap(long)]
     </span>http_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
+    </span>http_timeout: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    <span class="attr">#[clap(long)]
     </span>grpc_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
     </span>mysql_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
@@ -576,6 +588,10 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.http_addr {
             opts.http.addr = addr.clone()
+        }
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(http_timeout) = <span class="self">self</span>.http_timeout {
+            opts.http.timeout = Duration::from_secs(http_timeout)
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(disable_dashboard) = <span class="self">self</span>.disable_dashboard {
