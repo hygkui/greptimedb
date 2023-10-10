@@ -511,10 +511,6 @@
 <a href="#511" id="511">511</a>
 <a href="#512" id="512">512</a>
 <a href="#513" id="513">513</a>
-<a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
-<a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -545,7 +541,7 @@
 <span class="kw">use </span>common_query::{DfPhysicalPlan, Output};
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>common_runtime::Runtime;
-<span class="kw">use </span>common_telemetry::{info, timer, warn};
+<span class="kw">use </span>common_telemetry::{info, warn};
 <span class="kw">use </span>dashmap::DashMap;
 <span class="kw">use </span>datafusion::catalog::schema::SchemaProvider;
 <span class="kw">use </span>datafusion::catalog::{CatalogList, CatalogProvider};
@@ -744,13 +740,9 @@
         region_id: RegionId,
         request: RegionRequest,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>request_type = request.request_type();
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
-            <span class="kw">crate</span>::metrics::HANDLE_REGION_REQUEST_ELAPSED,
-            <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::REGION_REQUEST_TYPE, request_type),]
-        );
+        <span class="comment">// TODO(ruihang): add some metrics
 
-        <span class="kw">let </span>region_change = <span class="kw">match </span><span class="kw-2">&amp;</span>request {
+        </span><span class="kw">let </span>region_change = <span class="kw">match </span><span class="kw-2">&amp;</span>request {
             RegionRequest::Create(create) =&gt; RegionChange::Register(create.engine.clone()),
             RegionRequest::Open(open) =&gt; RegionChange::Register(open.engine.clone()),
             RegionRequest::Close(<span class="kw">_</span>) | RegionRequest::Drop(<span class="kw">_</span>) =&gt; RegionChange::Deregisters,
