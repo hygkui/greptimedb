@@ -508,6 +508,14 @@
 <a href="#508" id="508">508</a>
 <a href="#509" id="509">509</a>
 <a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -548,6 +556,7 @@
 <span class="kw">use </span>snafu::ResultExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{DeserializeSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::PROMQL_SERIES_COUNT;
 
 <span class="attr">#[derive(Debug, PartialEq, Eq, Hash)]
 </span><span class="kw">pub struct </span>SeriesDivide {
@@ -714,6 +723,7 @@
             schema,
             input,
             metric: baseline_metric,
+            num_series: <span class="number">0</span>,
         }))
     }
 
@@ -749,6 +759,7 @@
     schema: SchemaRef,
     input: SendableRecordBatchStream,
     metric: BaselineMetrics,
+    num_series: usize,
 }
 
 <span class="kw">impl </span>RecordBatchStream <span class="kw">for </span>SeriesDivideStream {
@@ -769,6 +780,7 @@
                         <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(batch)) =&gt; batch,
                         <span class="prelude-val">None </span>=&gt; {
                             <span class="self">self</span>.buffer = <span class="prelude-val">None</span>;
+                            <span class="self">self</span>.num_series += <span class="number">1</span>;
                             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(batch)));
                         }
                         error =&gt; <span class="kw">return </span>Poll::Ready(error),
@@ -781,12 +793,16 @@
                     <span class="kw">let </span>result_batch = batch.slice(<span class="number">0</span>, same_length);
                     <span class="kw">let </span>remaining_batch = batch.slice(same_length, batch.num_rows() - same_length);
                     <span class="self">self</span>.buffer = <span class="prelude-val">Some</span>(remaining_batch);
+                    <span class="self">self</span>.num_series += <span class="number">1</span>;
                     <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(result_batch)));
                 }
             } <span class="kw">else </span>{
                 <span class="kw">let </span>batch = <span class="kw">match </span><span class="macro">ready!</span>(<span class="self">self</span>.as_mut().fetch_next_batch(cx)) {
                     <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(batch)) =&gt; batch,
-                    <span class="prelude-val">None </span>=&gt; <span class="kw">return </span>Poll::Ready(<span class="prelude-val">None</span>),
+                    <span class="prelude-val">None </span>=&gt; {
+                        <span class="macro">metrics::histogram!</span>(PROMQL_SERIES_COUNT, <span class="self">self</span>.num_series <span class="kw">as </span>f64);
+                        <span class="kw">return </span>Poll::Ready(<span class="prelude-val">None</span>);
+                    }
                     error =&gt; <span class="kw">return </span>Poll::Ready(error),
                 };
                 <span class="self">self</span>.buffer = <span class="prelude-val">Some</span>(batch);

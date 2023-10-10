@@ -321,6 +321,24 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -337,6 +355,7 @@
 
 </span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>arrow_schema::{Schema <span class="kw">as </span>ArrowSchema, SchemaRef <span class="kw">as </span>ArrowSchemaRef};
 <span class="kw">use </span>async_stream::stream;
@@ -362,8 +381,12 @@
 <span class="kw">use </span>greptime_proto::v1::region::{QueryRequest, RegionRequestHeader};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
+<span class="kw">use </span>tokio::time::Instant;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::ConvertSchemaSnafu;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{
+    METRIC_MERGE_SCAN_ERRORS_TOTAL, METRIC_MERGE_SCAN_POLL_ELAPSED, METRIC_MERGE_SCAN_REGIONS,
+};
 <span class="kw">use </span><span class="kw">crate</span>::region_query::RegionQueryHandlerRef;
 
 <span class="attr">#[derive(Debug, Hash, PartialEq, Eq, Clone)]
@@ -484,6 +507,7 @@
         <span class="kw">let </span>trace_id = trace_id().unwrap_or_default();
 
         <span class="kw">let </span>stream = Box::pin(<span class="macro">stream!</span>({
+            <span class="macro">metrics::histogram!</span>(METRIC_MERGE_SCAN_REGIONS, regions.len() <span class="kw">as </span>f64);
             <span class="kw">let </span>_finish_timer = metric.finish_time().timer();
             <span class="kw">let </span><span class="kw-2">mut </span>ready_timer = metric.ready_time().timer();
             <span class="kw">let </span><span class="kw-2">mut </span>first_consume_timer = <span class="prelude-val">Some</span>(metric.first_consume_time().timer());
@@ -501,12 +525,21 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>stream = region_query_handler
                     .do_get(request)
                     .<span class="kw">await
-                    </span>.map_err(BoxedError::new)
+                    </span>.map_err(|e| {
+                        <span class="macro">metrics::increment_counter!</span>(METRIC_MERGE_SCAN_ERRORS_TOTAL);
+                        BoxedError::new(e)
+                    })
                     .context(ExternalSnafu)<span class="question-mark">?</span>;
 
                 ready_timer.stop();
 
+                <span class="kw">let </span><span class="kw-2">mut </span>poll_duration = Duration::new(<span class="number">0</span>, <span class="number">0</span>);
+
+                <span class="kw">let </span><span class="kw-2">mut </span>poll_timer = Instant::now();
                 <span class="kw">while let </span><span class="prelude-val">Some</span>(batch) = stream.next().<span class="kw">await </span>{
+                    <span class="kw">let </span>poll_elapsed = poll_timer.elapsed();
+                    poll_duration += poll_elapsed;
+
                     <span class="kw">let </span>batch = batch<span class="question-mark">?</span>;
                     <span class="comment">// reconstruct batch using `self.schema`
                     // to remove metadata and correct column name
@@ -516,7 +549,10 @@
                         first_consume_timer.stop();
                     }
                     <span class="kw">yield </span><span class="prelude-val">Ok</span>(batch);
+                    <span class="comment">// reset poll timer
+                    </span>poll_timer = Instant::now();
                 }
+                <span class="macro">metrics::histogram!</span>(METRIC_MERGE_SCAN_POLL_ELAPSED, poll_duration.as_secs_f64());
             }
         }));
 
