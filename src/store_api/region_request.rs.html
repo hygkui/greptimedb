@@ -750,6 +750,23 @@
 <a href="#750" id="750">750</a>
 <a href="#751" id="751">751</a>
 <a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -795,6 +812,23 @@
 }
 
 <span class="kw">impl </span>RegionRequest {
+    <span class="doccomment">/// Returns the type name of the [RegionRequest].
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>request_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self </span>{
+            RegionRequest::Put(<span class="kw">_</span>) =&gt; <span class="string">&quot;put&quot;</span>,
+            RegionRequest::Delete(<span class="kw">_</span>) =&gt; <span class="string">&quot;delete&quot;</span>,
+            RegionRequest::Create(<span class="kw">_</span>) =&gt; <span class="string">&quot;create&quot;</span>,
+            RegionRequest::Drop(<span class="kw">_</span>) =&gt; <span class="string">&quot;drop&quot;</span>,
+            RegionRequest::Open(<span class="kw">_</span>) =&gt; <span class="string">&quot;open&quot;</span>,
+            RegionRequest::Close(<span class="kw">_</span>) =&gt; <span class="string">&quot;close&quot;</span>,
+            RegionRequest::Alter(<span class="kw">_</span>) =&gt; <span class="string">&quot;alter&quot;</span>,
+            RegionRequest::Flush(<span class="kw">_</span>) =&gt; <span class="string">&quot;flush&quot;</span>,
+            RegionRequest::Compact(<span class="kw">_</span>) =&gt; <span class="string">&quot;compact&quot;</span>,
+            RegionRequest::Truncate(<span class="kw">_</span>) =&gt; <span class="string">&quot;truncate&quot;</span>,
+        }
+    }
+
     <span class="doccomment">/// Convert [Body](region_request::Body) to a group of [RegionRequest] with region id.
     /// Inserts/Deletes request might become multiple requests. Others are one-to-one.
     </span><span class="kw">pub fn </span>try_from_request_body(body: region_request::Body) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(RegionId, <span class="self">Self</span>)&gt;&gt; {
