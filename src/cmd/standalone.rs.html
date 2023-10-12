@@ -717,7 +717,7 @@
     <span class="kw">pub </span>prom_store: PromStoreOptions,
     <span class="kw">pub </span>wal: WalConfig,
     <span class="kw">pub </span>storage: StorageConfig,
-    <span class="kw">pub </span>kv_store: KvStoreConfig,
+    <span class="kw">pub </span>metadata_store: KvStoreConfig,
     <span class="kw">pub </span>procedure: ProcedureConfig,
     <span class="kw">pub </span>logging: LoggingOptions,
     <span class="doccomment">/// Options for different store engines.
@@ -738,7 +738,7 @@
             prom_store: PromStoreOptions::default(),
             wal: WalConfig::default(),
             storage: StorageConfig::default(),
-            kv_store: KvStoreConfig::default(),
+            metadata_store: KvStoreConfig::default(),
             procedure: ProcedureConfig::default(),
             logging: LoggingOptions::default(),
             region_engine: <span class="macro">vec!</span>[
@@ -899,7 +899,7 @@
         <span class="kw">if </span><span class="self">self</span>.influxdb_enable {
             opts.influxdb.enable = <span class="self">self</span>.influxdb_enable;
         }
-        <span class="kw">let </span>kv_store = opts.kv_store.clone();
+        <span class="kw">let </span>metadata_store = opts.metadata_store.clone();
         <span class="kw">let </span>procedure = opts.procedure.clone();
         <span class="kw">let </span>frontend = opts.clone().frontend_options();
         <span class="kw">let </span>logging = opts.logging.clone();
@@ -907,7 +907,7 @@
 
         <span class="prelude-val">Ok</span>(Options::Standalone(Box::new(MixOptions {
             procedure,
-            kv_store,
+            metadata_store,
             data_home: datanode.storage.data_home.to_string(),
             frontend,
             datanode,
@@ -935,7 +935,7 @@
         <span class="kw">let </span>metadata_dir = metadata_store_dir(<span class="kw-2">&amp;</span>opts.data_home);
         <span class="kw">let </span>(kv_store, procedure_manager) = FeInstance::try_build_standalone_components(
             metadata_dir,
-            opts.kv_store,
+            opts.metadata_store,
             opts.procedure,
         )
         .<span class="kw">await
@@ -1236,7 +1236,7 @@
         <span class="macro">assert_eq!</span>(options.influxdb, default_options.influxdb);
         <span class="macro">assert_eq!</span>(options.prom_store, default_options.prom_store);
         <span class="macro">assert_eq!</span>(options.wal, default_options.wal);
-        <span class="macro">assert_eq!</span>(options.kv_store, default_options.kv_store);
+        <span class="macro">assert_eq!</span>(options.metadata_store, default_options.metadata_store);
         <span class="macro">assert_eq!</span>(options.procedure, default_options.procedure);
         <span class="macro">assert_eq!</span>(options.logging, default_options.logging);
         <span class="macro">assert_eq!</span>(options.region_engine, default_options.region_engine);
