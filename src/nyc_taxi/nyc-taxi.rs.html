@@ -501,6 +501,26 @@
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
 <a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -532,14 +552,14 @@
 <span class="kw">use </span>client::api::v1::{
     Column, ColumnDataType, ColumnDef, CreateTableExpr, InsertRequest, InsertRequests, SemanticType,
 };
-<span class="kw">use </span>client::{Client, Database, DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+<span class="kw">use </span>client::{Client, Database, Output, DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+<span class="kw">use </span>futures_util::TryStreamExt;
 <span class="kw">use </span>indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 <span class="kw">use </span>parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 <span class="kw">use </span>tokio::task::JoinSet;
 
 <span class="kw">const </span>CATALOG_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;greptime&quot;</span>;
 <span class="kw">const </span>SCHEMA_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;public&quot;</span>;
-<span class="kw">const </span>TABLE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;nyc_taxi&quot;</span>;
 
 <span class="attr">#[derive(Parser)]
 #[command(name = <span class="string">&quot;NYC benchmark runner&quot;</span>)]
@@ -577,7 +597,12 @@
         .collect()
 }
 
+<span class="kw">fn </span>new_table_name() -&gt; String {
+    <span class="macro">format!</span>(<span class="string">&quot;nyc_taxi_{}&quot;</span>, chrono::Utc::now().timestamp())
+}
+
 <span class="kw">async fn </span>write_data(
+    table_name: <span class="kw-2">&amp;</span>str,
     batch_size: usize,
     db: <span class="kw-2">&amp;</span>Database,
     path: PathBuf,
@@ -607,7 +632,7 @@
         }
         <span class="kw">let </span>(columns, row_count) = convert_record_batch(record_batch);
         <span class="kw">let </span>request = InsertRequest {
-            table_name: TABLE_NAME.to_string(),
+            table_name: table_name.to_string(),
             columns,
             row_count,
         };
@@ -616,7 +641,7 @@
         };
 
         <span class="kw">let </span>now = Instant::now();
-        <span class="kw">let _ </span>= db.insert(requests).<span class="kw">await</span>.unwrap();
+        db.insert(requests).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>elapsed = now.elapsed();
         total_rpc_elapsed_ms += elapsed.as_millis();
         progress_bar.inc(row_count <span class="kw">as _</span>);
@@ -634,6 +659,11 @@
 
     <span class="kw">for </span>(array, field) <span class="kw">in </span>record_batch.columns().iter().zip(fields.iter()) {
         <span class="kw">let </span>(values, datatype) = build_values(array);
+        <span class="kw">let </span>semantic_type = <span class="kw">match </span>field.name().as_str() {
+            <span class="string">&quot;VendorID&quot; </span>=&gt; SemanticType::Tag,
+            <span class="string">&quot;tpep_pickup_datetime&quot; </span>=&gt; SemanticType::Timestamp,
+            <span class="kw">_ </span>=&gt; SemanticType::Field,
+        };
 
         <span class="kw">let </span>column = Column {
             column_name: field.name().clone(),
@@ -644,8 +674,7 @@
                 .map(|bitmap| bitmap.buffer().as_slice().to_vec())
                 .unwrap_or_default(),
             datatype: datatype.into(),
-            <span class="comment">// datatype and semantic_type are set to default
-            </span>..Default::default()
+            semantic_type: semantic_type <span class="kw">as </span>i32,
         };
         columns.push(column);
     }
@@ -746,11 +775,11 @@
     batch.columns().iter().all(|col| col.null_count() == <span class="number">0</span>)
 }
 
-<span class="kw">fn </span>create_table_expr() -&gt; CreateTableExpr {
+<span class="kw">fn </span>create_table_expr(table_name: <span class="kw-2">&amp;</span>str) -&gt; CreateTableExpr {
     CreateTableExpr {
         catalog_name: CATALOG_NAME.to_string(),
         schema_name: SCHEMA_NAME.to_string(),
-        table_name: TABLE_NAME.to_string(),
+        table_name: table_name.to_string(),
         desc: <span class="string">&quot;&quot;</span>.to_string(),
         column_defs: <span class="macro">vec!</span>[
             ColumnDef {
@@ -764,7 +793,7 @@
             ColumnDef {
                 name: <span class="string">&quot;tpep_pickup_datetime&quot;</span>.to_string(),
                 data_type: ColumnDataType::TimestampMicrosecond <span class="kw">as </span>i32,
-                is_nullable: <span class="bool-val">true</span>,
+                is_nullable: <span class="bool-val">false</span>,
                 default_constraint: <span class="macro">vec!</span>[],
                 semantic_type: SemanticType::Timestamp <span class="kw">as </span>i32,
                 comment: String::new(),
@@ -908,31 +937,31 @@
         ],
         time_index: <span class="string">&quot;tpep_pickup_datetime&quot;</span>.to_string(),
         primary_keys: <span class="macro">vec!</span>[<span class="string">&quot;VendorID&quot;</span>.to_string()],
-        create_if_not_exists: <span class="bool-val">false</span>,
+        create_if_not_exists: <span class="bool-val">true</span>,
         table_options: Default::default(),
         table_id: <span class="prelude-val">None</span>,
         engine: <span class="string">&quot;mito&quot;</span>.to_string(),
     }
 }
 
-<span class="kw">fn </span>query_set() -&gt; HashMap&lt;String, String&gt; {
+<span class="kw">fn </span>query_set(table_name: <span class="kw-2">&amp;</span>str) -&gt; HashMap&lt;String, String&gt; {
     HashMap::from([
         (
             <span class="string">&quot;count_all&quot;</span>.to_string(), 
-            <span class="macro">format!</span>(<span class="string">&quot;SELECT COUNT(*) FROM {TABLE_NAME};&quot;</span>),
+            <span class="macro">format!</span>(<span class="string">&quot;SELECT COUNT(*) FROM {table_name};&quot;</span>),
         ),
         (
             <span class="string">&quot;fare_amt_by_passenger&quot;</span>.to_string(),
-            <span class="macro">format!</span>(<span class="string">&quot;SELECT passenger_count, MIN(fare_amount), MAX(fare_amount), SUM(fare_amount) FROM {TABLE_NAME} GROUP BY passenger_count&quot;</span>),
+            <span class="macro">format!</span>(<span class="string">&quot;SELECT passenger_count, MIN(fare_amount), MAX(fare_amount), SUM(fare_amount) FROM {table_name} GROUP BY passenger_count&quot;</span>),
         )
     ])
 }
 
-<span class="kw">async fn </span>do_write(args: <span class="kw-2">&amp;</span>Args, db: <span class="kw-2">&amp;</span>Database) {
+<span class="kw">async fn </span>do_write(args: <span class="kw-2">&amp;</span>Args, db: <span class="kw-2">&amp;</span>Database, table_name: <span class="kw-2">&amp;</span>str) {
     <span class="kw">let </span><span class="kw-2">mut </span>file_list = get_file_list(args.path.clone().expect(<span class="string">&quot;Specify data path in argument&quot;</span>));
     <span class="kw">let </span><span class="kw-2">mut </span>write_jobs = JoinSet::new();
 
-    <span class="kw">let </span>create_table_result = db.create(create_table_expr()).<span class="kw">await</span>;
+    <span class="kw">let </span>create_table_result = db.create(create_table_expr(table_name)).<span class="kw">await</span>;
     <span class="macro">println!</span>(<span class="string">&quot;Create table result: {create_table_result:?}&quot;</span>);
 
     <span class="kw">let </span>progress_bar_style = ProgressStyle::with_template(
@@ -950,8 +979,10 @@
             <span class="kw">let </span>db = db.clone();
             <span class="kw">let </span>mpb = multi_progress_bar.clone();
             <span class="kw">let </span>pb_style = progress_bar_style.clone();
-            <span class="kw">let _ </span>= write_jobs
-                .spawn(<span class="kw">async move </span>{ write_data(batch_size, <span class="kw-2">&amp;</span>db, path, mpb, pb_style).<span class="kw">await </span>});
+            <span class="kw">let </span>table_name = table_name.to_string();
+            <span class="kw">let _ </span>= write_jobs.spawn(<span class="kw">async move </span>{
+                write_data(<span class="kw-2">&amp;</span>table_name, batch_size, <span class="kw-2">&amp;</span>db, path, mpb, pb_style).<span class="kw">await
+            </span>});
         }
     }
     <span class="kw">while </span>write_jobs.join_next().<span class="kw">await</span>.is_some() {
@@ -960,24 +991,32 @@
             <span class="kw">let </span>db = db.clone();
             <span class="kw">let </span>mpb = multi_progress_bar.clone();
             <span class="kw">let </span>pb_style = progress_bar_style.clone();
-            <span class="kw">let _ </span>= write_jobs
-                .spawn(<span class="kw">async move </span>{ write_data(batch_size, <span class="kw-2">&amp;</span>db, path, mpb, pb_style).<span class="kw">await </span>});
+            <span class="kw">let </span>table_name = table_name.to_string();
+            <span class="kw">let _ </span>= write_jobs.spawn(<span class="kw">async move </span>{
+                write_data(<span class="kw-2">&amp;</span>table_name, batch_size, <span class="kw-2">&amp;</span>db, path, mpb, pb_style).<span class="kw">await
+            </span>});
         }
     }
 }
 
-<span class="kw">async fn </span>do_query(num_iter: usize, db: <span class="kw-2">&amp;</span>Database) {
-    <span class="kw">for </span>(query_name, query) <span class="kw">in </span>query_set() {
+<span class="kw">async fn </span>do_query(num_iter: usize, db: <span class="kw-2">&amp;</span>Database, table_name: <span class="kw-2">&amp;</span>str) {
+    <span class="kw">for </span>(query_name, query) <span class="kw">in </span>query_set(table_name) {
         <span class="macro">println!</span>(<span class="string">&quot;Running query: {query}&quot;</span>);
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..num_iter {
             <span class="kw">let </span>now = Instant::now();
-            <span class="kw">let </span>_res = db.sql(<span class="kw-2">&amp;</span>query).<span class="kw">await</span>.unwrap();
+            <span class="kw">let </span>res = db.sql(<span class="kw-2">&amp;</span>query).<span class="kw">await</span>.unwrap();
+            <span class="kw">match </span>res {
+                Output::AffectedRows(<span class="kw">_</span>) | Output::RecordBatches(<span class="kw">_</span>) =&gt; (),
+                Output::Stream(stream) =&gt; {
+                    stream.try_collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().<span class="kw">await</span>.unwrap();
+                }
+            }
             <span class="kw">let </span>elapsed = now.elapsed();
             <span class="macro">println!</span>(
                 <span class="string">&quot;query {}, iteration {}: {}ms&quot;</span>,
                 query_name,
                 i,
-                elapsed.as_millis()
+                elapsed.as_millis(),
             );
         }
     }
@@ -994,13 +1033,14 @@
         .block_on(<span class="kw">async </span>{
             <span class="kw">let </span>client = Client::with_urls(<span class="macro">vec!</span>[<span class="kw-2">&amp;</span>args.endpoint]);
             <span class="kw">let </span>db = Database::new(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, client);
+            <span class="kw">let </span>table_name = new_table_name();
 
             <span class="kw">if </span>!args.skip_write {
-                do_write(<span class="kw-2">&amp;</span>args, <span class="kw-2">&amp;</span>db).<span class="kw">await</span>;
+                do_write(<span class="kw-2">&amp;</span>args, <span class="kw-2">&amp;</span>db, <span class="kw-2">&amp;</span>table_name).<span class="kw">await</span>;
             }
 
             <span class="kw">if </span>!args.skip_read {
-                do_query(args.iter_num, <span class="kw-2">&amp;</span>db).<span class="kw">await</span>;
+                do_query(args.iter_num, <span class="kw-2">&amp;</span>db, <span class="kw-2">&amp;</span>table_name).<span class="kw">await</span>;
             }
         })
 }
