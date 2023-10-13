@@ -37,6 +37,7 @@
 <a href="#37" id="37">37</a>
 <a href="#38" id="38">38</a>
 <a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -51,7 +52,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>common_grpc::channel_manager::{
+</span><span class="kw">use </span>common_base::readable_size::ReadableSize;
+<span class="kw">use </span>common_grpc::channel_manager::{
     DEFAULT_MAX_GRPC_RECV_MESSAGE_SIZE, DEFAULT_MAX_GRPC_SEND_MESSAGE_SIZE,
 };
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -61,9 +63,9 @@
     <span class="kw">pub </span>addr: String,
     <span class="kw">pub </span>runtime_size: usize,
     <span class="comment">// Max gRPC receiving(decoding) message size
-    </span><span class="kw">pub </span>max_recv_message_size: usize,
+    </span><span class="kw">pub </span>max_recv_message_size: ReadableSize,
     <span class="comment">// Max gRPC sending(encoding) message size
-    </span><span class="kw">pub </span>max_send_message_size: usize,
+    </span><span class="kw">pub </span>max_send_message_size: ReadableSize,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>GrpcOptions {

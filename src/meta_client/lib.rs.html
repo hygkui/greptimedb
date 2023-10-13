@@ -53,6 +53,22 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -67,7 +83,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>serde::{Deserialize, Serialize};
+</span><span class="kw">use </span>std::time::Duration;
+
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">pub mod </span>client;
 <span class="kw">pub mod </span>error;
@@ -76,31 +94,45 @@
 </span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>MetaClientOptions {
     <span class="kw">pub </span>metasrv_addrs: Vec&lt;String&gt;,
-    <span class="kw">pub </span>timeout_millis: u64,
-    <span class="attr">#[serde(default = <span class="string">&quot;default_heartbeat_timeout_millis&quot;</span>)]
-    </span><span class="kw">pub </span>heartbeat_timeout_millis: u64,
-    <span class="attr">#[serde(default = <span class="string">&quot;default_ddl_timeout_millis&quot;</span>)]
-    </span><span class="kw">pub </span>ddl_timeout_millis: u64,
-    <span class="kw">pub </span>connect_timeout_millis: u64,
+    <span class="attr">#[serde(default = <span class="string">&quot;default_timeout&quot;</span>)]
+    #[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>timeout: Duration,
+    <span class="attr">#[serde(default = <span class="string">&quot;default_heartbeat_timeout&quot;</span>)]
+    #[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>heartbeat_timeout: Duration,
+    <span class="attr">#[serde(default = <span class="string">&quot;default_ddl_timeout&quot;</span>)]
+    #[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>ddl_timeout: Duration,
+    <span class="attr">#[serde(default = <span class="string">&quot;default_connect_timeout&quot;</span>)]
+    #[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>connect_timeout: Duration,
     <span class="kw">pub </span>tcp_nodelay: bool,
 }
 
-<span class="kw">fn </span>default_heartbeat_timeout_millis() -&gt; u64 {
-    <span class="number">500u64
-</span>}
+<span class="kw">fn </span>default_heartbeat_timeout() -&gt; Duration {
+    Duration::from_millis(<span class="number">500u64</span>)
+}
 
-<span class="kw">fn </span>default_ddl_timeout_millis() -&gt; u64 {
-    <span class="number">10_000u64
-</span>}
+<span class="kw">fn </span>default_ddl_timeout() -&gt; Duration {
+    Duration::from_millis(<span class="number">10_000u64</span>)
+}
+
+<span class="kw">fn </span>default_connect_timeout() -&gt; Duration {
+    Duration::from_millis(<span class="number">1_000u64</span>)
+}
+
+<span class="kw">fn </span>default_timeout() -&gt; Duration {
+    Duration::from_millis(<span class="number">3_000u64</span>)
+}
 
 <span class="kw">impl </span>Default <span class="kw">for </span>MetaClientOptions {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             metasrv_addrs: <span class="macro">vec!</span>[<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()],
-            timeout_millis: <span class="number">3_000u64</span>,
-            heartbeat_timeout_millis: default_heartbeat_timeout_millis(),
-            ddl_timeout_millis: default_ddl_timeout_millis(),
-            connect_timeout_millis: <span class="number">1_000u64</span>,
+            timeout: default_timeout(),
+            heartbeat_timeout: default_heartbeat_timeout(),
+            ddl_timeout: default_ddl_timeout(),
+            connect_timeout: default_connect_timeout(),
             tcp_nodelay: <span class="bool-val">true</span>,
         }
     }

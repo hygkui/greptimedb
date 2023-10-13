@@ -135,8 +135,8 @@
         <span class="kw">let </span>region_server_handler = <span class="prelude-val">Some</span>(Arc::new(region_server.clone()) <span class="kw">as _</span>);
         <span class="kw">let </span>runtime = region_server.runtime();
         <span class="kw">let </span>grpc_config = GrpcServerConfig {
-            max_recv_message_size: opts.rpc_max_recv_message_size,
-            max_send_message_size: opts.rpc_max_send_message_size,
+            max_recv_message_size: opts.rpc_max_recv_message_size.as_bytes() <span class="kw">as </span>usize,
+            max_send_message_size: opts.rpc_max_send_message_size.as_bytes() <span class="kw">as </span>usize,
         };
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{

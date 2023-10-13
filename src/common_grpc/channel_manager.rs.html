@@ -643,6 +643,7 @@
 <a href="#643" id="643">643</a>
 <a href="#644" id="644">644</a>
 <a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -661,6 +662,7 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
+<span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>dashmap::mapref::entry::Entry;
 <span class="kw">use </span>dashmap::DashMap;
@@ -676,8 +678,8 @@
 <span class="kw">const </span>RECYCLE_CHANNEL_INTERVAL_SECS: u64 = <span class="number">60</span>;
 <span class="kw">pub const </span>DEFAULT_GRPC_REQUEST_TIMEOUT_SECS: u64 = <span class="number">10</span>;
 <span class="kw">pub const </span>DEFAULT_GRPC_CONNECT_TIMEOUT_SECS: u64 = <span class="number">1</span>;
-<span class="kw">pub const </span>DEFAULT_MAX_GRPC_RECV_MESSAGE_SIZE: usize = <span class="number">512 </span>* <span class="number">1024 </span>* <span class="number">1024</span>;
-<span class="kw">pub const </span>DEFAULT_MAX_GRPC_SEND_MESSAGE_SIZE: usize = <span class="number">512 </span>* <span class="number">1024 </span>* <span class="number">1024</span>;
+<span class="kw">pub const </span>DEFAULT_MAX_GRPC_RECV_MESSAGE_SIZE: ReadableSize = ReadableSize::mb(<span class="number">512</span>);
+<span class="kw">pub const </span>DEFAULT_MAX_GRPC_SEND_MESSAGE_SIZE: ReadableSize = ReadableSize::mb(<span class="number">512</span>);
 
 <span class="macro">lazy_static! </span>{
     <span class="kw">static </span><span class="kw-2">ref </span>ID: AtomicU64 = AtomicU64::new(<span class="number">0</span>);
@@ -895,9 +897,9 @@
     <span class="kw">pub </span>tcp_nodelay: bool,
     <span class="kw">pub </span>client_tls: <span class="prelude-ty">Option</span>&lt;ClientTlsOption&gt;,
     <span class="comment">// Max gRPC receiving(decoding) message size
-    </span><span class="kw">pub </span>max_recv_message_size: usize,
+    </span><span class="kw">pub </span>max_recv_message_size: ReadableSize,
     <span class="comment">// Max gRPC sending(encoding) message size
-    </span><span class="kw">pub </span>max_send_message_size: usize,
+    </span><span class="kw">pub </span>max_send_message_size: ReadableSize,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>ChannelConfig {

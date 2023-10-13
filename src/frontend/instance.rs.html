@@ -766,9 +766,6 @@
 <a href="#766" id="766">766</a>
 <a href="#767" id="767">767</a>
 <a href="#768" id="768">768</a>
-<a href="#769" id="769">769</a>
-<a href="#770" id="770">770</a>
-<a href="#771" id="771">771</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -793,7 +790,6 @@
 <span class="kw">mod </span>standalone;
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>async_trait::async_trait;
@@ -1002,14 +998,12 @@
         );
 
         <span class="kw">let </span>channel_config = ChannelConfig::new()
-            .timeout(Duration::from_millis(meta_client_options.timeout_millis))
-            .connect_timeout(Duration::from_millis(
-                meta_client_options.connect_timeout_millis,
-            ))
+            .timeout(meta_client_options.timeout)
+            .connect_timeout(meta_client_options.connect_timeout)
             .tcp_nodelay(meta_client_options.tcp_nodelay);
-        <span class="kw">let </span>ddl_channel_config = channel_config.clone().timeout(Duration::from_millis(
-            meta_client_options.ddl_timeout_millis,
-        ));
+        <span class="kw">let </span>ddl_channel_config = channel_config
+            .clone()
+            .timeout(meta_client_options.ddl_timeout);
         <span class="kw">let </span>channel_manager = ChannelManager::with_config(channel_config);
         <span class="kw">let </span>ddl_channel_manager = ChannelManager::with_config(ddl_channel_config);
 

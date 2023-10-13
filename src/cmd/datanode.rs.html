@@ -467,6 +467,17 @@
 <a href="#467" id="467">467</a>
 <a href="#468" id="468">468</a>
 <a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -657,6 +668,7 @@
     <span class="kw">use </span>common_base::readable_size::ReadableSize;
     <span class="kw">use </span>common_test_util::temp_dir::create_named_temp_file;
     <span class="kw">use </span>datanode::config::{CompactionConfig, FileConfig, ObjectStoreConfig, RegionManifestConfig};
+    <span class="kw">use </span>servers::heartbeat_options::HeartbeatOptions;
     <span class="kw">use </span>servers::Mode;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -673,11 +685,14 @@
             rpc_hostname = &quot;127.0.0.1&quot;
             rpc_runtime_size = 8
 
+            [heartbeat]
+            interval = &quot;300ms&quot;
+
             [meta_client]
             metasrv_addrs = [&quot;127.0.0.1:3002&quot;]
-            timeout_millis = 3000
-            connect_timeout_millis = 5000
-            ddl_timeout_millis= 10000
+            timeout = &quot;3s&quot;
+            connect_timeout = &quot;5s&quot;
+            ddl_timeout = &quot;10s&quot;
             tcp_nodelay = true
 
             [wal]
@@ -726,19 +741,26 @@
         <span class="macro">assert_eq!</span>(<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">50</span>, options.wal.purge_threshold.<span class="number">0</span>);
         <span class="macro">assert!</span>(!options.wal.sync_write);
 
+        <span class="kw">let </span>HeartbeatOptions {
+            interval: heart_beat_interval,
+            ..
+        } = options.heartbeat;
+
+        <span class="macro">assert_eq!</span>(<span class="number">300</span>, heart_beat_interval.as_millis());
+
         <span class="kw">let </span>MetaClientOptions {
             metasrv_addrs: metasrv_addr,
-            timeout_millis,
-            connect_timeout_millis,
+            timeout,
+            connect_timeout,
+            ddl_timeout,
             tcp_nodelay,
-            ddl_timeout_millis,
             ..
         } = options.meta_client.unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string()], metasrv_addr);
-        <span class="macro">assert_eq!</span>(<span class="number">5000</span>, connect_timeout_millis);
-        <span class="macro">assert_eq!</span>(<span class="number">10000</span>, ddl_timeout_millis);
-        <span class="macro">assert_eq!</span>(<span class="number">3000</span>, timeout_millis);
+        <span class="macro">assert_eq!</span>(<span class="number">5000</span>, connect_timeout.as_millis());
+        <span class="macro">assert_eq!</span>(<span class="number">10000</span>, ddl_timeout.as_millis());
+        <span class="macro">assert_eq!</span>(<span class="number">3000</span>, timeout.as_millis());
         <span class="macro">assert!</span>(tcp_nodelay);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/&quot;</span>, options.storage.data_home);
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(
@@ -832,8 +854,8 @@
             rpc_runtime_size = 8
 
             [meta_client]
-            timeout_millis = 3000
-            connect_timeout_millis = 5000
+            timeout = &quot;3s&quot;
+            connect_timeout = &quot;5s&quot;
             tcp_nodelay = true
 
             [wal]
