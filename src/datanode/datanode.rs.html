@@ -488,6 +488,9 @@
 <a href="#488" id="488">488</a>
 <a href="#489" id="489">489</a>
 <a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -857,7 +860,10 @@
     </span><span class="doccomment">/// Build [RaftEngineLogStore]
     </span><span class="kw">async fn </span>build_log_store(opts: <span class="kw-2">&amp;</span>DatanodeOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;RaftEngineLogStore&gt;&gt; {
         <span class="kw">let </span>data_home = normalize_dir(<span class="kw-2">&amp;</span>opts.storage.data_home);
-        <span class="kw">let </span>wal_dir = <span class="macro">format!</span>(<span class="string">&quot;{}{WAL_DIR}&quot;</span>, data_home);
+        <span class="kw">let </span>wal_dir = <span class="kw">match </span><span class="kw-2">&amp;</span>opts.wal.dir {
+            <span class="prelude-val">Some</span>(dir) =&gt; dir.clone(),
+            <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{}{WAL_DIR}&quot;</span>, data_home),
+        };
         <span class="kw">let </span>wal_config = opts.wal.clone();
 
         <span class="comment">// create WAL directory

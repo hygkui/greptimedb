@@ -68,6 +68,9 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -90,6 +93,8 @@
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 </span><span class="kw">pub struct </span>WalConfig {
+    <span class="comment">// wal directory
+    </span><span class="kw">pub </span>dir: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="comment">// wal file size in bytes
     </span><span class="kw">pub </span>file_size: ReadableSize,
     <span class="comment">// wal purge threshold in bytes
@@ -106,7 +111,8 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>WalConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            file_size: ReadableSize::mb(<span class="number">256</span>),     <span class="comment">// log file size 256MB
+            dir: <span class="prelude-val">None</span>,
+            file_size: ReadableSize::mb(<span class="number">256</span>), <span class="comment">// log file size 256MB
             </span>purge_threshold: ReadableSize::gb(<span class="number">4</span>), <span class="comment">// purge threshold 4GB
             </span>purge_interval: Duration::from_secs(<span class="number">600</span>),
             read_batch_size: <span class="number">128</span>,

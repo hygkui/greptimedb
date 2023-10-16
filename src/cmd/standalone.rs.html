@@ -632,6 +632,8 @@
 <a href="#632" id="632">632</a>
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1126,6 +1128,8 @@
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, fe_opts.mysql.runtime_size);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, fe_opts.mysql.reject_no_database);
         <span class="macro">assert!</span>(fe_opts.influxdb.enable);
+
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;/tmp/greptimedb/test/wal&quot;</span>, dn_opts.wal.dir.unwrap());
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>dn_opts.storage.store {
             datanode::config::ObjectStoreConfig::S3(s3_config) =&gt; {
