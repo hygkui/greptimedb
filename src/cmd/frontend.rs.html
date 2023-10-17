@@ -537,7 +537,7 @@
     <span class="attr">#[clap(long)]
     </span>http_timeout: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     <span class="attr">#[clap(long)]
-    </span>grpc_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    </span>rpc_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
     </span>mysql_addr: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="attr">#[clap(long)]
@@ -598,7 +598,7 @@
             opts.http.disable_dashboard = disable_dashboard;
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(addr) = <span class="kw-2">&amp;</span><span class="self">self</span>.rpc_addr {
             opts.grpc.addr = addr.clone()
         }
 
