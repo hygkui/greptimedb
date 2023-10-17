@@ -377,6 +377,9 @@
 <a href="#377" id="377">377</a>
 <a href="#378" id="378">378</a>
 <a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -546,11 +549,14 @@
         }
     }
 
-    <span class="kw">pub async fn </span>sql(<span class="kw-2">&amp;</span><span class="self">self</span>, sql: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">pub async fn </span>sql&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, sql: S) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt;
+    <span class="kw">where
+        </span>S: AsRef&lt;str&gt;,
+    {
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_SQL);
         <span class="self">self</span>.do_get(
             Request::Query(QueryRequest {
-                query: <span class="prelude-val">Some</span>(Query::Sql(sql.to_string())),
+                query: <span class="prelude-val">Some</span>(Query::Sql(sql.as_ref().to_string())),
             }),
             <span class="number">0</span>,
         )

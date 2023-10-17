@@ -3,7 +3,7 @@ var srcIndex = JSON.parse('{\
 "auth":["",[["user_provider",[],["static_user_provider.rs"]]],["common.rs","error.rs","lib.rs","permission.rs","user_info.rs","user_provider.rs"]],\
 "catalog":["",[["information_schema",[],["columns.rs","tables.rs"]],["kvbackend",[],["client.rs","manager.rs"]],["memory",[],["manager.rs"]]],["error.rs","information_schema.rs","kvbackend.rs","lib.rs","memory.rs","metrics.rs","table_source.rs"]],\
 "client":["",[],["client.rs","client_manager.rs","database.rs","error.rs","lib.rs","load_balance.rs","metrics.rs","region.rs","stream_insert.rs"]],\
-"cmd":["",[["cli",[["bench",[],["metadata.rs"]]],["bench.rs","cmd.rs","helper.rs","repl.rs","upgrade.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","options.rs","standalone.rs"]],\
+"cmd":["",[["cli",[["bench",[],["metadata.rs"]]],["bench.rs","cmd.rs","export.rs","helper.rs","repl.rs","upgrade.rs"]]],["cli.rs","datanode.rs","error.rs","frontend.rs","lib.rs","metasrv.rs","options.rs","standalone.rs"]],\
 "common_base":["",[],["bit_vec.rs","buffer.rs","bytes.rs","lib.rs","readable_size.rs"]],\
 "common_catalog":["",[],["consts.rs","error.rs","lib.rs"]],\
 "common_config":["",[],["lib.rs"]],\
