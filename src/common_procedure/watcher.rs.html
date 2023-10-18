@@ -113,6 +113,7 @@
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -186,6 +187,7 @@
         };
         <span class="kw">let </span>state_store = Arc::new(ObjectStateStore::new(test_util::new_object_store(<span class="kw-2">&amp;</span>dir)));
         <span class="kw">let </span>manager = LocalManager::new(config, state_store);
+        manager.start().<span class="kw">await</span>.unwrap();
 
         <span class="attr">#[derive(Debug)]
         </span><span class="kw">struct </span>MockProcedure {

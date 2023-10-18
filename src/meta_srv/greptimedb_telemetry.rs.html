@@ -76,6 +76,10 @@
 <a href="#76" id="76">76</a>
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -90,7 +94,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::sync::Arc;
+</span><span class="kw">use </span>std::sync::atomic::AtomicBool;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_greptimedb_telemetry::{
@@ -141,7 +146,8 @@
     <span class="kw">if </span>!enable || <span class="macro">cfg!</span>(test) || <span class="macro">cfg!</span>(debug_assertions) {
         <span class="kw">return </span>Arc::new(GreptimeDBTelemetryTask::disable());
     }
-
+    <span class="comment">// Controlled by meta server state, only leader reports the info.
+    </span><span class="kw">let </span>should_report = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
     Arc::new(GreptimeDBTelemetryTask::enable(
         TELEMETRY_INTERVAL,
         Box::new(GreptimeDBTelemetry::new(
@@ -151,7 +157,9 @@
                 uuid: default_get_uuid(<span class="kw-2">&amp;</span>working_home),
                 retry: <span class="number">0</span>,
             }),
+            should_report.clone(),
         )),
+        should_report,
     ))
 }
 </code></pre></div></section></main></body></html>

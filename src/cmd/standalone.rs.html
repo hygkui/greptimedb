@@ -634,6 +634,22 @@
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
 <a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -679,7 +695,8 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CreateDirSnafu, IllegalConfigSnafu, InitMetadataSnafu, <span class="prelude-ty">Result</span>, ShutdownDatanodeSnafu,
-    ShutdownFrontendSnafu, StartDatanodeSnafu, StartFrontendSnafu,
+    ShutdownFrontendSnafu, StartDatanodeSnafu, StartFrontendSnafu, StartProcedureManagerSnafu,
+    StopProcedureManagerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::options::{MixOptions, Options, TopLevelOptions};
 
@@ -799,6 +816,7 @@
 <span class="kw">pub struct </span>Instance {
     datanode: Datanode,
     frontend: FeInstance,
+    procedure_manager: ProcedureManagerRef,
 }
 
 <span class="kw">impl </span>Instance {
@@ -806,6 +824,11 @@
         <span class="comment">// Start datanode instance before starting services, to avoid requests come in before internal components are started.
         </span><span class="self">self</span>.datanode.start().<span class="kw">await</span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;Datanode instance started&quot;</span>);
+
+        <span class="self">self</span>.procedure_manager
+            .start()
+            .<span class="kw">await
+            </span>.context(StartProcedureManagerSnafu)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.frontend.start().<span class="kw">await</span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
@@ -816,6 +839,11 @@
             .shutdown()
             .<span class="kw">await
             </span>.context(ShutdownFrontendSnafu)<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.procedure_manager
+            .stop()
+            .<span class="kw">await
+            </span>.context(StopProcedureManagerSnafu)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.datanode
             .shutdown()
@@ -990,7 +1018,7 @@
         </span><span class="kw">let </span><span class="kw-2">mut </span>frontend = build_frontend(
             fe_plugins,
             kv_store,
-            procedure_manager,
+            procedure_manager.clone(),
             catalog_manager,
             region_server,
         )
@@ -1001,7 +1029,11 @@
             .<span class="kw">await
             </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(Instance { datanode, frontend })
+        <span class="prelude-val">Ok</span>(Instance {
+            datanode,
+            frontend,
+            procedure_manager,
+        })
     }
 }
 

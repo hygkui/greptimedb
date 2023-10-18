@@ -674,6 +674,21 @@
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
 <a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -715,6 +730,12 @@
     </span>NextSequence {
         location: Location,
         source: common_meta::error::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start telemetry task&quot;</span>))]
+    </span>StartTelemetryTask {
+        location: Location,
+        source: common_runtime::error::Error,
     },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to submit ddl task&quot;</span>))]
@@ -1069,8 +1090,14 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required parameter, param: {:?}&quot;</span>, param))]
     </span>MissingRequiredParameter { param: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to recover procedure&quot;</span>))]
-    </span>RecoverProcedure {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to start procedure manager&quot;</span>))]
+    </span>StartProcedureManager {
+        location: Location,
+        source: common_procedure::Error,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to stop procedure manager&quot;</span>))]
+    </span>StopProcedureManager {
         location: Location,
         source: common_procedure::Error,
     },
@@ -1292,16 +1319,19 @@
             Error::RequestDatanode { source, .. } =&gt; source.status_code(),
             Error::InvalidCatalogValue { source, .. }
             | Error::InvalidFullTableName { source, .. } =&gt; source.status_code(),
-            Error::RecoverProcedure { source, .. }
-            | Error::SubmitProcedure { source, .. }
-            | Error::WaitProcedure { source, .. } =&gt; source.status_code(),
+            Error::SubmitProcedure { source, .. } | Error::WaitProcedure { source, .. } =&gt; {
+                source.status_code()
+            }
             Error::ShutdownServer { source, .. } | Error::StartHttp { source, .. } =&gt; {
                 source.status_code()
             }
+            Error::StartProcedureManager { source, .. }
+            | Error::StopProcedureManager { source, .. } =&gt; source.status_code(),
 
             Error::ListCatalogs { source, .. } | Error::ListSchemas { source, .. } =&gt; {
                 source.status_code()
             }
+            Error::StartTelemetryTask { source, .. } =&gt; source.status_code(),
 
             Error::RegionFailoverCandidatesNotFound { .. } =&gt; StatusCode::RuntimeResourcesExhausted,
             Error::NextSequence { source, .. } =&gt; source.status_code(),

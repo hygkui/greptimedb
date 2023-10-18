@@ -390,6 +390,38 @@
 <a href="#390" id="390">390</a>
 <a href="#391" id="391">391</a>
 <a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -420,7 +452,7 @@
 <span class="kw">use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_telemetry::logging::LoggingOptions;
-<span class="kw">use </span>common_telemetry::{debug, error, info, warn};
+<span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>servers::http::HttpOptions;
 <span class="kw">use </span>snafu::ResultExt;
@@ -429,7 +461,10 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClientRef;
 <span class="kw">use </span><span class="kw">crate</span>::election::{Election, LeaderChangeMessage};
-<span class="kw">use </span><span class="kw">crate</span>::error::{InitMetadataSnafu, RecoverProcedureSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    InitMetadataSnafu, <span class="prelude-ty">Result</span>, StartProcedureManagerSnafu, StartTelemetryTaskSnafu,
+    StopProcedureManagerSnafu,
+};
 <span class="kw">use </span><span class="kw">crate</span>::handler::HeartbeatHandlerGroup;
 <span class="kw">use </span><span class="kw">crate</span>::lock::DistLockRef;
 <span class="kw">use </span><span class="kw">crate</span>::pubsub::{PublishRef, SubscribeManagerRef};
@@ -561,6 +596,37 @@
 <span class="kw">pub type </span>SelectorRef = Arc&lt;<span class="kw">dyn </span>Selector&lt;Context = SelectorContext, Output = Vec&lt;Peer&gt;&gt;&gt;;
 <span class="kw">pub type </span>ElectionRef = Arc&lt;<span class="kw">dyn </span>Election&lt;Leader = LeaderValue&gt;&gt;;
 
+<span class="kw">pub struct </span>MetaStateHandler {
+    procedure_manager: ProcedureManagerRef,
+    subscribe_manager: <span class="prelude-ty">Option</span>&lt;SubscribeManagerRef&gt;,
+    greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
+}
+
+<span class="kw">impl </span>MetaStateHandler {
+    <span class="kw">pub async fn </span>on_become_leader(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.procedure_manager.start().<span class="kw">await </span>{
+            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to start procedure manager&quot;</span>);
+        }
+        <span class="self">self</span>.greptimedb_telemetry_task.should_report(<span class="bool-val">true</span>);
+    }
+
+    <span class="kw">pub async fn </span>on_become_follower(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="comment">// Stops the procedures.
+        </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.procedure_manager.stop().<span class="kw">await </span>{
+            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to stop procedure manager&quot;</span>);
+        }
+        <span class="comment">// Suspends reporting.
+        </span><span class="self">self</span>.greptimedb_telemetry_task.should_report(<span class="bool-val">false</span>);
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(sub_manager) = <span class="self">self</span>.subscribe_manager.clone() {
+            <span class="macro">info!</span>(<span class="string">&quot;Leader changed, un_subscribe all&quot;</span>);
+            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = sub_manager.un_subscribe_all() {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to un_subscribe all, error: {}&quot;</span>, e);
+            }
+        }
+    }
+}
+
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>MetaSrv {
     started: Arc&lt;AtomicBool&gt;,
@@ -604,7 +670,15 @@
             <span class="kw">let </span>leader_cached_kv_store = <span class="self">self</span>.leader_cached_kv_store.clone();
             <span class="kw">let </span>subscribe_manager = <span class="self">self</span>.subscribe_manager();
             <span class="kw">let </span><span class="kw-2">mut </span>rx = election.subscribe_leader_change();
-            <span class="kw">let </span>task_handler = <span class="self">self</span>.greptimedb_telemetry_task.clone();
+            <span class="kw">let </span>greptimedb_telemetry_task = <span class="self">self</span>.greptimedb_telemetry_task.clone();
+            greptimedb_telemetry_task
+                .start()
+                .context(StartTelemetryTaskSnafu)<span class="question-mark">?</span>;
+            <span class="kw">let </span>state_handler = MetaStateHandler {
+                greptimedb_telemetry_task,
+                subscribe_manager,
+                procedure_manager,
+            };
             <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">loop </span>{
                     <span class="kw">match </span>rx.recv().<span class="kw">await </span>{
@@ -617,28 +691,12 @@
                             );
                             <span class="kw">match </span>msg {
                                 LeaderChangeMessage::Elected(<span class="kw">_</span>) =&gt; {
-                                    <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = procedure_manager.recover().<span class="kw">await </span>{
-                                        <span class="macro">error!</span>(<span class="string">&quot;Failed to recover procedures, error: {e}&quot;</span>);
-                                    }
-                                    <span class="kw">let _ </span>= task_handler.start().map_err(|e| {
-                                        <span class="macro">debug!</span>(
-                                            <span class="string">&quot;Failed to start greptimedb telemetry task, error: {e}&quot;
-                                        </span>);
-                                    });
+                                    state_handler.on_become_leader().<span class="kw">await</span>;
                                 }
                                 LeaderChangeMessage::StepDown(leader) =&gt; {
-                                    <span class="kw">if let </span><span class="prelude-val">Some</span>(sub_manager) = subscribe_manager.clone() {
-                                        <span class="macro">info!</span>(<span class="string">&quot;Leader changed, un_subscribe all&quot;</span>);
-                                        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = sub_manager.un_subscribe_all() {
-                                            <span class="macro">error!</span>(<span class="string">&quot;Failed to un_subscribe all, error: {}&quot;</span>, e);
-                                        }
-                                    }
                                     <span class="macro">error!</span>(<span class="string">&quot;Leader :{:?} step down&quot;</span>, leader);
-                                    <span class="kw">let _ </span>= task_handler.stop().<span class="kw">await</span>.map_err(|e| {
-                                        <span class="macro">debug!</span>(
-                                            <span class="string">&quot;Failed to stop greptimedb telemetry task, error: {e}&quot;
-                                        </span>);
-                                    });
+
+                                    state_handler.on_become_follower().<span class="kw">await</span>;
                                 }
                             }
                         }
@@ -651,6 +709,8 @@
                         }
                     }
                 }
+
+                state_handler.on_become_follower().<span class="kw">await</span>;
             });
 
             <span class="kw">let </span>election = election.clone();
@@ -667,9 +727,9 @@
             });
         } <span class="kw">else </span>{
             <span class="self">self</span>.procedure_manager
-                .recover()
+                .start()
                 .<span class="kw">await
-                </span>.context(RecoverProcedureSnafu)<span class="question-mark">?</span>;
+                </span>.context(StartProcedureManagerSnafu)<span class="question-mark">?</span>;
         }
 
         <span class="macro">info!</span>(<span class="string">&quot;MetaSrv started&quot;</span>);
@@ -683,8 +743,12 @@
             </span>.context(InitMetadataSnafu)
     }
 
-    <span class="kw">pub fn </span>shutdown(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="kw">pub async fn </span>shutdown(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.started.store(<span class="bool-val">false</span>, Ordering::Relaxed);
+        <span class="self">self</span>.procedure_manager
+            .stop()
+            .<span class="kw">await
+            </span>.context(StopProcedureManagerSnafu)
     }
 
     <span class="attr">#[inline]

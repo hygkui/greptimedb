@@ -416,6 +416,38 @@
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
 <a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -433,6 +465,8 @@
 </span><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::io::ErrorKind;
 <span class="kw">use </span>std::path::{Path, PathBuf};
+<span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
+<span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_runtime::error::{Error, <span class="prelude-ty">Result</span>};
@@ -454,13 +488,26 @@
 </span><span class="kw">const </span>GREPTIMEDB_TELEMETRY_CLIENT_REQUEST_TIMEOUT: Duration = Duration::from_secs(<span class="number">10</span>);
 
 <span class="kw">pub enum </span>GreptimeDBTelemetryTask {
-    Enable(RepeatedTask&lt;Error&gt;),
+    Enable((RepeatedTask&lt;Error&gt;, Arc&lt;AtomicBool&gt;)),
     Disable,
 }
 
 <span class="kw">impl </span>GreptimeDBTelemetryTask {
-    <span class="kw">pub fn </span>enable(interval: Duration, task_fn: BoxedTaskFunction&lt;Error&gt;) -&gt; <span class="self">Self </span>{
-        GreptimeDBTelemetryTask::Enable(RepeatedTask::new(interval, task_fn))
+    <span class="kw">pub fn </span>should_report(<span class="kw-2">&amp;</span><span class="self">self</span>, value: bool) {
+        <span class="kw">match </span><span class="self">self </span>{
+            GreptimeDBTelemetryTask::Enable((<span class="kw">_</span>, should_report)) =&gt; {
+                should_report.store(value, Ordering::Relaxed);
+            }
+            GreptimeDBTelemetryTask::Disable =&gt; {}
+        }
+    }
+
+    <span class="kw">pub fn </span>enable(
+        interval: Duration,
+        task_fn: BoxedTaskFunction&lt;Error&gt;,
+        should_report: Arc&lt;AtomicBool&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        GreptimeDBTelemetryTask::Enable((RepeatedTask::new(interval, task_fn), should_report))
     }
 
     <span class="kw">pub fn </span>disable() -&gt; <span class="self">Self </span>{
@@ -469,7 +516,7 @@
 
     <span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            GreptimeDBTelemetryTask::Enable(task) =&gt; {
+            GreptimeDBTelemetryTask::Enable((task, <span class="kw">_</span>)) =&gt; {
                 print_anonymous_usage_data_disclaimer();
                 task.start(common_runtime::bg_runtime())
             }
@@ -479,7 +526,7 @@
 
     <span class="kw">pub async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            GreptimeDBTelemetryTask::Enable(task) =&gt; task.stop().<span class="kw">await</span>,
+            GreptimeDBTelemetryTask::Enable((task, <span class="kw">_</span>)) =&gt; task.stop().<span class="kw">await</span>,
             GreptimeDBTelemetryTask::Disable =&gt; <span class="prelude-val">Ok</span>(()),
         }
     }
@@ -609,6 +656,7 @@
     client: <span class="prelude-ty">Option</span>&lt;Client&gt;,
     working_home: <span class="prelude-ty">Option</span>&lt;String&gt;,
     telemetry_url: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    should_report: Arc&lt;AtomicBool&gt;,
 }
 
 <span class="attr">#[async_trait::async_trait]
@@ -618,13 +666,19 @@
     </span>}
 
     <span class="kw">async fn </span>call(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.report_telemetry_info().<span class="kw">await</span>;
+        <span class="kw">if </span><span class="self">self</span>.should_report.load(Ordering::Relaxed) {
+            <span class="self">self</span>.report_telemetry_info().<span class="kw">await</span>;
+        }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
 <span class="kw">impl </span>GreptimeDBTelemetry {
-    <span class="kw">pub fn </span>new(working_home: <span class="prelude-ty">Option</span>&lt;String&gt;, statistics: Box&lt;<span class="kw">dyn </span>Collector + Send + Sync&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(
+        working_home: <span class="prelude-ty">Option</span>&lt;String&gt;,
+        statistics: Box&lt;<span class="kw">dyn </span>Collector + Send + Sync&gt;,
+        should_report: Arc&lt;AtomicBool&gt;,
+    ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>client = Client::builder()
             .connect_timeout(GREPTIMEDB_TELEMETRY_CLIENT_CONNECT_TIMEOUT)
             .timeout(GREPTIMEDB_TELEMETRY_CLIENT_REQUEST_TIMEOUT)
@@ -634,6 +688,7 @@
             statistics,
             client: client.ok(),
             telemetry_url: TELEMETRY_URL,
+            should_report,
         }
     }
 
@@ -668,7 +723,8 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::convert::Infallible;
     <span class="kw">use </span>std::env;
-    <span class="kw">use </span>std::sync::atomic::AtomicUsize;
+    <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicUsize};
+    <span class="kw">use </span>std::sync::Arc;
     <span class="kw">use </span>std::time::Duration;
 
     <span class="kw">use </span>common_test_util::ports;
@@ -788,7 +844,11 @@
         <span class="kw">let </span>working_home = working_home_temp.path().to_str().unwrap().to_string();
 
         <span class="kw">let </span>test_statistic = Box::new(TestStatistic);
-        <span class="kw">let </span><span class="kw-2">mut </span>test_report = GreptimeDBTelemetry::new(<span class="prelude-val">Some</span>(working_home.clone()), test_statistic);
+        <span class="kw">let </span><span class="kw-2">mut </span>test_report = GreptimeDBTelemetry::new(
+            <span class="prelude-val">Some</span>(working_home.clone()),
+            test_statistic,
+            Arc::new(AtomicBool::new(<span class="bool-val">true</span>)),
+        );
         <span class="kw">let </span>url = Box::leak(<span class="macro">format!</span>(<span class="string">&quot;{}:{}&quot;</span>, <span class="string">&quot;http://localhost&quot;</span>, port).into_boxed_str());
         test_report.telemetry_url = url;
         <span class="kw">let </span>response = test_report.report_telemetry_info().<span class="kw">await</span>.unwrap();
@@ -802,7 +862,11 @@
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, body.nodes.unwrap());
 
         <span class="kw">let </span>failed_statistic = Box::new(FailedStatistic);
-        <span class="kw">let </span><span class="kw-2">mut </span>failed_report = GreptimeDBTelemetry::new(<span class="prelude-val">Some</span>(working_home), failed_statistic);
+        <span class="kw">let </span><span class="kw-2">mut </span>failed_report = GreptimeDBTelemetry::new(
+            <span class="prelude-val">Some</span>(working_home),
+            failed_statistic,
+            Arc::new(AtomicBool::new(<span class="bool-val">true</span>)),
+        );
         failed_report.telemetry_url = url;
         <span class="kw">let </span>response = failed_report.report_telemetry_info().<span class="kw">await</span>;
         <span class="macro">assert!</span>(response.is_none());

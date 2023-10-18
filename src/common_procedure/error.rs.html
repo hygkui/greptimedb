@@ -196,6 +196,10 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -231,6 +235,9 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Loader {} is already registered&quot;</span>, name))]
     </span>LoaderConflict { name: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Procedure Manager is stopped&quot;</span>))]
+    </span>ManagerNotStart { location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to serialize to json&quot;</span>))]
     </span>ToJson {
@@ -346,7 +353,8 @@
             | Error::FromJson { .. }
             | Error::RetryTimesExceeded { .. }
             | Error::RetryLater { .. }
-            | Error::WaitWatcher { .. } =&gt; StatusCode::Internal,
+            | Error::WaitWatcher { .. }
+            | Error::ManagerNotStart { .. } =&gt; StatusCode::Internal,
             Error::LoaderConflict { .. } | Error::DuplicateProcedure { .. } =&gt; {
                 StatusCode::InvalidArguments
             }
