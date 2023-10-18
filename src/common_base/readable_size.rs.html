@@ -323,6 +323,11 @@
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
 <a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2017-present, PingCAP, Inc. Licensed under Apache-2.0.
 
 // Copyright 2023 Greptime Team
@@ -339,10 +344,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is copied from https://github.com/tikv/raft-engine/blob/8dd2a39f359ff16f5295f35343f626e0c10132fa/src/util.rs without any modification.
+// This file is copied from https://github.com/tikv/raft-engine/blob/8dd2a39f359ff16f5295f35343f626e0c10132fa/src/util.rs
 
-</span><span class="kw">use </span>std::fmt;
-<span class="kw">use </span>std::fmt::{Display, Write};
+</span><span class="kw">use </span>std::fmt::{<span class="self">self</span>, Debug, Display, Write};
 <span class="kw">use </span>std::ops::{Div, Mul};
 <span class="kw">use </span>std::str::FromStr;
 
@@ -359,7 +363,7 @@
 <span class="kw">pub const </span>TIB: u64 = GIB * BINARY_DATA_MAGNITUDE;
 <span class="kw">pub const </span>PIB: u64 = TIB * BINARY_DATA_MAGNITUDE;
 
-<span class="attr">#[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd)]
+<span class="attr">#[derive(Clone, Copy, PartialEq, Eq, PartialOrd)]
 </span><span class="kw">pub struct </span>ReadableSize(<span class="kw">pub </span>u64);
 
 <span class="kw">impl </span>ReadableSize {
@@ -477,6 +481,12 @@
             <span class="prelude-val">Ok</span>(n) =&gt; <span class="prelude-val">Ok</span>(ReadableSize((n * unit <span class="kw">as </span>f64) <span class="kw">as </span>u64)),
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;invalid size string: {:?}&quot;</span>, s)),
         }
+    }
+}
+
+<span class="kw">impl </span>Debug <span class="kw">for </span>ReadableSize {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>)
     }
 }
 
