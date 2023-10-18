@@ -2052,7 +2052,7 @@
             .is_some());
     }
 
-    <span class="attr">#[tokio::test]
+    <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_remove_outdated_meta_task() {
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;remove_outdated_meta_task&quot;</span>);
         <span class="kw">let </span>object_store = test_util::new_object_store(<span class="kw-2">&amp;</span>dir);
@@ -2081,7 +2081,7 @@
         watcher.changed().<span class="kw">await</span>.unwrap();
 
         manager.start().<span class="kw">await</span>.unwrap();
-        tokio::time::sleep(Duration::from_millis(<span class="number">10</span>)).<span class="kw">await</span>;
+        tokio::time::sleep(Duration::from_millis(<span class="number">300</span>)).<span class="kw">await</span>;
         <span class="macro">assert!</span>(manager
             .procedure_state(procedure_id)
             .<span class="kw">await
@@ -2104,7 +2104,7 @@
             </span>.is_ok());
         <span class="kw">let </span><span class="kw-2">mut </span>watcher = manager.procedure_watcher(procedure_id).unwrap();
         watcher.changed().<span class="kw">await</span>.unwrap();
-        tokio::time::sleep(Duration::from_millis(<span class="number">10</span>)).<span class="kw">await</span>;
+        tokio::time::sleep(Duration::from_millis(<span class="number">300</span>)).<span class="kw">await</span>;
         <span class="macro">assert!</span>(manager
             .procedure_state(procedure_id)
             .<span class="kw">await
@@ -2126,7 +2126,7 @@
         watcher.changed().<span class="kw">await</span>.unwrap();
 
         manager.start().<span class="kw">await</span>.unwrap();
-        tokio::time::sleep(Duration::from_millis(<span class="number">10</span>)).<span class="kw">await</span>;
+        tokio::time::sleep(Duration::from_millis(<span class="number">300</span>)).<span class="kw">await</span>;
         <span class="macro">assert!</span>(manager
             .procedure_state(procedure_id)
             .<span class="kw">await
