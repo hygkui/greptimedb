@@ -189,7 +189,7 @@
         <span class="kw">let </span>result = sql_to_rel
             .statement_to_plan(df_stmt)
             .context(PlanSqlSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span>plan = RangePlanRewriter::new(table_provider, context_provider)
+        <span class="kw">let </span>plan = RangePlanRewriter::new(table_provider)
             .rewrite(result)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(LogicalPlan::DfPlan(plan))

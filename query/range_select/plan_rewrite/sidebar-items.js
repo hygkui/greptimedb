@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["have_range_in_exprs","parse_expr_list","parse_str_expr"],"struct":["RangeExprRewriter","RangePlanRewriter"]};
+window.SIDEBAR_ITEMS = {"fn":["dispose_parse_error","have_range_in_exprs","parse_expr_list","parse_str_expr"],"struct":["RangeExprRewriter","RangePlanRewriter"]};

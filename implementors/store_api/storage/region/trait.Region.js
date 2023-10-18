@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"storage":[["impl&lt;S: LogStore&gt; Region for <a class=\"struct\" href=\"storage/region/struct.RegionImpl.html\" title=\"struct storage::region::RegionImpl\">RegionImpl</a>&lt;S&gt;"]]
+"storage":[["impl&lt;S: <a class=\"trait\" href=\"store_api/logstore/trait.LogStore.html\" title=\"trait store_api::logstore::LogStore\">LogStore</a>&gt; <a class=\"trait\" href=\"store_api/storage/region/trait.Region.html\" title=\"trait store_api::storage::region::Region\">Region</a> for <a class=\"struct\" href=\"storage/region/struct.RegionImpl.html\" title=\"struct storage::region::RegionImpl\">RegionImpl</a>&lt;S&gt;"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

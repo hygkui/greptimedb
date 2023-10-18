@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ExecutionState"],"fn":["align_to_calendar"],"struct":["RangeFn","RangeFnExec","RangeSelect","RangeSelectExec","RangeSelectStream","SeriesState"],"type":["Millisecond"]};
+window.SIDEBAR_ITEMS = {"enum":["ExecutionState","Fill"],"fn":["align_to_calendar","cast_scalar_values"],"struct":["RangeFn","RangeFnExec","RangeSelect","RangeSelectExec","RangeSelectStream","SeriesState"],"type":["Millisecond"]};
