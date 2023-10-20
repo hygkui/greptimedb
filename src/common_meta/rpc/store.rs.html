@@ -1181,6 +1181,28 @@
 <a href="#1181" id="1181">1181</a>
 <a href="#1182" id="1182">1182</a>
 <a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
+<a href="#1197" id="1197">1197</a>
+<a href="#1198" id="1198">1198</a>
+<a href="#1199" id="1199">1199</a>
+<a href="#1200" id="1200">1200</a>
+<a href="#1201" id="1201">1201</a>
+<a href="#1202" id="1202">1202</a>
+<a href="#1203" id="1203">1203</a>
+<a href="#1204" id="1204">1204</a>
+<a href="#1205" id="1205">1205</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1196,6 +1218,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::fmt::{Display, Formatter};
+<span class="kw">use </span>std::ops::Bound;
 
 <span class="kw">use </span>api::v1::meta::{
     BatchDeleteRequest <span class="kw">as </span>PbBatchDeleteRequest, BatchDeleteResponse <span class="kw">as </span>PbBatchDeleteResponse,
@@ -1212,6 +1235,17 @@
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::{util, KeyValue};
+
+<span class="kw">pub fn </span>to_range(key: Vec&lt;u8&gt;, range_end: Vec&lt;u8&gt;) -&gt; (Bound&lt;Vec&lt;u8&gt;&gt;, Bound&lt;Vec&lt;u8&gt;&gt;) {
+    <span class="kw">match </span>(<span class="kw-2">&amp;</span>key[..], <span class="kw-2">&amp;</span>range_end[..]) {
+        (<span class="kw">_</span>, []) =&gt; (Bound::Included(key.clone()), Bound::Included(key)),
+        <span class="comment">// If both key and range_end are ‘\0’, then range represents all keys.
+        </span>([<span class="number">0</span>], [<span class="number">0</span>]) =&gt; (Bound::Unbounded, Bound::Unbounded),
+        <span class="comment">// If range_end is ‘\0’, the range is all keys greater than or equal to the key argument.
+        </span>(<span class="kw">_</span>, [<span class="number">0</span>]) =&gt; (Bound::Included(key), Bound::Unbounded),
+        (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; (Bound::Included(key), Bound::Excluded(range_end)),
+    }
+}
 
 <span class="attr">#[derive(Debug, Clone, Default)]
 </span><span class="kw">pub struct </span>RangeRequest {
@@ -1277,6 +1311,11 @@
             limit: <span class="number">0</span>,
             keys_only: <span class="bool-val">false</span>,
         }
+    }
+
+    <span class="doccomment">/// Returns the `RangeBounds`.
+    </span><span class="kw">pub fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (Bound&lt;Vec&lt;u8&gt;&gt;, Bound&lt;Vec&lt;u8&gt;&gt;) {
+        to_range(<span class="self">self</span>.key.clone(), <span class="self">self</span>.range_end.clone())
     }
 
     <span class="doccomment">/// key is the first key for the range, If range_end is not given, the
@@ -1871,6 +1910,11 @@
             range_end: <span class="macro">vec!</span>[],
             prev_kv: <span class="bool-val">false</span>,
         }
+    }
+
+    <span class="doccomment">/// Returns the `RangeBounds`.
+    </span><span class="kw">pub fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (Bound&lt;Vec&lt;u8&gt;&gt;, Bound&lt;Vec&lt;u8&gt;&gt;) {
+        to_range(<span class="self">self</span>.key.clone(), <span class="self">self</span>.range_end.clone())
     }
 
     <span class="doccomment">/// key is the first key to delete in the range. If range_end is not given,
