@@ -2118,6 +2118,12 @@
 <a href="#2118" id="2118">2118</a>
 <a href="#2119" id="2119">2119</a>
 <a href="#2120" id="2120">2120</a>
+<a href="#2121" id="2121">2121</a>
+<a href="#2122" id="2122">2122</a>
+<a href="#2123" id="2123">2123</a>
+<a href="#2124" id="2124">2124</a>
+<a href="#2125" id="2125">2125</a>
+<a href="#2126" id="2126">2126</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2181,6 +2187,8 @@
 
 <span class="doccomment">/// `time()` function in PromQL.
 </span><span class="kw">const </span>SPECIAL_TIME_FUNCTION: <span class="kw-2">&amp;</span>str = <span class="string">&quot;time&quot;</span>;
+<span class="doccomment">/// `histogram_quantile` function in PromQL
+</span><span class="kw">const </span>SPECIAL_HISTOGRAM_QUANTILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;histogram_quantile&quot;</span>;
 
 <span class="kw">const </span>DEFAULT_TIME_INDEX_COLUMN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;time&quot;</span>;
 
@@ -2558,6 +2566,10 @@
                             .context(DataFusionPlanningSnafu)<span class="question-mark">?</span>,
                         ),
                     }));
+                }
+
+                <span class="kw">if </span>func.name == SPECIAL_HISTOGRAM_QUANTILE {
+                    <span class="macro">todo!</span>()
                 }
 
                 <span class="kw">let </span>args = <span class="self">self</span>.create_function_args(<span class="kw-2">&amp;</span>args.args)<span class="question-mark">?</span>;
