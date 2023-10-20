@@ -291,6 +291,10 @@
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -312,7 +316,7 @@
 <span class="kw">pub const </span>OPENTSDB_TIMESTAMP_COLUMN_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;greptime_timestamp&quot;</span>;
 <span class="kw">pub const </span>OPENTSDB_FIELD_COLUMN_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;greptime_value&quot;</span>;
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>DataPoint {
     metric: String,
     ts_millis: i64,
@@ -406,6 +410,10 @@
 
     <span class="kw">pub fn </span>tags(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Vec&lt;(String, String)&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.tags
+    }
+
+    <span class="kw">pub fn </span>tags_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Vec&lt;(String, String)&gt; {
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>.tags
     }
 
     <span class="kw">pub fn </span>ts_millis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {

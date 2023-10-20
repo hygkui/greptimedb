@@ -126,6 +126,45 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -148,16 +187,20 @@
 <span class="kw">use </span>std::net::SocketAddr;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>api::v1::RowInsertRequests;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_runtime::Runtime;
 <span class="kw">use </span>common_telemetry::logging::error;
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>tokio::sync::broadcast;
 
+<span class="kw">use </span><span class="self">self</span>::codec::DataPoint;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::opentsdb::connection::Connection;
 <span class="kw">use </span><span class="kw">crate</span>::opentsdb::handler::Handler;
+<span class="kw">use </span><span class="kw">crate</span>::prom_store::{FIELD_COLUMN_NAME, TIMESTAMP_COLUMN_NAME};
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::OpentsdbProtocolHandlerRef;
+<span class="kw">use </span><span class="kw">crate</span>::row_writer::{<span class="self">self</span>, MultiTableData};
 <span class="kw">use </span><span class="kw">crate</span>::server::{AbortableStream, BaseTcpServer, Server};
 <span class="kw">use </span><span class="kw">crate</span>::shutdown::Shutdown;
 
@@ -253,5 +296,40 @@
     <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
         OPENTSDB_SERVER
     }
+}
+
+<span class="kw">pub fn </span>data_point_to_grpc_row_insert_requests(
+    data_points: Vec&lt;DataPoint&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(RowInsertRequests, usize)&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>multi_table_data = MultiTableData::new();
+
+    <span class="kw">for </span><span class="kw-2">mut </span>data_point <span class="kw">in </span>data_points {
+        <span class="kw">let </span>tags: Vec&lt;(String, String)&gt; = std::mem::take(data_point.tags_mut());
+        <span class="kw">let </span>table_name = data_point.metric();
+        <span class="kw">let </span>value = data_point.value();
+        <span class="kw">let </span>timestamp = data_point.ts_millis();
+        <span class="comment">// length of tags + 2 extra columns for greptime_timestamp and the value
+        </span><span class="kw">let </span>num_columns = tags.len() + <span class="number">2</span>;
+
+        <span class="kw">let </span>table_data = multi_table_data.get_or_default_table_data(table_name, num_columns, <span class="number">1</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>one_row = table_data.alloc_one_row();
+
+        <span class="comment">// tags
+        </span>row_writer::write_tags(table_data, tags.into_iter(), <span class="kw-2">&amp;mut </span>one_row)<span class="question-mark">?</span>;
+
+        <span class="comment">// value
+        </span>row_writer::write_f64(table_data, FIELD_COLUMN_NAME, value, <span class="kw-2">&amp;mut </span>one_row)<span class="question-mark">?</span>;
+        <span class="comment">// timestamp
+        </span>row_writer::write_ts_millis(
+            table_data,
+            TIMESTAMP_COLUMN_NAME,
+            <span class="prelude-val">Some</span>(timestamp),
+            <span class="kw-2">&amp;mut </span>one_row,
+        )<span class="question-mark">?</span>;
+
+        table_data.add_row(one_row);
+    }
+
+    <span class="prelude-val">Ok</span>(multi_table_data.into_row_insert_requests())
 }
 </code></pre></div></section></main></body></html>

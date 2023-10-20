@@ -237,8 +237,6 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -325,17 +323,19 @@
     <span class="kw">let </span>summary = params.contains_key(<span class="string">&quot;summary&quot;</span>);
     <span class="kw">let </span>details = params.contains_key(<span class="string">&quot;details&quot;</span>);
 
-    <span class="kw">let </span>data_points = parse_data_points(body).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>data_point_requests = parse_data_points(body).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>data_points = data_point_requests
+        .iter()
+        .map(|point| point.clone().into())
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
     <span class="kw">let </span>response = <span class="kw">if </span>!summary &amp;&amp; !details {
-        <span class="kw">for </span>data_point <span class="kw">in </span>data_points.into_iter() {
-            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = opentsdb_handler.exec(<span class="kw-2">&amp;</span>data_point.into(), ctx.clone()).<span class="kw">await </span>{
-                <span class="comment">// Not debugging purpose, failed fast.
-                </span><span class="kw">return </span>error::InternalSnafu {
-                    err_msg: e.to_string(),
-                }
-                .fail();
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = opentsdb_handler.exec(data_points, ctx.clone()).<span class="kw">await </span>{
+            <span class="comment">// Not debugging purpose, failed fast.
+            </span><span class="kw">return </span>error::InternalSnafu {
+                err_msg: e.to_string(),
             }
+            .fail();
         }
         (HttpStatusCode::NO_CONTENT, Json(OpentsdbPutResponse::Empty))
     } <span class="kw">else </span>{
@@ -349,15 +349,11 @@
             </span>},
         };
 
-        <span class="kw">for </span>data_point <span class="kw">in </span>data_points.into_iter() {
-            <span class="kw">let </span>result = opentsdb_handler
-                .exec(<span class="kw-2">&amp;</span>data_point.clone().into(), ctx.clone())
-                .<span class="kw">await</span>;
+        <span class="kw">for </span>(data_point, request) <span class="kw">in </span>data_points.into_iter().zip(data_point_requests) {
+            <span class="kw">let </span>result = opentsdb_handler.exec(<span class="macro">vec!</span>[data_point], ctx.clone()).<span class="kw">await</span>;
             <span class="kw">match </span>result {
-                <span class="prelude-val">Ok</span>(()) =&gt; response.on_success(),
-                <span class="prelude-val">Err</span>(e) =&gt; {
-                    response.on_failed(data_point, e);
-                }
+                <span class="prelude-val">Ok</span>(affected_rows) =&gt; response.on_success(affected_rows),
+                <span class="prelude-val">Err</span>(e) =&gt; response.on_failed(request, e),
             }
         }
         (
@@ -392,8 +388,8 @@
 }
 
 <span class="kw">impl </span>OpentsdbDebuggingResponse {
-    <span class="kw">fn </span>on_success(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.success += <span class="number">1</span>;
+    <span class="kw">fn </span>on_success(<span class="kw-2">&amp;mut </span><span class="self">self</span>, affected_rows: usize) {
+        <span class="self">self</span>.success += affected_rows <span class="kw">as </span>i32;
     }
 
     <span class="kw">fn </span>on_failed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, datapoint: DataPointRequest, error: <span class="kw">impl </span>ErrorExt) {

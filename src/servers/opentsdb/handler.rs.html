@@ -299,7 +299,7 @@
             <span class="kw">match </span>DataPoint::try_create(<span class="kw-2">&amp;</span>line) {
                 <span class="prelude-val">Ok</span>(data_point) =&gt; {
                     <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::METRIC_TCP_OPENTSDB_LINE_WRITE_ELAPSED);
-                    <span class="kw">let </span>result = <span class="self">self</span>.query_handler.exec(<span class="kw-2">&amp;</span>data_point, ctx.clone()).<span class="kw">await</span>;
+                    <span class="kw">let </span>result = <span class="self">self</span>.query_handler.exec(<span class="macro">vec!</span>[data_point], ctx.clone()).<span class="kw">await</span>;
                     <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = result {
                         <span class="self">self</span>.connection.write_line(e.output_msg()).<span class="kw">await</span><span class="question-mark">?</span>;
                     }
@@ -333,8 +333,8 @@
 
     <span class="attr">#[async_trait]
     </span><span class="kw">impl </span>OpentsdbProtocolHandler <span class="kw">for </span>DummyQueryHandler {
-        <span class="kw">async fn </span>exec(<span class="kw-2">&amp;</span><span class="self">self</span>, data_point: <span class="kw-2">&amp;</span>DataPoint, _ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-            <span class="kw">let </span>metric = data_point.metric();
+        <span class="kw">async fn </span>exec(<span class="kw-2">&amp;</span><span class="self">self</span>, data_points: Vec&lt;DataPoint&gt;, _ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
+            <span class="kw">let </span>metric = data_points.first().unwrap().metric();
             <span class="kw">if </span>metric == <span class="string">&quot;should_failed&quot; </span>{
                 <span class="kw">return </span>error::InternalSnafu {
                     err_msg: <span class="string">&quot;expected&quot;</span>,
@@ -342,7 +342,7 @@
                 .fail();
             }
             <span class="self">self</span>.tx.send(metric.to_string()).<span class="kw">await</span>.unwrap();
-            <span class="prelude-val">Ok</span>(())
+            <span class="prelude-val">Ok</span>(data_points.len())
         }
     }
 

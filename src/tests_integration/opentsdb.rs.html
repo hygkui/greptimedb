@@ -103,6 +103,7 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -151,7 +152,9 @@
 
     <span class="kw">async fn </span>test_exec(instance: <span class="kw-2">&amp;</span>Arc&lt;Instance&gt;) {
         <span class="kw">let </span>ctx = QueryContext::arc();
-        <span class="kw">let </span>data_point1 = DataPoint::new(
+
+        <span class="comment">// should create new table &quot;my_metric_1&quot; directly
+        </span><span class="kw">let </span>data_point1 = DataPoint::new(
             <span class="string">&quot;my_metric_1&quot;</span>.to_string(),
             <span class="number">1000</span>,
             <span class="number">1.0</span>,
@@ -160,10 +163,9 @@
                 (<span class="string">&quot;tagk2&quot;</span>.to_string(), <span class="string">&quot;tagv2&quot;</span>.to_string()),
             ],
         );
-        <span class="comment">// should create new table &quot;my_metric_1&quot; directly
-        </span>instance.exec(<span class="kw-2">&amp;</span>data_point1, ctx.clone()).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>data_point2 = DataPoint::new(
+        <span class="comment">// should create new column &quot;tagk3&quot; directly
+        </span><span class="kw">let </span>data_point2 = DataPoint::new(
             <span class="string">&quot;my_metric_1&quot;</span>.to_string(),
             <span class="number">2000</span>,
             <span class="number">2.0</span>,
@@ -172,12 +174,12 @@
                 (<span class="string">&quot;tagk3&quot;</span>.to_string(), <span class="string">&quot;tagv3&quot;</span>.to_string()),
             ],
         );
-        <span class="comment">// should create new column &quot;tagk3&quot; directly
-        </span>instance.exec(<span class="kw-2">&amp;</span>data_point2, ctx.clone()).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>data_point3 = DataPoint::new(<span class="string">&quot;my_metric_1&quot;</span>.to_string(), <span class="number">3000</span>, <span class="number">3.0</span>, <span class="macro">vec!</span>[]);
         <span class="comment">// should handle null tags properly
-        </span>instance.exec(<span class="kw-2">&amp;</span>data_point3, ctx.clone()).<span class="kw">await</span>.unwrap();
+        </span><span class="kw">let </span>data_point3 = DataPoint::new(<span class="string">&quot;my_metric_1&quot;</span>.to_string(), <span class="number">3000</span>, <span class="number">3.0</span>, <span class="macro">vec!</span>[]);
+
+        <span class="kw">let </span>data_points = <span class="macro">vec!</span>[data_point1, data_point2, data_point3];
+        instance.exec(data_points, ctx.clone()).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>output = instance
             .do_query(
@@ -192,13 +194,13 @@
                 <span class="kw">let </span>recordbatches = RecordBatches::try_collect(stream).<span class="kw">await</span>.unwrap();
                 <span class="kw">let </span>pretty_print = recordbatches.pretty_print().unwrap();
                 <span class="kw">let </span>expected = <span class="macro">vec!</span>[
-                    <span class="string">&quot;+---------------------+----------------+-------+-------+-------+&quot;</span>,
-                    <span class="string">&quot;| greptime_timestamp  | greptime_value | tagk1 | tagk2 | tagk3 |&quot;</span>,
-                    <span class="string">&quot;+---------------------+----------------+-------+-------+-------+&quot;</span>,
-                    <span class="string">&quot;| 1970-01-01T00:00:01 | 1.0            | tagv1 | tagv2 |       |&quot;</span>,
-                    <span class="string">&quot;| 1970-01-01T00:00:02 | 2.0            |       | tagv2 | tagv3 |&quot;</span>,
-                    <span class="string">&quot;| 1970-01-01T00:00:03 | 3.0            |       |       |       |&quot;</span>,
-                    <span class="string">&quot;+---------------------+----------------+-------+-------+-------+&quot;</span>,
+                    <span class="string">&quot;+-------+-------+----------------+---------------------+-------+&quot;</span>,
+                    <span class="string">&quot;| tagk1 | tagk2 | greptime_value | greptime_timestamp  | tagk3 |&quot;</span>,
+                    <span class="string">&quot;+-------+-------+----------------+---------------------+-------+&quot;</span>,
+                    <span class="string">&quot;| tagv1 | tagv2 | 1.0            | 1970-01-01T00:00:01 |       |&quot;</span>,
+                    <span class="string">&quot;|       | tagv2 | 2.0            | 1970-01-01T00:00:02 | tagv3 |&quot;</span>,
+                    <span class="string">&quot;|       |       | 3.0            | 1970-01-01T00:00:03 |       |&quot;</span>,
+                    <span class="string">&quot;+-------+-------+----------------+---------------------+-------+&quot;</span>,
                 ]
                 .into_iter()
                 .join(<span class="string">&quot;\n&quot;</span>);
