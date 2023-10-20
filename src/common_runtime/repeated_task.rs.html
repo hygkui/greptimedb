@@ -193,6 +193,38 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -235,6 +267,7 @@
 <span class="kw">struct </span>TaskInner&lt;E&gt; {
     <span class="doccomment">/// The repeated task handle. This handle is Some if the task is started.
     </span>task_handle: <span class="prelude-ty">Option</span>&lt;JoinHandle&lt;()&gt;&gt;,
+
     <span class="doccomment">/// The task_fn to run. This is Some if the task is not started.
     </span>task_fn: <span class="prelude-ty">Option</span>&lt;BoxedTaskFunction&lt;E&gt;&gt;,
 }
@@ -245,6 +278,7 @@
     inner: Mutex&lt;TaskInner&lt;E&gt;&gt;,
     started: AtomicBool,
     interval: Duration,
+    initial_delay: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
 }
 
 <span class="kw">impl</span>&lt;E&gt; std::fmt::Display <span class="kw">for </span>RepeatedTask&lt;E&gt; {
@@ -270,7 +304,10 @@
 }
 
 <span class="kw">impl</span>&lt;E: ErrorExt + <span class="lifetime">&#39;static</span>&gt; RepeatedTask&lt;E&gt; {
-    <span class="kw">pub fn </span>new(interval: Duration, task_fn: BoxedTaskFunction&lt;E&gt;) -&gt; <span class="self">Self </span>{
+    <span class="doccomment">/// Creates a new repeated task. The `initial_delay` is the delay before the first execution.
+    /// `initial_delay` default is None, the initial interval uses the `interval`.
+    /// You can use `with_initial_delay` to set the `initial_delay`.
+    </span><span class="kw">pub fn </span>new(interval: Duration, task_fn: BoxedTaskFunction&lt;E&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             name: task_fn.name().to_string(),
             cancel_token: CancellationToken::new(),
@@ -280,8 +317,14 @@
             }),
             started: AtomicBool::new(<span class="bool-val">false</span>),
             interval,
+            initial_delay: <span class="prelude-val">None</span>,
         }
     }
+
+    <span class="kw">pub fn </span>with_initial_delay(<span class="kw-2">mut </span><span class="self">self</span>, initial_delay: <span class="prelude-ty">Option</span>&lt;Duration&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.initial_delay = initial_delay;
+        <span class="self">self
+    </span>}
 
     <span class="kw">pub fn </span>started(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.started.load(Ordering::Relaxed)
@@ -294,17 +337,21 @@
             IllegalStateSnafu { name: <span class="kw-2">&amp;</span><span class="self">self</span>.name }
         );
 
-        <span class="kw">let </span>interval = <span class="self">self</span>.interval;
         <span class="kw">let </span>child = <span class="self">self</span>.cancel_token.child_token();
         <span class="comment">// Safety: The task is not started.
         </span><span class="kw">let </span><span class="kw-2">mut </span>task_fn = inner.task_fn.take().unwrap();
+        <span class="kw">let </span>interval = <span class="self">self</span>.interval;
+        <span class="kw">let </span><span class="kw-2">mut </span>initial_delay = <span class="self">self</span>.initial_delay;
         <span class="comment">// TODO(hl): Maybe spawn to a blocking runtime.
         </span><span class="kw">let </span>handle = runtime.spawn(<span class="kw">async move </span>{
             <span class="kw">loop </span>{
-                <span class="macro">tokio::select! </span>{
-                    <span class="kw">_ </span>= tokio::time::sleep(interval) =&gt; {}
-                    <span class="kw">_ </span>= child.cancelled() =&gt; {
-                        <span class="kw">return</span>;
+                <span class="kw">let </span>sleep_time = initial_delay.take().unwrap_or(interval);
+                <span class="kw">if </span>sleep_time &gt; Duration::ZERO {
+                    <span class="macro">tokio::select! </span>{
+                        <span class="kw">_ </span>= tokio::time::sleep(sleep_time) =&gt; {}
+                        <span class="kw">_ </span>= child.cancelled() =&gt; {
+                            <span class="kw">return</span>;
+                        }
                     }
                 }
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = task_fn.call().<span class="kw">await </span>{
@@ -386,6 +433,23 @@
         task.stop().<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(n.load(Ordering::Relaxed), <span class="number">5</span>);
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_repeated_task_prior_exec() {
+        common_telemetry::init_default_ut_logging();
+
+        <span class="kw">let </span>n = Arc::new(AtomicI32::new(<span class="number">0</span>));
+        <span class="kw">let </span>task_fn = TickTask { n: n.clone() };
+
+        <span class="kw">let </span>task = RepeatedTask::new(Duration::from_millis(<span class="number">100</span>), Box::new(task_fn))
+            .with_initial_delay(<span class="prelude-val">Some</span>(Duration::ZERO));
+
+        task.start(<span class="kw">crate</span>::bg_runtime()).unwrap();
+        tokio::time::sleep(Duration::from_millis(<span class="number">550</span>)).<span class="kw">await</span>;
+        task.stop().<span class="kw">await</span>.unwrap();
+
+        <span class="macro">assert_eq!</span>(n.load(Ordering::Relaxed), <span class="number">6</span>);
     }
 }
 </code></pre></div></section></main></body></html>
