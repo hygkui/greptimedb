@@ -580,6 +580,7 @@
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -974,7 +975,6 @@
             Internal { .. }
             | InternalIo { .. }
             | TokioIo { .. }
-            | CollectRecordbatch { .. }
             | StartHttp { .. }
             | StartGrpc { .. }
             | AlreadyStarted { .. }
@@ -984,6 +984,8 @@
             | CatalogError { .. }
             | GrpcReflectionService { .. }
             | BuildHttpResponse { .. } =&gt; StatusCode::Internal,
+
+            CollectRecordbatch { .. } =&gt; StatusCode::EngineExecuteQuery,
 
             InsertScript { source, .. }
             | ExecuteScript { source, .. }

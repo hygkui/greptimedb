@@ -206,6 +206,14 @@
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -247,17 +255,25 @@
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>error = <span class="self">self</span>.last();
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(external_error) = error.source() {
-            <span class="kw">let </span>external_root = external_error.sources().last().unwrap();
-
-            <span class="kw">if </span>error.to_string().is_empty() {
-                <span class="macro">format!</span>(<span class="string">&quot;{external_root}&quot;</span>)
-            } <span class="kw">else </span>{
-                <span class="macro">format!</span>(<span class="string">&quot;{error}: {external_root}&quot;</span>)
+        <span class="kw">match </span><span class="self">self</span>.status_code() {
+            StatusCode::Unknown | StatusCode::Unexpected | StatusCode::Internal =&gt; {
+                <span class="comment">// masks internal error from end user
+                </span><span class="macro">format!</span>(<span class="string">&quot;Internal error: {}&quot;</span>, <span class="self">self</span>.status_code() <span class="kw">as </span>u32)
             }
-        } <span class="kw">else </span>{
-            <span class="macro">format!</span>(<span class="string">&quot;{error}&quot;</span>)
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">let </span>error = <span class="self">self</span>.last();
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(external_error) = error.source() {
+                    <span class="kw">let </span>external_root = external_error.sources().last().unwrap();
+
+                    <span class="kw">if </span>error.to_string().is_empty() {
+                        <span class="macro">format!</span>(<span class="string">&quot;{external_root}&quot;</span>)
+                    } <span class="kw">else </span>{
+                        <span class="macro">format!</span>(<span class="string">&quot;{error}: {external_root}&quot;</span>)
+                    }
+                } <span class="kw">else </span>{
+                    <span class="macro">format!</span>(<span class="string">&quot;{error}&quot;</span>)
+                }
+            }
         }
     }
 }

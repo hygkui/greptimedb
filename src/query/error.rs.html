@@ -344,6 +344,10 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -662,9 +666,13 @@
             ParseSql { source, .. } =&gt; source.status_code(),
             CreateRecordBatch { source, .. } =&gt; source.status_code(),
             QueryExecution { source, .. } | QueryPlan { source, .. } =&gt; source.status_code(),
-            DataFusion { .. } | MissingTimestampColumn { .. } | RoutePartition { .. } =&gt; {
-                StatusCode::Internal
-            }
+            DataFusion { error, .. } =&gt; <span class="kw">match </span>error {
+                DataFusionError::Internal(<span class="kw">_</span>) =&gt; StatusCode::Internal,
+                DataFusionError::NotImplemented(<span class="kw">_</span>) =&gt; StatusCode::Unsupported,
+                DataFusionError::Plan(<span class="kw">_</span>) =&gt; StatusCode::PlanQuery,
+                <span class="kw">_ </span>=&gt; StatusCode::EngineExecuteQuery,
+            },
+            MissingTimestampColumn { .. } | RoutePartition { .. } =&gt; StatusCode::EngineExecuteQuery,
             Sql { source, .. } =&gt; source.status_code(),
             PlanSql { .. } =&gt; StatusCode::PlanQuery,
             ConvertSqlType { source, .. } | ConvertSqlValue { source, .. } =&gt; source.status_code(),

@@ -374,7 +374,7 @@
             .<span class="kw">await
             </span>.unwrap();
         <span class="kw">let </span>resp = client.read_line().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(resp, <span class="prelude-val">Some</span>(<span class="string">&quot;Internal error: expected&quot;</span>.to_string()));
+        <span class="macro">assert_eq!</span>(resp, <span class="prelude-val">Some</span>(<span class="string">&quot;Internal error: 1003&quot;</span>.to_string()));
 
         client.write_line(<span class="string">&quot;get&quot;</span>.to_string()).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>resp = client.read_line().<span class="kw">await</span>.unwrap();
