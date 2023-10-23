@@ -920,6 +920,7 @@
 <a href="#920" id="920">920</a>
 <a href="#921" id="921">921</a>
 <a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1582,6 +1583,7 @@
     <span class="kw">fn </span>route_otlp&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, otlp_handler: OpenTelemetryProtocolHandlerRef) -&gt; Router&lt;S&gt; {
         Router::new()
             .route(<span class="string">&quot;/v1/metrics&quot;</span>, routing::post(otlp::metrics))
+            .route(<span class="string">&quot;/v1/traces&quot;</span>, routing::post(otlp::traces))
             .with_state(otlp_handler)
     }
 
