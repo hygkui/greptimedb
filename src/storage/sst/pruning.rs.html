@@ -401,6 +401,16 @@
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
 <a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -432,9 +442,11 @@
 <span class="kw">use </span>parquet::arrow::arrow_reader::{ArrowPredicate, RowFilter};
 <span class="kw">use </span>parquet::arrow::ProjectionMask;
 <span class="kw">use </span>parquet::schema::types::SchemaDescriptor;
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>table::predicate::Predicate;
 
 <span class="kw">use </span><span class="kw">crate</span>::error;
+<span class="kw">use </span><span class="kw">crate</span>::error::BuildPredicateSnafu;
 <span class="kw">use </span><span class="kw">crate</span>::schema::StoreSchema;
 
 <span class="doccomment">/// Builds row filters according to predicates.
@@ -483,7 +495,11 @@
         Box::new(PlainTimestampRowFilter::new(time_range, ts_col_projection)) <span class="kw">as _
     </span>};
     <span class="kw">let </span><span class="kw-2">mut </span>predicates = <span class="macro">vec!</span>[time_range_row_filter];
-    <span class="kw">if let </span><span class="prelude-val">Ok</span>(datafusion_filters) = predicate_to_row_filter(predicate, projection_mask) {
+    <span class="kw">if let </span><span class="prelude-val">Ok</span>(datafusion_filters) = predicate_to_row_filter(
+        predicate,
+        projection_mask,
+        store_schema.schema().arrow_schema(),
+    ) {
         predicates.extend(datafusion_filters);
     }
     <span class="kw">let </span>filter = RowFilter::new(predicates);
@@ -493,9 +509,13 @@
 <span class="kw">fn </span>predicate_to_row_filter(
     predicate: <span class="kw-2">&amp;</span>Predicate,
     projection_mask: ProjectionMask,
+    schema: <span class="kw-2">&amp;</span>arrow::datatypes::SchemaRef,
 ) -&gt; error::Result&lt;Vec&lt;Box&lt;<span class="kw">dyn </span>ArrowPredicate&gt;&gt;&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>datafusion_predicates = Vec::with_capacity(predicate.exprs().len());
-    <span class="kw">for </span>expr <span class="kw">in </span>predicate.exprs() {
+    <span class="kw">let </span>physical_exprs = predicate
+        .to_physical_exprs(schema)
+        .context(BuildPredicateSnafu)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>datafusion_predicates = Vec::with_capacity(physical_exprs.len());
+    <span class="kw">for </span>expr <span class="kw">in </span><span class="kw-2">&amp;</span>physical_exprs {
         datafusion_predicates.push(Box::new(DatafusionArrowPredicate {
             projection_mask: projection_mask.clone(),
             physical_expr: expr.clone(),

@@ -345,6 +345,7 @@
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -535,8 +536,9 @@
                 <span class="kw-2">&amp;</span>read_format,
                 column_ids,
             );
+
             <span class="kw">let </span>pruned_row_groups = predicate
-                .prune_with_stats(<span class="kw-2">&amp;</span>stats)
+                .prune_with_stats(<span class="kw-2">&amp;</span>stats, read_format.metadata().schema.arrow_schema())
                 .into_iter()
                 .enumerate()
                 .filter_map(|(idx, valid)| <span class="kw">if </span>valid { <span class="prelude-val">Some</span>(idx) } <span class="kw">else </span>{ <span class="prelude-val">None </span>})

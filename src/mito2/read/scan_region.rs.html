@@ -212,11 +212,6 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -236,13 +231,12 @@
 </span><span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>common_time::range::TimestampRange;
-<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::ScanRequest;
 <span class="kw">use </span>table::predicate::{Predicate, TimeRangePredicateBuilder};
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
 <span class="kw">use </span><span class="kw">crate</span>::cache::CacheManagerRef;
-<span class="kw">use </span><span class="kw">crate</span>::error::{BuildPredicateSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::read::projection::ProjectionMapper;
 <span class="kw">use </span><span class="kw">crate</span>::read::seq_scan::SeqScan;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::VersionRef;
@@ -392,11 +386,7 @@
             total_ssts
         );
 
-        <span class="kw">let </span>predicate = Predicate::try_new(
-            <span class="self">self</span>.request.filters.clone(),
-            <span class="self">self</span>.version.metadata.schema.clone(),
-        )
-        .context(BuildPredicateSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>predicate = Predicate::new(<span class="self">self</span>.request.filters.clone());
         <span class="kw">let </span>mapper = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.request.projection {
             <span class="prelude-val">Some</span>(p) =&gt; ProjectionMapper::new(<span class="kw-2">&amp;</span><span class="self">self</span>.version.metadata, p.iter().copied())<span class="question-mark">?</span>,
             <span class="prelude-val">None </span>=&gt; ProjectionMapper::all(<span class="kw-2">&amp;</span><span class="self">self</span>.version.metadata)<span class="question-mark">?</span>,
