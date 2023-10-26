@@ -256,7 +256,7 @@
         </span><span class="self">Self</span>: Sized,
     {
         <span class="kw">match </span><span class="self">self</span>.status_code() {
-            StatusCode::Unknown | StatusCode::Unexpected | StatusCode::Internal =&gt; {
+            StatusCode::Unknown | StatusCode::Internal =&gt; {
                 <span class="comment">// masks internal error from end user
                 </span><span class="macro">format!</span>(<span class="string">&quot;Internal error: {}&quot;</span>, <span class="self">self</span>.status_code() <span class="kw">as </span>u32)
             }

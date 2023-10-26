@@ -968,8 +968,8 @@
     #[allow(unused_variables)]
     #[allow(clippy::diverging_sub_expression)]
     </span><span class="kw">async fn </span>build(<span class="self">self</span>, opts: MixOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>fe_opts = opts.frontend;
-        <span class="kw">let </span>fe_plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;mut </span>fe_opts)
+        <span class="kw">let </span>fe_opts = opts.frontend;
+        <span class="kw">let </span>fe_plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;</span>fe_opts)
             .<span class="kw">await
             </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
@@ -1073,12 +1073,12 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_try_from_start_command_to_anymap() {
-        <span class="kw">let </span><span class="kw-2">mut </span>fe_opts = FrontendOptions {
+        <span class="kw">let </span>fe_opts = FrontendOptions {
             user_provider: <span class="prelude-val">Some</span>(<span class="string">&quot;static_user_provider:cmd:test=test&quot;</span>.to_string()),
             ..Default::default()
         };
 
-        <span class="kw">let </span>plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;mut </span>fe_opts).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;</span>fe_opts).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>provider = plugins.get::&lt;UserProviderRef&gt;().unwrap();
         <span class="kw">let </span>result = provider

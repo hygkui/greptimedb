@@ -53,7 +53,7 @@
 <span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">pub async fn </span>setup_frontend_plugins(opts: <span class="kw-2">&amp;mut </span>FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Plugins&gt; {
+<span class="kw">pub async fn </span>setup_frontend_plugins(opts: <span class="kw-2">&amp;</span>FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Plugins&gt; {
     <span class="kw">let </span>plugins = Plugins::new();
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(user_provider) = opts.user_provider.as_ref() {
