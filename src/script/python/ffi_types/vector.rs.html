@@ -568,11 +568,12 @@
 <span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>arrow::array::Datum;
+<span class="kw">use </span>arrow::compute::kernels::{cmp, numeric};
 <span class="kw">use </span>datatypes::arrow::array::{
     Array, ArrayRef, BooleanArray, Float64Array, Int64Array, UInt64Array,
 };
 <span class="kw">use </span>datatypes::arrow::compute;
-<span class="kw">use </span>datatypes::arrow::compute::kernels::{arithmetic, comparison};
 <span class="kw">use </span>datatypes::arrow::datatypes::DataType <span class="kw">as </span>ArrowDataType;
 <span class="kw">use </span>datatypes::arrow::error::Result <span class="kw">as </span>ArrowResult;
 <span class="kw">use </span>datatypes::data_type::DataType;
@@ -613,25 +614,24 @@
 }
 
 <span class="doccomment">/// Performs `val - arr`.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>arrow_rsub(arr: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, val: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
-    arithmetic::subtract_dyn(val, arr).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;rsub error: {e}&quot;</span>))
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>arrow_rsub(arr: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, val: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
+    numeric::sub(val, arr).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;rsub error: {e}&quot;</span>))
 }
 
 <span class="doccomment">/// Performs `val / arr`
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>arrow_rtruediv(arr: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, val: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
-    arithmetic::divide_dyn(val, arr).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;rtruediv error: {e}&quot;</span>))
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>arrow_rtruediv(arr: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, val: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
+    numeric::div(val, arr).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;rtruediv error: {e}&quot;</span>))
 }
 
 <span class="doccomment">/// Performs `val / arr`, but cast to i64.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>arrow_rfloordiv(arr: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, val: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
-    <span class="kw">let </span>array =
-        arithmetic::divide_dyn(val, arr).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;rfloordiv divide error: {e}&quot;</span>))<span class="question-mark">?</span>;
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>arrow_rfloordiv(arr: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, val: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
+    <span class="kw">let </span>array = numeric::div(val, arr).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;rfloordiv divide error: {e}&quot;</span>))<span class="question-mark">?</span>;
     compute::cast(<span class="kw-2">&amp;</span>array, <span class="kw-2">&amp;</span>ArrowDataType::Int64).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;rfloordiv cast error: {e}&quot;</span>))
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>wrap_result&lt;F&gt;(f: F) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>wrap_result&lt;F&gt;(f: F) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;
 <span class="kw">where
-    </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; ArrowResult&lt;ArrayRef&gt;,
+    </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; ArrowResult&lt;ArrayRef&gt;,
 {
     <span class="kw">move </span>|left, right| f(left, right).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;arithmetic error {e}&quot;</span>))
 }
@@ -639,11 +639,11 @@
 <span class="attr">#[cfg(feature = <span class="string">&quot;pyo3_backend&quot;</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>wrap_bool_result&lt;F&gt;(
     op_bool_arr: F,
-) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;
+) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;
 <span class="kw">where
-    </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; ArrowResult&lt;BooleanArray&gt;,
+    </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; ArrowResult&lt;BooleanArray&gt;,
 {
-    <span class="kw">move </span>|a: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, b: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array| -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
+    <span class="kw">move </span>|a: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, b: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum| -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
         <span class="kw">let </span>array = op_bool_arr(a, b).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;logical op error: {e}&quot;</span>))<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Arc::new(array))
     }
@@ -760,7 +760,7 @@
         op: F,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt;
     <span class="kw">where
-        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
+        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
     {
         <span class="kw">let </span>right_type = right.data_type().as_arrow_type();
         <span class="comment">// assuming they are all 64 bit type if possible
@@ -803,7 +803,7 @@
             ));
         };
 
-        <span class="kw">let </span>result = op(left.as_ref(), right.as_ref())<span class="question-mark">?</span>;
+        <span class="kw">let </span>result = op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right.as_ref())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Helper::try_into_vector(result.clone())
             .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Can&#39;t cast result into vector, result: {result:?}, err: {e:?}&quot;</span>,))<span class="question-mark">?
@@ -818,7 +818,7 @@
         vm: <span class="kw-2">&amp;</span>VirtualMachine,
     ) -&gt; PyResult&lt;PyVector&gt;
     <span class="kw">where
-        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
+        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
     {
         <span class="comment">// the right operand only support PyInt or PyFloat,
         </span><span class="kw">let </span>right = {
@@ -864,7 +864,7 @@
         op: F,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;PyVector, String&gt;
     <span class="kw">where
-        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
+        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
     {
         <span class="kw">let </span>left = <span class="self">self</span>.to_arrow_array();
         <span class="kw">let </span>right = right.to_arrow_array();
@@ -877,7 +877,7 @@
         <span class="kw">let </span>left = cast(left, <span class="kw-2">&amp;</span>target_type)<span class="question-mark">?</span>;
         <span class="kw">let </span>right = cast(right, <span class="kw-2">&amp;</span>target_type)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>result = op(left.as_ref(), right.as_ref())<span class="question-mark">?</span>;
+        <span class="kw">let </span>result = op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Helper::try_into_vector(result.clone())
             .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Can&#39;t cast result into vector, result: {result:?}, err: {e:?}&quot;</span>,))<span class="question-mark">?
@@ -892,7 +892,7 @@
         vm: <span class="kw-2">&amp;</span>VirtualMachine,
     ) -&gt; PyResult&lt;PyVector&gt;
     <span class="kw">where
-        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
+        </span>F: Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt;,
     {
         <span class="kw">let </span>right = other.downcast_ref::&lt;PyVector&gt;().ok_or_else(|| {
             vm.new_type_error(<span class="macro">format!</span>(
@@ -1004,17 +1004,17 @@
 }
 
 <span class="doccomment">/// get corresponding arrow op function according to given PyComaprsionOp
-</span><span class="kw">fn </span>get_arrow_op(op: PyComparisonOp) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; ArrowResult&lt;ArrayRef&gt; {
+</span><span class="kw">fn </span>get_arrow_op(op: PyComparisonOp) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; ArrowResult&lt;ArrayRef&gt; {
     <span class="kw">let </span>op_bool_arr = <span class="kw">match </span>op {
-        PyComparisonOp::Eq =&gt; comparison::eq_dyn,
-        PyComparisonOp::Ne =&gt; comparison::neq_dyn,
-        PyComparisonOp::Gt =&gt; comparison::gt_dyn,
-        PyComparisonOp::Lt =&gt; comparison::lt_dyn,
-        PyComparisonOp::Ge =&gt; comparison::gt_eq_dyn,
-        PyComparisonOp::Le =&gt; comparison::lt_eq_dyn,
+        PyComparisonOp::Eq =&gt; cmp::eq,
+        PyComparisonOp::Ne =&gt; cmp::neq,
+        PyComparisonOp::Gt =&gt; cmp::gt,
+        PyComparisonOp::Lt =&gt; cmp::lt,
+        PyComparisonOp::Ge =&gt; cmp::gt_eq,
+        PyComparisonOp::Le =&gt; cmp::lt_eq,
     };
 
-    <span class="kw">move </span>|a: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, b: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array| -&gt; ArrowResult&lt;ArrayRef&gt; {
+    <span class="kw">move </span>|a: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, b: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum| -&gt; ArrowResult&lt;ArrayRef&gt; {
         <span class="kw">let </span>array = op_bool_arr(a, b)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Arc::new(array))
     }
@@ -1023,17 +1023,17 @@
 <span class="doccomment">/// get corresponding arrow scalar op function according to given PyComaprsionOp
 </span><span class="kw">fn </span>get_arrow_scalar_op(
     op: PyComparisonOp,
-) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
+) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum) -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
     <span class="kw">let </span>op_bool_arr = <span class="kw">match </span>op {
-        PyComparisonOp::Eq =&gt; comparison::eq_dyn,
-        PyComparisonOp::Ne =&gt; comparison::neq_dyn,
-        PyComparisonOp::Gt =&gt; comparison::gt_dyn,
-        PyComparisonOp::Lt =&gt; comparison::lt_dyn,
-        PyComparisonOp::Ge =&gt; comparison::gt_eq_dyn,
-        PyComparisonOp::Le =&gt; comparison::lt_eq_dyn,
+        PyComparisonOp::Eq =&gt; cmp::eq,
+        PyComparisonOp::Ne =&gt; cmp::neq,
+        PyComparisonOp::Gt =&gt; cmp::gt,
+        PyComparisonOp::Lt =&gt; cmp::lt,
+        PyComparisonOp::Ge =&gt; cmp::gt_eq,
+        PyComparisonOp::Le =&gt; cmp::lt_eq,
     };
 
-    <span class="kw">move </span>|a: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array, b: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Array| -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
+    <span class="kw">move </span>|a: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum, b: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Datum| -&gt; <span class="prelude-ty">Result</span>&lt;ArrayRef, String&gt; {
         <span class="kw">let </span>array = op_bool_arr(a, b).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;scalar op error: {e}&quot;</span>))<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Arc::new(array))
     }

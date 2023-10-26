@@ -888,6 +888,8 @@
 <a href="#888" id="888">888</a>
 <a href="#889" id="889">889</a>
 <a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1266,8 +1268,10 @@
         }
         SqlDataType::SmallInt(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::int16_datatype()),
         SqlDataType::UnsignedSmallInt(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::uint16_datatype()),
-        SqlDataType::TinyInt(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::int8_datatype()),
-        SqlDataType::UnsignedTinyInt(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::uint8_datatype()),
+        SqlDataType::TinyInt(<span class="kw">_</span>) | SqlDataType::Int8(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::int8_datatype()),
+        SqlDataType::UnsignedTinyInt(<span class="kw">_</span>) | SqlDataType::UnsignedInt8(<span class="kw">_</span>) =&gt; {
+            <span class="prelude-val">Ok</span>(ConcreteDataType::uint8_datatype())
+        }
         SqlDataType::Char(<span class="kw">_</span>)
         | SqlDataType::Varchar(<span class="kw">_</span>)
         | SqlDataType::Text

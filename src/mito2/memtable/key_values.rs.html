@@ -383,7 +383,7 @@
                 helper: <span class="kw-2">&amp;</span><span class="self">self</span>.helper,
                 sequence: <span class="self">self</span>.mutation.sequence + idx <span class="kw">as </span>u64, <span class="comment">// Calculate sequence for each row.
                 // Safety: This is a valid mutation.
-                </span>op_type: OpType::from_i32(<span class="self">self</span>.mutation.op_type).unwrap(),
+                </span>op_type: OpType::try_from(<span class="self">self</span>.mutation.op_type).unwrap(),
             }
         })
     }

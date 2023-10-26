@@ -193,9 +193,9 @@
     <span class="self">self</span>, ArrowComputeSnafu, InvalidFuncArgsSnafu, <span class="prelude-ty">Result</span>, UnsupportedInputDataTypeSnafu,
 };
 <span class="kw">use </span>common_query::prelude::{Signature, Volatility};
+<span class="kw">use </span>datafusion::arrow::compute::kernels::cmp::gt;
 <span class="kw">use </span>datatypes::arrow::array::AsArray;
 <span class="kw">use </span>datatypes::arrow::compute::cast;
-<span class="kw">use </span>datatypes::arrow::compute::kernels::comparison::gt_dyn;
 <span class="kw">use </span>datatypes::arrow::compute::kernels::zip;
 <span class="kw">use </span>datatypes::arrow::datatypes::{DataType <span class="kw">as </span>ArrowDataType, Date32Type};
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
@@ -247,7 +247,7 @@
                 <span class="kw">let </span>column2 = cast(<span class="kw-2">&amp;</span>columns[<span class="number">1</span>].to_arrow_array(), <span class="kw-2">&amp;</span>ArrowDataType::Date32)
                     .context(ArrowComputeSnafu)<span class="question-mark">?</span>;
                 <span class="kw">let </span>column2 = column2.as_primitive::&lt;Date32Type&gt;();
-                <span class="kw">let </span>boolean_array = gt_dyn(<span class="kw-2">&amp;</span>column1, <span class="kw-2">&amp;</span>column2).context(ArrowComputeSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>boolean_array = gt(<span class="kw-2">&amp;</span>column1, <span class="kw-2">&amp;</span>column2).context(ArrowComputeSnafu)<span class="question-mark">?</span>;
                 <span class="kw">let </span>result =
                     zip::zip(<span class="kw-2">&amp;</span>boolean_array, <span class="kw-2">&amp;</span>column1, <span class="kw-2">&amp;</span>column2).context(ArrowComputeSnafu)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Helper::try_into_vector(<span class="kw-2">&amp;</span>result).context(error::FromArrowArraySnafu)<span class="question-mark">?</span>)
@@ -257,7 +257,7 @@
                 <span class="kw">let </span>column1 = column1.as_primitive::&lt;Date32Type&gt;();
                 <span class="kw">let </span>column2 = columns[<span class="number">1</span>].to_arrow_array();
                 <span class="kw">let </span>column2 = column2.as_primitive::&lt;Date32Type&gt;();
-                <span class="kw">let </span>boolean_array = gt_dyn(<span class="kw-2">&amp;</span>column1, <span class="kw-2">&amp;</span>column2).context(ArrowComputeSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>boolean_array = gt(<span class="kw-2">&amp;</span>column1, <span class="kw-2">&amp;</span>column2).context(ArrowComputeSnafu)<span class="question-mark">?</span>;
                 <span class="kw">let </span>result =
                     zip::zip(<span class="kw-2">&amp;</span>boolean_array, <span class="kw-2">&amp;</span>column1, <span class="kw-2">&amp;</span>column2).context(ArrowComputeSnafu)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Helper::try_into_vector(<span class="kw-2">&amp;</span>result).context(error::FromArrowArraySnafu)<span class="question-mark">?</span>)

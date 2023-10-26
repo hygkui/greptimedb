@@ -1912,7 +1912,7 @@
 
 <span class="kw">impl </span>ColumnDataTypeWrapper {
     <span class="kw">pub fn </span>try_new(datatype: i32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>datatype = ColumnDataType::from_i32(datatype)
+        <span class="kw">let </span>datatype = ColumnDataType::try_from(datatype)
             .context(error::UnknownColumnDataTypeSnafu { datatype })<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(datatype))
     }
@@ -2567,7 +2567,7 @@
 
 <span class="doccomment">/// Returns true if the pb type value is valid.
 </span><span class="kw">pub fn </span>is_column_type_value_eq(type_value: i32, expect_type: <span class="kw-2">&amp;</span>ConcreteDataType) -&gt; bool {
-    <span class="kw">let </span><span class="prelude-val">Some</span>(column_type) = ColumnDataType::from_i32(type_value) <span class="kw">else </span>{
+    <span class="kw">let </span><span class="prelude-val">Ok</span>(column_type) = ColumnDataType::try_from(type_value) <span class="kw">else </span>{
         <span class="kw">return </span><span class="bool-val">false</span>;
     };
 

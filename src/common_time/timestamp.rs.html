@@ -1181,6 +1181,7 @@
 <a href="#1181" id="1181">1181</a>
 <a href="#1182" id="1182">1182</a>
 <a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1204,7 +1205,7 @@
 
 <span class="kw">use </span>arrow::datatypes::TimeUnit <span class="kw">as </span>ArrowTimeUnit;
 <span class="kw">use </span>chrono::{
-    DateTime, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, TimeZone <span class="kw">as </span>ChronoTimeZone, Utc,
+    DateTime, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, TimeZone <span class="kw">as </span>ChronoTimeZone,
 };
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -1246,7 +1247,7 @@
             TimeUnit::Second =&gt; now.timestamp(),
             TimeUnit::Millisecond =&gt; now.timestamp_millis(),
             TimeUnit::Microsecond =&gt; now.timestamp_micros(),
-            TimeUnit::Nanosecond =&gt; now.timestamp_nanos(),
+            TimeUnit::Nanosecond =&gt; now.timestamp_nanos_opt().unwrap_or_default(),
         };
         Timestamp { value, unit }
     }
@@ -1470,6 +1471,7 @@
     /// - `2022-09-20 14:16:43.012345Z` (Zulu timezone, without T)
     /// - `2022-09-20 14:16:43` (local timezone, without T)
     /// - `2022-09-20 14:16:43.012345` (local timezone, without T)
+    </span><span class="attr">#[allow(deprecated)]
     </span><span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
         <span class="comment">// RFC3339 timestamp (with a T)
         </span><span class="kw">let </span>s = s.trim();
@@ -1481,7 +1483,7 @@
             <span class="kw">return </span>Timestamp::from_chrono_datetime(ts.naive_utc())
                 .context(ParseTimestampSnafu { raw: s });
         }
-        <span class="kw">if let </span><span class="prelude-val">Ok</span>(ts) = Utc.datetime_from_str(s, <span class="string">&quot;%Y-%m-%d %H:%M:%S%.fZ&quot;</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>(ts) = chrono::Utc.datetime_from_str(s, <span class="string">&quot;%Y-%m-%d %H:%M:%S%.fZ&quot;</span>) {
             <span class="kw">return </span>Timestamp::from_chrono_datetime(ts.naive_utc())
                 .context(ParseTimestampSnafu { raw: s });
         }

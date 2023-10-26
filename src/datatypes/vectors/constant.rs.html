@@ -252,6 +252,7 @@
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -354,7 +355,8 @@
         <span class="kw">let </span>arr = indices.to_arrow_array();
         <span class="kw">let </span>indices_arr = arr.as_any().downcast_ref::&lt;UInt32Array&gt;().unwrap();
         <span class="kw">if </span>!arrow::compute::min_boolean(
-            <span class="kw-2">&amp;</span>arrow::compute::lt_scalar(indices_arr, len <span class="kw">as </span>u32).unwrap(),
+            <span class="kw-2">&amp;</span>arrow::compute::kernels::cmp::lt(indices_arr, <span class="kw-2">&amp;</span>UInt32Array::new_scalar(len <span class="kw">as </span>u32))
+                .unwrap(),
         )
         .unwrap()
         {

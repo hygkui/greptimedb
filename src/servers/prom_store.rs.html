@@ -782,6 +782,8 @@
 <a href="#782" id="782">782</a>
 <a href="#783" id="783">783</a>
 <a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -869,10 +871,12 @@
         }
 
         <span class="kw">let </span>value = <span class="kw-2">&amp;</span>m.value;
-        <span class="kw">let </span>m_type =
-            MatcherType::from_i32(m.r#type).context(error::InvalidPromRemoteRequestSnafu {
-                msg: <span class="macro">format!</span>(<span class="string">&quot;invalid LabelMatcher type: {}&quot;</span>, m.r#type),
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>m_type = MatcherType::try_from(m.r#type).map_err(|e| {
+            error::InvalidPromRemoteRequestSnafu {
+                msg: <span class="macro">format!</span>(<span class="string">&quot;invalid LabelMatcher type, decode error: {e}&quot;</span>,),
+            }
+            .build()
+        })<span class="question-mark">?</span>;
 
         <span class="kw">match </span>m_type {
             MatcherType::Eq =&gt; {

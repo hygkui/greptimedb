@@ -572,7 +572,7 @@
         .unwrap();
 
         <span class="kw">let </span>flight_data = batches_to_flight_data(
-            arrow_schema,
+            <span class="kw-2">&amp;</span>arrow_schema,
             <span class="macro">vec!</span>[
                 batch1.clone().into_df_record_batch(),
                 batch2.clone().into_df_record_batch(),

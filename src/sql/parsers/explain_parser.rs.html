@@ -98,6 +98,10 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -137,7 +141,9 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>sqlparser::ast::{Query <span class="kw">as </span>SpQuery, Statement <span class="kw">as </span>SpStatement, WildcardAdditionalOptions};
+    <span class="kw">use </span>sqlparser::ast::{
+        GroupByExpr, Query <span class="kw">as </span>SpQuery, Statement <span class="kw">as </span>SpStatement, WildcardAdditionalOptions,
+    };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::dialect::GreptimeDbDialect;
@@ -162,12 +168,14 @@
                     alias: <span class="prelude-val">None</span>,
                     args: <span class="prelude-val">None</span>,
                     with_hints: <span class="macro">vec!</span>[],
+                    partitions: <span class="macro">vec!</span>[],
+                    version: <span class="prelude-val">None</span>,
                 },
                 joins: <span class="macro">vec!</span>[],
             }],
             lateral_views: <span class="macro">vec!</span>[],
             selection: <span class="prelude-val">None</span>,
-            group_by: <span class="macro">vec!</span>[],
+            group_by: GroupByExpr::Expressions(<span class="macro">vec!</span>[]),
             cluster_by: <span class="macro">vec!</span>[],
             distribute_by: <span class="macro">vec!</span>[],
             sort_by: <span class="macro">vec!</span>[],

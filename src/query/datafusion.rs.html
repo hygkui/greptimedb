@@ -703,6 +703,27 @@
 <a href="#703" id="703">703</a>
 <a href="#704" id="704">704</a>
 <a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -741,6 +762,7 @@
 };
 <span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>datafusion::common::Column;
+<span class="kw">use </span>datafusion::physical_plan::analyze::AnalyzeExec;
 <span class="kw">use </span>datafusion::physical_plan::coalesce_partitions::CoalescePartitionsExec;
 <span class="kw">use </span>datafusion::physical_plan::ExecutionPlan;
 <span class="kw">use </span>datafusion::prelude::SessionContext;
@@ -791,12 +813,12 @@
 
         <span class="comment">// `create_physical_plan` will optimize logical plan internally
         </span><span class="kw">let </span>physical_plan = <span class="self">self</span>.create_physical_plan(<span class="kw-2">&amp;mut </span>ctx, <span class="kw-2">&amp;</span>plan).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>physical_plan = <span class="self">self</span>.optimize_physical_plan(<span class="kw-2">&amp;mut </span>ctx, physical_plan)<span class="question-mark">?</span>;
+        <span class="kw">let </span>optimized_physical_plan = <span class="self">self</span>.optimize_physical_plan(<span class="kw-2">&amp;mut </span>ctx, physical_plan)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>physical_plan = <span class="kw">if let </span><span class="prelude-val">Some</span>(wrapper) = <span class="self">self</span>.plugins.get::&lt;PhysicalPlanWrapperRef&gt;() {
-            wrapper.wrap(physical_plan, query_ctx)
+            wrapper.wrap(optimized_physical_plan, query_ctx)
         } <span class="kw">else </span>{
-            physical_plan
+            optimized_physical_plan
         };
 
         <span class="prelude-val">Ok</span>(Output::Stream(<span class="self">self</span>.execute_stream(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>physical_plan)<span class="question-mark">?</span>))
@@ -808,7 +830,7 @@
         query_ctx: QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="macro">ensure!</span>(
-            <span class="macro">matches!</span>(dml.op, WriteOp::Insert | WriteOp::Delete),
+            <span class="macro">matches!</span>(dml.op, WriteOp::InsertInto | WriteOp::Delete),
             UnsupportedExprSnafu {
                 name: <span class="macro">format!</span>(<span class="string">&quot;DML op {}&quot;</span>, dml.op),
             }
@@ -837,7 +859,7 @@
                 .context(QueryExecutionSnafu)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>rows = <span class="kw">match </span>dml.op {
-                WriteOp::Insert =&gt; {
+                WriteOp::InsertInto =&gt; {
                     <span class="self">self</span>.insert(<span class="kw-2">&amp;</span>table_name, column_vectors, query_ctx.clone())
                         .<span class="kw">await</span><span class="question-mark">?
                 </span>}
@@ -1050,7 +1072,9 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>PhysicalPlan&gt;&gt; {
         <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_OPTIMIZE_PHYSICAL_ELAPSED);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>new_plan = plan
+        <span class="kw">let </span>state = ctx.state();
+        <span class="kw">let </span>config = state.config_options();
+        <span class="kw">let </span>df_plan = plan
             .as_any()
             .downcast_ref::&lt;PhysicalPlanAdapter&gt;()
             .context(error::PhysicalPlanDowncastSnafu)
@@ -1058,14 +1082,32 @@
             .context(QueryExecutionSnafu)<span class="question-mark">?
             </span>.df_plan();
 
-        <span class="kw">let </span>state = ctx.state();
-        <span class="kw">let </span>config = state.config_options();
-        <span class="kw">for </span>optimizer <span class="kw">in </span>state.physical_optimizers() {
-            new_plan = optimizer
-                .optimize(new_plan, config)
-                .context(DataFusionSnafu)<span class="question-mark">?</span>;
-        }
-        <span class="prelude-val">Ok</span>(Arc::new(PhysicalPlanAdapter::new(plan.schema(), new_plan)))
+        <span class="comment">// skip optimize AnalyzeExec plan
+        </span><span class="kw">let </span>optimized_plan =
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(analyze_plan) = df_plan.as_any().downcast_ref::&lt;AnalyzeExec&gt;() {
+                <span class="kw">let </span><span class="kw-2">mut </span>new_plan = analyze_plan.input().clone();
+                <span class="kw">for </span>optimizer <span class="kw">in </span>state.physical_optimizers() {
+                    new_plan = optimizer
+                        .optimize(new_plan, config)
+                        .context(DataFusionSnafu)<span class="question-mark">?</span>;
+                }
+                Arc::new(analyze_plan.clone())
+                    .with_new_children(<span class="macro">vec!</span>[new_plan])
+                    .unwrap()
+            } <span class="kw">else </span>{
+                <span class="kw">let </span><span class="kw-2">mut </span>new_plan = df_plan;
+                <span class="kw">for </span>optimizer <span class="kw">in </span>state.physical_optimizers() {
+                    new_plan = optimizer
+                        .optimize(new_plan, config)
+                        .context(DataFusionSnafu)<span class="question-mark">?</span>;
+                }
+                new_plan
+            };
+
+        <span class="prelude-val">Ok</span>(Arc::new(PhysicalPlanAdapter::new(
+            plan.schema(),
+            optimized_plan,
+        )))
     }
 }
 
@@ -1339,7 +1381,7 @@
                 <span class="bool-val">true
             </span>)
         );
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Limit: skip=0, fetch=20\n  Aggregate: groupBy=[[]], aggr=[[SUM(numbers.number)]]\n    TableScan: numbers projection=[number]&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, logical_plan.display_indent()));
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;Limit: skip=0, fetch=20\n  Aggregate: groupBy=[[]], aggr=[[SUM(CAST(numbers.number AS UInt64))]]\n    TableScan: numbers projection=[number]&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, logical_plan.display_indent()));
     }
 
     <span class="attr">#[tokio::test]

@@ -201,7 +201,7 @@
                 .into_iter()
                 .map(|e| e.rewrite(<span class="kw-2">&amp;mut </span>converter))
                 .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
-            datafusion_expr::utils::from_plan(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>expr, <span class="kw-2">&amp;</span>inputs).map(Transformed::Yes)
+            plan.with_new_exprs(expr, <span class="kw-2">&amp;</span>inputs).map(Transformed::Yes)
         })
     }
 

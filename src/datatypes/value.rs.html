@@ -2290,6 +2290,7 @@
 <a href="#2290" id="2290">2290</a>
 <a href="#2291" id="2291">2291</a>
 <a href="#2292" id="2292">2292</a>
+<a href="#2293" id="2293">2293</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -3079,10 +3080,11 @@
                 .map(|x| Value::Duration(Duration::new(x, TimeUnit::Nanosecond)))
                 .unwrap_or(Value::Null),
             ScalarValue::Decimal128(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)
+            | ScalarValue::Decimal256(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)
             | ScalarValue::Struct(<span class="kw">_</span>, <span class="kw">_</span>)
             | ScalarValue::Dictionary(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
                 <span class="kw">return </span>error::UnsupportedArrowTypeSnafu {
-                    arrow_type: v.get_datatype(),
+                    arrow_type: v.data_type(),
                 }
                 .fail()
             }

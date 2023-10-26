@@ -574,6 +574,10 @@
 <a href="#574" id="574">574</a>
 <a href="#575" id="575">575</a>
 <a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -795,6 +799,7 @@
                 ConstantVector::new(Arc::new(IntervalMonthDayNanoVector::from(<span class="macro">vec!</span>[v])), length)
             }
             ScalarValue::Decimal128(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)
+            | ScalarValue::Decimal256(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)
             | ScalarValue::DurationSecond(<span class="kw">_</span>)
             | ScalarValue::DurationMillisecond(<span class="kw">_</span>)
             | ScalarValue::DurationMicrosecond(<span class="kw">_</span>)
@@ -921,7 +926,8 @@
     </span><span class="kw">pub fn </span>like_utf8(names: Vec&lt;String&gt;, s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;VectorRef&gt; {
         <span class="kw">let </span>array = StringArray::from(names);
 
-        <span class="kw">let </span>filter = comparison::like_utf8_scalar(<span class="kw-2">&amp;</span>array, s).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>s = StringArray::new_scalar(s);
+        <span class="kw">let </span>filter = comparison::like(<span class="kw-2">&amp;</span>array, <span class="kw-2">&amp;</span>s).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>result = compute::filter(<span class="kw-2">&amp;</span>array, <span class="kw-2">&amp;</span>filter).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
         Helper::try_into_vector(result)
@@ -929,7 +935,8 @@
 
     <span class="kw">pub fn </span>like_utf8_filter(names: Vec&lt;String&gt;, s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(VectorRef, BooleanVector)&gt; {
         <span class="kw">let </span>array = StringArray::from(names);
-        <span class="kw">let </span>filter = comparison::like_utf8_scalar(<span class="kw-2">&amp;</span>array, s).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>s = StringArray::new_scalar(s);
+        <span class="kw">let </span>filter = comparison::like(<span class="kw-2">&amp;</span>array, <span class="kw-2">&amp;</span>s).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>result = compute::filter(<span class="kw-2">&amp;</span>array, <span class="kw-2">&amp;</span>filter).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>vector = Helper::try_into_vector(result)<span class="question-mark">?</span>;
 
@@ -1057,7 +1064,8 @@
 
         <span class="kw">fn </span>assert_filter(array: Vec&lt;String&gt;, s: <span class="kw-2">&amp;</span>str, expected_filter: <span class="kw-2">&amp;</span>BooleanVector) {
             <span class="kw">let </span>array = StringArray::from(array);
-            <span class="kw">let </span>actual_filter = comparison::like_utf8_scalar(<span class="kw-2">&amp;</span>array, s).unwrap();
+            <span class="kw">let </span>s = StringArray::new_scalar(s);
+            <span class="kw">let </span>actual_filter = comparison::like(<span class="kw-2">&amp;</span>array, <span class="kw-2">&amp;</span>s).unwrap();
             <span class="macro">assert_eq!</span>(BooleanVector::from(actual_filter), <span class="kw-2">*</span>expected_filter);
         }
 

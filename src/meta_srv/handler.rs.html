@@ -751,7 +751,7 @@
         <span class="kw">let </span>role = req
             .header
             .as_ref()
-            .and_then(|h| Role::from_i32(h.role))
+            .and_then(|h| Role::try_from(h.role).ok())
             .context(error::InvalidArgumentsSnafu {
                 err_msg: <span class="macro">format!</span>(<span class="string">&quot;invalid role: {:?}&quot;</span>, req.header),
             })<span class="question-mark">?</span>;

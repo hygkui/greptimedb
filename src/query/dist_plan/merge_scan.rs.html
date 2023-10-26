@@ -373,7 +373,7 @@
     Count, ExecutionPlanMetricsSet, MetricBuilder, MetricsSet, Time,
 };
 <span class="kw">use </span>datafusion::physical_plan::{DisplayAs, DisplayFormatType, ExecutionPlan, Partitioning};
-<span class="kw">use </span>datafusion_common::{DataFusionError, <span class="prelude-ty">Result</span>, Statistics};
+<span class="kw">use </span>datafusion_common::{<span class="prelude-ty">Result</span>, Statistics};
 <span class="kw">use </span>datafusion_expr::{Extension, LogicalPlan, UserDefinedLogicalNodeCore};
 <span class="kw">use </span>datafusion_physical_expr::PhysicalSortExpr;
 <span class="kw">use </span>datatypes::schema::{Schema, SchemaRef};
@@ -604,13 +604,13 @@
         <span class="macro">vec!</span>[]
     }
 
-    <span class="kw">fn </span>with_new_children(
+    <span class="comment">// DataFusion will swap children unconditionally.
+    // But since this node is leaf node, it&#39;s safe to just return self.
+    </span><span class="kw">fn </span>with_new_children(
         <span class="self">self</span>: Arc&lt;<span class="self">Self</span>&gt;,
         _children: Vec&lt;Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt;&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ExecutionPlan&gt;&gt; {
-        <span class="prelude-val">Err</span>(DataFusionError::Execution(
-            <span class="string">&quot;should not call `with_new_children` on MergeScanExec&quot;</span>.to_string(),
-        ))
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.clone())
     }
 
     <span class="kw">fn </span>execute(

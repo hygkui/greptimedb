@@ -65,6 +65,11 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -95,7 +100,12 @@
 #[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
     <span class="attr">#[snafu(display(<span class="string">&quot;Unknown proto column datatype: {}&quot;</span>, datatype))]
-    </span>UnknownColumnDataType { datatype: i32, location: Location },
+    </span>UnknownColumnDataType {
+        datatype: i32,
+        location: Location,
+        <span class="attr">#[snafu(source)]
+        </span>error: prost::DecodeError,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create column datatype from {:?}&quot;</span>, from))]
     </span>IntoColumnDataType {

@@ -120,9 +120,9 @@
         schema: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Plan, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span>state_config = SessionConfig::new().with_default_catalog_and_schema(catalog, schema);
-        <span class="kw">let </span>state = SessionState::with_config_rt(state_config, Arc::new(RuntimeEnv::default()))
+        <span class="kw">let </span>state = SessionState::new_with_config_rt(state_config, Arc::new(RuntimeEnv::default()))
             .with_serializer_registry(Arc::new(ExtensionSerializer));
-        <span class="kw">let </span><span class="kw-2">mut </span>context = SessionContext::with_state(state);
+        <span class="kw">let </span><span class="kw-2">mut </span>context = SessionContext::new_with_state(state);
         context.register_catalog_list(catalog_list);
         <span class="kw">let </span>plan = Plan::decode(message).context(DecodeRelSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>df_plan = from_substrait_plan(<span class="kw-2">&amp;mut </span>context, <span class="kw-2">&amp;</span>plan)
@@ -134,9 +134,9 @@
     <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: <span class="kw-2">&amp;</span><span class="self">Self</span>::Plan) -&gt; <span class="prelude-ty">Result</span>&lt;Bytes, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>buf = BytesMut::new();
         <span class="kw">let </span>session_state =
-            SessionState::with_config_rt(SessionConfig::new(), Arc::new(RuntimeEnv::default()))
+            SessionState::new_with_config_rt(SessionConfig::new(), Arc::new(RuntimeEnv::default()))
                 .with_serializer_registry(Arc::new(ExtensionSerializer));
-        <span class="kw">let </span>context = SessionContext::with_state(session_state);
+        <span class="kw">let </span>context = SessionContext::new_with_state(session_state);
 
         <span class="kw">let </span>substrait_plan = to_substrait_plan(plan, <span class="kw-2">&amp;</span>context).context(EncodeDfPlanSnafu)<span class="question-mark">?</span>;
         substrait_plan.encode(<span class="kw-2">&amp;mut </span>buf).context(EncodeRelSnafu)<span class="question-mark">?</span>;

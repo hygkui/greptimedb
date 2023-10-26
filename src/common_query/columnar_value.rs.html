@@ -144,7 +144,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             ColumnarValue::Vector(vector) =&gt; vector.data_type(),
             ColumnarValue::Scalar(scalar_value) =&gt; {
-                ConcreteDataType::from_arrow_type(<span class="kw-2">&amp;</span>scalar_value.get_datatype())
+                ConcreteDataType::from_arrow_type(<span class="kw-2">&amp;</span>scalar_value.data_type())
             }
         }
     }

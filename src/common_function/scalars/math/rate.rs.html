@@ -104,6 +104,7 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -122,7 +123,8 @@
 
 <span class="kw">use </span>common_query::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>common_query::prelude::{Signature, Volatility};
-<span class="kw">use </span>datatypes::arrow::compute::kernels::{arithmetic, cast};
+<span class="kw">use </span>datafusion::arrow::compute::kernels::numeric;
+<span class="kw">use </span>datatypes::arrow::compute::kernels::cast;
 <span class="kw">use </span>datatypes::arrow::datatypes::DataType;
 <span class="kw">use </span>datatypes::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>datatypes::vectors::{Helper, VectorRef};
@@ -157,11 +159,11 @@
         <span class="kw">let </span>val = <span class="kw-2">&amp;</span>columns[<span class="number">0</span>].to_arrow_array();
         <span class="kw">let </span>val_0 = val.slice(<span class="number">0</span>, val.len() - <span class="number">1</span>);
         <span class="kw">let </span>val_1 = val.slice(<span class="number">1</span>, val.len() - <span class="number">1</span>);
-        <span class="kw">let </span>dv = arithmetic::subtract_dyn(<span class="kw-2">&amp;</span>val_1, <span class="kw-2">&amp;</span>val_0).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>dv = numeric::sub(<span class="kw-2">&amp;</span>val_1, <span class="kw-2">&amp;</span>val_0).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>ts = <span class="kw-2">&amp;</span>columns[<span class="number">1</span>].to_arrow_array();
         <span class="kw">let </span>ts_0 = ts.slice(<span class="number">0</span>, ts.len() - <span class="number">1</span>);
         <span class="kw">let </span>ts_1 = ts.slice(<span class="number">1</span>, ts.len() - <span class="number">1</span>);
-        <span class="kw">let </span>dt = arithmetic::subtract_dyn(<span class="kw-2">&amp;</span>ts_1, <span class="kw-2">&amp;</span>ts_0).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>dt = numeric::sub(<span class="kw-2">&amp;</span>ts_1, <span class="kw-2">&amp;</span>ts_0).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>dv = cast::cast(<span class="kw-2">&amp;</span>dv, <span class="kw-2">&amp;</span>DataType::Float64).context(error::TypeCastSnafu {
             typ: DataType::Float64,
@@ -169,7 +171,7 @@
         <span class="kw">let </span>dt = cast::cast(<span class="kw-2">&amp;</span>dt, <span class="kw-2">&amp;</span>DataType::Float64).context(error::TypeCastSnafu {
             typ: DataType::Float64,
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>rate = arithmetic::divide_dyn(<span class="kw-2">&amp;</span>dv, <span class="kw-2">&amp;</span>dt).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>rate = numeric::div(<span class="kw-2">&amp;</span>dv, <span class="kw-2">&amp;</span>dt).context(error::ArrowComputeSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>v = Helper::try_into_vector(<span class="kw-2">&amp;</span>rate).context(error::FromArrowArraySnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(v)

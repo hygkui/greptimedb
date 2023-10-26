@@ -300,12 +300,12 @@
             <span class="kw">let </span>record_batch = record_batch.context(DecodeArrowSnafu)<span class="question-mark">?</span>;
             <span class="kw">let </span>record_batch = RecordBatch::try_from_df_record_batch(schema.clone(), record_batch)
                 .context(CreateRecordBatchSnafu)<span class="question-mark">?</span>;
-            <span class="kw">let </span>op_type = <span class="kw">match </span>MutationType::from_i32(<span class="kw-2">*</span>mutation_type) {
-                <span class="prelude-val">Some</span>(MutationType::Delete) =&gt; OpType::Delete,
-                <span class="prelude-val">Some</span>(MutationType::Put) =&gt; OpType::Put,
-                <span class="prelude-val">None </span>=&gt; {
+            <span class="kw">let </span>op_type = <span class="kw">match </span>MutationType::try_from(<span class="kw-2">*</span>mutation_type) {
+                <span class="prelude-val">Ok</span>(MutationType::Delete) =&gt; OpType::Delete,
+                <span class="prelude-val">Ok</span>(MutationType::Put) =&gt; OpType::Put,
+                <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="kw">return </span>BatchCorruptedSnafu {
-                        message: <span class="macro">format!</span>(<span class="string">&quot;Unexpceted mutation type: {mutation_type}&quot;</span>),
+                        message: <span class="macro">format!</span>(<span class="string">&quot;Unexpceted decode error for mutation type: {e}&quot;</span>),
                     }
                     .fail()
                 }

@@ -437,7 +437,6 @@
 <a href="#437" id="437">437</a>
 <a href="#438" id="438">438</a>
 <a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -459,7 +458,6 @@
 <span class="kw">use </span>datafusion_common::config::ConfigOptions;
 <span class="kw">use </span>datafusion_common::tree_node::{RewriteRecursion, Transformed, TreeNode, TreeNodeRewriter};
 <span class="kw">use </span>datafusion_expr::expr::{Exists, InSubquery};
-<span class="kw">use </span>datafusion_expr::utils::from_plan;
 <span class="kw">use </span>datafusion_expr::{col, Expr, LogicalPlan, LogicalPlanBuilder, Subquery};
 <span class="kw">use </span>datafusion_optimizer::analyzer::AnalyzerRule;
 <span class="kw">use </span>substrait::{DFLogicalSubstraitConvertor, SubstraitPlan};
@@ -500,7 +498,7 @@
             .collect::&lt;DfResult&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
         <span class="kw">let </span>inputs = plan.inputs().into_iter().cloned().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="prelude-val">Ok</span>(Transformed::Yes(from_plan(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>exprs, <span class="kw-2">&amp;</span>inputs)<span class="question-mark">?</span>))
+        <span class="prelude-val">Ok</span>(Transformed::Yes(plan.with_new_exprs(exprs, <span class="kw-2">&amp;</span>inputs)<span class="question-mark">?</span>))
     }
 
     <span class="kw">fn </span>transform_subquery(expr: Expr) -&gt; DfResult&lt;Transformed&lt;Expr&gt;&gt; {

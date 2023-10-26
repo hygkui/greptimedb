@@ -114,8 +114,8 @@
         .iter()
         .enumerate()
         .filter_map(|(idx, val)| {
-            <span class="kw">if </span>val.get_datatype() != <span class="kw-2">*</span>ty {
-                <span class="prelude-val">Some</span>((idx, val.get_datatype()))
+            <span class="kw">if </span>val.data_type() != <span class="kw-2">*</span>ty {
+                <span class="prelude-val">Some</span>((idx, val.data_type()))
             } <span class="kw">else </span>{
                 <span class="prelude-val">None
             </span>}
@@ -149,7 +149,7 @@
                 <span class="kw">_ </span>=&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
                         <span class="string">&quot;Can&#39;t cast type {:#?} to {:#?}&quot;</span>,
-                        val.get_datatype(),
+                        val.data_type(),
                         ArrowDataType::Float64
                     ))
                 }
