@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["opener","options","version"],"struct":["MitoRegion","RegionMap"],"type":["MitoRegionRef","RegionMapRef"]};
+window.SIDEBAR_ITEMS = {"constant":["ESTIMATED_WAL_FACTOR"],"mod":["opener","options","version"],"struct":["MitoRegion","RegionMap"],"type":["MitoRegionRef","RegionMapRef"]};
