@@ -699,11 +699,6 @@
 <a href="#699" id="699">699</a>
 <a href="#700" id="700">700</a>
 <a href="#701" id="701">701</a>
-<a href="#702" id="702">702</a>
-<a href="#703" id="703">703</a>
-<a href="#704" id="704">704</a>
-<a href="#705" id="705">705</a>
-<a href="#706" id="706">706</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -731,8 +726,7 @@
 <span class="kw">use </span>common_meta::rpc::store::{
     BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
     BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
-    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
-    RangeRequest, RangeResponse,
+    DeleteRangeResponse, PutRequest, PutResponse, RangeRequest, RangeResponse,
 };
 <span class="kw">use </span>common_meta::rpc::KeyValue;
 <span class="kw">use </span>common_meta::util::get_next_prefix_key;
@@ -1047,10 +1041,6 @@
             .map_err(BoxedError::new)
             .context(meta_error::ExternalSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(BatchDeleteResponse { prev_kvs })
-    }
-
-    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, _req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse, <span class="self">Self</span>::Error&gt; {
-        <span class="macro">unimplemented!</span>()
     }
 
     <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;, <span class="self">Self</span>::Error&gt; {

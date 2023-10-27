@@ -393,53 +393,6 @@
 <a href="#393" id="393">393</a>
 <a href="#394" id="394">394</a>
 <a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -472,8 +425,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::rpc::store::{
     BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
     BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
-    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
-    RangeRequest, RangeResponse,
+    DeleteRangeResponse, PutRequest, PutResponse, RangeRequest, RangeResponse,
 };
 <span class="kw">use </span><span class="kw">crate</span>::rpc::KeyValue;
 
@@ -705,27 +657,6 @@
 
         <span class="prelude-val">Ok</span>(BatchDeleteResponse { prev_kvs })
     }
-
-    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>MoveValueRequest { from_key, to_key } = req;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>kvs = <span class="self">self</span>.kvs.write().unwrap();
-
-        <span class="kw">let </span>kv = <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = kvs.remove(<span class="kw-2">&amp;</span>from_key) {
-            kvs.insert(to_key, v.clone());
-            <span class="prelude-val">Some</span>(KeyValue {
-                key: from_key,
-                value: v,
-            })
-        } <span class="kw">else </span>{
-            kvs.get(<span class="kw-2">&amp;</span>to_key).map(|v| KeyValue {
-                key: to_key,
-                value: v.clone(),
-            })
-        };
-
-        <span class="prelude-val">Ok</span>(MoveValueResponse(kv))
-    }
 }
 
 <span class="attr">#[async_trait]
@@ -800,7 +731,6 @@
         prepare_kv, test_kv_batch_delete, test_kv_batch_get, test_kv_compare_and_put,
         test_kv_delete_range, test_kv_put, test_kv_range, test_kv_range_2,
     };
-    <span class="kw">use </span><span class="kw">crate</span>::kv_backend::KvBackend;
 
     <span class="kw">async fn </span>mock_mem_store_with_data() -&gt; MemoryKvBackend&lt;Error&gt; {
         <span class="kw">let </span>kv_store = MemoryKvBackend::&lt;Error&gt;::new();
@@ -849,30 +779,6 @@
         <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
 
         test_kv_delete_range(kv_store).<span class="kw">await</span>;
-    }
-
-    <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_move_value() {
-        <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
-
-        <span class="kw">let </span>req = MoveValueRequest {
-            from_key: <span class="string">b&quot;key1&quot;</span>.to_vec(),
-            to_key: <span class="string">b&quot;key111&quot;</span>.to_vec(),
-        };
-
-        <span class="kw">let </span>resp = kv_store.move_value(req).<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(<span class="string">b&quot;key1&quot;</span>, resp.<span class="number">0</span>.as_ref().unwrap().key());
-        <span class="macro">assert_eq!</span>(<span class="string">b&quot;val1&quot;</span>, resp.<span class="number">0</span>.as_ref().unwrap().value());
-
-        <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
-
-        <span class="kw">let </span>req = MoveValueRequest {
-            from_key: <span class="string">b&quot;notexistkey&quot;</span>.to_vec(),
-            to_key: <span class="string">b&quot;key222&quot;</span>.to_vec(),
-        };
-
-        <span class="kw">let </span>resp = kv_store.move_value(req).<span class="kw">await</span>.unwrap();
-        <span class="macro">assert!</span>(resp.<span class="number">0</span>.is_none());
     }
 
     <span class="attr">#[tokio::test]

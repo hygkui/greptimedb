@@ -308,29 +308,6 @@
 <a href="#308" id="308">308</a>
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -358,8 +335,7 @@
 <span class="kw">use </span>common_meta::rpc::store::{
     BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
     BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
-    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
-    RangeRequest, RangeResponse,
+    DeleteRangeResponse, PutRequest, PutResponse, RangeRequest, RangeResponse,
 };
 <span class="kw">use </span>common_meta::rpc::KeyValue;
 <span class="kw">use </span>common_telemetry::{debug, timer};
@@ -483,20 +459,6 @@
             }
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
         }
-    }
-
-    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse&gt; {
-        <span class="kw">let </span>from_key = <span class="kw-2">&amp;</span>req.from_key.clone();
-        <span class="kw">let </span>to_key = <span class="kw-2">&amp;</span>req.to_key.clone();
-
-        <span class="kw">let </span>ret = <span class="self">self</span>.kv_backend.move_value(req).<span class="kw">await</span>;
-
-        <span class="kw">if </span>ret.is_ok() {
-            <span class="self">self</span>.invalidate_key(from_key).<span class="kw">await</span>;
-            <span class="self">self</span>.invalidate_key(to_key).<span class="kw">await</span>;
-        }
-
-        ret
     }
 
     <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt; {
@@ -647,14 +609,6 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;CompareAndPutResponse&gt; {
         <span class="self">self</span>.client
             .compare_and_put(request)
-            .<span class="kw">await
-            </span>.map_err(BoxedError::new)
-            .context(ExternalSnafu)
-    }
-
-    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse&gt; {
-        <span class="self">self</span>.client
-            .move_value(req)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(ExternalSnafu)

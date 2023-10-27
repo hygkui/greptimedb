@@ -255,11 +255,6 @@
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
 <a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -428,8 +423,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::rpc::store::{
         BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse,
         BatchPutRequest, BatchPutResponse, CompareAndPutResponse, DeleteRangeRequest,
-        DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
-        RangeRequest, RangeResponse,
+        DeleteRangeResponse, PutRequest, PutResponse, RangeRequest, RangeResponse,
     };
 
     <span class="attr">#[tokio::test]
@@ -507,10 +501,6 @@
             }
 
             <span class="kw">async fn </span>batch_delete(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: BatchDeleteRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchDeleteResponse&gt; {
-                <span class="macro">unreachable!</span>()
-            }
-
-            <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse&gt; {
                 <span class="macro">unreachable!</span>()
             }
         }

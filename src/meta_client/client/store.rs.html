@@ -262,20 +262,6 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -297,8 +283,7 @@
 <span class="kw">use </span>api::v1::meta::{
     BatchDeleteRequest, BatchDeleteResponse, BatchGetRequest, BatchGetResponse, BatchPutRequest,
     BatchPutResponse, CompareAndPutRequest, CompareAndPutResponse, DeleteRangeRequest,
-    DeleteRangeResponse, MoveValueRequest, MoveValueResponse, PutRequest, PutResponse,
-    RangeRequest, RangeResponse, Role,
+    DeleteRangeResponse, PutRequest, PutResponse, RangeRequest, RangeResponse, Role,
 };
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -376,11 +361,6 @@
     <span class="kw">pub async fn </span>delete_range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: DeleteRangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;DeleteRangeResponse&gt; {
         <span class="kw">let </span>inner = <span class="self">self</span>.inner.read().<span class="kw">await</span>;
         inner.delete_range(req).<span class="kw">await
-    </span>}
-
-    <span class="kw">pub async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse&gt; {
-        <span class="kw">let </span>inner = <span class="self">self</span>.inner.read().<span class="kw">await</span>;
-        inner.move_value(req).<span class="kw">await
     </span>}
 }
 
@@ -475,14 +455,6 @@
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
         req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
         <span class="kw">let </span>res = client.delete_range(req).<span class="kw">await</span>.map_err(error::Error::from)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(res.into_inner())
-    }
-
-    <span class="kw">async fn </span>move_value(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: MoveValueRequest) -&gt; <span class="prelude-ty">Result</span>&lt;MoveValueResponse&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
-        <span class="kw">let </span>res = client.move_value(req).<span class="kw">await</span>.map_err(error::Error::from)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())
     }
