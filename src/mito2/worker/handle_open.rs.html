@@ -79,6 +79,11 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -125,12 +130,17 @@
         <span class="comment">// Check if this region is pending drop. And clean the entire dir if so.
         </span><span class="kw">if </span>!<span class="self">self</span>.dropping_regions.is_region_exists(region_id)
             &amp;&amp; <span class="self">self
-                </span>.object_store
+                </span>.object_store_manager
+                .default_object_store()
                 .is_exist(<span class="kw-2">&amp;</span>join_path(<span class="kw-2">&amp;</span>request.region_dir, DROPPING_MARKER_FILE))
                 .<span class="kw">await
                 </span>.context(OpenDalSnafu)<span class="question-mark">?
         </span>{
-            <span class="kw">let </span>result = remove_region_dir_once(<span class="kw-2">&amp;</span>request.region_dir, <span class="kw-2">&amp;</span><span class="self">self</span>.object_store).<span class="kw">await</span>;
+            <span class="kw">let </span>result = remove_region_dir_once(
+                <span class="kw-2">&amp;</span>request.region_dir,
+                <span class="self">self</span>.object_store_manager.default_object_store(),
+            )
+            .<span class="kw">await</span>;
             <span class="macro">info!</span>(<span class="string">&quot;Region {} is dropped, result: {:?}&quot;</span>, region_id, result);
             <span class="kw">return </span>RegionNotFoundSnafu { region_id }.fail();
         }
@@ -142,7 +152,7 @@
             region_id,
             <span class="kw-2">&amp;</span>request.region_dir,
             <span class="self">self</span>.memtable_builder.clone(),
-            <span class="self">self</span>.object_store.clone(),
+            <span class="self">self</span>.object_store_manager.default_object_store().clone(),
             <span class="self">self</span>.scheduler.clone(),
         )
         .options(request.options)

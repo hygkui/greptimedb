@@ -173,6 +173,8 @@
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -218,7 +220,9 @@
 
         <span class="comment">// write dropping marker
         </span><span class="kw">let </span>marker_path = join_path(region.access_layer.region_dir(), DROPPING_MARKER_FILE);
-        <span class="self">self</span>.object_store
+        region
+            .access_layer
+            .object_store()
             .write(<span class="kw-2">&amp;</span>marker_path, <span class="macro">vec!</span>[])
             .<span class="kw">await
             </span>.context(OpenDalSnafu)<span class="question-mark">?</span>;
@@ -243,7 +247,7 @@
 
         <span class="comment">// detach a background task to delete the region dir
         </span><span class="kw">let </span>region_dir = region.access_layer.region_dir().to_owned();
-        <span class="kw">let </span>object_store = <span class="self">self</span>.object_store.clone();
+        <span class="kw">let </span>object_store = region.access_layer.object_store().clone();
         <span class="kw">let </span>dropping_regions = <span class="self">self</span>.dropping_regions.clone();
         <span class="kw">let </span>listener = <span class="self">self</span>.listener.clone();
         common_runtime::spawn_bg(<span class="kw">async move </span>{

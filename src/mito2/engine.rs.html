@@ -302,7 +302,7 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
 <span class="kw">use </span>common_telemetry::timer;
-<span class="kw">use </span>object_store::ObjectStore;
+<span class="kw">use </span>object_store::manager::ObjectStoreManagerRef;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
@@ -328,12 +328,12 @@
     </span><span class="kw">pub fn </span>new&lt;S: LogStore&gt;(
         <span class="kw-2">mut </span>config: MitoConfig,
         log_store: Arc&lt;S&gt;,
-        object_store: ObjectStore,
+        object_store_manager: ObjectStoreManagerRef,
     ) -&gt; MitoEngine {
         config.sanitize();
 
         MitoEngine {
-            inner: Arc::new(EngineInner::new(config, log_store, object_store)),
+            inner: Arc::new(EngineInner::new(config, log_store, object_store_manager)),
         }
     }
 
@@ -364,10 +364,10 @@
     </span><span class="kw">fn </span>new&lt;S: LogStore&gt;(
         config: MitoConfig,
         log_store: Arc&lt;S&gt;,
-        object_store: ObjectStore,
+        object_store_manager: ObjectStoreManagerRef,
     ) -&gt; EngineInner {
         EngineInner {
-            workers: WorkerGroup::start(config, log_store, object_store),
+            workers: WorkerGroup::start(config, log_store, object_store_manager),
         }
     }
 
@@ -491,7 +491,7 @@
     </span><span class="kw">pub fn </span>new_for_test&lt;S: LogStore&gt;(
         <span class="kw-2">mut </span>config: MitoConfig,
         log_store: Arc&lt;S&gt;,
-        object_store: ObjectStore,
+        object_store_manager: ObjectStoreManagerRef,
         write_buffer_manager: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::flush::WriteBufferManagerRef&gt;,
         listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
     ) -&gt; MitoEngine {
@@ -502,7 +502,7 @@
                 workers: WorkerGroup::start_for_test(
                     config,
                     log_store,
-                    object_store,
+                    object_store_manager,
                     write_buffer_manager,
                     listener,
                 ),

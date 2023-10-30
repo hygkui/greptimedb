@@ -710,7 +710,7 @@
 <span class="kw">use </span>common_runtime::JoinHandle;
 <span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>futures::future::try_join_all;
-<span class="kw">use </span>object_store::ObjectStore;
+<span class="kw">use </span>object_store::manager::ObjectStoreManagerRef;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -789,7 +789,7 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start&lt;S: LogStore&gt;(
         config: MitoConfig,
         log_store: Arc&lt;S&gt;,
-        object_store: ObjectStore,
+        object_store_manager: ObjectStoreManagerRef,
     ) -&gt; WorkerGroup {
         <span class="macro">assert!</span>(config.num_workers.is_power_of_two());
         <span class="kw">let </span>config = Arc::new(config);
@@ -808,7 +808,7 @@
                     id: id <span class="kw">as </span>WorkerId,
                     config: config.clone(),
                     log_store: log_store.clone(),
-                    object_store: object_store.clone(),
+                    object_store_manager: object_store_manager.clone(),
                     write_buffer_manager: write_buffer_manager.clone(),
                     scheduler: scheduler.clone(),
                     listener: WorkerListener::default(),
@@ -883,7 +883,7 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>start_for_test&lt;S: LogStore&gt;(
         config: MitoConfig,
         log_store: Arc&lt;S&gt;,
-        object_store: ObjectStore,
+        object_store_manager: ObjectStoreManagerRef,
         write_buffer_manager: <span class="prelude-ty">Option</span>&lt;WriteBufferManagerRef&gt;,
         listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
     ) -&gt; WorkerGroup {
@@ -906,7 +906,7 @@
                     id: id <span class="kw">as </span>WorkerId,
                     config: config.clone(),
                     log_store: log_store.clone(),
-                    object_store: object_store.clone(),
+                    object_store_manager: object_store_manager.clone(),
                     write_buffer_manager: write_buffer_manager.clone(),
                     scheduler: scheduler.clone(),
                     listener: WorkerListener::new(listener.clone()),
@@ -933,7 +933,7 @@
     id: WorkerId,
     config: Arc&lt;MitoConfig&gt;,
     log_store: Arc&lt;S&gt;,
-    object_store: ObjectStore,
+    object_store_manager: ObjectStoreManagerRef,
     write_buffer_manager: WriteBufferManagerRef,
     scheduler: SchedulerRef,
     listener: WorkerListener,
@@ -955,7 +955,7 @@
             sender: sender.clone(),
             receiver,
             wal: Wal::new(<span class="self">self</span>.log_store),
-            object_store: <span class="self">self</span>.object_store,
+            object_store_manager: <span class="self">self</span>.object_store_manager.clone(),
             running: running.clone(),
             memtable_builder: Arc::new(TimeSeriesMemtableBuilder::new(<span class="prelude-val">Some</span>(
                 <span class="self">self</span>.write_buffer_manager.clone(),
@@ -1103,8 +1103,8 @@
     </span>receiver: Receiver&lt;WorkerRequest&gt;,
     <span class="doccomment">/// WAL of the engine.
     </span>wal: Wal&lt;S&gt;,
-    <span class="doccomment">/// Object store for manifest and SSTs.
-    </span>object_store: ObjectStore,
+    <span class="doccomment">/// Manages object stores for manifest and SSTs.
+    </span>object_store_manager: ObjectStoreManagerRef,
     <span class="doccomment">/// Whether the worker thread is still running.
     </span>running: Arc&lt;AtomicBool&gt;,
     <span class="doccomment">/// Memtable builder for each region.

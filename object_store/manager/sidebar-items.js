@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ObjectStoreManager"]};
+window.SIDEBAR_ITEMS = {"struct":["ObjectStoreManager"],"type":["ObjectStoreManagerRef"]};
