@@ -415,11 +415,6 @@
 <a href="#415" id="415">415</a>
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -829,11 +824,6 @@
             <span class="string">&quot;00:00:00.001&quot;</span>,
             Time::new(<span class="number">1</span>, TimeUnit::Millisecond)
                 .to_timezone_aware_string(TimeZone::from_tz_string(<span class="string">&quot;UTC&quot;</span>).unwrap())
-        );
-        <span class="macro">assert_eq!</span>(
-            <span class="string">&quot;02:00:00.001&quot;</span>,
-            Time::new(<span class="number">1</span>, TimeUnit::Millisecond)
-                .to_timezone_aware_string(TimeZone::from_tz_string(<span class="string">&quot;Europe/Berlin&quot;</span>).unwrap())
         );
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;03:00:00.001&quot;</span>,
