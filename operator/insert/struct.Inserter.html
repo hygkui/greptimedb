@@ -18,7 +18,7 @@
     statement_executor: &amp;<a class="struct" href="../statement/struct.StatementExecutor.html" title="struct operator::statement::StatementExecutor">StatementExecutor</a>
 ) -&gt; <a class="type" href="../error/type.Result.html" title="type operator::error::Result">Result</a>&lt;Output&gt;</h4></section><section id="method.handle_table_insert" class="method"><a class="src rightside" href="../../src/operator/insert.rs.html#112-132">source</a><h4 class="code-header">pub async fn <a href="#method.handle_table_insert" class="fn">handle_table_insert</a>(
     &amp;self,
-    request: <a class="struct" href="../../table/requests/struct.InsertRequest.html" title="struct table::requests::InsertRequest">TableInsertRequest</a>,
+    request: TableInsertRequest,
     ctx: QueryContextRef
 ) -&gt; <a class="type" href="../error/type.Result.html" title="type operator::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>&gt;</h4></section><section id="method.handle_statement_insert" class="method"><a class="src rightside" href="../../src/operator/insert.rs.html#134-146">source</a><h4 class="code-header">pub async fn <a href="#method.handle_statement_insert" class="fn">handle_statement_insert</a>(
     &amp;self,
@@ -41,10 +41,10 @@
     catalog: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
     schema: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
     table: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>
-) -&gt; <a class="type" href="../error/type.Result.html" title="type operator::error::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="type" href="../../table/table/type.TableRef.html" title="type table::table::TableRef">TableRef</a>&gt;&gt;</h4></section><section id="method.alter_table_on_demand" class="method"><a class="src rightside" href="../../src/operator/insert.rs.html#239-288">source</a><h4 class="code-header">async fn <a href="#method.alter_table_on_demand" class="fn">alter_table_on_demand</a>(
+) -&gt; <a class="type" href="../error/type.Result.html" title="type operator::error::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;TableRef&gt;&gt;</h4></section><section id="method.alter_table_on_demand" class="method"><a class="src rightside" href="../../src/operator/insert.rs.html#239-288">source</a><h4 class="code-header">async fn <a href="#method.alter_table_on_demand" class="fn">alter_table_on_demand</a>(
     &amp;self,
     req: &amp;RowInsertRequest,
-    table: <a class="type" href="../../table/table/type.TableRef.html" title="type table::table::TableRef">TableRef</a>,
+    table: TableRef,
     ctx: &amp;QueryContextRef,
     statement_executor: &amp;<a class="struct" href="../statement/struct.StatementExecutor.html" title="struct operator::statement::StatementExecutor">StatementExecutor</a>
 ) -&gt; <a class="type" href="../error/type.Result.html" title="type operator::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>&gt;</h4></section><section id="method.create_table" class="method"><a class="src rightside" href="../../src/operator/insert.rs.html#290-328">source</a><h4 class="code-header">async fn <a href="#method.create_table" class="fn">create_table</a>(

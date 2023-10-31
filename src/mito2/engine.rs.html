@@ -275,6 +275,20 @@
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -327,7 +341,7 @@
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
-<span class="kw">use </span>store_api::region_engine::RegionEngine;
+<span class="kw">use </span>store_api::region_engine::{RegionEngine, RegionRole};
 <span class="kw">use </span>store_api::region_request::RegionRequest;
 <span class="kw">use </span>store_api::storage::{RegionId, ScanRequest};
 
@@ -461,6 +475,16 @@
         region.set_writable(writable);
         <span class="prelude-val">Ok</span>(())
     }
+
+    <span class="kw">fn </span>role(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;RegionRole&gt; {
+        <span class="self">self</span>.workers.get_region(region_id).map(|region| {
+            <span class="kw">if </span>region.is_writable() {
+                RegionRole::Leader
+            } <span class="kw">else </span>{
+                RegionRole::Follower
+            }
+        })
+    }
 }
 
 <span class="attr">#[async_trait]
@@ -523,6 +547,10 @@
         <span class="self">self</span>.inner
             .set_writable(region_id, writable)
             .map_err(BoxedError::new)
+    }
+
+    <span class="kw">fn </span>role(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;RegionRole&gt; {
+        <span class="self">self</span>.inner.role(region_id)
     }
 }
 

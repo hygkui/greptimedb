@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RegionChange"],"struct":["DummyCatalogList","DummyCatalogProvider","DummySchemaProvider","DummyTableProvider","RegionServer","RegionServerInner"]};
+window.SIDEBAR_ITEMS = {"enum":["RegionChange"],"struct":["DummyCatalogList","DummyCatalogProvider","DummySchemaProvider","DummyTableProvider","RegionServer","RegionServerInner","RegionStat"]};
