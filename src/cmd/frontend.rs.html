@@ -446,6 +446,8 @@
 <a href="#446" id="446">446</a>
 <a href="#447" id="447">447</a>
 <a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -635,8 +637,9 @@
         <span class="prelude-val">Ok</span>(Options::Frontend(Box::new(opts)))
     }
 
-    <span class="kw">async fn </span>build(<span class="self">self</span>, opts: FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
-        <span class="kw">let </span>plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;</span>opts)
+    <span class="kw">async fn </span>build(<span class="self">self</span>, <span class="kw-2">mut </span>opts: FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
+        <span class="attr">#[allow(clippy::unnecessary_mut_passed)]
+        </span><span class="kw">let </span>plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;mut </span>opts)
             .<span class="kw">await
             </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
@@ -751,7 +754,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_try_from_start_command_to_anymap() {
-        <span class="kw">let </span>fe_opts = FrontendOptions {
+        <span class="kw">let </span><span class="kw-2">mut </span>fe_opts = FrontendOptions {
             http: HttpOptions {
                 disable_dashboard: <span class="bool-val">false</span>,
                 ..Default::default()
@@ -760,7 +763,8 @@
             ..Default::default()
         };
 
-        <span class="kw">let </span>plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;</span>fe_opts).<span class="kw">await</span>.unwrap();
+        <span class="attr">#[allow(clippy::unnecessary_mut_passed)]
+        </span><span class="kw">let </span>plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;mut </span>fe_opts).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>provider = plugins.get::&lt;UserProviderRef&gt;().unwrap();
         <span class="kw">let </span>result = provider
