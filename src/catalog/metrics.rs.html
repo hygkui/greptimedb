@@ -27,6 +27,12 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -41,19 +47,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>common_catalog::build_db_string;
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_DB_LABEL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;db&quot;</span>;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_DB_LABEL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;db&quot;</span>;
+<span class="kw">use </span>lazy_static::lazy_static;
+<span class="kw">use </span>prometheus::<span class="kw-2">*</span>;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_CATALOG_MANAGER_CATALOG_COUNT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;catalog.catalog_count&quot;</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_CATALOG_MANAGER_SCHEMA_COUNT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;catalog.schema_count&quot;</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_CATALOG_MANAGER_TABLE_COUNT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;catalog.table_count&quot;</span>;
-
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_CATALOG_KV_REMOTE_GET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;catalog.kv.get.remote&quot;</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_CATALOG_KV_GET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;catalog.kv.get&quot;</span>;
-
-<span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>db_label(catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String) {
-    (METRIC_DB_LABEL, build_db_string(catalog, schema))
+<span class="macro">lazy_static! </span>{
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_CATALOG_MANAGER_CATALOG_COUNT: IntGauge =
+        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;catalog_catalog_count&quot;</span>, <span class="string">&quot;catalog catalog count&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_CATALOG_MANAGER_SCHEMA_COUNT: IntGauge =
+        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;catalog_schema_count&quot;</span>, <span class="string">&quot;catalog schema count&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_CATALOG_MANAGER_TABLE_COUNT: IntGaugeVec = <span class="macro">register_int_gauge_vec!</span>(
+        <span class="string">&quot;catalog_table_count&quot;</span>,
+        <span class="string">&quot;catalog table count&quot;</span>,
+        <span class="kw-2">&amp;</span>[METRIC_DB_LABEL]
+    )
+    .unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_CATALOG_KV_REMOTE_GET: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;catalog_kv_get_remote&quot;</span>, <span class="string">&quot;catalog kv get remote&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_CATALOG_KV_GET: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;catalog_kv_get&quot;</span>, <span class="string">&quot;catalog kv get&quot;</span>).unwrap();
 }
 </code></pre></div></section></main></body></html>

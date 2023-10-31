@@ -67,6 +67,17 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -85,14 +96,25 @@
 
 <span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>error::UpdateJemallocMetricsSnafu;
-<span class="kw">use </span>metrics::gauge;
+<span class="kw">use </span>lazy_static::lazy_static;
 <span class="kw">use </span>once_cell::sync::Lazy;
+<span class="kw">use </span>prometheus::<span class="kw-2">*</span>;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>tikv_jemalloc_ctl::stats::{allocated_mib, resident_mib};
 <span class="kw">use </span>tikv_jemalloc_ctl::{epoch, epoch_mib, stats};
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_JEMALLOC_RESIDENT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;sys.jemalloc.resident&quot;</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_JEMALLOC_ALLOCATED: <span class="kw-2">&amp;</span>str = <span class="string">&quot;sys.jemalloc.allocated&quot;</span>;
+<span class="macro">lazy_static! </span>{
+    <span class="kw">pub static </span><span class="kw-2">ref </span>SYS_JEMALLOC_RESIDEN: IntGauge = <span class="macro">register_int_gauge!</span>(
+        <span class="string">&quot;sys_jemalloc_resident&quot;</span>,
+        <span class="string">&quot;Total number of bytes allocated by the application.&quot;
+    </span>)
+    .unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>SYS_JEMALLOC_ALLOCATED: IntGauge = <span class="macro">register_int_gauge!</span>(
+        <span class="string">&quot;sys_jemalloc_allocated&quot;</span>,
+        <span class="string">&quot;Total number of bytes in physically resident data pages mapped by the allocator.&quot;
+    </span>)
+    .unwrap();
+}
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">static </span>JEMALLOC_COLLECTOR: Lazy&lt;<span class="prelude-ty">Option</span>&lt;JemallocCollector&gt;&gt; = Lazy::new(|| {
     <span class="kw">let </span>collector = JemallocCollector::try_new()
@@ -131,8 +153,8 @@
         <span class="kw">let _ </span>= <span class="self">self</span>.epoch.advance().context(UpdateJemallocMetricsSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>allocated = <span class="self">self</span>.allocated.read().context(UpdateJemallocMetricsSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>resident = <span class="self">self</span>.resident.read().context(UpdateJemallocMetricsSnafu)<span class="question-mark">?</span>;
-        <span class="macro">gauge!</span>(METRIC_JEMALLOC_ALLOCATED, allocated <span class="kw">as </span>f64);
-        <span class="macro">gauge!</span>(METRIC_JEMALLOC_RESIDENT, resident <span class="kw">as </span>f64);
+        SYS_JEMALLOC_RESIDEN.set(allocated <span class="kw">as </span>i64);
+        SYS_JEMALLOC_ALLOCATED.set(resident <span class="kw">as </span>i64);
         <span class="prelude-val">Ok</span>(())
     }
 }

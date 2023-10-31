@@ -508,6 +508,7 @@
 <a href="#508" id="508">508</a>
 <a href="#509" id="509">509</a>
 <a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -534,10 +535,9 @@
 };
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply};
 <span class="kw">use </span>common_meta::sequence::Sequence;
-<span class="kw">use </span>common_telemetry::{debug, info, timer, warn};
+<span class="kw">use </span>common_telemetry::{debug, info, warn};
 <span class="kw">use </span>dashmap::DashMap;
 <span class="kw">use </span>futures::future::join_all;
-<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::mpsc::Sender;
 <span class="kw">use </span>tokio::sync::{oneshot, Notify, RwLock};
@@ -725,14 +725,14 @@
 
     <span class="kw">pub async fn </span>register(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw">impl </span>AsRef&lt;str&gt;, pusher: Pusher) {
         <span class="kw">let </span>key = key.as_ref();
-        <span class="macro">increment_gauge!</span>(METRIC_META_HEARTBEAT_CONNECTION_NUM, <span class="number">1.0</span>);
+        METRIC_META_HEARTBEAT_CONNECTION_NUM.inc();
         <span class="macro">info!</span>(<span class="string">&quot;Pusher register: {}&quot;</span>, key);
         <span class="kw">let _ </span>= <span class="self">self</span>.pushers.insert(key.to_string(), pusher).<span class="kw">await</span>;
     }
 
     <span class="kw">pub async fn </span>unregister(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw">impl </span>AsRef&lt;str&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Pusher&gt; {
         <span class="kw">let </span>key = key.as_ref();
-        <span class="macro">decrement_gauge!</span>(METRIC_META_HEARTBEAT_CONNECTION_NUM, <span class="number">1.0</span>);
+        METRIC_META_HEARTBEAT_CONNECTION_NUM.dec();
         <span class="macro">info!</span>(<span class="string">&quot;Pusher unregister: {}&quot;</span>, key);
         <span class="self">self</span>.pushers.remove(key).<span class="kw">await
     </span>}
@@ -762,7 +762,9 @@
             }
 
             <span class="kw">if </span>handler.is_acceptable(role) {
-                <span class="kw">let </span>_timer = <span class="macro">timer!</span>(METRIC_META_HANDLER_EXECUTE, <span class="kw-2">&amp;</span>[(<span class="string">&quot;name&quot;</span>, <span class="kw-2">*</span>name)]);
+                <span class="kw">let </span>_timer = METRIC_META_HANDLER_EXECUTE
+                    .with_label_values(<span class="kw-2">&amp;</span>[<span class="kw-2">*</span>name])
+                    .start_timer();
                 handler.handle(<span class="kw-2">&amp;</span>req, <span class="kw-2">&amp;mut </span>ctx, <span class="kw-2">&amp;mut </span>acc).<span class="kw">await</span><span class="question-mark">?</span>;
             }
         }

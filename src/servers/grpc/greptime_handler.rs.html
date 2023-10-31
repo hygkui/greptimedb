@@ -208,13 +208,6 @@
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -245,16 +238,12 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_runtime::Runtime;
 <span class="kw">use </span>common_telemetry::{logging, TRACE_ID};
-<span class="kw">use </span>metrics::{histogram, increment_counter};
 <span class="kw">use </span>session::context::{QueryContextBuilder, QueryContextRef};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Error::UnsupportedAuthScheme;
 <span class="kw">use </span><span class="kw">crate</span>::error::{AuthSnafu, InvalidQuerySnafu, JoinTaskSnafu, NotFoundAuthHeaderSnafu, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span><span class="kw">crate</span>::metrics::{
-    METRIC_AUTH_FAILURE, METRIC_CODE_LABEL, METRIC_DB_LABEL, METRIC_SERVER_GRPC_DB_REQUEST_TIMER,
-    METRIC_TYPE_LABEL,
-};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{METRIC_AUTH_FAILURE, METRIC_SERVER_GRPC_DB_REQUEST_TIMER};
 <span class="kw">use </span><span class="kw">crate</span>::query_handler::grpc::ServerGrpcQueryHandlerRef;
 
 <span class="attr">#[derive(Clone)]
@@ -353,10 +342,9 @@
     }
     .map(<span class="prelude-val">Some</span>)
     .map_err(|e| {
-        <span class="macro">increment_counter!</span>(
-            METRIC_AUTH_FAILURE,
-            <span class="kw-2">&amp;</span>[(METRIC_CODE_LABEL, <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.status_code()))]
-        );
+        METRIC_AUTH_FAILURE
+            .with_label_values(<span class="kw-2">&amp;</span>[e.status_code().as_ref()])
+            .inc();
         e
     })
 }
@@ -421,15 +409,13 @@
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>RequestTimer {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="macro">histogram!</span>(
-            METRIC_SERVER_GRPC_DB_REQUEST_TIMER,
-            <span class="self">self</span>.start.elapsed(),
-            <span class="kw-2">&amp;</span>[
-                (METRIC_DB_LABEL, std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.db)),
-                (METRIC_TYPE_LABEL, std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.request_type)),
-                (METRIC_CODE_LABEL, <span class="self">self</span>.status_code.to_string())
-            ]
-        );
+        METRIC_SERVER_GRPC_DB_REQUEST_TIMER
+            .with_label_values(<span class="kw-2">&amp;</span>[
+                <span class="self">self</span>.db.as_str(),
+                <span class="self">self</span>.request_type.as_str(),
+                <span class="self">self</span>.status_code.as_ref(),
+            ])
+            .observe(<span class="self">self</span>.start.elapsed().as_secs_f64());
     }
 }
 </code></pre></div></section></main></body></html>

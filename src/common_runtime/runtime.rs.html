@@ -307,7 +307,6 @@
 <span class="kw">use </span>std::thread;
 <span class="kw">use </span>std::time::Duration;
 
-<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>tokio::runtime::{Builder <span class="kw">as </span>RuntimeBuilder, Handle};
 <span class="kw">use </span>tokio::sync::oneshot;
@@ -461,29 +460,33 @@
 
 <span class="kw">fn </span>on_thread_start(thread_name: String) -&gt; <span class="kw">impl </span>Fn() + <span class="lifetime">&#39;static </span>{
     <span class="kw">move </span>|| {
-        <span class="kw">let </span>labels = [(THREAD_NAME_LABEL, thread_name.clone())];
-        <span class="macro">increment_gauge!</span>(METRIC_RUNTIME_THREADS_ALIVE, <span class="number">1.0</span>, <span class="kw-2">&amp;</span>labels);
+        METRIC_RUNTIME_THREADS_ALIVE
+            .with_label_values(<span class="kw-2">&amp;</span>[thread_name.as_str()])
+            .inc();
     }
 }
 
 <span class="kw">fn </span>on_thread_stop(thread_name: String) -&gt; <span class="kw">impl </span>Fn() + <span class="lifetime">&#39;static </span>{
     <span class="kw">move </span>|| {
-        <span class="kw">let </span>labels = [(THREAD_NAME_LABEL, thread_name.clone())];
-        <span class="macro">decrement_gauge!</span>(METRIC_RUNTIME_THREADS_ALIVE, <span class="number">1.0</span>, <span class="kw-2">&amp;</span>labels);
+        METRIC_RUNTIME_THREADS_ALIVE
+            .with_label_values(<span class="kw-2">&amp;</span>[thread_name.as_str()])
+            .dec();
     }
 }
 
 <span class="kw">fn </span>on_thread_park(thread_name: String) -&gt; <span class="kw">impl </span>Fn() + <span class="lifetime">&#39;static </span>{
     <span class="kw">move </span>|| {
-        <span class="kw">let </span>labels = [(THREAD_NAME_LABEL, thread_name.clone())];
-        <span class="macro">increment_gauge!</span>(METRIC_RUNTIME_THREADS_IDLE, <span class="number">1.0</span>, <span class="kw-2">&amp;</span>labels);
+        METRIC_RUNTIME_THREADS_IDLE
+            .with_label_values(<span class="kw-2">&amp;</span>[thread_name.as_str()])
+            .inc();
     }
 }
 
 <span class="kw">fn </span>on_thread_unpark(thread_name: String) -&gt; <span class="kw">impl </span>Fn() + <span class="lifetime">&#39;static </span>{
     <span class="kw">move </span>|| {
-        <span class="kw">let </span>labels = [(THREAD_NAME_LABEL, thread_name.clone())];
-        <span class="macro">decrement_gauge!</span>(METRIC_RUNTIME_THREADS_IDLE, <span class="number">1.0</span>, <span class="kw-2">&amp;</span>labels);
+        METRIC_RUNTIME_THREADS_IDLE
+            .with_label_values(<span class="kw-2">&amp;</span>[thread_name.as_str()])
+            .dec();
     }
 }
 
@@ -493,14 +496,13 @@
     <span class="kw">use </span>std::thread;
     <span class="kw">use </span>std::time::Duration;
 
-    <span class="kw">use </span>common_telemetry::metric;
+    <span class="kw">use </span>common_telemetry::dump_metrics;
     <span class="kw">use </span>tokio::sync::oneshot;
     <span class="kw">use </span>tokio_test::assert_ok;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>runtime() -&gt; Arc&lt;Runtime&gt; {
-        common_telemetry::init_default_metrics_recorder();
         <span class="kw">let </span>runtime = Builder::default()
             .worker_threads(<span class="number">2</span>)
             .thread_name(<span class="string">&quot;test_spawn_join&quot;</span>)
@@ -510,7 +512,6 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_metric() {
-        common_telemetry::init_default_metrics_recorder();
         <span class="kw">let </span>runtime = Builder::default()
             .worker_threads(<span class="number">5</span>)
             .thread_name(<span class="string">&quot;test_runtime_metric&quot;</span>)
@@ -525,8 +526,7 @@
 
         thread::sleep(Duration::from_millis(<span class="number">10</span>));
 
-        <span class="kw">let </span>handle = metric::try_handle().unwrap();
-        <span class="kw">let </span>metric_text = handle.render();
+        <span class="kw">let </span>metric_text = dump_metrics().unwrap();
 
         <span class="macro">assert!</span>(metric_text.contains(<span class="string">&quot;runtime_threads_idle{thread_name=\&quot;test_runtime_metric\&quot;}&quot;</span>));
         <span class="macro">assert!</span>(metric_text.contains(<span class="string">&quot;runtime_threads_alive{thread_name=\&quot;test_runtime_metric\&quot;}&quot;</span>));

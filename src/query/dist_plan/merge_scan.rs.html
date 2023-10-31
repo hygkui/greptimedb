@@ -507,7 +507,7 @@
         <span class="kw">let </span>trace_id = trace_id().unwrap_or_default();
 
         <span class="kw">let </span>stream = Box::pin(<span class="macro">stream!</span>({
-            <span class="macro">metrics::histogram!</span>(METRIC_MERGE_SCAN_REGIONS, regions.len() <span class="kw">as </span>f64);
+            METRIC_MERGE_SCAN_REGIONS.observe(regions.len() <span class="kw">as </span>f64);
             <span class="kw">let </span>_finish_timer = metric.finish_time().timer();
             <span class="kw">let </span><span class="kw-2">mut </span>ready_timer = metric.ready_time().timer();
             <span class="kw">let </span><span class="kw-2">mut </span>first_consume_timer = <span class="prelude-val">Some</span>(metric.first_consume_time().timer());
@@ -526,7 +526,7 @@
                     .do_get(request)
                     .<span class="kw">await
                     </span>.map_err(|e| {
-                        <span class="macro">metrics::increment_counter!</span>(METRIC_MERGE_SCAN_ERRORS_TOTAL);
+                        METRIC_MERGE_SCAN_ERRORS_TOTAL.inc();
                         BoxedError::new(e)
                     })
                     .context(ExternalSnafu)<span class="question-mark">?</span>;
@@ -552,7 +552,7 @@
                     <span class="comment">// reset poll timer
                     </span>poll_timer = Instant::now();
                 }
-                <span class="macro">metrics::histogram!</span>(METRIC_MERGE_SCAN_POLL_ELAPSED, poll_duration.as_secs_f64());
+                METRIC_MERGE_SCAN_POLL_ELAPSED.observe(poll_duration.as_secs_f64());
             }
         }));
 

@@ -24,6 +24,25 @@
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
 <a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -38,16 +57,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="doccomment">//! client metrics
-</span><span class="kw">pub const </span>METRIC_GRPC_CREATE_TABLE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.create_table&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_PROMQL_RANGE_QUERY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.promql.range_query&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_INSERT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.insert&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_DELETE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.delete&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_SQL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.sql&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_LOGICAL_PLAN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.logical_plan&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_ALTER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.alter&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_DROP_TABLE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.drop_table&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_TRUNCATE_TABLE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.truncate_table&quot;</span>;
-<span class="kw">pub const </span>METRIC_GRPC_DO_GET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.do_get&quot;</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_REGION_REQUEST_GRPC: <span class="kw-2">&amp;</span>str = <span class="string">&quot;grpc.region_request&quot;</span>;
+</span><span class="kw">use </span>lazy_static::lazy_static;
+<span class="kw">use </span>prometheus::<span class="kw-2">*</span>;
+
+<span class="macro">lazy_static! </span>{
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_CREATE_TABLE: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_create_table&quot;</span>, <span class="string">&quot;grpc create table&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_PROMQL_RANGE_QUERY: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_promql_range_query&quot;</span>, <span class="string">&quot;grpc promql range query&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_INSERT: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_insert&quot;</span>, <span class="string">&quot;grpc insert&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_DELETE: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_delete&quot;</span>, <span class="string">&quot;grpc delete&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_SQL: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_sql&quot;</span>, <span class="string">&quot;grpc sql&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_LOGICAL_PLAN: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_logical_plan&quot;</span>, <span class="string">&quot;grpc logical plan&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_ALTER: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_alter&quot;</span>, <span class="string">&quot;grpc alter&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_DROP_TABLE: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_drop_table&quot;</span>, <span class="string">&quot;grpc drop table&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_TRUNCATE_TABLE: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_truncate_table&quot;</span>, <span class="string">&quot;grpc truncate table&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_GRPC_DO_GET: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;grpc_do_get&quot;</span>, <span class="string">&quot;grpc do get&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_REGION_REQUEST_GRPC: HistogramVec = <span class="macro">register_histogram_vec!</span>(
+        <span class="string">&quot;grpc_region_request&quot;</span>,
+        <span class="string">&quot;grpc region request&quot;</span>,
+        <span class="kw-2">&amp;</span>[<span class="string">&quot;request_type&quot;</span>]
+    )
+    .unwrap();
+}
 </code></pre></div></section></main></body></html>

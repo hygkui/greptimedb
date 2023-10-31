@@ -363,10 +363,6 @@
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -386,8 +382,8 @@
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::{Arc, RwLock, Weak};
 
+<span class="kw">use </span>common_catalog::build_db_string;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME};
-<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::OptionExt;
 <span class="kw">use </span>table::TableRef;
 
@@ -535,7 +531,7 @@
                 <span class="kw">let </span>arc_self = Arc::new(<span class="self">self</span>.clone());
                 <span class="kw">let </span>catalog = arc_self.create_catalog_entry(name);
                 e.insert(catalog);
-                <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT, <span class="number">1.0</span>);
+                <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_CATALOG_COUNT.inc();
                 <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
             }
             Entry::Occupied(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
@@ -556,11 +552,9 @@
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>result = schema.remove(<span class="kw-2">&amp;</span>request.table_name);
         <span class="kw">if </span>result.is_some() {
-            <span class="macro">decrement_gauge!</span>(
-                <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
-                <span class="number">1.0</span>,
-                <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema)],
-            );
+            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT
+                .with_label_values(<span class="kw-2">&amp;</span>[build_db_string(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema).as_str()])
+                .dec();
         }
         <span class="prelude-val">Ok</span>(())
     }
@@ -579,7 +573,7 @@
         <span class="kw">match </span>catalog.entry(request.schema) {
             Entry::Vacant(e) =&gt; {
                 e.insert(HashMap::new());
-                <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT, <span class="number">1.0</span>);
+                <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_SCHEMA_COUNT.inc();
                 <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
             }
             Entry::Occupied(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
@@ -607,11 +601,9 @@
             .fail();
         }
         schema.insert(request.table_name, request.table);
-        <span class="macro">increment_gauge!</span>(
-            <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT,
-            <span class="number">1.0</span>,
-            <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::db_label(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema)],
-        );
+        <span class="kw">crate</span>::metrics::METRIC_CATALOG_MANAGER_TABLE_COUNT
+            .with_label_values(<span class="kw-2">&amp;</span>[build_db_string(<span class="kw-2">&amp;</span>request.catalog, <span class="kw-2">&amp;</span>request.schema).as_str()])
+            .inc();
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
 

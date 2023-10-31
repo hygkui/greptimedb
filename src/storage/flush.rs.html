@@ -512,8 +512,7 @@
 <span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>common_telemetry::{logging, timer};
-<span class="kw">use </span>metrics::counter;
+<span class="kw">use </span>common_telemetry::logging;
 <span class="kw">pub use </span>picker::{FlushPicker, PickerConfig};
 <span class="kw">pub use </span>scheduler::{
     FlushHandle, FlushRegionRequest, FlushRequest, FlushScheduler, FlushSchedulerRef,
@@ -731,7 +730,7 @@
 <span class="kw">impl</span>&lt;S: LogStore&gt; FlushJob&lt;S&gt; {
     <span class="doccomment">/// Execute the flush job.
     </span><span class="kw">async fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(FLUSH_ELAPSED);
+        <span class="kw">let </span>_timer = FLUSH_ELAPSED.start_timer();
 
         <span class="kw">let </span>file_metas = <span class="self">self</span>.write_memtables_to_layer().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">if </span>file_metas.is_empty() {
@@ -793,7 +792,8 @@
             .collect();
 
         <span class="kw">let </span>flush_bytes = metas.iter().map(|f| f.file_size).sum();
-        <span class="macro">counter!</span>(FLUSH_BYTES_TOTAL, flush_bytes);
+
+        FLUSH_BYTES_TOTAL.inc_by(flush_bytes);
 
         <span class="kw">let </span>file_ids = metas.iter().map(|f| f.file_id).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="macro">logging::info!</span>(<span class="string">&quot;Successfully flush memtables, region:{region_id}, files: {file_ids:?}&quot;</span>);

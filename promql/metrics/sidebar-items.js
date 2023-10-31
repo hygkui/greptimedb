@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"static":["PROMQL_SERIES_COUNT"]};
+window.SIDEBAR_ITEMS = {"struct":["PROMQL_SERIES_COUNT"]};

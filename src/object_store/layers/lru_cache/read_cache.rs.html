@@ -288,6 +288,12 @@
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -305,7 +311,6 @@
 
 <span class="kw">use </span>common_telemetry::logging::debug;
 <span class="kw">use </span>futures::FutureExt;
-<span class="kw">use </span>metrics::{decrement_gauge, increment_counter, increment_gauge};
 <span class="kw">use </span>moka::future::Cache;
 <span class="kw">use </span>moka::notification::ListenerFuture;
 <span class="kw">use </span>opendal::raw::oio::{Page, Read, ReadExt, Reader, WriteExt};
@@ -366,12 +371,12 @@
         <span class="kw">let </span>eviction_listener =
             <span class="kw">move </span>|read_key: Arc&lt;String&gt;, read_result: ReadResult, cause| -&gt; ListenerFuture {
                 <span class="comment">// Delete the file from local file cache when it&#39;s purged from mem_cache.
-                </span><span class="macro">decrement_gauge!</span>(OBJECT_STORE_LRU_CACHE_ENTRIES, <span class="number">1.0</span>);
+                </span>OBJECT_STORE_LRU_CACHE_ENTRIES.dec();
                 <span class="kw">let </span>file_cache_cloned = file_cache_cloned.clone();
 
                 <span class="kw">async move </span>{
                     <span class="kw">if let </span>ReadResult::Success(size) = read_result {
-                        <span class="macro">decrement_gauge!</span>(OBJECT_STORE_LRU_CACHE_BYTES, size <span class="kw">as </span>f64);
+                        OBJECT_STORE_LRU_CACHE_BYTES.sub(size <span class="kw">as </span>i64);
 
                         <span class="kw">let </span>result = file_cache_cloned.delete(<span class="kw-2">&amp;</span>read_key, OpDelete::new()).<span class="kw">await</span>;
                         <span class="macro">debug!</span>(
@@ -437,8 +442,8 @@
                     stat.into_metadata().content_length()
                 };
 
-                <span class="macro">increment_gauge!</span>(OBJECT_STORE_LRU_CACHE_ENTRIES, <span class="number">1.0</span>);
-                <span class="macro">increment_gauge!</span>(OBJECT_STORE_LRU_CACHE_BYTES, size <span class="kw">as </span>f64);
+                OBJECT_STORE_LRU_CACHE_ENTRIES.inc();
+                OBJECT_STORE_LRU_CACHE_BYTES.add(size <span class="kw">as </span>i64);
                 <span class="self">self</span>.mem_cache
                     .insert(read_key.to_string(), ReadResult::Success(size <span class="kw">as </span>u32))
                     .<span class="kw">await</span>;
@@ -490,17 +495,21 @@
                 // while reading, we have to fallback to remote read
                 </span><span class="kw">match </span><span class="self">self</span>.file_cache.read(<span class="kw-2">&amp;</span>read_key, OpRead::default()).<span class="kw">await </span>{
                     <span class="prelude-val">Ok</span>(ret) =&gt; {
-                        <span class="macro">increment_counter!</span>(OBJECT_STORE_LRU_CACHE_HIT, <span class="string">&quot;result&quot; </span>=&gt; <span class="string">&quot;success&quot;</span>);
+                        OBJECT_STORE_LRU_CACHE_HIT
+                            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;success&quot;</span>])
+                            .inc();
                         <span class="prelude-val">Ok</span>(to_output_reader(ret))
                     }
                     <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-                        <span class="macro">increment_counter!</span>(OBJECT_STORE_LRU_CACHE_MISS);
+                        OBJECT_STORE_LRU_CACHE_MISS.inc();
                         inner.read(path, args).<span class="kw">await</span>.map(to_output_reader)
                     }
                 }
             }
             ReadResult::NotFound =&gt; {
-                <span class="macro">increment_counter!</span>(OBJECT_STORE_LRU_CACHE_HIT, <span class="string">&quot;result&quot; </span>=&gt; <span class="string">&quot;not_found&quot;</span>);
+                OBJECT_STORE_LRU_CACHE_HIT
+                    .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;not_found&quot;</span>])
+                    .inc();
 
                 <span class="prelude-val">Err</span>(OpendalError::new(
                     ErrorKind::NotFound,
@@ -521,7 +530,7 @@
     <span class="kw">where
         </span>I: Accessor,
     {
-        <span class="macro">increment_counter!</span>(OBJECT_STORE_LRU_CACHE_MISS);
+        OBJECT_STORE_LRU_CACHE_MISS.inc();
 
         <span class="kw">let </span>inner_result = inner.read(path, args).<span class="kw">await</span>;
 
@@ -537,22 +546,25 @@
                 </span>writer.close().<span class="kw">await</span><span class="question-mark">?</span>;
 
                 <span class="kw">let </span>read_bytes = rp.metadata().content_length() <span class="kw">as </span>u32;
-                <span class="macro">increment_gauge!</span>(OBJECT_STORE_LRU_CACHE_ENTRIES, <span class="number">1.0</span>);
-                <span class="macro">increment_gauge!</span>(OBJECT_STORE_LRU_CACHE_BYTES, read_bytes <span class="kw">as </span>f64);
+                OBJECT_STORE_LRU_CACHE_ENTRIES.inc();
+                OBJECT_STORE_LRU_CACHE_BYTES.add(read_bytes <span class="kw">as </span>i64);
 
                 <span class="prelude-val">Ok</span>(ReadResult::Success(read_bytes))
             }
 
             <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == ErrorKind::NotFound =&gt; {
-                <span class="macro">increment_counter!</span>(OBJECT_STORE_READ_ERROR, <span class="string">&quot;kind&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.kind()));
-                <span class="macro">increment_gauge!</span>(OBJECT_STORE_LRU_CACHE_ENTRIES, <span class="number">1.0</span>);
+                OBJECT_STORE_READ_ERROR
+                    .with_label_values(<span class="kw-2">&amp;</span>[e.kind().to_string().as_str()])
+                    .inc();
+                OBJECT_STORE_LRU_CACHE_ENTRIES.inc();
 
                 <span class="prelude-val">Ok</span>(ReadResult::NotFound)
             }
 
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">increment_counter!</span>(OBJECT_STORE_READ_ERROR, <span class="string">&quot;kind&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.kind()));
-
+                OBJECT_STORE_READ_ERROR
+                    .with_label_values(<span class="kw-2">&amp;</span>[e.kind().to_string().as_str()])
+                    .inc();
                 <span class="prelude-val">Err</span>(e)
             }
         }

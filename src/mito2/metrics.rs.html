@@ -58,6 +58,54 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -72,50 +120,98 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="doccomment">/// Stage label.
-</span><span class="kw">pub const </span>STAGE_LABEL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;stage&quot;</span>;
+</span><span class="kw">use </span>lazy_static::lazy_static;
+<span class="kw">use </span>prometheus::<span class="kw-2">*</span>;
 
-<span class="doccomment">/// Global write buffer size in bytes.
-</span><span class="kw">pub const </span>WRITE_BUFFER_BYTES: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.write_buffer_bytes&quot;</span>;
+<span class="doccomment">/// Stage label.
+</span><span class="kw">pub const </span>STAGE_LABEL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;stage&quot;</span>;
 <span class="doccomment">/// Type label.
 </span><span class="kw">pub const </span>TYPE_LABEL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;type&quot;</span>;
-<span class="doccomment">/// Gauge for open regions
-</span><span class="kw">pub const </span>REGION_COUNT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.region_count&quot;</span>;
-<span class="doccomment">/// Elapsed time to handle requests.
-</span><span class="kw">pub const </span>HANDLE_REQUEST_ELAPSED: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.handle_request.elapsed&quot;</span>;
-
-<span class="comment">// ------ Flush related metrics
-</span><span class="doccomment">/// Counter of scheduled flush requests.
-/// Note that the flush scheduler may merge some flush requests.
-</span><span class="kw">pub const </span>FLUSH_REQUESTS_TOTAL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.flush.requests_total&quot;</span>;
 <span class="doccomment">/// Reason to flush.
 </span><span class="kw">pub const </span>FLUSH_REASON: <span class="kw-2">&amp;</span>str = <span class="string">&quot;reason&quot;</span>;
-<span class="doccomment">/// Counter of scheduled failed flush jobs.
-</span><span class="kw">pub const </span>FLUSH_ERRORS_TOTAL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.flush.errors_total&quot;</span>;
-<span class="doccomment">/// Elapsed time of a flush job.
-</span><span class="kw">pub const </span>FLUSH_ELAPSED: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.flush.elapsed&quot;</span>;
-<span class="doccomment">/// Histogram of flushed bytes.
-</span><span class="kw">pub const </span>FLUSH_BYTES_TOTAL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.flush.bytes_total&quot;</span>;
-<span class="comment">// ------ End of flush related metrics
 
-// ------ Write related metrics
-</span><span class="doccomment">/// Counter of stalled write requests.
-</span><span class="kw">pub const </span>WRITE_STALL_TOTAL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.write.stall_total&quot;</span>;
-<span class="doccomment">/// Counter of rejected write requests.
-</span><span class="kw">pub const </span>WRITE_REJECT_TOTAL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.write.reject_total&quot;</span>;
-<span class="doccomment">/// Elapsed time of each write stage.
-</span><span class="kw">pub const </span>WRITE_STAGE_ELAPSED: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.write.stage_elapsed&quot;</span>;
-<span class="doccomment">/// Counter of rows to write.
-</span><span class="kw">pub const </span>WRITE_ROWS_TOTAL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.write.rows_total&quot;</span>;
-<span class="comment">// ------ End of write related metrics
+<span class="macro">lazy_static! </span>{
+    <span class="doccomment">/// Global write buffer size in bytes.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>WRITE_BUFFER_BYTES: IntGauge =
+        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;mito_write_buffer_bytes&quot;</span>, <span class="string">&quot;mito write buffer bytes&quot;</span>).unwrap();
+    <span class="doccomment">/// Gauge for open regions
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>REGION_COUNT: IntGauge =
+        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;mito_region_count&quot;</span>, <span class="string">&quot;mito region count&quot;</span>).unwrap();
+    <span class="doccomment">/// Elapsed time to handle requests.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>HANDLE_REQUEST_ELAPSED: HistogramVec = <span class="macro">register_histogram_vec!</span>(
+            <span class="string">&quot;mito_handle_request_elapsed&quot;</span>,
+            <span class="string">&quot;mito handle request elapsed&quot;</span>,
+            <span class="kw-2">&amp;</span>[TYPE_LABEL]
+        )
+        .unwrap();
 
-// Compaction metrics
-</span><span class="doccomment">/// Timer of different stages in compaction.
-</span><span class="kw">pub const </span>COMPACTION_STAGE_ELAPSED: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.compaction.stage_elapsed&quot;</span>;
-<span class="doccomment">/// Timer of whole compaction task.
-</span><span class="kw">pub const </span>COMPACTION_ELAPSED_TOTAL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.compaction.total_elapsed&quot;</span>;
-<span class="doccomment">/// Counter of all requested compaction task.
-</span><span class="kw">pub const </span>COMPACTION_REQUEST_COUNT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.compaction.requests_total&quot;</span>;
-<span class="doccomment">/// Counter of failed compaction task.
-</span><span class="kw">pub const </span>COMPACTION_FAILURE_COUNT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito.compaction.failure_total&quot;</span>;
+
+
+    <span class="comment">// ------ Flush related metrics
+    </span><span class="doccomment">/// Counter of scheduled flush requests.
+    /// Note that the flush scheduler may merge some flush requests.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>FLUSH_REQUESTS_TOTAL: IntCounterVec = <span class="macro">register_int_counter_vec!</span>(
+            <span class="string">&quot;mito_flush_requests_total&quot;</span>,
+            <span class="string">&quot;mito flush requests total&quot;</span>,
+            <span class="kw-2">&amp;</span>[FLUSH_REASON]
+        )
+        .unwrap();
+    <span class="doccomment">/// Counter of scheduled failed flush jobs.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>FLUSH_ERRORS_TOTAL: IntCounter =
+        <span class="macro">register_int_counter!</span>(<span class="string">&quot;mito_flush_errors_total&quot;</span>, <span class="string">&quot;mito flush errors total&quot;</span>).unwrap();
+    <span class="doccomment">/// Elapsed time of a flush job.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>FLUSH_ELAPSED: HistogramVec = <span class="macro">register_histogram_vec!</span>(
+            <span class="string">&quot;mito_flush_elapsed&quot;</span>,
+            <span class="string">&quot;mito flush elapsed&quot;</span>,
+            <span class="kw-2">&amp;</span>[TYPE_LABEL]
+        )
+        .unwrap();
+    <span class="doccomment">/// Histogram of flushed bytes.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>FLUSH_BYTES_TOTAL: IntCounter =
+        <span class="macro">register_int_counter!</span>(<span class="string">&quot;mito_flush_bytes_total&quot;</span>, <span class="string">&quot;mito flush bytes total&quot;</span>).unwrap();
+    <span class="comment">// ------ End of flush related metrics
+
+
+    // ------ Write related metrics
+    </span><span class="doccomment">/// Counter of stalled write requests.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>WRITE_STALL_TOTAL: IntCounter =
+        <span class="macro">register_int_counter!</span>(<span class="string">&quot;mito_write_stall_total&quot;</span>, <span class="string">&quot;mito write stall total&quot;</span>).unwrap();
+    <span class="doccomment">/// Counter of rejected write requests.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>WRITE_REJECT_TOTAL: IntCounter =
+        <span class="macro">register_int_counter!</span>(<span class="string">&quot;mito_write_reject_total&quot;</span>, <span class="string">&quot;mito write reject total&quot;</span>).unwrap();
+    <span class="doccomment">/// Elapsed time of each write stage.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>WRITE_STAGE_ELAPSED: HistogramVec = <span class="macro">register_histogram_vec!</span>(
+            <span class="string">&quot;mito_write_stage_elapsed&quot;</span>,
+            <span class="string">&quot;mito write stage elapsed&quot;</span>,
+            <span class="kw-2">&amp;</span>[STAGE_LABEL]
+        )
+        .unwrap();
+    <span class="doccomment">/// Counter of rows to write.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>WRITE_ROWS_TOTAL: IntCounterVec = <span class="macro">register_int_counter_vec!</span>(
+        <span class="string">&quot;mito_write_rows_total&quot;</span>,
+        <span class="string">&quot;mito write rows total&quot;</span>,
+        <span class="kw-2">&amp;</span>[TYPE_LABEL]
+    )
+    .unwrap();
+    <span class="comment">// ------ End of write related metrics
+
+
+    // Compaction metrics
+    </span><span class="doccomment">/// Timer of different stages in compaction.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>COMPACTION_STAGE_ELAPSED: HistogramVec = <span class="macro">register_histogram_vec!</span>(
+        <span class="string">&quot;mito_compaction_stage_elapsed&quot;</span>,
+        <span class="string">&quot;mito compaction stage elapsed&quot;</span>,
+        <span class="kw-2">&amp;</span>[STAGE_LABEL]
+    )
+    .unwrap();
+    <span class="doccomment">/// Timer of whole compaction task.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>COMPACTION_ELAPSED_TOTAL: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;mito_compaction_total_elapsed&quot;</span>, <span class="string">&quot;mito compaction total elapsed&quot;</span>).unwrap();
+    <span class="doccomment">/// Counter of all requested compaction task.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>COMPACTION_REQUEST_COUNT: IntCounter =
+        <span class="macro">register_int_counter!</span>(<span class="string">&quot;mito_compaction_requests_total&quot;</span>, <span class="string">&quot;mito compaction requests total&quot;</span>).unwrap();
+    <span class="doccomment">/// Counter of failed compaction task.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>COMPACTION_FAILURE_COUNT: IntCounter =
+        <span class="macro">register_int_counter!</span>(<span class="string">&quot;mito_compaction_failure_total&quot;</span>, <span class="string">&quot;mito compaction failure total&quot;</span>).unwrap();
+}
 </code></pre></div></section></main></body></html>

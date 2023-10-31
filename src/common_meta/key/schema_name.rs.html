@@ -232,8 +232,6 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -254,11 +252,9 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
-<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>futures::stream::BoxStream;
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>humantime_serde::re::humantime;
-<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
@@ -382,7 +378,7 @@
         value: <span class="prelude-ty">Option</span>&lt;SchemaNameValue&gt;,
         if_not_exists: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::METRIC_META_CREATE_SCHEMA);
+        <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::METRIC_META_CREATE_SCHEMA.start_timer();
 
         <span class="kw">let </span>raw_key = schema.as_raw_key();
         <span class="kw">let </span>raw_value = value.unwrap_or_default().try_as_raw_value()<span class="question-mark">?</span>;
@@ -391,7 +387,7 @@
             .put_conditionally(raw_key, raw_value, if_not_exists)
             .<span class="kw">await</span><span class="question-mark">?
         </span>{
-            <span class="macro">increment_counter!</span>(<span class="kw">crate</span>::metrics::METRIC_META_CREATE_SCHEMA);
+            <span class="kw">crate</span>::metrics::METRIC_META_CREATE_SCHEMA_COUNTER.inc();
         }
 
         <span class="prelude-val">Ok</span>(())

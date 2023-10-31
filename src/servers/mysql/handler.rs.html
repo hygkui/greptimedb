@@ -461,20 +461,6 @@
 <a href="#461" id="461">461</a>
 <a href="#462" id="462">462</a>
 <a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
-<a href="#469" id="469">469</a>
-<a href="#470" id="470">470</a>
-<a href="#471" id="471">471</a>
-<a href="#472" id="472">472</a>
-<a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
-<a href="#476" id="476">476</a>
-<a href="#477" id="477">477</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -500,9 +486,8 @@
 <span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::{error, logging, timer, warn};
+<span class="kw">use </span>common_telemetry::{error, logging, warn};
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
-<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>opensrv_mysql::{
     AsyncMysqlShim, Column, ErrorKind, InitWriter, ParamParser, ParamValue, QueryResultWriter,
     StatementMetaWriter, ValueInner,
@@ -520,6 +505,7 @@
 <span class="kw">use </span>tokio::io::AsyncWrite;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, InvalidPrepareStatementSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_AUTH_FAILURE;
 <span class="kw">use </span><span class="kw">crate</span>::mysql::helper::{
     <span class="self">self</span>, format_placeholder, replace_placeholders, transform_placeholders,
 };
@@ -661,7 +647,9 @@
                     user_info = <span class="prelude-val">Some</span>(userinfo);
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">increment_counter!</span>(<span class="kw">crate</span>::metrics::METRIC_AUTH_FAILURE);
+                    METRIC_AUTH_FAILURE
+                        .with_label_values(<span class="kw-2">&amp;</span>[e.status_code().as_ref()])
+                        .inc();
                     <span class="macro">warn!</span>(<span class="string">&quot;Failed to auth, err: {:?}&quot;</span>, e);
                     <span class="kw">return </span><span class="bool-val">false</span>;
                 }
@@ -721,10 +709,9 @@
         });
 
         w.reply(stmt_id, <span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="macro">increment_counter!</span>(
-            <span class="kw">crate</span>::metrics::METRIC_MYSQL_PREPARED_COUNT,
-            <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, query_ctx.get_db_string())]
-        );
+        <span class="kw">crate</span>::metrics::METRIC_MYSQL_PREPARED_COUNT
+            .with_label_values(<span class="kw-2">&amp;</span>[query_ctx.get_db_string().as_str()])
+            .inc();
         <span class="kw">return </span><span class="prelude-val">Ok</span>(());
     }
 
@@ -735,16 +722,11 @@
         w: QueryResultWriter&lt;<span class="lifetime">&#39;a</span>, W&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>query_ctx = <span class="self">self</span>.session.new_query_context();
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
-            <span class="kw">crate</span>::metrics::METRIC_MYSQL_QUERY_TIMER,
-            <span class="kw-2">&amp;</span>[
-                (
-                    <span class="kw">crate</span>::metrics::METRIC_MYSQL_SUBPROTOCOL_LABEL,
-                    <span class="kw">crate</span>::metrics::METRIC_MYSQL_BINQUERY.to_string()
-                ),
-                (<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, query_ctx.get_db_string())
-            ]
-        );
+        <span class="kw">let </span>db = query_ctx.get_db_string();
+        <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::METRIC_MYSQL_QUERY_TIMER
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::METRIC_MYSQL_BINQUERY, db.as_str()])
+            .start_timer();
+
         <span class="kw">let </span>params: Vec&lt;ParamValue&gt; = p.into_iter().collect();
         <span class="kw">let </span>sql_plan = <span class="kw">match </span><span class="self">self</span>.plan(stmt_id) {
             <span class="prelude-val">None </span>=&gt; {
@@ -803,16 +785,10 @@
         writer: QueryResultWriter&lt;<span class="lifetime">&#39;a</span>, W&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>query_ctx = <span class="self">self</span>.session.new_query_context();
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
-            <span class="kw">crate</span>::metrics::METRIC_MYSQL_QUERY_TIMER,
-            <span class="kw-2">&amp;</span>[
-                (
-                    <span class="kw">crate</span>::metrics::METRIC_MYSQL_SUBPROTOCOL_LABEL,
-                    <span class="kw">crate</span>::metrics::METRIC_MYSQL_TEXTQUERY.to_string()
-                ),
-                (<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, query_ctx.get_db_string())
-            ]
-        );
+        <span class="kw">let </span>db = query_ctx.get_db_string();
+        <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::METRIC_MYSQL_QUERY_TIMER
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="kw">crate</span>::metrics::METRIC_MYSQL_TEXTQUERY, db.as_str()])
+            .start_timer();
         <span class="kw">let </span>outputs = <span class="self">self</span>.do_query(query, query_ctx.clone()).<span class="kw">await</span>;
         writer::write_output(writer, query_ctx, outputs).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
@@ -835,13 +811,9 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(schema_validator) = <span class="kw-2">&amp;</span><span class="self">self</span>.user_provider {
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = schema_validator.authorize(catalog, schema, user_info).<span class="kw">await </span>{
-                <span class="macro">increment_counter!</span>(
-                    <span class="kw">crate</span>::metrics::METRIC_AUTH_FAILURE,
-                    <span class="kw-2">&amp;</span>[(
-                        <span class="kw">crate</span>::metrics::METRIC_CODE_LABEL,
-                        <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e.status_code())
-                    )]
-                );
+                METRIC_AUTH_FAILURE
+                    .with_label_values(<span class="kw-2">&amp;</span>[e.status_code().as_ref()])
+                    .inc();
                 <span class="kw">return </span>w
                     .error(
                         ErrorKind::ER_DBACCESS_DENIED_ERROR,

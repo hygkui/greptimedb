@@ -410,7 +410,7 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::error::ExternalSnafu;
 <span class="kw">use </span>common_recordbatch::RecordBatchStreamAdaptor;
-<span class="kw">use </span>common_telemetry::{logging, timer};
+<span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
@@ -493,12 +493,12 @@
     }
 
     <span class="kw">pub async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, requests: InsertRequests) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_INSERT);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_INSERT.start_timer();
         <span class="self">self</span>.handle(Request::Inserts(requests)).<span class="kw">await
     </span>}
 
     <span class="kw">pub async fn </span>row_insert(<span class="kw-2">&amp;</span><span class="self">self</span>, requests: RowInsertRequests) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_INSERT);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_INSERT.start_timer();
         <span class="self">self</span>.handle(Request::RowInserts(requests)).<span class="kw">await
     </span>}
 
@@ -523,7 +523,7 @@
     }
 
     <span class="kw">pub async fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, request: DeleteRequests) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_DELETE);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_DELETE.start_timer();
         <span class="self">self</span>.handle(Request::Deletes(request)).<span class="kw">await
     </span>}
 
@@ -553,7 +553,7 @@
     <span class="kw">where
         </span>S: AsRef&lt;str&gt;,
     {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_SQL);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_SQL.start_timer();
         <span class="self">self</span>.do_get(
             Request::Query(QueryRequest {
                 query: <span class="prelude-val">Some</span>(Query::Sql(sql.as_ref().to_string())),
@@ -564,7 +564,7 @@
     </span>}
 
     <span class="kw">pub async fn </span>logical_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, logical_plan: Vec&lt;u8&gt;, trace_id: u64) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_LOGICAL_PLAN);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_LOGICAL_PLAN.start_timer();
         <span class="self">self</span>.do_get(
             Request::Query(QueryRequest {
                 query: <span class="prelude-val">Some</span>(Query::LogicalPlan(logical_plan)),
@@ -581,7 +581,7 @@
         end: <span class="kw-2">&amp;</span>str,
         step: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_PROMQL_RANGE_QUERY);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_PROMQL_RANGE_QUERY.start_timer();
         <span class="self">self</span>.do_get(
             Request::Query(QueryRequest {
                 query: <span class="prelude-val">Some</span>(Query::PromRangeQuery(PromRangeQuery {
@@ -597,7 +597,7 @@
     </span>}
 
     <span class="kw">pub async fn </span>create(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: CreateTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_CREATE_TABLE);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_CREATE_TABLE.start_timer();
         <span class="self">self</span>.do_get(
             Request::Ddl(DdlRequest {
                 expr: <span class="prelude-val">Some</span>(DdlExpr::CreateTable(expr)),
@@ -608,7 +608,7 @@
     </span>}
 
     <span class="kw">pub async fn </span>alter(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: AlterExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_ALTER);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_ALTER.start_timer();
         <span class="self">self</span>.do_get(
             Request::Ddl(DdlRequest {
                 expr: <span class="prelude-val">Some</span>(DdlExpr::Alter(expr)),
@@ -619,7 +619,7 @@
     </span>}
 
     <span class="kw">pub async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: DropTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_DROP_TABLE);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_DROP_TABLE.start_timer();
         <span class="self">self</span>.do_get(
             Request::Ddl(DdlRequest {
                 expr: <span class="prelude-val">Some</span>(DdlExpr::DropTable(expr)),
@@ -630,7 +630,7 @@
     </span>}
 
     <span class="kw">pub async fn </span>truncate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: TruncateTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_TRUNCATE_TABLE);
+        <span class="kw">let </span>_timer = metrics::METRIC_GRPC_TRUNCATE_TABLE.start_timer();
         <span class="self">self</span>.do_get(
             Request::Ddl(DdlRequest {
                 expr: <span class="prelude-val">Some</span>(DdlExpr::TruncateTable(expr)),
@@ -642,7 +642,7 @@
 
     <span class="kw">async fn </span>do_get(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request, trace_id: u64) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="comment">// FIXME(paomian): should be added some labels for metrics
-        </span><span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_GRPC_DO_GET);
+        </span><span class="kw">let </span>_timer = metrics::METRIC_GRPC_DO_GET.start_timer();
         <span class="kw">let </span>request = <span class="self">self</span>.to_rpc_request(request, trace_id);
         <span class="kw">let </span>request = Ticket {
             ticket: request.encode_to_vec().into(),

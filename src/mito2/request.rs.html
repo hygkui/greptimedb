@@ -1127,7 +1127,6 @@
 <a href="#1127" id="1127">1127</a>
 <a href="#1128" id="1128">1128</a>
 <a href="#1129" id="1129">1129</a>
-<a href="#1130" id="1130">1130</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1155,11 +1154,10 @@
 <span class="kw">use </span>api::v1::{ColumnDataType, ColumnSchema, OpType, Rows, SemanticType, Value};
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_query::Output::AffectedRows;
-<span class="kw">use </span>common_telemetry::metric::Timer;
 <span class="kw">use </span>common_telemetry::tracing::log::info;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>datatypes::prelude::DataType;
-<span class="kw">use </span>metrics::histogram;
+<span class="kw">use </span>prometheus::HistogramTimer;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -1726,7 +1724,7 @@
     <span class="doccomment">/// File purger for cleaning files on failure.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
     <span class="doccomment">/// Flush timer.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) timer: Timer,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) _timer: HistogramTimer,
 }
 
 <span class="kw">impl </span>FlushFinished {
@@ -1785,7 +1783,7 @@
 <span class="kw">impl </span>CompactionFinished {
     <span class="kw">pub fn </span>on_success(<span class="self">self</span>) {
         <span class="comment">// only update compaction time on success
-        </span><span class="macro">histogram!</span>(COMPACTION_ELAPSED_TOTAL, <span class="self">self</span>.start_time.elapsed());
+        </span>COMPACTION_ELAPSED_TOTAL.observe(<span class="self">self</span>.start_time.elapsed().as_secs_f64());
 
         <span class="kw">for </span>sender <span class="kw">in </span><span class="self">self</span>.senders {
             sender.send(<span class="prelude-val">Ok</span>(AffectedRows(<span class="number">0</span>)));

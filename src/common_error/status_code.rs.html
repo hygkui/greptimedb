@@ -258,10 +258,10 @@
 
 </span><span class="kw">use </span>std::fmt;
 
-<span class="kw">use </span>strum::EnumString;
+<span class="kw">use </span>strum::{AsRefStr, EnumString};
 
 <span class="doccomment">/// Common status code for public API.
-</span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString)]
+</span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, AsRefStr)]
 </span><span class="kw">pub enum </span>StatusCode {
     <span class="comment">// ====== Begin of common status code ==============
     </span><span class="doccomment">/// Success.

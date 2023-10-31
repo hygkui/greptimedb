@@ -177,6 +177,21 @@
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -205,7 +220,7 @@
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_telemetry::logging::info;
-<span class="kw">use </span>object_store::layers::{LoggingLayer, LruCacheLayer, MetricsLayer, RetryLayer, TracingLayer};
+<span class="kw">use </span>object_store::layers::{LoggingLayer, LruCacheLayer, RetryLayer, TracingLayer};
 <span class="kw">use </span>object_store::services::Fs <span class="kw">as </span>FsBuilder;
 <span class="kw">use </span>object_store::util::normalize_dir;
 <span class="kw">use </span>object_store::{util, HttpClient, ObjectStore, ObjectStoreBuilder};
@@ -237,8 +252,7 @@
         object_store
     };
 
-    <span class="prelude-val">Ok</span>(object_store
-        .layer(MetricsLayer)
+    <span class="kw">let </span>store = object_store
         .layer(
             LoggingLayer::default()
                 <span class="comment">// Print the expected error only in DEBUG level.
@@ -246,7 +260,23 @@
                 </span>.with_error_level(<span class="prelude-val">Some</span>(<span class="string">&quot;debug&quot;</span>))
                 .expect(<span class="string">&quot;input error level must be valid&quot;</span>),
         )
-        .layer(TracingLayer))
+        .layer(TracingLayer);
+
+    <span class="comment">// In the test environment, multiple datanodes will be started in the same process.
+    // If each datanode registers Prometheus metric when it starts, it will cause the program to crash. (Because the same metric is registered repeatedly.)
+    // So the Prometheus metric layer is disabled in the test environment.
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
+    </span><span class="kw">return </span><span class="prelude-val">Ok</span>(store);
+
+    <span class="attr">#[cfg(not(feature = <span class="string">&quot;testing&quot;</span>))]
+    </span>{
+        <span class="kw">let </span>registry = prometheus::default_registry();
+        <span class="prelude-val">Ok</span>(
+            store.layer(object_store::layers::PrometheusLayer::with_registry(
+                registry.clone(),
+            )),
+        )
+    }
 }
 
 <span class="kw">async fn </span>create_object_store_with_cache(

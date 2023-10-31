@@ -391,8 +391,6 @@
 <a href="#391" id="391">391</a>
 <a href="#392" id="392">392</a>
 <a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -416,7 +414,6 @@
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_error::ext::ErrorExt;
-<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>serde::Serializer;
 
 <span class="kw">use </span><span class="kw">crate</span>::kv_backend::txn::{Txn, TxnOp, TxnOpResponse, TxnRequest, TxnResponse};
@@ -664,10 +661,9 @@
     <span class="kw">type </span>Error = T;
 
     <span class="kw">async fn </span>txn(<span class="kw-2">&amp;</span><span class="self">self</span>, txn: Txn) -&gt; <span class="prelude-ty">Result</span>&lt;TxnResponse, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
-            METRIC_META_TXN_REQUEST,
-            <span class="kw-2">&amp;</span>[(<span class="string">&quot;target&quot;</span>, <span class="string">&quot;memory&quot;</span>), (<span class="string">&quot;op&quot;</span>, <span class="string">&quot;txn&quot;</span>)]
-        );
+        <span class="kw">let </span>_timer = METRIC_META_TXN_REQUEST
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;memory&quot;</span>, <span class="string">&quot;txn&quot;</span>])
+            .start_timer();
 
         <span class="kw">let </span>TxnRequest {
             compare,

@@ -756,8 +756,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::{error, info, timer};
-<span class="kw">use </span>metrics::{counter, increment_counter};
+<span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>strum::IntoStaticStr;
@@ -768,10 +767,7 @@
     Error, FlushRegionSnafu, RegionClosedSnafu, RegionDroppedSnafu, RegionTruncatedSnafu, <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use </span><span class="kw">crate</span>::memtable::MemtableBuilderRef;
-<span class="kw">use </span><span class="kw">crate</span>::metrics::{
-    FLUSH_BYTES_TOTAL, FLUSH_ELAPSED, FLUSH_ERRORS_TOTAL, FLUSH_REASON, FLUSH_REQUESTS_TOTAL,
-    TYPE_LABEL,
-};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{FLUSH_BYTES_TOTAL, FLUSH_ELAPSED, FLUSH_ERRORS_TOTAL, FLUSH_REQUESTS_TOTAL};
 <span class="kw">use </span><span class="kw">crate</span>::read::Source;
 <span class="kw">use </span><span class="kw">crate</span>::region::version::{VersionControlData, VersionControlRef, VersionRef};
 <span class="kw">use </span><span class="kw">crate</span>::request::{
@@ -981,7 +977,7 @@
 
     <span class="doccomment">/// Runs the flush task.
     </span><span class="kw">async fn </span>do_flush(<span class="kw-2">&amp;mut </span><span class="self">self</span>, version_data: VersionControlData) {
-        <span class="kw">let </span>timer = <span class="macro">timer!</span>(FLUSH_ELAPSED, <span class="kw-2">&amp;</span>[(TYPE_LABEL, <span class="string">&quot;total&quot;</span>)]);
+        <span class="kw">let </span>timer = FLUSH_ELAPSED.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;total&quot;</span>]).start_timer();
         <span class="self">self</span>.listener.on_flush_begin(<span class="self">self</span>.region_id).<span class="kw">await</span>;
         <span class="kw">let </span>worker_request = <span class="kw">match </span><span class="self">self</span>.flush_memtables(<span class="kw-2">&amp;</span>version_data.version).<span class="kw">await </span>{
             <span class="prelude-val">Ok</span>(file_metas) =&gt; {
@@ -1001,7 +997,7 @@
                     memtables_to_remove,
                     senders: std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.senders),
                     file_purger: <span class="self">self</span>.file_purger.clone(),
-                    timer,
+                    _timer: timer,
                 };
                 WorkerRequest::Background {
                     region_id: <span class="self">self</span>.region_id,
@@ -1011,7 +1007,7 @@
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(e; <span class="string">&quot;Failed to flush region {}&quot;</span>, <span class="self">self</span>.region_id);
                 <span class="comment">// Discard the timer.
-                </span>timer.discard();
+                </span>timer.stop_and_discard();
 
                 <span class="kw">let </span>err = Arc::new(e);
                 <span class="self">self</span>.on_failure(err.clone());
@@ -1026,7 +1022,9 @@
 
     <span class="doccomment">/// Flushes memtables to level 0 SSTs.
     </span><span class="kw">async fn </span>flush_memtables(<span class="kw-2">&amp;</span><span class="self">self</span>, version: <span class="kw-2">&amp;</span>VersionRef) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;FileMeta&gt;&gt; {
-        <span class="kw">let </span>timer = <span class="macro">timer!</span>(FLUSH_ELAPSED, <span class="kw-2">&amp;</span>[(TYPE_LABEL, <span class="string">&quot;flush_memtables&quot;</span>)]);
+        <span class="kw">let </span>timer = FLUSH_ELAPSED
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;flush_memtables&quot;</span>])
+            .start_timer();
 
         <span class="comment">// TODO(yingwen): Make it configurable.
         </span><span class="kw">let </span><span class="kw-2">mut </span>write_opts = WriteOptions::default();
@@ -1065,7 +1063,7 @@
         }
 
         <span class="kw">if </span>!file_metas.is_empty() {
-            <span class="macro">counter!</span>(FLUSH_BYTES_TOTAL, flushed_bytes);
+            FLUSH_BYTES_TOTAL.inc_by(flushed_bytes);
         }
 
         <span class="kw">let </span>file_ids: Vec&lt;<span class="kw">_</span>&gt; = file_metas.iter().map(|f| f.file_id).collect();
@@ -1074,7 +1072,7 @@
             version.metadata.region_id,
             <span class="self">self</span>.reason.as_str(),
             file_ids,
-            timer.elapsed(),
+            timer.stop_and_record(),
         );
 
         <span class="prelude-val">Ok</span>(file_metas)
@@ -1129,7 +1127,9 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">debug_assert_eq!</span>(region_id, task.region_id);
 
-        <span class="macro">increment_counter!</span>(FLUSH_REQUESTS_TOTAL, FLUSH_REASON =&gt; task.reason.as_str());
+        FLUSH_REQUESTS_TOTAL
+            .with_label_values(<span class="kw-2">&amp;</span>[task.reason.as_str()])
+            .inc();
 
         <span class="kw">let </span>version = version_control.current().version;
         <span class="kw">if </span>version.memtables.mutable.is_empty() &amp;&amp; version.memtables.immutables().is_empty() {
@@ -1211,7 +1211,7 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_flush_failed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, region_id: RegionId, err: Arc&lt;Error&gt;) {
         <span class="macro">error!</span>(err; <span class="string">&quot;Region {} failed to flush, cancel all pending tasks&quot;</span>, region_id);
 
-        <span class="macro">increment_counter!</span>(FLUSH_ERRORS_TOTAL);
+        FLUSH_ERRORS_TOTAL.inc();
 
         <span class="comment">// Remove this region.
         </span><span class="kw">let </span><span class="prelude-val">Some</span>(flush_status) = <span class="self">self</span>.region_status.remove(<span class="kw-2">&amp;</span>region_id) <span class="kw">else </span>{

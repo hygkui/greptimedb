@@ -260,8 +260,6 @@
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -288,7 +286,7 @@
 <span class="kw">use </span>common_meta::error::{<span class="self">self </span><span class="kw">as </span>meta_error, <span class="prelude-ty">Result </span><span class="kw">as </span>MetaResult};
 <span class="kw">use </span>common_recordbatch::error::ExternalSnafu;
 <span class="kw">use </span>common_recordbatch::{RecordBatchStreamAdaptor, SendableRecordBatchStream};
-<span class="kw">use </span>common_telemetry::{error, timer};
+<span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>snafu::{location, Location, OptionExt, ResultExt};
 <span class="kw">use </span>tokio_stream::StreamExt;
@@ -416,11 +414,9 @@
             .with_context(|| MissingFieldSnafu { field: <span class="string">&quot;body&quot; </span>})<span class="question-mark">?
             </span>.as_ref()
             .to_string();
-
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
-            metrics::METRIC_REGION_REQUEST_GRPC,
-            <span class="kw-2">&amp;</span>[(<span class="string">&quot;request_type&quot;</span>, request_type)]
-        );
+        <span class="kw">let </span>_timer = metrics::METRIC_REGION_REQUEST_GRPC
+            .with_label_values(<span class="kw-2">&amp;</span>[request_type.as_str()])
+            .start_timer();
 
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.client.raw_region_client()<span class="question-mark">?</span>;
 

@@ -325,7 +325,7 @@
 <span class="kw">use </span>std::fmt::{Debug, Formatter};
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
-<span class="kw">use </span>common_telemetry::{debug, error, info, timer};
+<span class="kw">use </span>common_telemetry::{debug, error, info};
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
@@ -467,7 +467,7 @@
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl</span>&lt;S: LogStore&gt; CompactionTask <span class="kw">for </span>CompactionTaskImpl&lt;S&gt; {
     <span class="kw">async fn </span>run(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::COMPACT_ELAPSED);
+        <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::COMPACT_ELAPSED.start_timer();
         <span class="self">self</span>.mark_files_compacting(<span class="bool-val">true</span>);
 
         <span class="kw">let </span>(output, <span class="kw-2">mut </span>compacted) = <span class="self">self</span>.merge_ssts().<span class="kw">await</span>.map_err(|e| {
@@ -565,7 +565,7 @@
         <span class="kw">let </span>opts = WriteOptions {
             sst_write_buffer_size,
         };
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(<span class="kw">crate</span>::metrics::MERGE_ELAPSED);
+        <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::MERGE_ELAPSED.start_timer();
         <span class="kw">let </span>meta = sst_layer
             .write_sst(<span class="self">self</span>.output_file_id, Source::Reader(reader), <span class="kw-2">&amp;</span>opts)
             .<span class="kw">await</span><span class="question-mark">?

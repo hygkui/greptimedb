@@ -105,7 +105,6 @@
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -124,7 +123,6 @@
 <span class="kw">use </span>axum::http::header;
 <span class="kw">use </span>axum::response::IntoResponse;
 <span class="kw">use </span>axum::Extension;
-<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>hyper::Body;
 <span class="kw">use </span>opentelemetry_proto::tonic::collector::metrics::v1::{
     ExportMetricsServiceRequest, ExportMetricsServiceResponse,
@@ -145,10 +143,10 @@
     Extension(query_ctx): Extension&lt;QueryContextRef&gt;,
     RawBody(body): RawBody,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;OtlpMetricsResponse&gt; {
-    <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
-        <span class="kw">crate</span>::metrics::METRIC_HTTP_OPENTELEMETRY_METRICS_ELAPSED,
-        <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, query_ctx.get_db_string())]
-    );
+    <span class="kw">let </span>db = query_ctx.get_db_string();
+    <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::METRIC_HTTP_OPENTELEMETRY_METRICS_ELAPSED
+        .with_label_values(<span class="kw-2">&amp;</span>[db.as_str()])
+        .start_timer();
     <span class="kw">let </span>request = parse_metrics_body(body).<span class="kw">await</span><span class="question-mark">?</span>;
     handler
         .metrics(request, query_ctx)
@@ -183,10 +181,10 @@
     Extension(query_ctx): Extension&lt;QueryContextRef&gt;,
     RawBody(body): RawBody,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;OtlpTracesResponse&gt; {
-    <span class="kw">let </span>_timer = <span class="macro">timer!</span>(
-        <span class="kw">crate</span>::metrics::METRIC_HTTP_OPENTELEMETRY_TRACES_ELAPSED,
-        <span class="kw-2">&amp;</span>[(<span class="kw">crate</span>::metrics::METRIC_DB_LABEL, query_ctx.get_db_string())]
-    );
+    <span class="kw">let </span>db = query_ctx.get_db_string();
+    <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::METRIC_HTTP_OPENTELEMETRY_TRACES_ELAPSED
+        .with_label_values(<span class="kw-2">&amp;</span>[db.as_str()])
+        .start_timer();
     <span class="kw">let </span>request = parse_traces_body(body).<span class="kw">await</span><span class="question-mark">?</span>;
     handler
         .traces(request, query_ctx)

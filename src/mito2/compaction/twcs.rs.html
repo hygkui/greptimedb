@@ -678,6 +678,7 @@
 <a href="#678" id="678">678</a>
 <a href="#679" id="679">679</a>
 <a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -699,11 +700,10 @@
 
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::{debug, error, info, timer};
+<span class="kw">use </span>common_telemetry::{debug, error, info};
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>common_time::timestamp_millis::BucketAligned;
 <span class="kw">use </span>common_time::Timestamp;
-<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::storage::RegionId;
@@ -715,7 +715,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::compaction::CompactionRequest;
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::error::CompactRegionSnafu;
-<span class="kw">use </span><span class="kw">crate</span>::metrics::{COMPACTION_FAILURE_COUNT, COMPACTION_STAGE_ELAPSED, STAGE_LABEL};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{COMPACTION_FAILURE_COUNT, COMPACTION_STAGE_ELAPSED};
 <span class="kw">use </span><span class="kw">crate</span>::request::{
     BackgroundNotify, CompactionFailed, CompactionFinished, OutputTx, WorkerRequest,
 };
@@ -996,10 +996,12 @@
 
     <span class="kw">async fn </span>handle_compaction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; error::Result&lt;(Vec&lt;FileMeta&gt;, Vec&lt;FileMeta&gt;)&gt; {
         <span class="self">self</span>.mark_files_compacting(<span class="bool-val">true</span>);
-        <span class="kw">let </span>merge_timer = <span class="macro">timer!</span>(COMPACTION_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;merge&quot;</span>)]);
+        <span class="kw">let </span>merge_timer = COMPACTION_STAGE_ELAPSED
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;merge&quot;</span>])
+            .start_timer();
         <span class="kw">let </span>(output, <span class="kw-2">mut </span>compacted) = <span class="self">self</span>.merge_ssts().<span class="kw">await</span>.map_err(|e| {
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to compact region: {}&quot;</span>, <span class="self">self</span>.region_id);
-            merge_timer.discard();
+            merge_timer.stop_and_discard();
             e
         })<span class="question-mark">?</span>;
         compacted.extend(<span class="self">self</span>.expired_ssts.iter().map(FileHandle::meta));
@@ -1008,7 +1010,7 @@
 
     <span class="doccomment">/// Handles compaction failure, notifies all waiters.
     </span><span class="kw">fn </span>on_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, err: Arc&lt;error::Error&gt;) {
-        <span class="macro">increment_counter!</span>(COMPACTION_FAILURE_COUNT);
+        COMPACTION_FAILURE_COUNT.inc();
         <span class="kw">for </span>waiter <span class="kw">in </span><span class="self">self</span>.waiters.drain(..) {
             waiter.send(<span class="prelude-val">Err</span>(err.clone()).context(CompactRegionSnafu {
                 region_id: <span class="self">self</span>.region_id,

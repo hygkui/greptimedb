@@ -806,7 +806,6 @@
 <a href="#806" id="806">806</a>
 <a href="#807" id="807">807</a>
 <a href="#808" id="808">808</a>
-<a href="#809" id="809">809</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -834,7 +833,6 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_telemetry::{info, logging};
 <span class="kw">use </span>common_time::util;
-<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::manifest::{
@@ -942,7 +940,7 @@
     </span>}
 
     <span class="kw">async fn </span>drop_region(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
+        <span class="kw">crate</span>::metrics::REGION_COUNT.dec();
         <span class="self">self</span>.inner.drop_region().<span class="kw">await
     </span>}
 
@@ -1004,7 +1002,7 @@
         <span class="comment">// Try to persist region data to manifest, ensure the new region could be recovered from
         // the manifest.
         </span><span class="kw">let </span>manifest_version = {
-            <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::CREATE_REGION_UPDATE_MANIFEST);
+            <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::CREATE_REGION_UPDATE_MANIFEST.start_timer();
             store_config
                 .manifest
                 .update(RegionMetaActionList::with_action(RegionMetaAction::Change(
@@ -1027,7 +1025,7 @@
             store_config.file_purger.clone(),
         );
         <span class="kw">let </span>region = RegionImpl::new(version, store_config);
-        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
+        <span class="kw">crate</span>::metrics::REGION_COUNT.inc();
 
         <span class="prelude-val">Ok</span>(region)
     }
@@ -1177,7 +1175,7 @@
             manifest: store_config.manifest,
         });
 
-        <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
+        <span class="kw">crate</span>::metrics::REGION_COUNT.inc();
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(RegionImpl { inner }))
     }
 
@@ -1382,7 +1380,7 @@
     </span>}
 
     <span class="kw">pub async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>CloseContext) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::REGION_COUNT, <span class="number">1.0</span>);
+        <span class="kw">crate</span>::metrics::REGION_COUNT.dec();
         <span class="self">self</span>.inner.close(ctx).<span class="kw">await
     </span>}
 }

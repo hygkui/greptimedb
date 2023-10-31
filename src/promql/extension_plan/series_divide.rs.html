@@ -800,7 +800,7 @@
                 <span class="kw">let </span>batch = <span class="kw">match </span><span class="macro">ready!</span>(<span class="self">self</span>.as_mut().fetch_next_batch(cx)) {
                     <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(batch)) =&gt; batch,
                     <span class="prelude-val">None </span>=&gt; {
-                        <span class="macro">metrics::histogram!</span>(PROMQL_SERIES_COUNT, <span class="self">self</span>.num_series <span class="kw">as </span>f64);
+                        PROMQL_SERIES_COUNT.observe(<span class="self">self</span>.num_series <span class="kw">as </span>f64);
                         <span class="kw">return </span>Poll::Ready(<span class="prelude-val">None</span>);
                     }
                     error =&gt; <span class="kw">return </span>Poll::Ready(error),

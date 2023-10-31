@@ -723,7 +723,6 @@
 <a href="#723" id="723">723</a>
 <a href="#724" id="724">724</a>
 <a href="#725" id="725">725</a>
-<a href="#726" id="726">726</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -760,7 +759,6 @@
 <span class="kw">use </span>common_recordbatch::{
     EmptyRecordBatchStream, RecordBatch, RecordBatches, SendableRecordBatchStream,
 };
-<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>datafusion::common::Column;
 <span class="kw">use </span>datafusion::physical_plan::analyze::AnalyzeExec;
 <span class="kw">use </span>datafusion::physical_plan::coalesce_partitions::CoalescePartitionsExec;
@@ -1013,7 +1011,7 @@
 
 <span class="kw">impl </span>LogicalOptimizer <span class="kw">for </span>DatafusionQueryEngine {
     <span class="kw">fn </span>optimize(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: <span class="kw-2">&amp;</span>LogicalPlan) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_OPTIMIZE_LOGICAL_ELAPSED);
+        <span class="kw">let </span>_timer = metrics::METRIC_OPTIMIZE_LOGICAL_ELAPSED.start_timer();
         <span class="kw">match </span>plan {
             LogicalPlan::DfPlan(df_plan) =&gt; {
                 <span class="kw">let </span>optimized_plan = <span class="self">self
@@ -1037,7 +1035,7 @@
         ctx: <span class="kw-2">&amp;mut </span>QueryEngineContext,
         logical_plan: <span class="kw-2">&amp;</span>LogicalPlan,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>PhysicalPlan&gt;&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_CREATE_PHYSICAL_ELAPSED);
+        <span class="kw">let </span>_timer = metrics::METRIC_CREATE_PHYSICAL_ELAPSED.start_timer();
         <span class="kw">match </span>logical_plan {
             LogicalPlan::DfPlan(df_plan) =&gt; {
                 <span class="kw">let </span>state = ctx.state();
@@ -1070,7 +1068,7 @@
         ctx: <span class="kw-2">&amp;mut </span>QueryEngineContext,
         plan: Arc&lt;<span class="kw">dyn </span>PhysicalPlan&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>PhysicalPlan&gt;&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_OPTIMIZE_PHYSICAL_ELAPSED);
+        <span class="kw">let </span>_timer = metrics::METRIC_OPTIMIZE_PHYSICAL_ELAPSED.start_timer();
 
         <span class="kw">let </span>state = ctx.state();
         <span class="kw">let </span>config = state.config_options();
@@ -1117,7 +1115,7 @@
         ctx: <span class="kw-2">&amp;</span>QueryEngineContext,
         plan: <span class="kw-2">&amp;</span>Arc&lt;<span class="kw">dyn </span>PhysicalPlan&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_EXEC_PLAN_ELAPSED);
+        <span class="kw">let </span>_timer = metrics::METRIC_EXEC_PLAN_ELAPSED.start_timer();
         <span class="kw">let </span>task_ctx = ctx.build_task_ctx();
 
         <span class="kw">match </span>plan.output_partitioning().partition_count() {

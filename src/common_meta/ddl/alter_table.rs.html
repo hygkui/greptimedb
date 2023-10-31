@@ -515,6 +515,7 @@
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -891,10 +892,11 @@
 
         <span class="kw">let </span>state = <span class="kw-2">&amp;</span><span class="self">self</span>.data.state;
 
-        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(
-            metrics::METRIC_META_PROCEDURE_ALTER_TABLE,
-            <span class="kw-2">&amp;</span>[(<span class="string">&quot;step&quot;</span>, state.as_ref().to_string())]
-        );
+        <span class="kw">let </span>step = state.as_ref();
+
+        <span class="kw">let </span>_timer = metrics::METRIC_META_PROCEDURE_ALTER_TABLE
+            .with_label_values(<span class="kw-2">&amp;</span>[step])
+            .start_timer();
 
         <span class="kw">match </span>state {
             AlterTableState::Prepare =&gt; <span class="self">self</span>.on_prepare().<span class="kw">await</span>,

@@ -725,7 +725,7 @@
         create_table: <span class="kw-2">&amp;mut </span>CreateTableExpr,
         partitions: <span class="prelude-ty">Option</span>&lt;Partitions&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;TableRef&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="kw">crate</span>::metrics::DIST_CREATE_TABLE);
+        <span class="kw">let </span>_timer = <span class="kw">crate</span>::metrics::DIST_CREATE_TABLE.start_timer();
         <span class="kw">let </span>schema = <span class="self">self
             </span>.table_metadata_manager
             .schema_manager()

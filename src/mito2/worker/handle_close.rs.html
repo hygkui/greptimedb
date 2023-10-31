@@ -44,7 +44,6 @@
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
 <a href="#46" id="46">46</a>
-<a href="#47" id="47">47</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -63,7 +62,6 @@
 
 </span><span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::info;
-<span class="kw">use </span>metrics::decrement_gauge;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
@@ -87,7 +85,7 @@
 
         <span class="macro">info!</span>(<span class="string">&quot;Region {} closed&quot;</span>, region_id);
 
-        <span class="macro">decrement_gauge!</span>(REGION_COUNT, <span class="number">1.0</span>);
+        REGION_COUNT.dec();
 
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
     }

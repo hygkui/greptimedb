@@ -920,7 +920,6 @@
 <a href="#920" id="920">920</a>
 <a href="#921" id="921">921</a>
 <a href="#922" id="922">922</a>
-<a href="#923" id="923">923</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -992,8 +991,7 @@
     instant_query, label_values_query, labels_query, range_query, series_query,
 };
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{
-    METRIC_CODE_LABEL, METRIC_HTTP_REQUESTS_ELAPSED, METRIC_HTTP_REQUESTS_TOTAL,
-    METRIC_METHOD_LABEL, METRIC_PATH_LABEL,
+    HTTP_TRACK_METRICS, METRIC_HTTP_REQUESTS_ELAPSED, METRIC_HTTP_REQUESTS_TOTAL,
 };
 <span class="kw">use </span><span class="kw">crate</span>::metrics_handler::MetricsHandler;
 <span class="kw">use </span><span class="kw">crate</span>::prometheus_handler::PrometheusHandlerRef;
@@ -1597,7 +1595,9 @@
 <span class="doccomment">/// A middleware to record metrics for HTTP.
 </span><span class="comment">// Based on https://github.com/tokio-rs/axum/blob/axum-v0.6.16/examples/prometheus-metrics/src/main.rs
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>track_metrics&lt;B&gt;(req: Request&lt;B&gt;, next: Next&lt;B&gt;) -&gt; <span class="kw">impl </span>IntoResponse {
-    <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(<span class="string">&quot;http_track_metrics&quot;</span>, <span class="kw-2">&amp;</span>[(<span class="string">&quot;tag&quot;</span>, <span class="string">&quot;value&quot;</span>)]);
+    <span class="kw">let </span>_timer = HTTP_TRACK_METRICS
+        .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;value&quot;</span>])
+        .start_timer();
     <span class="kw">let </span>start = Instant::now();
     <span class="kw">let </span>path = <span class="kw">if let </span><span class="prelude-val">Some</span>(matched_path) = req.extensions().get::&lt;MatchedPath&gt;() {
         matched_path.as_str().to_owned()
@@ -1610,15 +1610,13 @@
 
     <span class="kw">let </span>latency = start.elapsed().as_secs_f64();
     <span class="kw">let </span>status = response.status().as_u16().to_string();
+    <span class="kw">let </span>method_str = method.to_string();
 
-    <span class="kw">let </span>labels = [
-        (METRIC_METHOD_LABEL, method.to_string()),
-        (METRIC_PATH_LABEL, path),
-        (METRIC_CODE_LABEL, status),
-    ];
-
-    <span class="macro">metrics::increment_counter!</span>(METRIC_HTTP_REQUESTS_TOTAL, <span class="kw-2">&amp;</span>labels);
-    <span class="macro">metrics::histogram!</span>(METRIC_HTTP_REQUESTS_ELAPSED, latency, <span class="kw-2">&amp;</span>labels);
+    <span class="kw">let </span>labels = [method_str.as_str(), path.as_str(), status.as_str()];
+    METRIC_HTTP_REQUESTS_TOTAL.with_label_values(<span class="kw-2">&amp;</span>labels).inc();
+    METRIC_HTTP_REQUESTS_ELAPSED
+        .with_label_values(<span class="kw-2">&amp;</span>labels)
+        .observe(latency);
 
     response
 }

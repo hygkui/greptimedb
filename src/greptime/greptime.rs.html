@@ -236,6 +236,11 @@
 <a href="#236" id="236">236</a>
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -259,7 +264,11 @@
 <span class="kw">use </span>cmd::options::{Options, TopLevelOptions};
 <span class="kw">use </span>cmd::{cli, datanode, frontend, metasrv, standalone};
 <span class="kw">use </span>common_telemetry::logging::{error, info, TracingOptions};
-<span class="kw">use </span>metrics::gauge;
+
+<span class="macro">lazy_static::lazy_static! </span>{
+    <span class="kw">static </span><span class="kw-2">ref </span>APP_VERSION: prometheus::IntGaugeVec =
+        <span class="macro">prometheus::register_int_gauge_vec!</span>(<span class="string">&quot;app_version&quot;</span>, <span class="string">&quot;app version&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;short_version&quot;</span>, <span class="string">&quot;version&quot;</span>]).unwrap();
+}
 
 <span class="attr">#[derive(Parser)]
 #[clap(name = <span class="string">&quot;greptimedb&quot;</span>, version = print_version())]
@@ -442,11 +451,12 @@
     };
 
     common_telemetry::set_panic_hook();
-    common_telemetry::init_default_metrics_recorder();
     <span class="kw">let </span>_guard = common_telemetry::init_global_logging(app_name, logging_opts, tracing_opts);
 
     <span class="comment">// Report app version as gauge.
-    </span><span class="macro">gauge!</span>(<span class="string">&quot;app_version&quot;</span>, <span class="number">1.0</span>, <span class="string">&quot;short_version&quot; </span>=&gt; short_version(), <span class="string">&quot;version&quot; </span>=&gt; full_version());
+    </span>APP_VERSION
+        .with_label_values(<span class="kw-2">&amp;</span>[short_version(), full_version()])
+        .inc();
 
     <span class="comment">// Log version and argument flags.
     </span><span class="macro">info!</span>(

@@ -136,7 +136,6 @@
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -161,7 +160,6 @@
 <span class="kw">use </span>common_telemetry::logging::error;
 <span class="kw">use </span>common_telemetry::{debug, warn};
 <span class="kw">use </span>futures::StreamExt;
-<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>pgwire::tokio::process_socket;
 <span class="kw">use </span>tokio_rustls::TlsAcceptor;
 
@@ -228,7 +226,7 @@
                         };
 
                         <span class="kw">let </span>_handle = io_runtime.spawn(<span class="kw">async move </span>{
-                            <span class="macro">increment_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_POSTGRES_CONNECTIONS, <span class="number">1.0</span>);
+                            <span class="kw">crate</span>::metrics::METRIC_POSTGRES_CONNECTIONS.inc();
                             <span class="kw">let </span>pg_handler = Arc::new(handler_maker.make(addr));
                             <span class="kw">let </span>r = process_socket(
                                 io_stream,
@@ -238,7 +236,7 @@
                                 pg_handler,
                             )
                             .<span class="kw">await</span>;
-                            <span class="macro">decrement_gauge!</span>(<span class="kw">crate</span>::metrics::METRIC_POSTGRES_CONNECTIONS, <span class="number">1.0</span>);
+                            <span class="kw">crate</span>::metrics::METRIC_POSTGRES_CONNECTIONS.dec();
                             r
                         });
                     }

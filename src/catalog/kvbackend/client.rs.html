@@ -338,7 +338,7 @@
     DeleteRangeResponse, PutRequest, PutResponse, RangeRequest, RangeResponse,
 };
 <span class="kw">use </span>common_meta::rpc::KeyValue;
-<span class="kw">use </span>common_telemetry::{debug, timer};
+<span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>meta_client::client::MetaClient;
 <span class="kw">use </span>moka::future::{Cache, CacheBuilder};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -462,10 +462,10 @@
     }
 
     <span class="kw">async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KeyValue&gt;&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(METRIC_CATALOG_KV_GET);
+        <span class="kw">let </span>_timer = METRIC_CATALOG_KV_GET.start_timer();
 
         <span class="kw">let </span>init = <span class="kw">async </span>{
-            <span class="kw">let </span>_timer = <span class="macro">timer!</span>(METRIC_CATALOG_KV_REMOTE_GET);
+            <span class="kw">let </span>_timer = METRIC_CATALOG_KV_REMOTE_GET.start_timer();
             <span class="self">self</span>.kv_backend.get(key).<span class="kw">await</span>.map(|val| {
                 val.with_context(|| CacheNotGetSnafu {
                     key: String::from_utf8_lossy(key),

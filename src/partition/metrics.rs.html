@@ -13,6 +13,12 @@
 <a href="#13" id="13">13</a>
 <a href="#14" id="14">14</a>
 <a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -27,5 +33,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>METRIC_TABLE_ROUTE_GET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;frontend.table_route.get&quot;</span>;
+</span><span class="kw">use </span>lazy_static::lazy_static;
+<span class="kw">use </span>prometheus::<span class="kw-2">*</span>;
+
+<span class="macro">lazy_static! </span>{
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_TABLE_ROUTE_GET: Histogram =
+        <span class="macro">register_histogram!</span>(<span class="string">&quot;frontend_table_route_get&quot;</span>, <span class="string">&quot;frontend table route get&quot;</span>).unwrap();
+}
 </code></pre></div></section></main></body></html>

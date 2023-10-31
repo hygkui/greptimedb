@@ -209,7 +209,6 @@
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -233,7 +232,6 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::RecordBatches;
 <span class="kw">use </span>common_telemetry::logging;
-<span class="kw">use </span>metrics::counter;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>servers::error::{<span class="self">self</span>, AuthSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>ServerResult};
 <span class="kw">use </span>servers::prom_store::{<span class="self">self</span>, Metrics};
@@ -373,7 +371,7 @@
             </span>.map_err(BoxedError::new)
             .context(error::ExecuteGrpcQuerySnafu)<span class="question-mark">?</span>;
 
-        <span class="macro">counter!</span>(PROM_STORE_REMOTE_WRITE_SAMPLES, samples <span class="kw">as </span>u64);
+        PROM_STORE_REMOTE_WRITE_SAMPLES.inc_by(samples <span class="kw">as </span>u64);
         <span class="prelude-val">Ok</span>(())
     }
 

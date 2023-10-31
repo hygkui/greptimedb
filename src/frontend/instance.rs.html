@@ -812,8 +812,8 @@
 <span class="kw">use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
 <span class="kw">use </span>common_query::Output;
+<span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>common_telemetry::logging::info;
-<span class="kw">use </span>common_telemetry::{error, timer};
 <span class="kw">use </span>datanode::region_server::RegionServer;
 <span class="kw">use </span>log_store::raft_engine::RaftEngineBackend;
 <span class="kw">use </span>meta_client::client::{MetaClient, MetaClientBuilder};
@@ -1190,7 +1190,7 @@
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">async fn </span>do_query(<span class="kw-2">&amp;</span><span class="self">self</span>, query: <span class="kw-2">&amp;</span>str, query_ctx: QueryContextRef) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_HANDLE_SQL_ELAPSED);
+        <span class="kw">let </span>_timer = metrics::METRIC_HANDLE_SQL_ELAPSED.start_timer();
         <span class="kw">let </span>query_interceptor_opt = <span class="self">self</span>.plugins.get::&lt;SqlQueryInterceptorRef&lt;Error&gt;&gt;();
         <span class="kw">let </span>query_interceptor = query_interceptor_opt.as_ref();
         <span class="kw">let </span>query = <span class="kw">match </span>query_interceptor.pre_parsing(query, query_ctx.clone()) {
@@ -1250,7 +1250,7 @@
     }
 
     <span class="kw">async fn </span>do_exec_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: LogicalPlan, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_EXEC_PLAN_ELAPSED);
+        <span class="kw">let </span>_timer = metrics::METRIC_EXEC_PLAN_ELAPSED.start_timer();
         <span class="comment">// plan should be prepared before exec
         // we&#39;ll do check there
         </span><span class="self">self</span>.query_engine
@@ -1319,7 +1319,7 @@
         query: <span class="kw-2">&amp;</span>PromQuery,
         query_ctx: QueryContextRef,
     ) -&gt; server_error::Result&lt;Output&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(metrics::METRIC_HANDLE_PROMQL_ELAPSED);
+        <span class="kw">let </span>_timer = metrics::METRIC_HANDLE_PROMQL_ELAPSED.start_timer();
         <span class="kw">let </span>interceptor = <span class="self">self
             </span>.plugins
             .get::&lt;PromQueryInterceptorRef&lt;server_error::Error&gt;&gt;();

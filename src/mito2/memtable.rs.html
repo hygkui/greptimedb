@@ -232,7 +232,6 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -259,7 +258,6 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_time::Timestamp;
-<span class="kw">use </span>metrics::{decrement_gauge, increment_gauge};
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
 <span class="kw">use </span>store_api::storage::ColumnId;
 <span class="kw">use </span>table::predicate::Predicate;
@@ -366,7 +364,7 @@
     <span class="doccomment">/// Tracks `bytes` memory is allocated.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_allocation(<span class="kw-2">&amp;</span><span class="self">self</span>, bytes: usize) {
         <span class="self">self</span>.bytes_allocated.fetch_add(bytes, Ordering::Relaxed);
-        <span class="macro">increment_gauge!</span>(WRITE_BUFFER_BYTES, bytes <span class="kw">as </span>f64);
+        WRITE_BUFFER_BYTES.add(bytes <span class="kw">as </span>i64);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(write_buffer_manager) = <span class="kw-2">&amp;</span><span class="self">self</span>.write_buffer_manager {
             write_buffer_manager.reserve_mem(bytes);
         }
@@ -402,7 +400,7 @@
         }
 
         <span class="kw">let </span>bytes_allocated = <span class="self">self</span>.bytes_allocated.load(Ordering::Relaxed);
-        <span class="macro">decrement_gauge!</span>(WRITE_BUFFER_BYTES, bytes_allocated <span class="kw">as </span>f64);
+        WRITE_BUFFER_BYTES.sub(bytes_allocated <span class="kw">as </span>i64);
 
         <span class="comment">// Memory tracked by this tracker is freed.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(write_buffer_manager) = <span class="kw-2">&amp;</span><span class="self">self</span>.write_buffer_manager {

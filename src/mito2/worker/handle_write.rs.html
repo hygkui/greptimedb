@@ -194,6 +194,10 @@
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -213,16 +217,13 @@
 </span><span class="kw">use </span>std::collections::{hash_map, HashMap};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>common_telemetry::timer;
-<span class="kw">use </span>metrics::counter;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::metadata::RegionMetadata;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{RejectWriteSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{
-    STAGE_LABEL, TYPE_LABEL, WRITE_REJECT_TOTAL, WRITE_ROWS_TOTAL, WRITE_STAGE_ELAPSED,
-    WRITE_STALL_TOTAL,
+    WRITE_REJECT_TOTAL, WRITE_ROWS_TOTAL, WRITE_STAGE_ELAPSED, WRITE_STALL_TOTAL,
 };
 <span class="kw">use </span><span class="kw">crate</span>::region_write_ctx::RegionWriteCtx;
 <span class="kw">use </span><span class="kw">crate</span>::request::{SenderWriteRequest, WriteRequest};
@@ -252,7 +253,7 @@
         }
 
         <span class="kw">if </span><span class="self">self</span>.write_buffer_manager.should_stall() &amp;&amp; allow_stall {
-            <span class="macro">counter!</span>(WRITE_STALL_TOTAL, write_requests.len() <span class="kw">as </span>u64);
+            WRITE_STALL_TOTAL.inc_by(write_requests.len() <span class="kw">as </span>u64);
 
             <span class="self">self</span>.stalled_requests.append(<span class="kw-2">&amp;mut </span>write_requests);
             <span class="self">self</span>.listener.on_write_stall();
@@ -263,7 +264,9 @@
 
         <span class="comment">// Write to WAL.
         </span>{
-            <span class="kw">let </span>_timer = <span class="macro">timer!</span>(WRITE_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;write_wal&quot;</span>)]);
+            <span class="kw">let </span>_timer = WRITE_STAGE_ELAPSED
+                .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;write_wal&quot;</span>])
+                .start_timer();
             <span class="kw">let </span><span class="kw-2">mut </span>wal_writer = <span class="self">self</span>.wal.writer();
             <span class="kw">for </span>region_ctx <span class="kw">in </span>region_ctxs.values_mut() {
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = region_ctx.add_wal_entry(<span class="kw-2">&amp;mut </span>wal_writer).map_err(Arc::new) {
@@ -282,16 +285,21 @@
         <span class="kw">let </span>(<span class="kw-2">mut </span>put_rows, <span class="kw-2">mut </span>delete_rows) = (<span class="number">0</span>, <span class="number">0</span>);
         <span class="comment">// Write to memtables.
         </span>{
-            <span class="kw">let </span>_timer = <span class="macro">timer!</span>(WRITE_STAGE_ELAPSED, <span class="kw-2">&amp;</span>[(STAGE_LABEL, <span class="string">&quot;write_memtable&quot;</span>)]);
+            <span class="kw">let </span>_timer = WRITE_STAGE_ELAPSED
+                .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;write_memtable&quot;</span>])
+                .start_timer();
             <span class="kw">for </span><span class="kw-2">mut </span>region_ctx <span class="kw">in </span>region_ctxs.into_values() {
                 region_ctx.write_memtable();
                 put_rows += region_ctx.put_num;
                 delete_rows += region_ctx.delete_num;
             }
         }
-
-        <span class="macro">counter!</span>(WRITE_ROWS_TOTAL, put_rows <span class="kw">as </span>u64, TYPE_LABEL =&gt; <span class="string">&quot;put&quot;</span>);
-        <span class="macro">counter!</span>(WRITE_ROWS_TOTAL, delete_rows <span class="kw">as </span>u64, TYPE_LABEL =&gt; <span class="string">&quot;delete&quot;</span>);
+        WRITE_ROWS_TOTAL
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;put&quot;</span>])
+            .inc_by(put_rows <span class="kw">as </span>u64);
+        WRITE_ROWS_TOTAL
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;delete&quot;</span>])
+            .inc_by(delete_rows <span class="kw">as </span>u64);
     }
 }
 
@@ -363,7 +371,7 @@
 
 <span class="doccomment">/// Send rejected error to all `write_requests`.
 </span><span class="kw">fn </span>reject_write_requests(write_requests: Vec&lt;SenderWriteRequest&gt;) {
-    <span class="macro">counter!</span>(WRITE_REJECT_TOTAL, write_requests.len() <span class="kw">as </span>u64);
+    WRITE_REJECT_TOTAL.inc_by(write_requests.len() <span class="kw">as </span>u64);
 
     <span class="kw">for </span>req <span class="kw">in </span>write_requests {
         req.sender.send(

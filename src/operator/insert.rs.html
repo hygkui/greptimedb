@@ -432,7 +432,6 @@
 <a href="#432" id="432">432</a>
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -465,7 +464,6 @@
 <span class="kw">use </span>datatypes::schema::Schema;
 <span class="kw">use </span>futures_util::future;
 <span class="kw">use </span>meter_macros::write_meter;
-<span class="kw">use </span>metrics::counter;
 <span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::prelude::<span class="kw-2">*</span>;
@@ -610,7 +608,7 @@
         <span class="kw">let </span>results = future::try_join_all(tasks).<span class="kw">await</span>.context(JoinTaskSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>affected_rows = results.into_iter().sum::&lt;<span class="prelude-ty">Result</span>&lt;u64&gt;&gt;()<span class="question-mark">?</span>;
-        <span class="macro">counter!</span>(<span class="kw">crate</span>::metrics::DIST_INGEST_ROW_COUNT, affected_rows);
+        <span class="kw">crate</span>::metrics::DIST_INGEST_ROW_COUNT.inc_by(affected_rows);
         <span class="prelude-val">Ok</span>(affected_rows)
     }
 

@@ -981,6 +981,7 @@
 <a href="#981" id="981">981</a>
 <a href="#982" id="982">982</a>
 <a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1001,7 +1002,6 @@
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>futures::TryStreamExt;
-<span class="kw">use </span>metrics::increment_counter;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::manifest::{Manifest, ManifestLogStorage, ManifestVersion, MetaAction};
@@ -1022,7 +1022,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::memtable::{Inserter, MemtableBuilderRef, MemtableId, MemtableRef, MemtableVersion};
 <span class="kw">use </span><span class="kw">crate</span>::metadata::RegionMetadataRef;
-<span class="kw">use </span><span class="kw">crate</span>::metrics::{FLUSH_REASON, FLUSH_REQUESTS_TOTAL, PREPROCESS_ELAPSED};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{FLUSH_REQUESTS_TOTAL, PREPROCESS_ELAPSED};
 <span class="kw">use </span><span class="kw">crate</span>::proto::wal::WalHeader;
 <span class="kw">use </span><span class="kw">crate</span>::region::{
     CompactContext, RecoveredMetadata, RecoveredMetadataMap, RegionManifest, SharedDataRef,
@@ -1744,7 +1744,7 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         writer_ctx: <span class="kw-2">&amp;</span>WriterContext&lt;<span class="lifetime">&#39;_</span>, S&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>_timer = <span class="macro">common_telemetry::timer!</span>(PREPROCESS_ELAPSED);
+        <span class="kw">let </span>_timer = PREPROCESS_ELAPSED.start_timer();
 
         <span class="kw">let </span>version_control = writer_ctx.version_control();
         <span class="comment">// Check whether memtable is full or flush should be triggered. We need to do this first since
@@ -1804,7 +1804,9 @@
         <span class="comment">// Freeze all mutable memtables so we can flush them later.
         </span>version_control.freeze_mutable(new_mutable);
 
-        <span class="macro">increment_counter!</span>(FLUSH_REQUESTS_TOTAL, FLUSH_REASON =&gt; reason.as_str());
+        FLUSH_REQUESTS_TOTAL
+            .with_label_values(<span class="kw-2">&amp;</span>[reason.as_str()])
+            .inc();
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(flush_handle) = <span class="self">self</span>.flush_handle.take() {
             <span class="comment">// Previous flush job is incomplete, wait util it is finished.
