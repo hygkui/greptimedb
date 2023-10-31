@@ -200,8 +200,6 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -222,7 +220,6 @@
 <span class="kw">use </span>api::v1::meta::ddl_task_server::DdlTaskServer;
 <span class="kw">use </span>api::v1::meta::heartbeat_server::HeartbeatServer;
 <span class="kw">use </span>api::v1::meta::lock_server::LockServer;
-<span class="kw">use </span>api::v1::meta::router_server::RouterServer;
 <span class="kw">use </span>api::v1::meta::store_server::StoreServer;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>etcd_client::Client;
@@ -356,7 +353,6 @@
     tonic::transport::Server::builder()
         .accept_http1(<span class="bool-val">true</span>) <span class="comment">// for admin services
         </span>.add_service(HeartbeatServer::new(meta_srv.clone()))
-        .add_service(RouterServer::new(meta_srv.clone()))
         .add_service(StoreServer::new(meta_srv.clone()))
         .add_service(ClusterServer::new(meta_srv.clone()))
         .add_service(LockServer::new(meta_srv.clone()))

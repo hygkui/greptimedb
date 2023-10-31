@@ -344,6 +344,9 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -367,6 +370,7 @@
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::router::{convert_to_region_map, RegionRoutes};
 <span class="kw">use </span>common_query::prelude::Expr;
+<span class="kw">use </span>common_telemetry::timer;
 <span class="kw">use </span>datafusion_expr::{BinaryExpr, Expr <span class="kw">as </span>DfExpr, Operator};
 <span class="kw">use </span>datatypes::prelude::Value;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -375,6 +379,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::columns::RangeColumnsPartitionRule;
 <span class="kw">use </span><span class="kw">crate</span>::error::{FindLeaderSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_TABLE_ROUTE_GET;
 <span class="kw">use </span><span class="kw">crate</span>::partition::{PartitionBound, PartitionDef, PartitionExpr};
 <span class="kw">use </span><span class="kw">crate</span>::range::RangePartitionRule;
 <span class="kw">use </span><span class="kw">crate</span>::splitter::RowSplitter;
@@ -412,6 +417,7 @@
 
     <span class="doccomment">/// Find table route of given table name.
     </span><span class="kw">pub async fn </span>find_table_route(<span class="kw-2">&amp;</span><span class="self">self</span>, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;RegionRoutes&gt; {
+        <span class="kw">let </span>_timer = <span class="macro">timer!</span>(METRIC_TABLE_ROUTE_GET);
         <span class="kw">let </span>route = <span class="self">self
             </span>.table_route_manager
             .get(table_id)

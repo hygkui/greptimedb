@@ -784,10 +784,6 @@
 <a href="#784" id="784">784</a>
 <a href="#785" id="785">785</a>
 <a href="#786" id="786">786</a>
-<a href="#787" id="787">787</a>
-<a href="#788" id="788">788</a>
-<a href="#789" id="789">789</a>
-<a href="#790" id="790">790</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1201,7 +1197,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::Channel;
     <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvBackendAdapter, KvStoreRef};
     <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
-    <span class="kw">use </span><span class="kw">crate</span>::table_routes;
+    <span class="kw">use </span><span class="kw">crate</span>::test_util;
 
     <span class="kw">struct </span>RandomNodeSelector {
         nodes: Vec&lt;Peer&gt;,
@@ -1287,11 +1283,7 @@
             <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(
                 KvBackendAdapter::wrap(kv_store.clone()),
             ));
-            table_routes::tests::prepare_table_region_and_info_value(
-                <span class="kw-2">&amp;</span>table_metadata_manager,
-                table,
-            )
-            .<span class="kw">await</span>;
+            test_util::prepare_table_region_and_info_value(<span class="kw-2">&amp;</span>table_metadata_manager, table).<span class="kw">await</span>;
             <span class="kw">let </span>region_distribution = table_metadata_manager
                 .table_route_manager()
                 .get_region_distribution(<span class="number">1</span>)
