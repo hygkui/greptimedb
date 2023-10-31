@@ -273,6 +273,10 @@
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
 <a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -367,6 +371,10 @@
     <span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), BoxedError&gt; {
         <span class="self">self</span>.inner.stop().<span class="kw">await</span>.map_err(BoxedError::new)
     }
+
+    <span class="kw">async fn </span>region_disk_usage(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;i64&gt; {
+        <span class="prelude-val">None
+    </span>}
 
     <span class="kw">fn </span>set_writable(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, writable: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(), BoxedError&gt; {
         <span class="self">self</span>.inner

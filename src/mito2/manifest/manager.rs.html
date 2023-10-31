@@ -813,7 +813,7 @@
     }
 
     <span class="doccomment">/// Returns total manifest size.
-    </span><span class="kw">pub async fn </span>manifest_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+    </span><span class="kw">pub async fn </span>manifest_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
         <span class="kw">let </span>inner = <span class="self">self</span>.inner.read().<span class="kw">await</span>;
         inner.total_manifest_size()
     }
@@ -1274,7 +1274,7 @@
         manager.validate_manifest(<span class="kw-2">&amp;</span>new_metadata, <span class="number">1</span>).<span class="kw">await</span>;
 
         <span class="comment">// get manifest size
-        </span><span class="kw">let </span>manifest_size = manager.manifest_size().<span class="kw">await</span>;
+        </span><span class="kw">let </span>manifest_size = manager.manifest_usage().<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(manifest_size, manifest_dir_usage(<span class="kw-2">&amp;</span>manifest_dir).<span class="kw">await</span>);
 
         <span class="comment">// update 10 times nop_action to trigger checkpoint
@@ -1294,7 +1294,7 @@
         }
 
         <span class="comment">// check manifest size again
-        </span><span class="kw">let </span>manifest_size = manager.manifest_size().<span class="kw">await</span>;
+        </span><span class="kw">let </span>manifest_size = manager.manifest_usage().<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(manifest_size, manifest_dir_usage(<span class="kw-2">&amp;</span>manifest_dir).<span class="kw">await</span>);
 
         <span class="comment">// Reopen the manager,
@@ -1308,7 +1308,7 @@
         manager.validate_manifest(<span class="kw-2">&amp;</span>new_metadata, <span class="number">11</span>).<span class="kw">await</span>;
 
         <span class="comment">// get manifest size again
-        </span><span class="kw">let </span>manifest_size = manager.manifest_size().<span class="kw">await</span>;
+        </span><span class="kw">let </span>manifest_size = manager.manifest_usage().<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(manifest_size, <span class="number">1312</span>);
     }
 }

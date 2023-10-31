@@ -382,6 +382,14 @@
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
 <a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -664,15 +672,23 @@
 
     <span class="kw">async fn </span>load_region_stats(region_server: <span class="kw-2">&amp;</span>RegionServer) -&gt; Vec&lt;RegionStat&gt; {
         <span class="kw">let </span>regions = region_server.opened_regions();
-        regions
-            .into_iter()
-            .map(|(region_id, engine)| RegionStat {
+
+        <span class="kw">let </span><span class="kw-2">mut </span>region_stats = Vec::new();
+        <span class="kw">for </span>(region_id, engine) <span class="kw">in </span>regions {
+            <span class="kw">let </span>approximate_bytes = region_server
+                .region_disk_usage(region_id)
+                .<span class="kw">await
+                </span>.unwrap_or(<span class="number">0</span>);
+            <span class="kw">let </span>region_stat = RegionStat {
                 region_id: region_id.as_u64(),
                 engine,
+                approximate_bytes,
                 <span class="comment">// TODO(ruihang): scratch more info
                 </span>..Default::default()
-            })
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+            };
+            region_stats.push(region_stat);
+        }
+        region_stats
     }
 
     <span class="kw">pub async fn </span>close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {

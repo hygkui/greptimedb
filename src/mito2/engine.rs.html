@@ -254,6 +254,27 @@
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -314,6 +335,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{RecvSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{HANDLE_REQUEST_ELAPSED, TYPE_LABEL};
 <span class="kw">use </span><span class="kw">crate</span>::read::scan_region::{ScanRegion, Scanner};
+<span class="kw">use </span><span class="kw">crate</span>::region::RegionUsage;
 <span class="kw">use </span><span class="kw">crate</span>::request::WorkerRequest;
 <span class="kw">use </span><span class="kw">crate</span>::worker::WorkerGroup;
 
@@ -340,6 +362,17 @@
     <span class="doccomment">/// Returns true if the specific region exists.
     </span><span class="kw">pub fn </span>is_region_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; bool {
         <span class="self">self</span>.inner.workers.is_region_exists(region_id)
+    }
+
+    <span class="doccomment">/// Returns the region disk/memory usage information.
+    </span><span class="kw">pub async fn </span>get_region_usage(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;RegionUsage&gt; {
+        <span class="kw">let </span>region = <span class="self">self
+            </span>.inner
+            .workers
+            .get_region(region_id)
+            .context(RegionNotFoundSnafu { region_id })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(region.region_usage().<span class="kw">await</span>)
     }
 
     <span class="doccomment">/// Returns a scanner to scan for `request`.
@@ -475,6 +508,15 @@
     /// automatically shutdown.)
     </span><span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::result::Result&lt;(), BoxedError&gt; {
         <span class="self">self</span>.inner.stop().<span class="kw">await</span>.map_err(BoxedError::new)
+    }
+
+    <span class="kw">async fn </span>region_disk_usage(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;i64&gt; {
+        <span class="kw">let </span>size = <span class="self">self
+            </span>.get_region_usage(region_id)
+            .<span class="kw">await
+            </span>.map(|usage| usage.disk_usage())
+            .ok()<span class="question-mark">?</span>;
+        size.try_into().ok()
     }
 
     <span class="kw">fn </span>set_writable(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, writable: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(), BoxedError&gt; {
