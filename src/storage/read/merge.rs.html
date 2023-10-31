@@ -824,6 +824,8 @@
 <a href="#824" id="824">824</a>
 <a href="#825" id="825">825</a>
 <a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1408,7 +1410,9 @@
                 <span class="comment">// Now key range of this node is behind the hottest node&#39;s.
                 </span>node.is_behind(hottest)
             } <span class="kw">else </span>{
-                <span class="bool-val">false
+                <span class="comment">// Setting this to false should not affect correctness but performance because
+                // `refille_hot()` ensures the hottest node is correct.
+                </span><span class="bool-val">true
             </span>};
 
             <span class="kw">if </span>node_is_cold {
