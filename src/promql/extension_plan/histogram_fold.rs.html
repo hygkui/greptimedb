@@ -968,7 +968,7 @@
 /// Due to the folding or sampling, the output rows number will become `input_rows` / `bucket_num`.
 ///
 /// # Requirement
-/// - Input should be sorted on `&lt;tag list&gt;, le ASC, ts`.
+/// - Input should be sorted on `&lt;tag list&gt;, ts, le ASC`.
 /// - The value set of `le` should be same. I.e., buckets of every series should be same.
 ///
 /// [1]: https://prometheus.io/docs/concepts/metric_types/#histogram
@@ -1164,6 +1164,14 @@
                 options: <span class="prelude-val">None</span>,
             })
             .collect::&lt;Vec&lt;PhysicalSortRequirement&gt;&gt;();
+        <span class="comment">// add ts
+        </span>cols.push(PhysicalSortRequirement {
+            expr: Arc::new(PhyColumn::new(
+                <span class="self">self</span>.input.schema().field(<span class="self">self</span>.ts_column_index).name(),
+                <span class="self">self</span>.ts_column_index,
+            )),
+            options: <span class="prelude-val">None</span>,
+        });
         <span class="comment">// add le ASC
         </span>cols.push(PhysicalSortRequirement {
             expr: Arc::new(PhyCast::new(
@@ -1178,14 +1186,6 @@
                 descending: <span class="bool-val">false</span>,  <span class="comment">// +INF in the last
                 </span>nulls_first: <span class="bool-val">false</span>, <span class="comment">// not nullable
             </span>}),
-        });
-        <span class="comment">// add ts
-        </span>cols.push(PhysicalSortRequirement {
-            expr: Arc::new(PhyColumn::new(
-                <span class="self">self</span>.input.schema().field(<span class="self">self</span>.ts_column_index).name(),
-                <span class="self">self</span>.ts_column_index,
-            )),
-            options: <span class="prelude-val">None</span>,
         });
 
         <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(cols)]
