@@ -346,6 +346,36 @@
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -362,37 +392,34 @@
 
 </span><span class="doccomment">//! Parquet reader.
 
-</span><span class="kw">use </span>std::collections::HashSet;
-<span class="kw">use </span>std::ops::Range;
+</span><span class="kw">use </span>std::collections::{HashSet, VecDeque};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>async_compat::CompatExt;
+<span class="kw">use </span>async_compat::{Compat, CompatExt};
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>bytes::Bytes;
 <span class="kw">use </span>common_time::range::TimestampRange;
 <span class="kw">use </span>datatypes::arrow::record_batch::RecordBatch;
-<span class="kw">use </span>futures::future::BoxFuture;
-<span class="kw">use </span>futures::stream::BoxStream;
-<span class="kw">use </span>futures::{FutureExt, TryStreamExt};
-<span class="kw">use </span>object_store::ObjectStore;
+<span class="kw">use </span>object_store::{ObjectStore, Reader};
+<span class="kw">use </span>parquet::arrow::arrow_reader::ParquetRecordBatchReader;
 <span class="kw">use </span>parquet::arrow::async_reader::AsyncFileReader;
-<span class="kw">use </span>parquet::arrow::{ParquetRecordBatchStreamBuilder, ProjectionMask};
-<span class="kw">use </span>parquet::errors::ParquetError;
+<span class="kw">use </span>parquet::arrow::{parquet_to_arrow_field_levels, FieldLevels, ProjectionMask};
 <span class="kw">use </span>parquet::file::metadata::ParquetMetaData;
 <span class="kw">use </span>parquet::format::KeyValue;
-<span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::metadata::{RegionMetadata, RegionMetadataRef};
-<span class="kw">use </span>store_api::storage::{ColumnId, RegionId};
+<span class="kw">use </span>store_api::storage::ColumnId;
 <span class="kw">use </span>table::predicate::Predicate;
 <span class="kw">use </span>tokio::io::BufReader;
 
 <span class="kw">use </span><span class="kw">crate</span>::cache::CacheManagerRef;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    InvalidMetadataSnafu, InvalidParquetSnafu, OpenDalSnafu, ReadParquetSnafu, <span class="prelude-ty">Result</span>,
+    ArrowReaderSnafu, InvalidMetadataSnafu, InvalidParquetSnafu, OpenDalSnafu, ReadParquetSnafu,
+    <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use </span><span class="kw">crate</span>::read::{Batch, BatchReader};
-<span class="kw">use </span><span class="kw">crate</span>::sst::file::{FileHandle, FileId};
+<span class="kw">use </span><span class="kw">crate</span>::sst::file::FileHandle;
 <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::format::ReadFormat;
+<span class="kw">use </span><span class="kw">crate</span>::sst::parquet::row_group::InMemoryRowGroup;
 <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::stats::RowGroupPruningStats;
 <span class="kw">use </span><span class="kw">crate</span>::sst::parquet::{DEFAULT_READ_BATCH_SIZE, PARQUET_METADATA_KEY};
 
@@ -462,47 +489,23 @@
     <span class="doccomment">/// Builds and initializes a [ParquetReader].
     ///
     /// This needs to perform IO operation.
-    </span><span class="kw">pub async fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ParquetReader&gt; {
+    </span><span class="kw">pub async fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ParquetReader&gt; {
         <span class="kw">let </span>file_path = <span class="self">self</span>.file_handle.file_path(<span class="kw-2">&amp;</span><span class="self">self</span>.file_dir);
-        <span class="kw">let </span>(stream, read_format) = <span class="self">self</span>.init_stream(<span class="kw-2">&amp;</span>file_path).<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(ParquetReader {
-            file_path,
-            _file_handle: <span class="self">self</span>.file_handle,
-            stream,
-            read_format,
-            batches: Vec::new(),
-        })
-    }
-
-    <span class="doccomment">/// Initializes the parquet stream, also creates a [ReadFormat] to decode record batches.
-    </span><span class="kw">async fn </span>init_stream(<span class="kw-2">&amp;</span><span class="self">self</span>, file_path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(BoxedRecordBatchStream, ReadFormat)&gt; {
-        <span class="comment">// Creates parquet stream builder.
+        <span class="comment">// Now we create a reader to read the whole file.
         </span><span class="kw">let </span>reader = <span class="self">self
             </span>.object_store
-            .reader(file_path)
+            .reader(<span class="kw-2">&amp;</span>file_path)
             .<span class="kw">await
             </span>.context(OpenDalSnafu)<span class="question-mark">?
             </span>.compat();
-        <span class="kw">let </span>reader = BufReader::new(reader);
-        <span class="kw">let </span>reader = AsyncFileReaderCache {
-            reader,
-            <span class="comment">// TODO(yingwen): Sets the metadata when we implement row group level reader.
-            </span>metadata: <span class="prelude-val">None</span>,
-            cache: <span class="self">self</span>.cache_manager.clone(),
-            region_id: <span class="self">self</span>.file_handle.region_id(),
-            file_id: <span class="self">self</span>.file_handle.file_id(),
-        };
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = ParquetRecordBatchStreamBuilder::new(reader)
-            .<span class="kw">await
-            </span>.context(ReadParquetSnafu { path: file_path })<span class="question-mark">?
-            </span>.with_batch_size(DEFAULT_READ_BATCH_SIZE);
-
-        <span class="comment">// Decode region metadata.
-        </span><span class="kw">let </span>key_value_meta = builder.metadata().file_metadata().key_value_metadata();
-        <span class="kw">let </span>region_meta = <span class="self">self</span>.get_region_metadata(file_path, key_value_meta)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>column_ids: HashSet&lt;<span class="kw">_</span>&gt; = <span class="self">self
+        <span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(reader);
+        <span class="comment">// Loads parquet metadata of the file.
+        </span><span class="kw">let </span>parquet_meta = <span class="self">self</span>.read_parquet_metadata(<span class="kw-2">&amp;mut </span>reader, <span class="kw-2">&amp;</span>file_path).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="comment">// Decodes region metadata.
+        </span><span class="kw">let </span>key_value_meta = parquet_meta.file_metadata().key_value_metadata();
+        <span class="kw">let </span>region_meta = <span class="self">Self</span>::get_region_metadata(<span class="kw-2">&amp;</span>file_path, key_value_meta)<span class="question-mark">?</span>;
+        <span class="comment">// Computes column ids to read.
+        </span><span class="kw">let </span>column_ids: HashSet&lt;<span class="kw">_</span>&gt; = <span class="self">self
             </span>.projection
             .as_ref()
             .map(|p| p.iter().cloned().collect())
@@ -513,56 +516,59 @@
                     .map(|c| c.column_id)
                     .collect()
             });
-
         <span class="kw">let </span>read_format = ReadFormat::new(Arc::new(region_meta));
-        <span class="comment">// The arrow schema converted from the region meta should be the same as parquet&#39;s.
-        // We only compare fields to avoid schema&#39;s metadata breaks the comparison.
-        </span><span class="macro">ensure!</span>(
-            read_format.arrow_schema().fields() == builder.schema().fields(),
-            InvalidParquetSnafu {
-                file: file_path,
-                reason: <span class="macro">format!</span>(
-                    <span class="string">&quot;schema mismatch, expect: {:?}, given: {:?}&quot;</span>,
-                    read_format.arrow_schema().fields(),
-                    builder.schema().fields()
-                )
-            }
-        );
 
-        <span class="comment">// Prune row groups by metadata.
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(predicate) = <span class="kw-2">&amp;</span><span class="self">self</span>.predicate {
-            <span class="kw">let </span>stats = RowGroupPruningStats::new(
-                builder.metadata().row_groups(),
-                <span class="kw-2">&amp;</span>read_format,
-                column_ids,
-            );
+        <span class="comment">// Prunes row groups by metadata.
+        </span><span class="kw">let </span>row_groups: VecDeque&lt;<span class="kw">_</span>&gt; = <span class="kw">if let </span><span class="prelude-val">Some</span>(predicate) = <span class="kw-2">&amp;</span><span class="self">self</span>.predicate {
+            <span class="kw">let </span>stats =
+                RowGroupPruningStats::new(parquet_meta.row_groups(), <span class="kw-2">&amp;</span>read_format, column_ids);
 
-            <span class="kw">let </span>pruned_row_groups = predicate
+            predicate
                 .prune_with_stats(<span class="kw-2">&amp;</span>stats, read_format.metadata().schema.arrow_schema())
                 .into_iter()
                 .enumerate()
                 .filter_map(|(idx, valid)| <span class="kw">if </span>valid { <span class="prelude-val">Some</span>(idx) } <span class="kw">else </span>{ <span class="prelude-val">None </span>})
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            builder = builder.with_row_groups(pruned_row_groups);
-        }
+                .collect()
+        } <span class="kw">else </span>{
+            (<span class="number">0</span>..parquet_meta.num_row_groups()).collect()
+        };
 
-        <span class="kw">let </span>parquet_schema_desc = builder.metadata().file_metadata().schema_descr();
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(column_ids) = <span class="self">self</span>.projection.as_ref() {
+        <span class="comment">// Computes the projection mask.
+        </span><span class="kw">let </span>parquet_schema_desc = parquet_meta.file_metadata().schema_descr();
+        <span class="kw">let </span>projection_mask = <span class="kw">if let </span><span class="prelude-val">Some</span>(column_ids) = <span class="self">self</span>.projection.as_ref() {
             <span class="kw">let </span>indices = read_format.projection_indices(column_ids.iter().copied());
-            <span class="kw">let </span>projection_mask = ProjectionMask::roots(parquet_schema_desc, indices);
-            builder = builder.with_projection(projection_mask);
-        }
+            <span class="comment">// Now we assumes we don&#39;t have nested schemas.
+            </span>ProjectionMask::roots(parquet_schema_desc, indices)
+        } <span class="kw">else </span>{
+            ProjectionMask::all()
+        };
 
-        <span class="kw">let </span>stream = builder
-            .build()
-            .context(ReadParquetSnafu { path: file_path })<span class="question-mark">?</span>;
+        <span class="comment">// Computes the field levels.
+        </span><span class="kw">let </span>hint = <span class="prelude-val">Some</span>(read_format.arrow_schema().fields());
+        <span class="kw">let </span>field_levels =
+            parquet_to_arrow_field_levels(parquet_schema_desc, projection_mask.clone(), hint)
+                .context(ReadParquetSnafu { path: <span class="kw-2">&amp;</span>file_path })<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>((Box::pin(stream), read_format))
+        <span class="kw">let </span>reader_builder = RowGroupReaderBuilder {
+            file_path,
+            parquet_meta,
+            file_reader: reader,
+            projection: projection_mask,
+            field_levels,
+        };
+
+        <span class="prelude-val">Ok</span>(ParquetReader {
+            _file_handle: <span class="self">self</span>.file_handle.clone(),
+            row_groups,
+            read_format,
+            reader_builder,
+            current_reader: <span class="prelude-val">None</span>,
+            batches: VecDeque::new(),
+        })
     }
 
-    <span class="doccomment">/// Decode region metadata from key value.
+    <span class="doccomment">/// Decodes region metadata from key value.
     </span><span class="kw">fn </span>get_region_metadata(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
         file_path: <span class="kw-2">&amp;</span>str,
         key_value_meta: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Vec&lt;KeyValue&gt;&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;RegionMetadata&gt; {
@@ -587,49 +593,119 @@
 
         RegionMetadata::from_json(json).context(InvalidMetadataSnafu)
     }
+
+    <span class="doccomment">/// Reads parquet metadata of specific file.
+    </span><span class="kw">async fn </span>read_parquet_metadata(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        reader: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>AsyncFileReader,
+        file_path: <span class="kw-2">&amp;</span>str,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;ParquetMetaData&gt;&gt; {
+        <span class="comment">// Tries to get from global cache.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(metadata) = <span class="self">self</span>.cache_manager.as_ref().and_then(|cache| {
+            cache.get_parquet_meta_data(<span class="self">self</span>.file_handle.region_id(), <span class="self">self</span>.file_handle.file_id())
+        }) {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(metadata);
+        }
+
+        <span class="comment">// Cache miss, get from the reader.
+        </span><span class="kw">let </span>metadata = reader
+            .get_metadata()
+            .<span class="kw">await
+            </span>.context(ReadParquetSnafu { path: file_path })<span class="question-mark">?</span>;
+        <span class="comment">// Cache the metadata.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(cache) = <span class="kw-2">&amp;</span><span class="self">self</span>.cache_manager {
+            cache.put_parquet_meta_data(
+                <span class="self">self</span>.file_handle.region_id(),
+                <span class="self">self</span>.file_handle.file_id(),
+                metadata.clone(),
+            );
+        }
+
+        <span class="prelude-val">Ok</span>(metadata)
+    }
 }
 
-<span class="kw">type </span>BoxedRecordBatchStream = BoxStream&lt;<span class="lifetime">&#39;static</span>, std::result::Result&lt;RecordBatch, ParquetError&gt;&gt;;
+<span class="doccomment">/// Builder to build a [ParquetRecordBatchReader] for a row group.
+</span><span class="kw">struct </span>RowGroupReaderBuilder {
+    <span class="doccomment">/// Path of the file.
+    </span>file_path: String,
+    <span class="doccomment">/// Metadata of the parquet file.
+    </span>parquet_meta: Arc&lt;ParquetMetaData&gt;,
+    <span class="doccomment">/// Reader to get data.
+    </span>file_reader: BufReader&lt;Compat&lt;Reader&gt;&gt;,
+    <span class="doccomment">/// Projection mask.
+    </span>projection: ProjectionMask,
+    <span class="doccomment">/// Field levels to read.
+    </span>field_levels: FieldLevels,
+}
+
+<span class="kw">impl </span>RowGroupReaderBuilder {
+    <span class="doccomment">/// Path of the file to read.
+    </span><span class="kw">fn </span>file_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.file_path
+    }
+
+    <span class="doccomment">/// Builds a [ParquetRecordBatchReader] to read the row group at `row_group_idx`.
+    </span><span class="kw">async fn </span>build(<span class="kw-2">&amp;mut </span><span class="self">self</span>, row_group_idx: usize) -&gt; <span class="prelude-ty">Result</span>&lt;ParquetRecordBatchReader&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>row_group = InMemoryRowGroup::create(<span class="kw-2">&amp;</span><span class="self">self</span>.parquet_meta, row_group_idx);
+        <span class="comment">// Fetches data into memory.
+        </span>row_group
+            .fetch(<span class="kw-2">&amp;mut </span><span class="self">self</span>.file_reader, <span class="kw-2">&amp;</span><span class="self">self</span>.projection, <span class="prelude-val">None</span>)
+            .<span class="kw">await
+            </span>.context(ReadParquetSnafu {
+                path: <span class="kw-2">&amp;</span><span class="self">self</span>.file_path,
+            })<span class="question-mark">?</span>;
+
+        <span class="comment">// Builds the parquet reader.
+        // Now the row selection is None.
+        </span>ParquetRecordBatchReader::try_new_with_row_groups(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.field_levels,
+            <span class="kw-2">&amp;</span>row_group,
+            DEFAULT_READ_BATCH_SIZE,
+            <span class="prelude-val">None</span>,
+        )
+        .context(ReadParquetSnafu {
+            path: <span class="kw-2">&amp;</span><span class="self">self</span>.file_path,
+        })
+    }
+}
 
 <span class="doccomment">/// Parquet batch reader to read our SST format.
 </span><span class="kw">pub struct </span>ParquetReader {
-    <span class="doccomment">/// Path of the file.
-    </span>file_path: String,
     <span class="doccomment">/// SST file to read.
     ///
     /// Holds the file handle to avoid the file purge purge it.
     </span>_file_handle: FileHandle,
-    <span class="doccomment">/// Inner parquet record batch stream.
-    </span>stream: BoxedRecordBatchStream,
+    <span class="doccomment">/// Indices of row groups to read.
+    </span>row_groups: VecDeque&lt;usize&gt;,
     <span class="doccomment">/// Helper to read record batches.
     ///
     /// Not `None` if [ParquetReader::stream] is not `None`.
     </span>read_format: ReadFormat,
+    <span class="doccomment">/// Builder to build row group readers.
+    </span>reader_builder: RowGroupReaderBuilder,
+    <span class="doccomment">/// Reader of current row group.
+    </span>current_reader: <span class="prelude-ty">Option</span>&lt;ParquetRecordBatchReader&gt;,
     <span class="doccomment">/// Buffered batches to return.
-    </span>batches: Vec&lt;Batch&gt;,
+    </span>batches: VecDeque&lt;Batch&gt;,
 }
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>BatchReader <span class="kw">for </span>ParquetReader {
     <span class="kw">async fn </span>next_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Batch&gt;&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(batch) = <span class="self">self</span>.batches.pop() {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(batch) = <span class="self">self</span>.batches.pop_front() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(batch));
         }
 
         <span class="comment">// We need to fetch next record batch and convert it to batches.
-        </span><span class="kw">let </span><span class="prelude-val">Some</span>(record_batch) = <span class="self">self</span>.stream.try_next().<span class="kw">await</span>.context(ReadParquetSnafu {
-            path: <span class="kw-2">&amp;</span><span class="self">self</span>.file_path,
-        })<span class="question-mark">?
-        </span><span class="kw">else </span>{
+        </span><span class="kw">let </span><span class="prelude-val">Some</span>(record_batch) = <span class="self">self</span>.fetch_next_record_batch().<span class="kw">await</span><span class="question-mark">? </span><span class="kw">else </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         };
 
         <span class="self">self</span>.read_format
             .convert_record_batch(<span class="kw-2">&amp;</span>record_batch, <span class="kw-2">&amp;mut </span><span class="self">self</span>.batches)<span class="question-mark">?</span>;
-        <span class="comment">// Reverse batches so we could pop it.
-        </span><span class="self">self</span>.batches.reverse();
 
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.batches.pop())
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.batches.pop_front())
     }
 }
 
@@ -638,60 +714,44 @@
     </span><span class="kw">pub fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>RegionMetadataRef {
         <span class="self">self</span>.read_format.metadata()
     }
-}
 
-<span class="doccomment">/// Cache layer for parquet&#39;s [AsyncFileReader].
-</span><span class="kw">struct </span>AsyncFileReaderCache&lt;T&gt; {
-    <span class="doccomment">/// Underlying async file reader.
-    </span>reader: T,
-    <span class="doccomment">/// Parquet metadata cached locally.
-    </span>metadata: <span class="prelude-ty">Option</span>&lt;Arc&lt;ParquetMetaData&gt;&gt;,
-    <span class="doccomment">/// Global cache.
-    </span>cache: <span class="prelude-ty">Option</span>&lt;CacheManagerRef&gt;,
-    <span class="doccomment">/// Id of the region.
-    </span>region_id: RegionId,
-    <span class="doccomment">/// Id of the file to read.
-    </span>file_id: FileId,
-}
-
-<span class="kw">impl</span>&lt;T: AsyncFileReader&gt; AsyncFileReader <span class="kw">for </span>AsyncFileReaderCache&lt;T&gt; {
-    <span class="kw">fn </span>get_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: Range&lt;usize&gt;) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span>&lt;Bytes, ParquetError&gt;&gt; {
-        <span class="self">self</span>.reader.get_bytes(range)
-    }
-
-    <span class="kw">fn </span>get_byte_ranges(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        ranges: Vec&lt;Range&lt;usize&gt;&gt;,
-    ) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span>&lt;Vec&lt;Bytes&gt;, ParquetError&gt;&gt; {
-        <span class="self">self</span>.reader.get_byte_ranges(ranges)
-    }
-
-    <span class="kw">fn </span>get_metadata(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span>&lt;Arc&lt;ParquetMetaData&gt;, ParquetError&gt;&gt; {
-        <span class="kw">async </span>{
-            <span class="comment">// Tries to get from local cache.
-            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(metadata) = <span class="kw-2">&amp;</span><span class="self">self</span>.metadata {
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(metadata.clone());
+    <span class="doccomment">/// Tries to fetch next [RecordBatch] from the reader.
+    ///
+    /// If the reader is exhausted, reads next row group.
+    </span><span class="kw">async fn </span>fetch_next_record_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;RecordBatch&gt;&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(row_group_reader) = <span class="kw-2">&amp;mut </span><span class="self">self</span>.current_reader {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(record_batch) =
+                row_group_reader
+                    .next()
+                    .transpose()
+                    .context(ArrowReaderSnafu {
+                        path: <span class="self">self</span>.reader_builder.file_path(),
+                    })<span class="question-mark">?
+            </span>{
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(record_batch));
             }
-
-            <span class="comment">// Tries to get from global cache.
-            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(metadata) = <span class="self">self
-                </span>.cache
-                .as_ref()
-                .and_then(|cache| cache.get_parquet_meta_data(<span class="self">self</span>.region_id, <span class="self">self</span>.file_id))
-            {
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(metadata);
-            }
-
-            <span class="comment">// Cache miss.
-            </span><span class="kw">let </span>metadata = <span class="self">self</span>.reader.get_metadata().<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="comment">// Cache the metadata.
-            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(cache) = <span class="kw-2">&amp;</span><span class="self">self</span>.cache {
-                cache.put_parquet_meta_data(<span class="self">self</span>.region_id, <span class="self">self</span>.file_id, metadata.clone());
-            }
-
-            <span class="prelude-val">Ok</span>(metadata)
         }
-        .boxed()
+
+        <span class="comment">// No more items in current row group, reads next row group.
+        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(row_group_idx) = <span class="self">self</span>.row_groups.pop_front() {
+            <span class="kw">let </span><span class="kw-2">mut </span>row_group_reader = <span class="self">self</span>.reader_builder.build(row_group_idx).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="prelude-val">Some</span>(record_batch) =
+                row_group_reader
+                    .next()
+                    .transpose()
+                    .context(ArrowReaderSnafu {
+                        path: <span class="self">self</span>.reader_builder.file_path(),
+                    })<span class="question-mark">?
+            </span><span class="kw">else </span>{
+                <span class="kw">continue</span>;
+            };
+
+            <span class="comment">// Sets current reader to this reader.
+            </span><span class="self">self</span>.current_reader = <span class="prelude-val">Some</span>(row_group_reader);
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(record_batch));
+        }
+
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 }
 </code></pre></div></section></main></body></html>

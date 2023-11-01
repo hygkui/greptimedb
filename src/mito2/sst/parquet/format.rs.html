@@ -801,6 +801,9 @@
 <a href="#801" id="801">801</a>
 <a href="#802" id="802">802</a>
 <a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -829,7 +832,7 @@
 //!
 //! We stores fields in the same order as [RegionMetadata::field_columns()](store_api::metadata::RegionMetadata::field_columns()).
 
-</span><span class="kw">use </span>std::collections::HashMap;
+</span><span class="kw">use </span>std::collections::{HashMap, VecDeque};
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::SemanticType;
@@ -941,7 +944,10 @@
         }
     }
 
-    <span class="doccomment">/// Gets the converted arrow schema.
+    <span class="doccomment">/// Gets the arrow schema of the SST file.
+    ///
+    /// This schema is computed from the region metadata but should be the same
+    /// as the arrow schema decoded from the file metadata.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>arrow_schema(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>SchemaRef {
         <span class="kw-2">&amp;</span><span class="self">self</span>.arrow_schema
     }
@@ -981,7 +987,7 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>convert_record_batch(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         record_batch: <span class="kw-2">&amp;</span>RecordBatch,
-        batches: <span class="kw-2">&amp;mut </span>Vec&lt;Batch&gt;,
+        batches: <span class="kw-2">&amp;mut </span>VecDeque&lt;Batch&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">debug_assert!</span>(batches.is_empty());
 
@@ -1052,7 +1058,7 @@
             }
 
             <span class="kw">let </span>batch = builder.build()<span class="question-mark">?</span>;
-            batches.push(batch);
+            batches.push_back(batch);
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -1571,7 +1577,7 @@
         <span class="macro">assert_eq!</span>(arrow_schema, <span class="kw-2">*</span>read_format.arrow_schema());
 
         <span class="kw">let </span>record_batch = RecordBatch::new_empty(arrow_schema);
-        <span class="kw">let </span><span class="kw-2">mut </span>batches = <span class="macro">vec!</span>[];
+        <span class="kw">let </span><span class="kw-2">mut </span>batches = VecDeque::new();
         read_format
             .convert_record_batch(<span class="kw-2">&amp;</span>record_batch, <span class="kw-2">&amp;mut </span>batches)
             .unwrap();
@@ -1593,14 +1599,14 @@
         </span>];
         <span class="kw">let </span>arrow_schema = build_test_arrow_schema();
         <span class="kw">let </span>record_batch = RecordBatch::try_new(arrow_schema, columns).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>batches = <span class="macro">vec!</span>[];
+        <span class="kw">let </span><span class="kw-2">mut </span>batches = VecDeque::new();
         read_format
             .convert_record_batch(<span class="kw-2">&amp;</span>record_batch, <span class="kw-2">&amp;mut </span>batches)
             .unwrap();
 
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[new_batch(<span class="string">b&quot;one&quot;</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>), new_batch(<span class="string">b&quot;two&quot;</span>, <span class="number">11</span>, <span class="number">10</span>, <span class="number">2</span>)],
-            batches
+            batches.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
         );
     }
 }

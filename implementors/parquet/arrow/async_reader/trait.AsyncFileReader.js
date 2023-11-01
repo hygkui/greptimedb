@@ -1,4 +1,3 @@
 (function() {var implementors = {
-"common_datasource":[["impl AsyncFileReader for <a class=\"struct\" href=\"common_datasource/file_format/parquet/struct.LazyParquetFileReader.html\" title=\"struct common_datasource::file_format::parquet::LazyParquetFileReader\">LazyParquetFileReader</a>"]],
-"mito2":[["impl&lt;T: AsyncFileReader&gt; AsyncFileReader for <a class=\"struct\" href=\"mito2/sst/parquet/reader/struct.AsyncFileReaderCache.html\" title=\"struct mito2::sst::parquet::reader::AsyncFileReaderCache\">AsyncFileReaderCache</a>&lt;T&gt;"]]
+"common_datasource":[["impl AsyncFileReader for <a class=\"struct\" href=\"common_datasource/file_format/parquet/struct.LazyParquetFileReader.html\" title=\"struct common_datasource::file_format::parquet::LazyParquetFileReader\">LazyParquetFileReader</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

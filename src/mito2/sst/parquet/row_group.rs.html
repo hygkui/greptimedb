@@ -228,6 +228,20 @@
 <a href="#228" id="228">228</a>
 <a href="#229" id="229">229</a>
 <a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -252,7 +266,7 @@
 <span class="kw">use </span>parquet::arrow::ProjectionMask;
 <span class="kw">use </span>parquet::column::page::{PageIterator, PageReader};
 <span class="kw">use </span>parquet::errors::{ParquetError, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span>parquet::file::metadata::RowGroupMetaData;
+<span class="kw">use </span>parquet::file::metadata::{ParquetMetaData, RowGroupMetaData};
 <span class="kw">use </span>parquet::file::reader::{ChunkReader, Length};
 <span class="kw">use </span>parquet::file::serialized_reader::SerializedPageReader;
 <span class="kw">use </span>parquet::format::PageLocation;
@@ -266,10 +280,25 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; InMemoryRowGroup&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="doccomment">/// Creates a new [InMemoryRowGroup] by `row_group_idx`.
+    ///
+    /// # Panics
+    /// Panics if the `row_group_idx` is invalid.
+    </span><span class="kw">pub fn </span>create(parquet_meta: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ParquetMetaData, row_group_idx: usize) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>metadata = parquet_meta.row_group(row_group_idx);
+        <span class="kw">let </span>page_locations = parquet_meta
+            .offset_index()
+            .map(|x| x[row_group_idx].as_slice());
+
+        <span class="self">Self </span>{
+            metadata,
+            row_count: metadata.num_rows() <span class="kw">as </span>usize,
+            column_chunks: <span class="macro">vec!</span>[<span class="prelude-val">None</span>; metadata.columns().len()],
+            page_locations,
+        }
+    }
+
     <span class="doccomment">/// Fetches the necessary column data into memory
-    </span><span class="comment">// TODO(yingwen): Fix clippy warnings.
-    </span><span class="attr">#[allow(clippy::filter_map_bool_then)]
-    #[allow(clippy::useless_conversion)]
     </span><span class="kw">pub async fn </span>fetch&lt;T: AsyncFileReader + Send&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         input: <span class="kw-2">&amp;mut </span>T,
@@ -286,26 +315,26 @@
                 .iter()
                 .zip(<span class="self">self</span>.metadata.columns())
                 .enumerate()
-                .filter_map(|(idx, (chunk, chunk_meta))| {
-                    (chunk.is_none() &amp;&amp; projection.leaf_included(idx)).then(|| {
-                        <span class="comment">// If the first page does not start at the beginning of the column,
-                        // then we need to also fetch a dictionary page.
-                        </span><span class="kw">let </span><span class="kw-2">mut </span>ranges = <span class="macro">vec!</span>[];
-                        <span class="kw">let </span>(start, _len) = chunk_meta.byte_range();
-                        <span class="kw">match </span>page_locations[idx].first() {
-                            <span class="prelude-val">Some</span>(first) <span class="kw">if </span>first.offset <span class="kw">as </span>u64 != start =&gt; {
-                                ranges.push(start <span class="kw">as </span>usize..first.offset <span class="kw">as </span>usize);
-                            }
-                            <span class="kw">_ </span>=&gt; (),
-                        }
-
-                        ranges.extend(selection.scan_ranges(<span class="kw-2">&amp;</span>page_locations[idx]));
-                        page_start_offsets.push(ranges.iter().map(|range| range.start).collect());
-
-                        ranges
-                    })
+                .filter(|<span class="kw-2">&amp;</span>(idx, (chunk, _chunk_meta))| {
+                    chunk.is_none() &amp;&amp; projection.leaf_included(idx)
                 })
-                .flatten()
+                .flat_map(|(idx, (_chunk, chunk_meta))| {
+                    <span class="comment">// If the first page does not start at the beginning of the column,
+                    // then we need to also fetch a dictionary page.
+                    </span><span class="kw">let </span><span class="kw-2">mut </span>ranges = <span class="macro">vec!</span>[];
+                    <span class="kw">let </span>(start, _len) = chunk_meta.byte_range();
+                    <span class="kw">match </span>page_locations[idx].first() {
+                        <span class="prelude-val">Some</span>(first) <span class="kw">if </span>first.offset <span class="kw">as </span>u64 != start =&gt; {
+                            ranges.push(start <span class="kw">as </span>usize..first.offset <span class="kw">as </span>usize);
+                        }
+                        <span class="kw">_ </span>=&gt; (),
+                    }
+
+                    ranges.extend(selection.scan_ranges(<span class="kw-2">&amp;</span>page_locations[idx]));
+                    page_start_offsets.push(ranges.iter().map(|range| range.start).collect());
+
+                    ranges
+                })
                 .collect();
 
             <span class="kw">let </span><span class="kw-2">mut </span>chunk_data = input.get_byte_ranges(fetch_ranges).<span class="kw">await</span><span class="question-mark">?</span>.into_iter();
@@ -324,7 +353,7 @@
 
                     <span class="kw-2">*</span>chunk = <span class="prelude-val">Some</span>(Arc::new(ColumnChunkData::Sparse {
                         length: <span class="self">self</span>.metadata.column(idx).byte_range().<span class="number">1 </span><span class="kw">as </span>usize,
-                        data: offsets.into_iter().zip(chunks.into_iter()).collect(),
+                        data: offsets.into_iter().zip(chunks).collect(),
                     }))
                 }
             }
@@ -333,12 +362,11 @@
                 </span>.column_chunks
                 .iter()
                 .enumerate()
-                .filter_map(|(idx, chunk)| {
-                    (chunk.is_none() &amp;&amp; projection.leaf_included(idx)).then(|| {
-                        <span class="kw">let </span>column = <span class="self">self</span>.metadata.column(idx);
-                        <span class="kw">let </span>(start, length) = column.byte_range();
-                        start <span class="kw">as </span>usize..(start + length) <span class="kw">as </span>usize
-                    })
+                .filter(|<span class="kw-2">&amp;</span>(idx, chunk)| chunk.is_none() &amp;&amp; projection.leaf_included(idx))
+                .map(|(idx, _chunk)| {
+                    <span class="kw">let </span>column = <span class="self">self</span>.metadata.column(idx);
+                    <span class="kw">let </span>(start, length) = column.byte_range();
+                    start <span class="kw">as </span>usize..(start + length) <span class="kw">as </span>usize
                 })
                 .collect();
 
