@@ -480,7 +480,7 @@
 <span class="kw">use </span>api::v1::value::ValueData;
 <span class="kw">use </span>api::v1::{ColumnDataType, RowInsertRequests};
 <span class="kw">use </span>common_grpc::writer::Precision;
-<span class="kw">use </span>common_time::time::Time;
+<span class="kw">use </span>common_time::timestamp::Timestamp;
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest;
 <span class="kw">use </span>opentelemetry_proto::tonic::common::v1::any_value::Value <span class="kw">as </span>OtlpValue;
@@ -556,7 +556,7 @@
     <span class="kw">fn </span>from(event: <span class="kw-2">&amp;</span>Event) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             name: event.name.clone(),
-            time: Time::new_nanosecond(event.time_unix_nano <span class="kw">as </span>i64).to_iso8601_string(),
+            time: Timestamp::new_nanosecond(event.time_unix_nano <span class="kw">as </span>i64).to_iso8601_string(),
             attributes: vec_kv_to_string(<span class="kw-2">&amp;</span>event.attributes),
         }
     }
@@ -778,7 +778,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>common_time::time::Time;
+    <span class="kw">use </span>common_time::timestamp::Timestamp;
     <span class="kw">use </span>opentelemetry_proto::tonic::common::v1::{
         any_value, AnyValue, ArrayValue, KeyValue, KeyValueList,
     };
@@ -894,7 +894,7 @@
 
         <span class="kw">let </span>span_events = <span class="macro">vec!</span>[SpanEvent {
             name: event_name.clone(),
-            time: Time::new_nanosecond(time_unix_nano <span class="kw">as </span>i64).to_iso8601_string(),
+            time: Timestamp::new_nanosecond(time_unix_nano <span class="kw">as </span>i64).to_iso8601_string(),
             attributes: vec_kv_to_string(<span class="kw-2">&amp;</span>event_attributes),
         }];
         <span class="kw">let </span>expect_string = serde_json::to_string(<span class="kw-2">&amp;</span>span_events).unwrap_or_default();
