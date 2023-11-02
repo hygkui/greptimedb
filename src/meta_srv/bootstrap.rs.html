@@ -200,6 +200,9 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -222,6 +225,7 @@
 <span class="kw">use </span>api::v1::meta::lock_server::LockServer;
 <span class="kw">use </span>api::v1::meta::store_server::StoreServer;
 <span class="kw">use </span>common_base::Plugins;
+<span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>etcd_client::Client;
 <span class="kw">use </span>servers::configurator::ConfiguratorRef;
 <span class="kw">use </span>servers::http::{HttpServer, HttpServerBuilder};
@@ -335,6 +339,8 @@
     <span class="kw">let </span>listener = TcpListener::bind(bind_addr)
         .<span class="kw">await
         </span>.context(error::TcpBindSnafu { addr: bind_addr })<span class="question-mark">?</span>;
+
+    <span class="macro">info!</span>(<span class="string">&quot;gRPC server is bound to: {bind_addr}&quot;</span>);
 
     <span class="kw">let </span>incoming =
         TcpIncoming::from_listener(listener, <span class="bool-val">true</span>, <span class="prelude-val">None</span>).context(error::TcpIncomingSnafu)<span class="question-mark">?</span>;

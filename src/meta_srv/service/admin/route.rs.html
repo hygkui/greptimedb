@@ -68,6 +68,44 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -84,16 +122,21 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
+<span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_meta::key::table_name::TableNameKey;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>store_api::storage::{RegionId, TableId};
 <span class="kw">use </span>tonic::codegen::http;
 
-<span class="kw">use </span><span class="kw">super</span>::HttpHandler;
+<span class="kw">use super</span>::{util, HttpHandler};
 <span class="kw">use </span><span class="kw">crate</span>::error;
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="prelude-ty">Result</span>, TableNotFoundSnafu, TableRouteNotFoundSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::error::{
+    ParseNumSnafu, <span class="prelude-ty">Result</span>, TableMetadataManagerSnafu, TableNotFoundSnafu, TableRouteNotFoundSnafu,
+};
 
-<span class="kw">pub struct </span>RouteHandler {
+<span class="attr">#[derive(Clone)]
+</span><span class="kw">pub struct </span>RouteHandler {
     <span class="kw">pub </span>table_metadata_manager: TableMetadataManagerRef,
 }
 
@@ -101,18 +144,59 @@
 </span><span class="kw">impl </span>HttpHandler <span class="kw">for </span>RouteHandler {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _path: <span class="kw-2">&amp;</span>str,
+        path: <span class="kw-2">&amp;</span>str,
         params: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;http::Response&lt;String&gt;&gt; {
-        <span class="kw">let </span>catalog = params
-            .get(<span class="string">&quot;catalog&quot;</span>)
-            .context(error::MissingRequiredParameterSnafu { param: <span class="string">&quot;catalog&quot; </span>})<span class="question-mark">?</span>;
-        <span class="kw">let </span>schema = params
-            .get(<span class="string">&quot;schema&quot;</span>)
-            .context(error::MissingRequiredParameterSnafu { param: <span class="string">&quot;schema&quot; </span>})<span class="question-mark">?</span>;
-        <span class="kw">let </span>table = params
-            .get(<span class="string">&quot;table&quot;</span>)
-            .context(error::MissingRequiredParameterSnafu { param: <span class="string">&quot;table&quot; </span>})<span class="question-mark">?</span>;
+        <span class="kw">if </span>path.ends_with(<span class="string">&quot;/help&quot;</span>) {
+            <span class="kw">return </span>util::to_text_response(
+                <span class="string">r#&quot;
+            - GET /table?region_id=123
+            - GET /table?table_id=456
+            - GET /table?catalog=foo&amp;schema=bar&amp;table=baz
+            &quot;#</span>,
+            );
+        }
+
+        <span class="kw">let </span>table_id = <span class="self">self</span>.extract_table_id(params).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>table_route_value = <span class="self">self
+            </span>.table_metadata_manager
+            .table_route_manager()
+            .get(table_id)
+            .<span class="kw">await
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.context(TableRouteNotFoundSnafu { table_id })<span class="question-mark">?</span>;
+
+        http::Response::builder()
+            .status(http::StatusCode::OK)
+            .body(serde_json::to_string(<span class="kw-2">&amp;</span>table_route_value).unwrap())
+            .context(error::InvalidHttpBodySnafu)
+    }
+}
+
+<span class="kw">impl </span>RouteHandler {
+    <span class="kw">async fn </span>extract_table_id(<span class="kw-2">&amp;</span><span class="self">self</span>, params: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TableId&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = params.get(<span class="string">&quot;region_id&quot;</span>) {
+            <span class="kw">let </span>table_id = id
+                .parse::&lt;u64&gt;()
+                .map(|x| RegionId::from_u64(x).table_id())
+                .context(ParseNumSnafu {
+                    err_msg: <span class="macro">format!</span>(<span class="string">&quot;invalid region id: {id}&quot;</span>),
+                })<span class="question-mark">?</span>;
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(table_id);
+        }
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = params.get(<span class="string">&quot;table_id&quot;</span>) {
+            <span class="kw">let </span>table_id = id.parse::&lt;u32&gt;().context(ParseNumSnafu {
+                err_msg: <span class="macro">format!</span>(<span class="string">&quot;invalid table id: {id}&quot;</span>),
+            })<span class="question-mark">?</span>;
+
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(table_id);
+        }
+
+        <span class="kw">let </span>catalog = util::get_value(params, <span class="string">&quot;catalog&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>schema = util::get_value(params, <span class="string">&quot;schema&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>table = util::get_value(params, <span class="string">&quot;table&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>key = TableNameKey::new(catalog, schema, table);
 
@@ -121,21 +205,13 @@
             .table_name_manager()
             .get(key)
             .<span class="kw">await
-            </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.map(|x| x.table_id())
-            .context(TableNotFoundSnafu { name: table })<span class="question-mark">?</span>;
+            .context(TableNotFoundSnafu {
+                name: format_full_table_name(catalog, schema, table),
+            })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>table_route_value = <span class="self">self
-            </span>.table_metadata_manager
-            .table_route_manager()
-            .get(table_id)
-            .<span class="kw">await
-            </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
-            </span>.context(TableRouteNotFoundSnafu { table_id })<span class="question-mark">?</span>;
-        http::Response::builder()
-            .status(http::StatusCode::OK)
-            .body(serde_json::to_string(<span class="kw-2">&amp;</span>table_route_value).unwrap())
-            .context(error::InvalidHttpBodySnafu)
+        <span class="prelude-val">Ok</span>(table_id)
     }
 }
 </code></pre></div></section></main></body></html>

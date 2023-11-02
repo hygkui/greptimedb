@@ -29,6 +29,21 @@
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
 <a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -46,18 +61,33 @@
 </span><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>tonic::codegen::http;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MissingRequiredParameterSnafu, ParseNumSnafu, <span class="prelude-ty">Result</span>};
 
 <span class="kw">pub fn </span>extract_cluster_id(params: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
     params
         .get(<span class="string">&quot;cluster_id&quot;</span>)
         .map(|id| id.parse::&lt;u64&gt;())
-        .context(error::MissingRequiredParameterSnafu {
+        .context(MissingRequiredParameterSnafu {
             param: <span class="string">&quot;cluster_id&quot;</span>,
         })<span class="question-mark">?
-        </span>.context(error::ParseNumSnafu {
+        </span>.context(ParseNumSnafu {
             err_msg: <span class="string">&quot;`cluster_id` is not a valid number&quot;</span>,
         })
+}
+
+<span class="kw">pub fn </span>get_value&lt;<span class="lifetime">&#39;a</span>&gt;(params: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>HashMap&lt;String, String&gt;, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>String&gt; {
+    params
+        .get(key)
+        .context(error::MissingRequiredParameterSnafu { param: key })
+}
+
+<span class="kw">pub fn </span>to_text_response(text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;http::Response&lt;String&gt;&gt; {
+    http::Response::builder()
+        .header(<span class="string">&quot;Content-Type&quot;</span>, <span class="string">&quot;text/plain&quot;</span>)
+        .status(http::StatusCode::OK)
+        .body(text.to_string())
+        .context(error::InvalidHttpBodySnafu)
 }
 </code></pre></div></section></main></body></html>
