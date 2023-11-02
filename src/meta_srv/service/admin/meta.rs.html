@@ -385,10 +385,10 @@
             .<span class="kw">await
             </span>.context(TableMetadataManagerSnafu)<span class="question-mark">?
             </span>.into_iter()
-            .map(|(k, v)| (<span class="macro">format!</span>(<span class="string">&quot;{k}&quot;</span>), <span class="macro">format!</span>(<span class="string">&quot;{v:?}&quot;</span>)))
             .collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
 
         http::Response::builder()
+            .header(<span class="string">&quot;Content-Type&quot;</span>, <span class="string">&quot;application/json&quot;</span>)
             .status(http::StatusCode::OK)
             <span class="comment">// Safety: HashMap&lt;String, String&gt; is definitely &quot;serde-json&quot;-able.
             </span>.body(serde_json::to_string(<span class="kw-2">&amp;</span>table_info_values).unwrap())
