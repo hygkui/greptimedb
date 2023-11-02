@@ -155,6 +155,16 @@
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -174,6 +184,7 @@
 <span class="kw">use </span>api::v1::meta::HeartbeatRequest;
 <span class="kw">use </span>common_time::util <span class="kw">as </span>time_util;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>store_api::region_engine::RegionRole;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, InvalidHeartbeatRequestSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::keys::StatKey;
@@ -182,8 +193,10 @@
 </span><span class="kw">pub struct </span>Stat {
     <span class="kw">pub </span>timestamp_millis: i64,
     <span class="kw">pub </span>cluster_id: u64,
-    <span class="kw">pub </span>id: u64,
-    <span class="kw">pub </span>addr: String,
+    <span class="comment">// The datanode Id.
+    </span><span class="kw">pub </span>id: u64,
+    <span class="comment">// The datanode address.
+    </span><span class="kw">pub </span>addr: String,
     <span class="doccomment">/// The read capacity units during this period
     </span><span class="kw">pub </span>rcus: i64,
     <span class="doccomment">/// The write capacity units during this period
@@ -195,9 +208,10 @@
     </span><span class="kw">pub </span>node_epoch: u64,
 }
 
-<span class="attr">#[derive(Debug, Default, Serialize, Deserialize)]
+<span class="attr">#[derive(Debug, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>RegionStat {
-    <span class="kw">pub </span>id: u64,
+    <span class="doccomment">/// The region_id.
+    </span><span class="kw">pub </span>id: u64,
     <span class="doccomment">/// The read capacity units during this period
     </span><span class="kw">pub </span>rcus: i64,
     <span class="doccomment">/// The write capacity units during this period
@@ -206,6 +220,10 @@
     </span><span class="kw">pub </span>approximate_bytes: i64,
     <span class="doccomment">/// Approximate number of rows in this region
     </span><span class="kw">pub </span>approximate_rows: i64,
+    <span class="doccomment">/// The engine name.
+    </span><span class="kw">pub </span>engine: String,
+    <span class="doccomment">/// The region role.
+    </span><span class="kw">pub </span>role: RegionRole,
 }
 
 <span class="kw">impl </span>Stat {
@@ -289,6 +307,8 @@
             wcus: value.wcus,
             approximate_bytes: value.approximate_bytes,
             approximate_rows: value.approximate_rows,
+            engine: value.engine.to_string(),
+            role: RegionRole::from(value.role()),
         })
     }
 }

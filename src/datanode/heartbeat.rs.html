@@ -391,6 +391,8 @@
 <a href="#391" id="391">391</a>
 <a href="#392" id="392">392</a>
 <a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -686,7 +688,9 @@
                 role: RegionRole::from(stat.role).into(),
                 approximate_bytes,
                 <span class="comment">// TODO(ruihang): scratch more info
-                </span>..Default::default()
+                </span>rcus: <span class="number">0</span>,
+                wcus: <span class="number">0</span>,
+                approximate_rows: <span class="number">0</span>,
             };
             region_stats.push(region_stat);
         }

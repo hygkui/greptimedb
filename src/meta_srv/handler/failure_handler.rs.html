@@ -152,6 +152,10 @@
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -256,6 +260,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>store_api::region_engine::RegionRole;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::handler::node_stat::{RegionStat, Stat};
     <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
@@ -283,6 +289,8 @@
                 wcus: <span class="number">0</span>,
                 approximate_bytes: <span class="number">0</span>,
                 approximate_rows: <span class="number">0</span>,
+                engine: default_engine().to_string(),
+                role: RegionRole::Follower,
             }
         }
         acc.stat = <span class="prelude-val">Some</span>(Stat {
