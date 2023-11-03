@@ -371,6 +371,12 @@
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
 <a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -397,7 +403,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::vectors::operations::VectorOp;
 <span class="kw">use </span><span class="kw">crate</span>::vectors::{TimestampMillisecondVector, VectorRef};
 
-<span class="kw">const </span>CURRENT_TIMESTAMP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;current_timestamp()&quot;</span>;
+<span class="kw">const </span>CURRENT_TIMESTAMP: <span class="kw-2">&amp;</span>str = <span class="string">&quot;current_timestamp&quot;</span>;
+<span class="kw">const </span>CURRENT_TIMESTAMP_FN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;current_timestamp()&quot;</span>;
+<span class="kw">const </span>NOW_FN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;now()&quot;</span>;
 
 <span class="doccomment">/// Column&#39;s default constraint.
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -450,7 +458,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             ColumnDefaultConstraint::Function(expr) =&gt; {
                 <span class="macro">ensure!</span>(
-                    expr == CURRENT_TIMESTAMP,
+                    expr == CURRENT_TIMESTAMP || expr == CURRENT_TIMESTAMP_FN || expr == NOW_FN,
                     error::UnsupportedDefaultExprSnafu { expr }
                 );
                 <span class="macro">ensure!</span>(
@@ -503,7 +511,9 @@
                 </span><span class="kw">match </span><span class="kw-2">&amp;</span>expr[..] {
                     <span class="comment">// TODO(dennis): we only supports current_timestamp right now,
                     //   it&#39;s better to use a expression framework in future.
-                    </span>CURRENT_TIMESTAMP =&gt; create_current_timestamp_vector(data_type, num_rows),
+                    </span>CURRENT_TIMESTAMP | CURRENT_TIMESTAMP_FN | NOW_FN =&gt; {
+                        create_current_timestamp_vector(data_type, num_rows)
+                    }
                     <span class="kw">_ </span>=&gt; error::UnsupportedDefaultExprSnafu { expr }.fail(),
                 }
             }
@@ -533,7 +543,9 @@
                 <span class="comment">// Functions should also ensure its return value is not null when
                 // is_nullable is true.
                 </span><span class="kw">match </span><span class="kw-2">&amp;</span>expr[..] {
-                    CURRENT_TIMESTAMP =&gt; create_current_timestamp(data_type),
+                    CURRENT_TIMESTAMP | CURRENT_TIMESTAMP_FN | NOW_FN =&gt; {
+                        create_current_timestamp(data_type)
+                    }
                     <span class="kw">_ </span>=&gt; error::UnsupportedDefaultExprSnafu { expr }.fail(),
                 }
             }
