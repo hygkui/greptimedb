@@ -225,6 +225,9 @@
 <span class="kw">use </span>api::v1::meta::lock_server::LockServer;
 <span class="kw">use </span>api::v1::meta::store_server::StoreServer;
 <span class="kw">use </span>common_base::Plugins;
+<span class="kw">use </span>common_meta::kv_backend::etcd::EtcdStore;
+<span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
+<span class="kw">use </span>common_meta::kv_backend::ResettableKvBackendRef;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>etcd_client::Client;
 <span class="kw">use </span>servers::configurator::ConfiguratorRef;
@@ -246,9 +249,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::selector::load_based::LoadBasedSelector;
 <span class="kw">use </span><span class="kw">crate</span>::selector::SelectorType;
 <span class="kw">use </span><span class="kw">crate</span>::service::admin;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::etcd::EtcdStore;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::ResettableKvStoreRef;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 <span class="kw">use crate</span>::{error, <span class="prelude-ty">Result</span>};
 
 <span class="attr">#[derive(Clone)]
@@ -367,9 +367,9 @@
 }
 
 <span class="kw">pub async fn </span>build_meta_srv(opts: <span class="kw-2">&amp;</span>MetaSrvOptions, plugins: Plugins) -&gt; <span class="prelude-ty">Result</span>&lt;MetaSrv&gt; {
-    <span class="kw">let </span>(kv_store, election, lock) = <span class="kw">if </span>opts.use_memory_store {
+    <span class="kw">let </span>(kv_backend, election, lock) = <span class="kw">if </span>opts.use_memory_store {
         (
-            Arc::new(MemStore::new()) <span class="kw">as _</span>,
+            Arc::new(MemoryKvBackend::new()) <span class="kw">as _</span>,
             <span class="prelude-val">None</span>,
             <span class="prelude-val">Some</span>(Arc::new(MemLock::default()) <span class="kw">as _</span>),
         )
@@ -390,7 +390,7 @@
         )
     };
 
-    <span class="kw">let </span>in_memory = Arc::new(MemStore::default()) <span class="kw">as </span>ResettableKvStoreRef;
+    <span class="kw">let </span>in_memory = Arc::new(MemoryKvBackend::new()) <span class="kw">as </span>ResettableKvBackendRef;
 
     <span class="kw">let </span>selector = <span class="kw">match </span>opts.selector {
         SelectorType::LoadBased =&gt; Arc::new(LoadBasedSelector) <span class="kw">as </span>SelectorRef,
@@ -399,7 +399,7 @@
 
     MetaSrvBuilder::new()
         .options(opts.clone())
-        .kv_store(kv_store)
+        .kv_backend(kv_backend)
         .in_memory(in_memory)
         .selector(selector)
         .election(election)

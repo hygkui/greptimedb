@@ -339,6 +339,16 @@
 <a href="#339" id="339">339</a>
 <a href="#340" id="340">340</a>
 <a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -363,6 +373,7 @@
     RangeRequest <span class="kw">as </span>PbRangeRequest, RangeResponse <span class="kw">as </span>PbRangeResponse, ResponseHeader,
 };
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
+<span class="kw">use </span>common_meta::kv_backend::ResettableKvBackendRef;
 <span class="kw">use </span>common_meta::rpc::store::{BatchGetRequest, RangeRequest};
 <span class="kw">use </span>common_meta::rpc::KeyValue;
 <span class="kw">use </span>common_meta::util;
@@ -374,14 +385,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{match_for_io_error, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::keys::{StatKey, StatValue, DN_STAT_PREFIX};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::ElectionRef;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::ResettableKvStoreRef;
 
 <span class="kw">pub type </span>MetaPeerClientRef = Arc&lt;MetaPeerClient&gt;;
 
 <span class="attr">#[derive(Builder)]
 </span><span class="kw">pub struct </span>MetaPeerClient {
     election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
-    in_memory: ResettableKvStoreRef,
+    in_memory: ResettableKvBackendRef,
     <span class="attr">#[builder(default = <span class="string">&quot;ChannelManager::default()&quot;</span>)]
     </span>channel_manager: ChannelManager,
     <span class="attr">#[builder(default = <span class="string">&quot;3&quot;</span>)]
@@ -434,7 +444,12 @@
                 ..Default::default()
             };
 
-            <span class="kw">return </span><span class="self">self</span>.in_memory.range(request).<span class="kw">await</span>.map(|resp| resp.kvs);
+            <span class="kw">return </span><span class="self">self
+                </span>.in_memory
+                .range(request)
+                .<span class="kw">await
+                </span>.map(|resp| resp.kvs)
+                .context(error::KvBackendSnafu);
         }
 
         <span class="kw">let </span>max_retry_count = <span class="self">self</span>.max_retry_count;
@@ -503,7 +518,12 @@
         <span class="kw">if </span><span class="self">self</span>.is_leader() {
             <span class="kw">let </span>request = BatchGetRequest { keys };
 
-            <span class="kw">return </span><span class="self">self</span>.in_memory.batch_get(request).<span class="kw">await</span>.map(|resp| resp.kvs);
+            <span class="kw">return </span><span class="self">self
+                </span>.in_memory
+                .batch_get(request)
+                .<span class="kw">await
+                </span>.map(|resp| resp.kvs)
+                .context(error::KvBackendSnafu);
         }
 
         <span class="kw">let </span>max_retry_count = <span class="self">self</span>.max_retry_count;

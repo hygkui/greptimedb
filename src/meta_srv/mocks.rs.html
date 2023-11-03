@@ -122,8 +122,6 @@
 <a href="#122" id="122">122</a>
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -147,13 +145,13 @@
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
 <span class="kw">use </span>common_meta::key::TableMetadataManager;
+<span class="kw">use </span>common_meta::kv_backend::etcd::EtcdStore;
+<span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
+<span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>tower::service_fn;
 
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{MetaSrv, MetaSrvOptions, SelectorRef};
-<span class="kw">use </span><span class="kw">crate</span>::service::store::etcd::EtcdStore;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvBackendAdapter, KvStoreRef};
-<span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>MockInfo {
@@ -163,34 +161,32 @@
 }
 
 <span class="kw">pub async fn </span>mock_with_memstore() -&gt; MockInfo {
-    <span class="kw">let </span>kv_store = Arc::new(MemStore::default());
-    mock(Default::default(), kv_store, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="kw">await
+    <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::new());
+    mock(Default::default(), kv_backend, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="kw">await
 </span>}
 
 <span class="kw">pub async fn </span>mock_with_etcdstore(addr: <span class="kw-2">&amp;</span>str) -&gt; MockInfo {
-    <span class="kw">let </span>kv_store = EtcdStore::with_endpoints([addr]).<span class="kw">await</span>.unwrap();
-    mock(Default::default(), kv_store, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="kw">await
+    <span class="kw">let </span>kv_backend = EtcdStore::with_endpoints([addr]).<span class="kw">await</span>.unwrap();
+    mock(Default::default(), kv_backend, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="kw">await
 </span>}
 
 <span class="kw">pub async fn </span>mock_with_memstore_and_selector(selector: SelectorRef) -&gt; MockInfo {
-    <span class="kw">let </span>kv_store = Arc::new(MemStore::default());
-    mock(Default::default(), kv_store, <span class="prelude-val">Some</span>(selector), <span class="prelude-val">None</span>).<span class="kw">await
+    <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::new());
+    mock(Default::default(), kv_backend, <span class="prelude-val">Some</span>(selector), <span class="prelude-val">None</span>).<span class="kw">await
 </span>}
 
 <span class="kw">pub async fn </span>mock(
     opts: MetaSrvOptions,
-    kv_store: KvStoreRef,
+    kv_backend: KvBackendRef,
     selector: <span class="prelude-ty">Option</span>&lt;SelectorRef&gt;,
     datanode_clients: <span class="prelude-ty">Option</span>&lt;Arc&lt;DatanodeClients&gt;&gt;,
 ) -&gt; MockInfo {
     <span class="kw">let </span>server_addr = opts.server_addr.clone();
-    <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(KvBackendAdapter::wrap(
-        kv_store.clone(),
-    )));
+    <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(kv_backend.clone()));
 
     table_metadata_manager.init().<span class="kw">await</span>.unwrap();
 
-    <span class="kw">let </span>builder = MetaSrvBuilder::new().options(opts).kv_store(kv_store);
+    <span class="kw">let </span>builder = MetaSrvBuilder::new().options(opts).kv_backend(kv_backend);
 
     <span class="kw">let </span>builder = <span class="kw">match </span>selector {
         <span class="prelude-val">Some</span>(s) =&gt; builder.selector(s),

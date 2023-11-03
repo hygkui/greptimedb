@@ -391,6 +391,13 @@
 <a href="#391" id="391">391</a>
 <a href="#392" id="392">392</a>
 <a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -416,6 +423,7 @@
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>serde::Serializer;
 
+<span class="kw">use </span><span class="kw">super</span>::ResettableKvBackend;
 <span class="kw">use </span><span class="kw">crate</span>::kv_backend::txn::{Txn, TxnOp, TxnOpResponse, TxnRequest, TxnResponse};
 <span class="kw">use </span><span class="kw">crate</span>::kv_backend::{KvBackend, TxnService};
 <span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_META_TXN_REQUEST;
@@ -717,6 +725,12 @@
     }
 }
 
+<span class="kw">impl</span>&lt;T: ErrorExt + Send + Sync + <span class="lifetime">&#39;static</span>&gt; ResettableKvBackend <span class="kw">for </span>MemoryKvBackend&lt;T&gt; {
+    <span class="kw">fn </span>reset(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.clear();
+    }
+}
+
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::sync::Arc;
@@ -729,24 +743,24 @@
     };
 
     <span class="kw">async fn </span>mock_mem_store_with_data() -&gt; MemoryKvBackend&lt;Error&gt; {
-        <span class="kw">let </span>kv_store = MemoryKvBackend::&lt;Error&gt;::new();
-        prepare_kv(<span class="kw-2">&amp;</span>kv_store).<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = MemoryKvBackend::&lt;Error&gt;::new();
+        prepare_kv(<span class="kw-2">&amp;</span>kv_backend).<span class="kw">await</span>;
 
-        kv_store
+        kv_backend
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_put() {
-        <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = mock_mem_store_with_data().<span class="kw">await</span>;
 
-        test_kv_put(kv_store).<span class="kw">await</span>;
+        test_kv_put(kv_backend).<span class="kw">await</span>;
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_range() {
-        <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = mock_mem_store_with_data().<span class="kw">await</span>;
 
-        test_kv_range(kv_store).<span class="kw">await</span>;
+        test_kv_range(kv_backend).<span class="kw">await</span>;
     }
 
     <span class="attr">#[tokio::test]
@@ -758,30 +772,30 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_batch_get() {
-        <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = mock_mem_store_with_data().<span class="kw">await</span>;
 
-        test_kv_batch_get(kv_store).<span class="kw">await</span>;
+        test_kv_batch_get(kv_backend).<span class="kw">await</span>;
     }
 
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_compare_and_put() {
-        <span class="kw">let </span>kv_store = Arc::new(MemoryKvBackend::&lt;Error&gt;::new());
+        <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::&lt;Error&gt;::new());
 
-        test_kv_compare_and_put(kv_store).<span class="kw">await</span>;
+        test_kv_compare_and_put(kv_backend).<span class="kw">await</span>;
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_delete_range() {
-        <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = mock_mem_store_with_data().<span class="kw">await</span>;
 
-        test_kv_delete_range(kv_store).<span class="kw">await</span>;
+        test_kv_delete_range(kv_backend).<span class="kw">await</span>;
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_batch_delete() {
-        <span class="kw">let </span>kv_store = mock_mem_store_with_data().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = mock_mem_store_with_data().<span class="kw">await</span>;
 
-        test_kv_batch_delete(kv_store).<span class="kw">await</span>;
+        test_kv_batch_delete(kv_backend).<span class="kw">await</span>;
     }
 }
 </code></pre></div></section></main></body></html>

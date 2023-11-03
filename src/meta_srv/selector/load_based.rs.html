@@ -104,8 +104,6 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -132,7 +130,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::lease;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::SelectorContext;
 <span class="kw">use </span><span class="kw">crate</span>::selector::{Namespace, Selector};
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvBackendAdapter;
 
 <span class="kw">const </span>MAX_REGION_NUMBER: u64 = u64::MAX;
 
@@ -174,8 +171,7 @@
         <span class="kw">let </span>stat_kvs = ctx.meta_peer_client.get_dn_stat_kvs(stat_keys).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>leader_peer_ids = <span class="kw">if let </span><span class="prelude-val">Some</span>(table_id) = ctx.table_id {
-            <span class="kw">let </span>table_metadata_manager =
-                TableMetadataManager::new(KvBackendAdapter::wrap(ctx.kv_store.clone()));
+            <span class="kw">let </span>table_metadata_manager = TableMetadataManager::new(ctx.kv_backend.clone());
 
             get_leader_peer_ids(<span class="kw-2">&amp;</span>table_metadata_manager, table_id).<span class="kw">await</span><span class="question-mark">?
         </span>} <span class="kw">else </span>{

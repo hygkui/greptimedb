@@ -315,6 +315,38 @@
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
 <a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -330,10 +362,6 @@
 // limitations under the License.
 
 </span><span class="kw">pub mod </span>cached_kv;
-<span class="kw">pub mod </span>etcd;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>etcd_util;
-<span class="kw">pub mod </span>kv;
-<span class="kw">pub mod </span>memory;
 
 <span class="kw">use </span>api::v1::meta::{
     store_server, BatchDeleteRequest <span class="kw">as </span>PbBatchDeleteRequest,
@@ -349,10 +377,10 @@
     BatchDeleteRequest, BatchGetRequest, BatchPutRequest, CompareAndPutRequest, DeleteRangeRequest,
     PutRequest, RangeRequest,
 };
-<span class="kw">use </span>snafu::OptionExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>tonic::{Request, Response};
 
-<span class="kw">use </span><span class="kw">crate</span>::error::MissingRequestHeaderSnafu;
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, MissingRequestHeaderSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::MetaSrv;
 <span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_META_KV_REQUEST;
 <span class="kw">use </span><span class="kw">crate</span>::service::GrpcResult;
@@ -370,12 +398,16 @@
         <span class="kw">let </span>cluster_id_str = cluster_id.to_string();
 
         <span class="kw">let </span>_timer = METRIC_META_KV_REQUEST
-            .with_label_values(<span class="kw-2">&amp;</span>[<span class="self">self</span>.kv_store().name(), <span class="string">&quot;range&quot;</span>, cluster_id_str.as_str()])
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="self">self</span>.kv_backend().name(), <span class="string">&quot;range&quot;</span>, cluster_id_str.as_str()])
             .start_timer();
 
         <span class="kw">let </span>req: RangeRequest = req.into();
 
-        <span class="kw">let </span>res = <span class="self">self</span>.kv_store().range(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.kv_backend()
+            .range(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = res.to_proto_resp(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(Response::new(res))
@@ -392,12 +424,16 @@
         <span class="kw">let </span>cluster_id_str = cluster_id.to_string();
 
         <span class="kw">let </span>_timer = METRIC_META_KV_REQUEST
-            .with_label_values(<span class="kw-2">&amp;</span>[<span class="self">self</span>.kv_store().name(), <span class="string">&quot;put&quot;</span>, cluster_id_str.as_str()])
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="self">self</span>.kv_backend().name(), <span class="string">&quot;put&quot;</span>, cluster_id_str.as_str()])
             .start_timer();
 
         <span class="kw">let </span>req: PutRequest = req.into();
 
-        <span class="kw">let </span>res = <span class="self">self</span>.kv_store().put(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.kv_backend()
+            .put(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = res.to_proto_resp(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(Response::new(res))
@@ -414,12 +450,20 @@
         <span class="kw">let </span>cluster_id_str = cluster_id.to_string();
 
         <span class="kw">let </span>_timer = METRIC_META_KV_REQUEST
-            .with_label_values(<span class="kw-2">&amp;</span>[<span class="self">self</span>.kv_store().name(), <span class="string">&quot;batch_get&quot;</span>, cluster_id_str.as_str()])
+            .with_label_values(<span class="kw-2">&amp;</span>[
+                <span class="self">self</span>.kv_backend().name(),
+                <span class="string">&quot;batch_get&quot;</span>,
+                cluster_id_str.as_str(),
+            ])
             .start_timer();
 
         <span class="kw">let </span>req: BatchGetRequest = req.into();
 
-        <span class="kw">let </span>res = <span class="self">self</span>.kv_store().batch_get(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.kv_backend()
+            .batch_get(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = res.to_proto_resp(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(Response::new(res))
@@ -436,12 +480,20 @@
         <span class="kw">let </span>cluster_id_str = cluster_id.to_string();
 
         <span class="kw">let </span>_timer = METRIC_META_KV_REQUEST
-            .with_label_values(<span class="kw-2">&amp;</span>[<span class="self">self</span>.kv_store().name(), <span class="string">&quot;batch_pub&quot;</span>, cluster_id_str.as_str()])
+            .with_label_values(<span class="kw-2">&amp;</span>[
+                <span class="self">self</span>.kv_backend().name(),
+                <span class="string">&quot;batch_pub&quot;</span>,
+                cluster_id_str.as_str(),
+            ])
             .start_timer();
 
         <span class="kw">let </span>req: BatchPutRequest = req.into();
 
-        <span class="kw">let </span>res = <span class="self">self</span>.kv_store().batch_put(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.kv_backend()
+            .batch_put(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = res.to_proto_resp(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(Response::new(res))
@@ -462,7 +514,7 @@
 
         <span class="kw">let </span>_timer = METRIC_META_KV_REQUEST
             .with_label_values(<span class="kw-2">&amp;</span>[
-                <span class="self">self</span>.kv_store().name(),
+                <span class="self">self</span>.kv_backend().name(),
                 <span class="string">&quot;batch_delete&quot;</span>,
                 cluster_id_str.as_str(),
             ])
@@ -470,7 +522,11 @@
 
         <span class="kw">let </span>req: BatchDeleteRequest = req.into();
 
-        <span class="kw">let </span>res = <span class="self">self</span>.kv_store().batch_delete(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.kv_backend()
+            .batch_delete(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = res.to_proto_resp(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(Response::new(res))
@@ -491,7 +547,7 @@
 
         <span class="kw">let </span>_timer = METRIC_META_KV_REQUEST
             .with_label_values(<span class="kw-2">&amp;</span>[
-                <span class="self">self</span>.kv_store().name(),
+                <span class="self">self</span>.kv_backend().name(),
                 <span class="string">&quot;compare_and_put&quot;</span>,
                 cluster_id_str.as_str(),
             ])
@@ -499,7 +555,11 @@
 
         <span class="kw">let </span>req: CompareAndPutRequest = req.into();
 
-        <span class="kw">let </span>res = <span class="self">self</span>.kv_store().compare_and_put(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.kv_backend()
+            .compare_and_put(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = res.to_proto_resp(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(Response::new(res))
@@ -520,7 +580,7 @@
 
         <span class="kw">let </span>_timer = METRIC_META_KV_REQUEST
             .with_label_values(<span class="kw-2">&amp;</span>[
-                <span class="self">self</span>.kv_store().name(),
+                <span class="self">self</span>.kv_backend().name(),
                 <span class="string">&quot;delete_range&quot;</span>,
                 cluster_id_str.as_str(),
             ])
@@ -528,7 +588,11 @@
 
         <span class="kw">let </span>req: DeleteRangeRequest = req.into();
 
-        <span class="kw">let </span>res = <span class="self">self</span>.kv_store().delete_range(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.kv_backend()
+            .delete_range(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>res = res.to_proto_resp(ResponseHeader::success(cluster_id));
         <span class="prelude-val">Ok</span>(Response::new(res))
@@ -541,15 +605,15 @@
 
     <span class="kw">use </span>api::v1::meta::store_server::Store;
     <span class="kw">use </span>api::v1::meta::<span class="kw-2">*</span>;
+    <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
     <span class="kw">use </span>tonic::IntoRequest;
 
     <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
     <span class="kw">use </span><span class="kw">crate</span>::metasrv::MetaSrv;
-    <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 
     <span class="kw">async fn </span>new_meta_srv() -&gt; MetaSrv {
         MetaSrvBuilder::new()
-            .kv_store(Arc::new(MemStore::new()))
+            .kv_backend(Arc::new(MemoryKvBackend::new()))
             .build()
             .<span class="kw">await
             </span>.unwrap()

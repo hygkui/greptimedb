@@ -523,10 +523,10 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_range_empty() {
-        <span class="kw">let </span>kv_store = Arc::new(MemoryKvBackend::&lt;Error&gt;::new());
+        <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::&lt;Error&gt;::new());
 
         <span class="kw">let </span>stream = PaginationStream::new(
-            kv_store.clone(),
+            kv_backend.clone(),
             RangeRequest {
                 key: <span class="string">b&quot;a&quot;</span>.to_vec(),
                 ..Default::default()
@@ -541,14 +541,14 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_range() {
-        <span class="kw">let </span>kv_store = Arc::new(MemoryKvBackend::&lt;Error&gt;::new());
+        <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::&lt;Error&gt;::new());
         <span class="kw">let </span>total = <span class="number">26</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>expected = BTreeMap::&lt;Vec&lt;u8&gt;, ()&gt;::new();
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..total {
             <span class="kw">let </span>key = <span class="macro">vec!</span>[<span class="number">97 </span>+ i];
 
-            <span class="macro">assert!</span>(kv_store
+            <span class="macro">assert!</span>(kv_backend
                 .put(PutRequest {
                     key: key.clone(),
                     value: key.clone(),
@@ -564,7 +564,7 @@
         <span class="kw">let </span>range_end = <span class="string">b&quot;f&quot;</span>.to_vec();
 
         <span class="kw">let </span>stream = PaginationStream::new(
-            kv_store.clone(),
+            kv_backend.clone(),
             RangeRequest {
                 key,
                 range_end,

@@ -428,9 +428,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_sequence() {
-        <span class="kw">let </span>kv_store = Arc::new(MemoryKvBackend::default());
+        <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::default());
         <span class="kw">let </span>initial = <span class="number">1024</span>;
-        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, initial, <span class="number">10</span>, kv_store);
+        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, initial, <span class="number">10</span>, kv_backend);
 
         <span class="kw">for </span>i <span class="kw">in </span>initial..initial + <span class="number">100 </span>{
             <span class="macro">assert_eq!</span>(i, seq.next().<span class="kw">await</span>.unwrap());
@@ -439,9 +439,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_sequence_out_of_rage() {
-        <span class="kw">let </span>kv_store = Arc::new(MemoryKvBackend::default());
+        <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::default());
         <span class="kw">let </span>initial = u64::MAX - <span class="number">10</span>;
-        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, initial, <span class="number">10</span>, kv_store);
+        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, initial, <span class="number">10</span>, kv_backend);
 
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">10 </span>{
             <span class="kw">let _ </span>= seq.next().<span class="kw">await</span>.unwrap();
@@ -505,8 +505,8 @@
             }
         }
 
-        <span class="kw">let </span>kv_store = Arc::new(Noop {});
-        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_store);
+        <span class="kw">let </span>kv_backend = Arc::new(Noop {});
+        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_backend);
 
         <span class="kw">let </span>next = seq.next().<span class="kw">await</span>;
         <span class="macro">assert!</span>(next.is_err());

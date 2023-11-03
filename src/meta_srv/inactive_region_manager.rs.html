@@ -138,6 +138,22 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -154,20 +170,21 @@
 
 </span><span class="kw">use </span>std::collections::HashSet;
 
+<span class="kw">use </span>common_meta::kv_backend::ResettableKvBackendRef;
 <span class="kw">use </span>common_meta::rpc::store::{BatchGetRequest, DeleteRangeRequest, PutRequest, RangeRequest};
 <span class="kw">use </span>common_meta::RegionIdent;
+<span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::keys::InactiveRegionKey;
 <span class="kw">use </span><span class="kw">crate</span>::metrics::METRIC_META_INACTIVE_REGIONS;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::ResettableKvStoreRef;
 
 <span class="kw">pub struct </span>InactiveRegionManager&lt;<span class="lifetime">&#39;a</span>&gt; {
-    store: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ResettableKvStoreRef,
+    store: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ResettableKvBackendRef,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; InactiveRegionManager&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>new(store: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ResettableKvStoreRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(store: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ResettableKvBackendRef) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ store }
     }
 
@@ -183,7 +200,7 @@
             value: <span class="macro">vec!</span>[],
             prev_kv: <span class="bool-val">false</span>,
         };
-        <span class="self">self</span>.store.put(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.store.put(req).<span class="kw">await</span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         METRIC_META_INACTIVE_REGIONS.inc();
 
@@ -198,7 +215,10 @@
             region_id,
         }
         .into();
-        <span class="self">self</span>.store.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.store
+            .delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         METRIC_META_INACTIVE_REGIONS.dec();
 
@@ -229,7 +249,11 @@
             })
             .collect::&lt;Vec&lt;(Vec&lt;u8&gt;, <span class="kw">_</span>)&gt;&gt;();
         <span class="kw">let </span>keys = key_region_ids.iter().map(|(key, <span class="kw">_</span>)| key.clone()).collect();
-        <span class="kw">let </span>resp = <span class="self">self</span>.store.batch_get(BatchGetRequest { keys }).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>resp = <span class="self">self
+            </span>.store
+            .batch_get(BatchGetRequest { keys })
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>kvs = resp.kvs;
         <span class="kw">if </span>kvs.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(HashSet::new());
@@ -264,7 +288,11 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;InactiveRegionKey&gt;&gt; {
         <span class="kw">let </span>prefix = InactiveRegionKey::get_prefix_by_cluster(cluster_id);
         <span class="kw">let </span>request = RangeRequest::new().with_prefix(prefix);
-        <span class="kw">let </span>resp = <span class="self">self</span>.store.range(request).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>resp = <span class="self">self
+            </span>.store
+            .range(request)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>kvs = resp.kvs;
         kvs.into_iter()
             .map(|kv| InactiveRegionKey::try_from(kv.key))
@@ -274,7 +302,11 @@
     <span class="kw">pub async fn </span>clear_all_inactive_regions(<span class="kw-2">&amp;</span><span class="self">self</span>, cluster_id: u64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>prefix = InactiveRegionKey::get_prefix_by_cluster(cluster_id);
         <span class="kw">let </span>request = DeleteRangeRequest::new().with_prefix(prefix);
-        <span class="kw">let _ </span>= <span class="self">self</span>.store.delete_range(request).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.store
+            .delete_range(request)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }

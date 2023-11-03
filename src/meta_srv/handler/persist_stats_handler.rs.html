@@ -230,6 +230,9 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -250,8 +253,9 @@
 <span class="kw">use </span>common_meta::rpc::store::PutRequest;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>dashmap::DashMap;
+<span class="kw">use </span>snafu::ResultExt;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::Result;
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::handler::node_stat::Stat;
 <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::keys::{StatKey, StatValue};
@@ -362,7 +366,11 @@
             ..Default::default()
         };
 
-        <span class="kw">let _ </span>= ctx.in_memory.put(put).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let _ </span>= ctx
+            .in_memory
+            .put(put)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -374,23 +382,23 @@
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>common_meta::key::TableMetadataManager;
+    <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
     <span class="kw">use </span>common_meta::sequence::Sequence;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClientBuilder;
     <span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatMailbox, Pushers};
     <span class="kw">use </span><span class="kw">crate</span>::keys::StatKey;
-    <span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::LeaderCachedKvStore;
-    <span class="kw">use </span><span class="kw">crate</span>::service::store::kv::KvBackendAdapter;
-    <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
+    <span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::LeaderCachedKvBackend;
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_handle_datanode_stats() {
-        <span class="kw">let </span>in_memory = Arc::new(MemStore::new());
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
-        <span class="kw">let </span>leader_cached_kv_store =
-            Arc::new(LeaderCachedKvStore::with_always_leader(kv_store.clone()));
-        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, KvBackendAdapter::wrap(kv_store.clone()));
+        <span class="kw">let </span>in_memory = Arc::new(MemoryKvBackend::new());
+        <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::new());
+        <span class="kw">let </span>leader_cached_kv_backend = Arc::new(LeaderCachedKvBackend::with_always_leader(
+            kv_backend.clone(),
+        ));
+        <span class="kw">let </span>seq = Sequence::new(<span class="string">&quot;test_seq&quot;</span>, <span class="number">0</span>, <span class="number">10</span>, kv_backend.clone());
         <span class="kw">let </span>mailbox = HeartbeatMailbox::create(Pushers::default(), seq);
         <span class="kw">let </span>meta_peer_client = MetaPeerClientBuilder::default()
             .election(<span class="prelude-val">None</span>)
@@ -402,16 +410,14 @@
         <span class="kw">let </span>ctx = Context {
             server_addr: <span class="string">&quot;127.0.0.1:0000&quot;</span>.to_string(),
             in_memory,
-            kv_store: kv_store.clone(),
-            leader_cached_kv_store,
+            kv_backend: kv_backend.clone(),
+            leader_cached_kv_backend,
             meta_peer_client,
             mailbox,
             election: <span class="prelude-val">None</span>,
             skip_all: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
             is_infancy: <span class="bool-val">false</span>,
-            table_metadata_manager: Arc::new(TableMetadataManager::new(KvBackendAdapter::wrap(
-                kv_store.clone(),
-            ))),
+            table_metadata_manager: Arc::new(TableMetadataManager::new(kv_backend.clone())),
         };
 
         <span class="kw">let </span>handler = PersistStatsHandler::default();

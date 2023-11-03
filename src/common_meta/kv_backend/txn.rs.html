@@ -764,9 +764,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_txn_one_compare_op() {
-        <span class="kw">let </span>kv_store = create_kv_store().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = create_kv_backend().<span class="kw">await</span>;
 
-        <span class="kw">let _ </span>= kv_store
+        <span class="kw">let _ </span>= kv_backend
             .put(PutRequest {
                 key: <span class="macro">vec!</span>[<span class="number">11</span>],
                 value: <span class="macro">vec!</span>[<span class="number">3</span>],
@@ -784,7 +784,7 @@
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(<span class="macro">vec!</span>[<span class="number">11</span>], <span class="macro">vec!</span>[<span class="number">1</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Put(<span class="macro">vec!</span>[<span class="number">11</span>], <span class="macro">vec!</span>[<span class="number">2</span>])]);
 
-        <span class="kw">let </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert!</span>(txn_response.succeeded);
         <span class="macro">assert_eq!</span>(txn_response.responses.len(), <span class="number">1</span>);
@@ -792,10 +792,10 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_txn_multi_compare_op() {
-        <span class="kw">let </span>kv_store = create_kv_store().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = create_kv_backend().<span class="kw">await</span>;
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..<span class="number">3 </span>{
-            <span class="kw">let _ </span>= kv_store
+            <span class="kw">let _ </span>= kv_backend
                 .put(PutRequest {
                     key: <span class="macro">vec!</span>[i],
                     value: <span class="macro">vec!</span>[i],
@@ -817,7 +817,7 @@
             ])
             .or_else(<span class="macro">vec!</span>[TxnOp::Put(<span class="macro">vec!</span>[<span class="number">1</span>], <span class="macro">vec!</span>[<span class="number">11</span>])]);
 
-        <span class="kw">let </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert!</span>(txn_response.succeeded);
         <span class="macro">assert_eq!</span>(txn_response.responses.len(), <span class="number">2</span>);
@@ -825,9 +825,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_txn_compare_equal() {
-        <span class="kw">let </span>kv_store = create_kv_store().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = create_kv_backend().<span class="kw">await</span>;
         <span class="kw">let </span>key = <span class="macro">vec!</span>[<span class="number">101u8</span>];
-        kv_store.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
+        kv_backend.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>txn = Txn::new()
             .when(<span class="macro">vec!</span>[Compare::with_not_exist_value(
@@ -836,10 +836,10 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">1</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">2</span>])]);
-        <span class="kw">let </span>txn_response = kv_store.txn(txn.clone()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn.clone()).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(txn_response.succeeded);
 
-        <span class="kw">let </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
 
         <span class="kw">let </span>txn = Txn::new()
@@ -850,15 +850,15 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">3</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Put(key, <span class="macro">vec!</span>[<span class="number">4</span>])]);
-        <span class="kw">let </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(txn_response.succeeded);
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_txn_compare_greater() {
-        <span class="kw">let </span>kv_store = create_kv_store().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = create_kv_backend().<span class="kw">await</span>;
         <span class="kw">let </span>key = <span class="macro">vec!</span>[<span class="number">102u8</span>];
-        kv_store.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
+        kv_backend.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>txn = Txn::new()
             .when(<span class="macro">vec!</span>[Compare::with_not_exist_value(
@@ -867,10 +867,10 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">1</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">2</span>])]);
-        <span class="kw">let </span>txn_response = kv_store.txn(txn.clone()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn.clone()).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
 
-        <span class="kw">let </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(txn_response.succeeded);
 
         <span class="kw">let </span>txn = Txn::new()
@@ -881,7 +881,7 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">3</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Get(key.clone())]);
-        <span class="kw">let </span><span class="kw-2">mut </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
         <span class="kw">let </span>res = txn_response.responses.pop().unwrap();
         <span class="macro">assert_eq!</span>(
@@ -898,9 +898,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_txn_compare_less() {
-        <span class="kw">let </span>kv_store = create_kv_store().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = create_kv_backend().<span class="kw">await</span>;
         <span class="kw">let </span>key = <span class="macro">vec!</span>[<span class="number">103u8</span>];
-        kv_store.delete(<span class="kw-2">&amp;</span>[<span class="number">3</span>], <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
+        kv_backend.delete(<span class="kw-2">&amp;</span>[<span class="number">3</span>], <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>txn = Txn::new()
             .when(<span class="macro">vec!</span>[Compare::with_not_exist_value(
@@ -909,10 +909,10 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">1</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">2</span>])]);
-        <span class="kw">let </span>txn_response = kv_store.txn(txn.clone()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn.clone()).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
 
-        <span class="kw">let </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
 
         <span class="kw">let </span>txn = Txn::new()
@@ -923,7 +923,7 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">3</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Get(key.clone())]);
-        <span class="kw">let </span><span class="kw-2">mut </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
         <span class="kw">let </span>res = txn_response.responses.pop().unwrap();
         <span class="macro">assert_eq!</span>(
@@ -940,9 +940,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_txn_compare_not_equal() {
-        <span class="kw">let </span>kv_store = create_kv_store().<span class="kw">await</span>;
+        <span class="kw">let </span>kv_backend = create_kv_backend().<span class="kw">await</span>;
         <span class="kw">let </span>key = <span class="macro">vec!</span>[<span class="number">104u8</span>];
-        kv_store.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
+        kv_backend.delete(<span class="kw-2">&amp;</span>key, <span class="bool-val">false</span>).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>txn = Txn::new()
             .when(<span class="macro">vec!</span>[Compare::with_not_exist_value(
@@ -951,10 +951,10 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">1</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">2</span>])]);
-        <span class="kw">let </span>txn_response = kv_store.txn(txn.clone()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn.clone()).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
 
-        <span class="kw">let </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(txn_response.succeeded);
 
         <span class="kw">let </span>txn = Txn::new()
@@ -965,7 +965,7 @@
             )])
             .and_then(<span class="macro">vec!</span>[TxnOp::Put(key.clone(), <span class="macro">vec!</span>[<span class="number">3</span>])])
             .or_else(<span class="macro">vec!</span>[TxnOp::Get(key.clone())]);
-        <span class="kw">let </span><span class="kw-2">mut </span>txn_response = kv_store.txn(txn).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>txn_response = kv_backend.txn(txn).<span class="kw">await</span>.unwrap();
         <span class="macro">assert!</span>(!txn_response.succeeded);
         <span class="kw">let </span>res = txn_response.responses.pop().unwrap();
         <span class="macro">assert_eq!</span>(
@@ -980,7 +980,7 @@
         );
     }
 
-    <span class="kw">async fn </span>create_kv_store() -&gt; KvBackendRef {
+    <span class="kw">async fn </span>create_kv_backend() -&gt; KvBackendRef {
         Arc::new(MemoryKvBackend::&lt;Error&gt;::new())
         <span class="comment">// TODO(jiachun): Add a feature to test against etcd in github CI
         //

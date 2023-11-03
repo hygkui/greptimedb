@@ -127,6 +127,16 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -141,7 +151,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">pub mod </span>memory;
+</span><span class="kw">pub mod </span>etcd;
+<span class="kw">pub mod </span>memory;
 <span class="kw">pub mod </span>test;
 <span class="kw">pub mod </span>txn;
 
@@ -256,4 +267,13 @@
         }
     }
 }
+
+<span class="kw">pub trait </span>ResettableKvBackend: KvBackend
+<span class="kw">where
+    </span><span class="self">Self</span>::Error: ErrorExt,
+{
+    <span class="kw">fn </span>reset(<span class="kw-2">&amp;</span><span class="self">self</span>);
+}
+
+<span class="kw">pub type </span>ResettableKvBackendRef = Arc&lt;<span class="kw">dyn </span>ResettableKvBackend&lt;Error = Error&gt; + Send + Sync&gt;;
 </code></pre></div></section></main></body></html>

@@ -365,9 +365,6 @@
 <a href="#365" id="365">365</a>
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -392,6 +389,8 @@
 <span class="kw">use </span>common_meta::ddl_manager::{DdlManager, DdlManagerRef};
 <span class="kw">use </span>common_meta::distributed_time_constants;
 <span class="kw">use </span>common_meta::key::{TableMetadataManager, TableMetadataManagerRef};
+<span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
+<span class="kw">use </span>common_meta::kv_backend::{KvBackendRef, ResettableKvBackendRef};
 <span class="kw">use </span>common_meta::sequence::{Sequence, SequenceRef};
 <span class="kw">use </span>common_meta::state_store::KvStateStore;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
@@ -422,16 +421,14 @@
 <span class="kw">use </span><span class="kw">crate</span>::pubsub::PublishRef;
 <span class="kw">use </span><span class="kw">crate</span>::selector::lease_based::LeaseBasedSelector;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
-<span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::{CheckLeader, LeaderCachedKvStore};
-<span class="kw">use </span><span class="kw">crate</span>::service::store::kv::{KvBackendAdapter, KvStoreRef, ResettableKvStoreRef};
-<span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
+<span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::{CheckLeader, LeaderCachedKvBackend};
 <span class="kw">use </span><span class="kw">crate</span>::table_meta_alloc::MetaSrvTableMetadataAllocator;
 
 <span class="comment">// TODO(fys): try use derive_builder macro
 </span><span class="kw">pub struct </span>MetaSrvBuilder {
     options: <span class="prelude-ty">Option</span>&lt;MetaSrvOptions&gt;,
-    kv_store: <span class="prelude-ty">Option</span>&lt;KvStoreRef&gt;,
-    in_memory: <span class="prelude-ty">Option</span>&lt;ResettableKvStoreRef&gt;,
+    kv_backend: <span class="prelude-ty">Option</span>&lt;KvBackendRef&gt;,
+    in_memory: <span class="prelude-ty">Option</span>&lt;ResettableKvBackendRef&gt;,
     selector: <span class="prelude-ty">Option</span>&lt;SelectorRef&gt;,
     handler_group: <span class="prelude-ty">Option</span>&lt;HeartbeatHandlerGroup&gt;,
     election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
@@ -444,7 +441,7 @@
 <span class="kw">impl </span>MetaSrvBuilder {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            kv_store: <span class="prelude-val">None</span>,
+            kv_backend: <span class="prelude-val">None</span>,
             in_memory: <span class="prelude-val">None</span>,
             selector: <span class="prelude-val">None</span>,
             handler_group: <span class="prelude-val">None</span>,
@@ -462,12 +459,12 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>kv_store(<span class="kw-2">mut </span><span class="self">self</span>, kv_store: KvStoreRef) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.kv_store = <span class="prelude-val">Some</span>(kv_store);
+    <span class="kw">pub fn </span>kv_backend(<span class="kw-2">mut </span><span class="self">self</span>, kv_backend: KvBackendRef) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.kv_backend = <span class="prelude-val">Some</span>(kv_backend);
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>in_memory(<span class="kw-2">mut </span><span class="self">self</span>, in_memory: ResettableKvStoreRef) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>in_memory(<span class="kw-2">mut </span><span class="self">self</span>, in_memory: ResettableKvBackendRef) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.in_memory = <span class="prelude-val">Some</span>(in_memory);
         <span class="self">self
     </span>}
@@ -514,7 +511,7 @@
             election,
             meta_peer_client,
             options,
-            kv_store,
+            kv_backend,
             in_memory,
             selector,
             handler_group,
@@ -525,23 +522,22 @@
 
         <span class="kw">let </span>options = options.unwrap_or_default();
 
-        <span class="kw">let </span>kv_store = kv_store.unwrap_or_else(|| Arc::new(MemStore::default()));
-        <span class="kw">let </span>in_memory = in_memory.unwrap_or_else(|| Arc::new(MemStore::default()));
-        <span class="kw">let </span>leader_cached_kv_store = build_leader_cached_kv_store(<span class="kw-2">&amp;</span>election, <span class="kw-2">&amp;</span>kv_store);
+        <span class="kw">let </span>kv_backend = kv_backend.unwrap_or_else(|| Arc::new(MemoryKvBackend::new()));
+        <span class="kw">let </span>in_memory = in_memory.unwrap_or_else(|| Arc::new(MemoryKvBackend::new()));
+        <span class="kw">let </span>leader_cached_kv_backend = build_leader_cached_kv_backend(<span class="kw-2">&amp;</span>election, <span class="kw-2">&amp;</span>kv_backend);
         <span class="kw">let </span>meta_peer_client = meta_peer_client
             .unwrap_or_else(|| build_default_meta_peer_client(<span class="kw-2">&amp;</span>election, <span class="kw-2">&amp;</span>in_memory));
         <span class="kw">let </span>selector = selector.unwrap_or_else(|| Arc::new(LeaseBasedSelector));
         <span class="kw">let </span>pushers = Pushers::default();
-        <span class="kw">let </span>mailbox = build_mailbox(<span class="kw-2">&amp;</span>kv_store, <span class="kw-2">&amp;</span>pushers);
-        <span class="kw">let </span>procedure_manager = build_procedure_manager(<span class="kw-2">&amp;</span>options, <span class="kw-2">&amp;</span>kv_store);
-        <span class="kw">let </span>kv_backend = KvBackendAdapter::wrap(kv_store.clone());
+        <span class="kw">let </span>mailbox = build_mailbox(<span class="kw-2">&amp;</span>kv_backend, <span class="kw-2">&amp;</span>pushers);
+        <span class="kw">let </span>procedure_manager = build_procedure_manager(<span class="kw-2">&amp;</span>options, <span class="kw-2">&amp;</span>kv_backend);
         <span class="kw">let </span>table_id_sequence = Arc::new(Sequence::new(TABLE_ID_SEQ, <span class="number">1024</span>, <span class="number">10</span>, kv_backend.clone()));
         <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(kv_backend.clone()));
         <span class="kw">let </span>lock = lock.unwrap_or_else(|| Arc::new(MemLock::default()));
         <span class="kw">let </span>selector_ctx = SelectorContext {
             server_addr: options.server_addr.clone(),
             datanode_lease_secs: distributed_time_constants::DATANODE_LEASE_SECS,
-            kv_store: kv_store.clone(),
+            kv_backend: kv_backend.clone(),
             meta_peer_client: meta_peer_client.clone(),
             table_id: <span class="prelude-val">None</span>,
         };
@@ -615,8 +611,8 @@
             started,
             options,
             in_memory,
-            kv_store,
-            leader_cached_kv_store,
+            kv_backend,
+            leader_cached_kv_backend,
             meta_peer_client: meta_peer_client.clone(),
             table_id_sequence,
             selector,
@@ -638,19 +634,19 @@
     }
 }
 
-<span class="kw">fn </span>build_leader_cached_kv_store(
+<span class="kw">fn </span>build_leader_cached_kv_backend(
     election: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
-    kv_store: <span class="kw-2">&amp;</span>KvStoreRef,
-) -&gt; Arc&lt;LeaderCachedKvStore&gt; {
-    Arc::new(LeaderCachedKvStore::new(
+    kv_backend: <span class="kw-2">&amp;</span>KvBackendRef,
+) -&gt; Arc&lt;LeaderCachedKvBackend&gt; {
+    Arc::new(LeaderCachedKvBackend::new(
         Arc::new(CheckLeaderByElection(election.clone())),
-        kv_store.clone(),
+        kv_backend.clone(),
     ))
 }
 
 <span class="kw">fn </span>build_default_meta_peer_client(
     election: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
-    in_memory: <span class="kw-2">&amp;</span>ResettableKvStoreRef,
+    in_memory: <span class="kw-2">&amp;</span>ResettableKvBackendRef,
 ) -&gt; MetaPeerClientRef {
     MetaPeerClientBuilder::default()
         .election(election.clone())
@@ -661,23 +657,21 @@
         </span>.unwrap()
 }
 
-<span class="kw">fn </span>build_mailbox(kv_store: <span class="kw-2">&amp;</span>KvStoreRef, pushers: <span class="kw-2">&amp;</span>Pushers) -&gt; MailboxRef {
-    <span class="kw">let </span>mailbox_sequence = Sequence::new(
-        <span class="string">&quot;heartbeat_mailbox&quot;</span>,
-        <span class="number">1</span>,
-        <span class="number">100</span>,
-        KvBackendAdapter::wrap(kv_store.clone()),
-    );
+<span class="kw">fn </span>build_mailbox(kv_backend: <span class="kw-2">&amp;</span>KvBackendRef, pushers: <span class="kw-2">&amp;</span>Pushers) -&gt; MailboxRef {
+    <span class="kw">let </span>mailbox_sequence = Sequence::new(<span class="string">&quot;heartbeat_mailbox&quot;</span>, <span class="number">1</span>, <span class="number">100</span>, kv_backend.clone());
     HeartbeatMailbox::create(pushers.clone(), mailbox_sequence)
 }
 
-<span class="kw">fn </span>build_procedure_manager(options: <span class="kw-2">&amp;</span>MetaSrvOptions, kv_store: <span class="kw-2">&amp;</span>KvStoreRef) -&gt; ProcedureManagerRef {
+<span class="kw">fn </span>build_procedure_manager(
+    options: <span class="kw-2">&amp;</span>MetaSrvOptions,
+    kv_backend: <span class="kw-2">&amp;</span>KvBackendRef,
+) -&gt; ProcedureManagerRef {
     <span class="kw">let </span>manager_config = ManagerConfig {
         max_retry_times: options.procedure.max_retry_times,
         retry_delay: options.procedure.retry_delay,
         ..Default::default()
     };
-    <span class="kw">let </span>state_store = Arc::new(KvStateStore::new(KvBackendAdapter::wrap(kv_store.clone())));
+    <span class="kw">let </span>state_store = Arc::new(KvStateStore::new(kv_backend.clone()));
     Arc::new(LocalManager::new(manager_config, state_store))
 }
 

@@ -389,18 +389,18 @@
 
     <span class="kw">use </span>api::v1::meta::heartbeat_server::Heartbeat;
     <span class="kw">use </span>api::v1::meta::<span class="kw-2">*</span>;
+    <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
     <span class="kw">use </span>tonic::IntoRequest;
 
     <span class="kw">use </span><span class="kw">super</span>::get_node_id;
     <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
-    <span class="kw">use </span><span class="kw">crate</span>::service::store::memory::MemStore;
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_ask_leader() {
-        <span class="kw">let </span>kv_store = Arc::new(MemStore::new());
+        <span class="kw">let </span>kv_backend = Arc::new(MemoryKvBackend::new());
 
         <span class="kw">let </span>meta_srv = MetaSrvBuilder::new()
-            .kv_store(kv_store)
+            .kv_backend(kv_backend)
             .build()
             .<span class="kw">await
             </span>.unwrap();

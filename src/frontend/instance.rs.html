@@ -798,7 +798,7 @@
 <span class="kw">use </span>catalog::CatalogManagerRef;
 <span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_base::Plugins;
-<span class="kw">use </span>common_config::KvStoreConfig;
+<span class="kw">use </span>common_config::KvBackendConfig;
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
 <span class="kw">use </span>common_meta::cache_invalidator::DummyCacheInvalidator;
@@ -1025,23 +1025,23 @@
 
     <span class="kw">pub async fn </span>try_build_standalone_components(
         dir: String,
-        kv_store_config: KvStoreConfig,
+        kv_backend_config: KvBackendConfig,
         procedure_config: ProcedureConfig,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(KvBackendRef, ProcedureManagerRef)&gt; {
-        <span class="kw">let </span>kv_store = Arc::new(
+        <span class="kw">let </span>kv_backend = Arc::new(
             RaftEngineBackend::try_open_with_cfg(Config {
                 dir,
-                purge_threshold: ReadableSize(kv_store_config.purge_threshold.<span class="number">0</span>),
+                purge_threshold: ReadableSize(kv_backend_config.purge_threshold.<span class="number">0</span>),
                 recovery_mode: RecoveryMode::TolerateTailCorruption,
                 batch_compression_threshold: ReadableSize::kb(<span class="number">8</span>),
-                target_file_size: ReadableSize(kv_store_config.file_size.<span class="number">0</span>),
+                target_file_size: ReadableSize(kv_backend_config.file_size.<span class="number">0</span>),
                 ..Default::default()
             })
             .map_err(BoxedError::new)
             .context(error::OpenRaftEngineBackendSnafu)<span class="question-mark">?</span>,
         );
 
-        <span class="kw">let </span>state_store = Arc::new(KvStateStore::new(kv_store.clone()));
+        <span class="kw">let </span>state_store = Arc::new(KvStateStore::new(kv_backend.clone()));
 
         <span class="kw">let </span>manager_config = ManagerConfig {
             max_retry_times: procedure_config.max_retry_times,
@@ -1050,7 +1050,7 @@
         };
         <span class="kw">let </span>procedure_manager = Arc::new(LocalManager::new(manager_config, state_store));
 
-        <span class="prelude-val">Ok</span>((kv_store, procedure_manager))
+        <span class="prelude-val">Ok</span>((kv_backend, procedure_manager))
     }
 
     <span class="kw">pub async fn </span>try_new_standalone(

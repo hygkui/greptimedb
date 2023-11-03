@@ -114,6 +114,7 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -132,7 +133,7 @@
 
 <span class="kw">use </span>catalog::kvbackend::KvBackendCatalogManager;
 <span class="kw">use </span>common_base::Plugins;
-<span class="kw">use </span>common_config::KvStoreConfig;
+<span class="kw">use </span>common_config::KvBackendConfig;
 <span class="kw">use </span>common_meta::cache_invalidator::DummyKvCacheInvalidator;
 <span class="kw">use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>datanode::config::DatanodeOptions;
@@ -182,9 +183,9 @@
 
         <span class="kw">let </span>(opts, guard) = create_tmp_dir_and_datanode_opts(store_type, <span class="kw-2">&amp;</span><span class="self">self</span>.instance_name);
 
-        <span class="kw">let </span>(kv_store, procedure_manager) = Instance::try_build_standalone_components(
+        <span class="kw">let </span>(kv_backend, procedure_manager) = Instance::try_build_standalone_components(
             <span class="macro">format!</span>(<span class="string">&quot;{}/kv&quot;</span>, <span class="kw-2">&amp;</span>opts.storage.data_home),
-            KvStoreConfig::default(),
+            KvBackendConfig::default(),
             ProcedureConfig::default(),
         )
         .<span class="kw">await
@@ -192,13 +193,14 @@
 
         <span class="kw">let </span>plugins = <span class="self">self</span>.plugin.unwrap_or_default();
 
-        <span class="kw">let </span>datanode = DatanodeBuilder::new(opts.clone(), <span class="prelude-val">Some</span>(kv_store.clone()), plugins.clone())
-            .build()
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="kw">let </span>datanode =
+            DatanodeBuilder::new(opts.clone(), <span class="prelude-val">Some</span>(kv_backend.clone()), plugins.clone())
+                .build()
+                .<span class="kw">await
+                </span>.unwrap();
 
         <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
-            kv_store.clone(),
+            kv_backend.clone(),
             Arc::new(DummyKvCacheInvalidator),
             Arc::new(StandaloneDatanodeManager(datanode.region_server())),
         );
@@ -210,7 +212,7 @@
             </span>.unwrap();
         procedure_manager.start().<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>instance = Instance::try_new_standalone(
-            kv_store,
+            kv_backend,
             procedure_manager,
             catalog_manager,
             plugins,

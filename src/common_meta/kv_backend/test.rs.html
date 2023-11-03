@@ -350,6 +350,15 @@
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
 <a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -390,9 +399,9 @@
     ]
 }
 
-<span class="kw">pub async fn </span>prepare_kv(kv_store: <span class="kw-2">&amp;</span><span class="kw">impl </span>KvBackend) {
+<span class="kw">pub async fn </span>prepare_kv(kv_backend: <span class="kw-2">&amp;</span><span class="kw">impl </span>KvBackend) {
     <span class="kw">let </span>kvs = mock_kvs();
-    <span class="macro">assert!</span>(kv_store
+    <span class="macro">assert!</span>(kv_backend
         .batch_put(BatchPutRequest {
             kvs,
             ..Default::default()
@@ -400,7 +409,7 @@
         .<span class="kw">await
         </span>.is_ok());
 
-    <span class="macro">assert!</span>(kv_store
+    <span class="macro">assert!</span>(kv_backend
         .put(PutRequest {
             key: <span class="string">b&quot;key11&quot;</span>.to_vec(),
             value: <span class="string">b&quot;val11&quot;</span>.to_vec(),
@@ -410,8 +419,8 @@
         </span>.is_ok());
 }
 
-<span class="kw">pub async fn </span>test_kv_put(kv_store: <span class="kw">impl </span>KvBackend) {
-    <span class="kw">let </span>resp = kv_store
+<span class="kw">pub async fn </span>test_kv_put(kv_backend: <span class="kw">impl </span>KvBackend) {
+    <span class="kw">let </span>resp = kv_backend
         .put(PutRequest {
             key: <span class="string">b&quot;key11&quot;</span>.to_vec(),
             value: <span class="string">b&quot;val12&quot;</span>.to_vec(),
@@ -421,7 +430,7 @@
         </span>.unwrap();
     <span class="macro">assert!</span>(resp.prev_kv.is_none());
 
-    <span class="kw">let </span>resp = kv_store
+    <span class="kw">let </span>resp = kv_backend
         .put(PutRequest {
             key: <span class="string">b&quot;key11&quot;</span>.to_vec(),
             value: <span class="string">b&quot;val13&quot;</span>.to_vec(),
@@ -434,11 +443,11 @@
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;val12&quot;</span>, prev_kv.value());
 }
 
-<span class="kw">pub async fn </span>test_kv_range(kv_store: <span class="kw">impl </span>KvBackend) {
+<span class="kw">pub async fn </span>test_kv_range(kv_backend: <span class="kw">impl </span>KvBackend) {
     <span class="kw">let </span>key = <span class="string">b&quot;key1&quot;</span>.to_vec();
     <span class="kw">let </span>range_end = util::get_prefix_end_key(<span class="string">b&quot;key1&quot;</span>);
 
-    <span class="kw">let </span>resp = kv_store
+    <span class="kw">let </span>resp = kv_backend
         .range(RangeRequest {
             key: key.clone(),
             range_end: range_end.clone(),
@@ -454,7 +463,7 @@
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;key11&quot;</span>, resp.kvs[<span class="number">1</span>].key());
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;val11&quot;</span>, resp.kvs[<span class="number">1</span>].value());
 
-    <span class="kw">let </span>resp = kv_store
+    <span class="kw">let </span>resp = kv_backend
         .range(RangeRequest {
             key: key.clone(),
             range_end: range_end.clone(),
@@ -470,7 +479,7 @@
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;key11&quot;</span>, resp.kvs[<span class="number">1</span>].key());
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;&quot;</span>, resp.kvs[<span class="number">1</span>].value());
 
-    <span class="kw">let </span>resp = kv_store
+    <span class="kw">let </span>resp = kv_backend
         .range(RangeRequest {
             key: key.clone(),
             limit: <span class="number">0</span>,
@@ -484,7 +493,7 @@
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;key1&quot;</span>, resp.kvs[<span class="number">0</span>].key());
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;val1&quot;</span>, resp.kvs[<span class="number">0</span>].value());
 
-    <span class="kw">let </span>resp = kv_store
+    <span class="kw">let </span>resp = kv_backend
         .range(RangeRequest {
             key,
             range_end,
@@ -499,19 +508,19 @@
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;val1&quot;</span>, resp.kvs[<span class="number">0</span>].value());
 }
 
-<span class="kw">pub async fn </span>test_kv_range_2(kv_store: <span class="kw">impl </span>KvBackend) {
-    kv_store
+<span class="kw">pub async fn </span>test_kv_range_2(kv_backend: <span class="kw">impl </span>KvBackend) {
+    kv_backend
         .put(PutRequest::new().with_key(<span class="string">&quot;atest&quot;</span>).with_value(<span class="string">&quot;value&quot;</span>))
         .<span class="kw">await
         </span>.unwrap();
 
-    kv_store
+    kv_backend
         .put(PutRequest::new().with_key(<span class="string">&quot;test&quot;</span>).with_value(<span class="string">&quot;value&quot;</span>))
         .<span class="kw">await
         </span>.unwrap();
 
     <span class="comment">// If both key and range_end are ‘\0’, then range represents all keys.
-    </span><span class="kw">let </span>result = kv_store
+    </span><span class="kw">let </span>result = kv_backend
         .range(RangeRequest::new().with_range(<span class="string">b&quot;\0&quot;</span>.to_vec(), <span class="string">b&quot;\0&quot;</span>.to_vec()))
         .<span class="kw">await
         </span>.unwrap();
@@ -520,14 +529,14 @@
     <span class="macro">assert!</span>(!result.more);
 
     <span class="comment">// If range_end is ‘\0’, the range is all keys greater than or equal to the key argument.
-    </span><span class="kw">let </span>result = kv_store
+    </span><span class="kw">let </span>result = kv_backend
         .range(RangeRequest::new().with_range(<span class="string">b&quot;a&quot;</span>.to_vec(), <span class="string">b&quot;\0&quot;</span>.to_vec()))
         .<span class="kw">await
         </span>.unwrap();
 
     <span class="macro">assert_eq!</span>(result.kvs.len(), <span class="number">2</span>);
 
-    <span class="kw">let </span>result = kv_store
+    <span class="kw">let </span>result = kv_backend
         .range(RangeRequest::new().with_range(<span class="string">b&quot;b&quot;</span>.to_vec(), <span class="string">b&quot;\0&quot;</span>.to_vec()))
         .<span class="kw">await
         </span>.unwrap();
@@ -536,7 +545,7 @@
     <span class="macro">assert_eq!</span>(result.kvs[<span class="number">0</span>].key, <span class="string">b&quot;test&quot;</span>);
 
     <span class="comment">// Fetches the keys &gt;= &quot;a&quot;, set limit to 1, the `more` should be true.
-    </span><span class="kw">let </span>result = kv_store
+    </span><span class="kw">let </span>result = kv_backend
         .range(
             RangeRequest::new()
                 .with_range(<span class="string">b&quot;a&quot;</span>.to_vec(), <span class="string">b&quot;\0&quot;</span>.to_vec())
@@ -548,7 +557,7 @@
     <span class="macro">assert!</span>(result.more);
 
     <span class="comment">// Fetches the keys &gt;= &quot;a&quot;, set limit to 2, the `more` should be false.
-    </span><span class="kw">let </span>result = kv_store
+    </span><span class="kw">let </span>result = kv_backend
         .range(
             RangeRequest::new()
                 .with_range(<span class="string">b&quot;a&quot;</span>.to_vec(), <span class="string">b&quot;\0&quot;</span>.to_vec())
@@ -560,7 +569,7 @@
     <span class="macro">assert!</span>(!result.more);
 
     <span class="comment">// Fetches the keys &gt;= &quot;a&quot;, set limit to 3, the `more` should be false.
-    </span><span class="kw">let </span>result = kv_store
+    </span><span class="kw">let </span>result = kv_backend
         .range(
             RangeRequest::new()
                 .with_range(<span class="string">b&quot;a&quot;</span>.to_vec(), <span class="string">b&quot;\0&quot;</span>.to_vec())
@@ -572,19 +581,28 @@
     <span class="macro">assert!</span>(!result.more);
 }
 
-<span class="kw">pub async fn </span>test_kv_batch_get(kv_store: <span class="kw">impl </span>KvBackend) {
+<span class="kw">pub async fn </span>test_kv_batch_get(kv_backend: <span class="kw">impl </span>KvBackend) {
     <span class="kw">let </span>keys = <span class="macro">vec!</span>[];
-    <span class="kw">let </span>resp = kv_store.batch_get(BatchGetRequest { keys }).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend
+        .batch_get(BatchGetRequest { keys })
+        .<span class="kw">await
+        </span>.unwrap();
 
     <span class="macro">assert!</span>(resp.kvs.is_empty());
 
     <span class="kw">let </span>keys = <span class="macro">vec!</span>[<span class="string">b&quot;key10&quot;</span>.to_vec()];
-    <span class="kw">let </span>resp = kv_store.batch_get(BatchGetRequest { keys }).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend
+        .batch_get(BatchGetRequest { keys })
+        .<span class="kw">await
+        </span>.unwrap();
 
     <span class="macro">assert!</span>(resp.kvs.is_empty());
 
     <span class="kw">let </span>keys = <span class="macro">vec!</span>[<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="string">b&quot;key3&quot;</span>.to_vec(), <span class="string">b&quot;key4&quot;</span>.to_vec()];
-    <span class="kw">let </span>resp = kv_store.batch_get(BatchGetRequest { keys }).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend
+        .batch_get(BatchGetRequest { keys })
+        .<span class="kw">await
+        </span>.unwrap();
 
     <span class="macro">assert_eq!</span>(<span class="number">2</span>, resp.kvs.len());
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;key1&quot;</span>, resp.kvs[<span class="number">0</span>].key());
@@ -593,12 +611,12 @@
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;val3&quot;</span>, resp.kvs[<span class="number">1</span>].value());
 }
 
-<span class="kw">pub async fn </span>test_kv_compare_and_put(kv_store: Arc&lt;<span class="kw">dyn </span>KvBackend&lt;Error = Error&gt;&gt;) {
+<span class="kw">pub async fn </span>test_kv_compare_and_put(kv_backend: Arc&lt;<span class="kw">dyn </span>KvBackend&lt;Error = Error&gt;&gt;) {
     <span class="kw">let </span>success = Arc::new(AtomicU8::new(<span class="number">0</span>));
 
     <span class="kw">let </span><span class="kw-2">mut </span>joins = <span class="macro">vec!</span>[];
     <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
-        <span class="kw">let </span>kv_store_clone = kv_store.clone();
+        <span class="kw">let </span>kv_backend_clone = kv_backend.clone();
         <span class="kw">let </span>success_clone = success.clone();
         <span class="kw">let </span>join = tokio::spawn(<span class="kw">async move </span>{
             <span class="kw">let </span>req = CompareAndPutRequest {
@@ -606,7 +624,7 @@
                 expect: <span class="macro">vec!</span>[],
                 value: <span class="string">b&quot;val_new&quot;</span>.to_vec(),
             };
-            <span class="kw">let </span>resp = kv_store_clone.compare_and_put(req).<span class="kw">await</span>.unwrap();
+            <span class="kw">let </span>resp = kv_backend_clone.compare_and_put(req).<span class="kw">await</span>.unwrap();
             <span class="kw">if </span>resp.success {
                 success_clone.fetch_add(<span class="number">1</span>, Ordering::SeqCst);
             }
@@ -621,20 +639,20 @@
     <span class="macro">assert_eq!</span>(<span class="number">1</span>, success.load(Ordering::SeqCst));
 }
 
-<span class="kw">pub async fn </span>test_kv_delete_range(kv_store: <span class="kw">impl </span>KvBackend) {
+<span class="kw">pub async fn </span>test_kv_delete_range(kv_backend: <span class="kw">impl </span>KvBackend) {
     <span class="kw">let </span>req = DeleteRangeRequest {
         key: <span class="string">b&quot;key3&quot;</span>.to_vec(),
         range_end: <span class="macro">vec!</span>[],
         prev_kv: <span class="bool-val">true</span>,
     };
 
-    <span class="kw">let </span>resp = kv_store.delete_range(req).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.delete_range(req).<span class="kw">await</span>.unwrap();
     <span class="macro">assert_eq!</span>(<span class="number">1</span>, resp.prev_kvs.len());
     <span class="macro">assert_eq!</span>(<span class="number">1</span>, resp.deleted);
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;key3&quot;</span>, resp.prev_kvs[<span class="number">0</span>].key());
     <span class="macro">assert_eq!</span>(<span class="string">b&quot;val3&quot;</span>, resp.prev_kvs[<span class="number">0</span>].value());
 
-    <span class="kw">let </span>resp = kv_store.get(<span class="string">b&quot;key3&quot;</span>).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.get(<span class="string">b&quot;key3&quot;</span>).<span class="kw">await</span>.unwrap();
     <span class="macro">assert!</span>(resp.is_none());
 
     <span class="kw">let </span>req = DeleteRangeRequest {
@@ -643,11 +661,11 @@
         prev_kv: <span class="bool-val">false</span>,
     };
 
-    <span class="kw">let </span>resp = kv_store.delete_range(req).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.delete_range(req).<span class="kw">await</span>.unwrap();
     <span class="macro">assert_eq!</span>(<span class="number">1</span>, resp.deleted);
     <span class="macro">assert!</span>(resp.prev_kvs.is_empty());
 
-    <span class="kw">let </span>resp = kv_store.get(<span class="string">b&quot;key2&quot;</span>).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.get(<span class="string">b&quot;key2&quot;</span>).<span class="kw">await</span>.unwrap();
     <span class="macro">assert!</span>(resp.is_none());
 
     <span class="kw">let </span>key = <span class="string">b&quot;key1&quot;</span>.to_vec();
@@ -658,7 +676,7 @@
         range_end: range_end.clone(),
         prev_kv: <span class="bool-val">true</span>,
     };
-    <span class="kw">let </span>resp = kv_store.delete_range(req).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.delete_range(req).<span class="kw">await</span>.unwrap();
     <span class="macro">assert_eq!</span>(<span class="number">2</span>, resp.prev_kvs.len());
 
     <span class="kw">let </span>req = RangeRequest {
@@ -666,19 +684,19 @@
         range_end,
         ..Default::default()
     };
-    <span class="kw">let </span>resp = kv_store.range(req).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.range(req).<span class="kw">await</span>.unwrap();
     <span class="macro">assert!</span>(resp.kvs.is_empty());
 }
 
-<span class="kw">pub async fn </span>test_kv_batch_delete(kv_store: <span class="kw">impl </span>KvBackend) {
-    <span class="macro">assert!</span>(kv_store.get(<span class="string">b&quot;key1&quot;</span>).<span class="kw">await</span>.unwrap().is_some());
-    <span class="macro">assert!</span>(kv_store.get(<span class="string">b&quot;key100&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
+<span class="kw">pub async fn </span>test_kv_batch_delete(kv_backend: <span class="kw">impl </span>KvBackend) {
+    <span class="macro">assert!</span>(kv_backend.get(<span class="string">b&quot;key1&quot;</span>).<span class="kw">await</span>.unwrap().is_some());
+    <span class="macro">assert!</span>(kv_backend.get(<span class="string">b&quot;key100&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
 
     <span class="kw">let </span>req = BatchDeleteRequest {
         keys: <span class="macro">vec!</span>[<span class="string">b&quot;key1&quot;</span>.to_vec(), <span class="string">b&quot;key100&quot;</span>.to_vec()],
         prev_kv: <span class="bool-val">true</span>,
     };
-    <span class="kw">let </span>resp = kv_store.batch_delete(req).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.batch_delete(req).<span class="kw">await</span>.unwrap();
     <span class="macro">assert_eq!</span>(<span class="number">1</span>, resp.prev_kvs.len());
     <span class="macro">assert_eq!</span>(
         <span class="macro">vec!</span>[KeyValue {
@@ -687,19 +705,19 @@
         }],
         resp.prev_kvs
     );
-    <span class="macro">assert!</span>(kv_store.get(<span class="string">b&quot;key1&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
+    <span class="macro">assert!</span>(kv_backend.get(<span class="string">b&quot;key1&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
 
-    <span class="macro">assert!</span>(kv_store.get(<span class="string">b&quot;key2&quot;</span>).<span class="kw">await</span>.unwrap().is_some());
-    <span class="macro">assert!</span>(kv_store.get(<span class="string">b&quot;key3&quot;</span>).<span class="kw">await</span>.unwrap().is_some());
+    <span class="macro">assert!</span>(kv_backend.get(<span class="string">b&quot;key2&quot;</span>).<span class="kw">await</span>.unwrap().is_some());
+    <span class="macro">assert!</span>(kv_backend.get(<span class="string">b&quot;key3&quot;</span>).<span class="kw">await</span>.unwrap().is_some());
 
     <span class="kw">let </span>req = BatchDeleteRequest {
         keys: <span class="macro">vec!</span>[<span class="string">b&quot;key2&quot;</span>.to_vec(), <span class="string">b&quot;key3&quot;</span>.to_vec()],
         prev_kv: <span class="bool-val">false</span>,
     };
-    <span class="kw">let </span>resp = kv_store.batch_delete(req).<span class="kw">await</span>.unwrap();
+    <span class="kw">let </span>resp = kv_backend.batch_delete(req).<span class="kw">await</span>.unwrap();
     <span class="macro">assert!</span>(resp.prev_kvs.is_empty());
 
-    <span class="macro">assert!</span>(kv_store.get(<span class="string">b&quot;key2&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
-    <span class="macro">assert!</span>(kv_store.get(<span class="string">b&quot;key3&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
+    <span class="macro">assert!</span>(kv_backend.get(<span class="string">b&quot;key2&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
+    <span class="macro">assert!</span>(kv_backend.get(<span class="string">b&quot;key3&quot;</span>).<span class="kw">await</span>.unwrap().is_none());
 }
 </code></pre></div></section></main></body></html>

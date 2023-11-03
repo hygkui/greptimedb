@@ -68,6 +68,16 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -87,8 +97,10 @@
     Error, RangeRequest <span class="kw">as </span>PbRangeRequest, RangeResponse <span class="kw">as </span>PbRangeResponse, ResponseHeader,
 };
 <span class="kw">use </span>common_telemetry::warn;
+<span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>tonic::{Request, Response};
 
+<span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::MetaSrv;
 <span class="kw">use </span><span class="kw">crate</span>::service::GrpcResult;
 
@@ -107,7 +119,11 @@
         }
 
         <span class="kw">let </span>req = req.into_inner().into();
-        <span class="kw">let </span>resp = <span class="self">self</span>.in_memory().batch_get(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>resp = <span class="self">self
+            </span>.in_memory()
+            .batch_get(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>resp = resp.to_proto_resp(ResponseHeader::success(<span class="number">0</span>));
         <span class="prelude-val">Ok</span>(Response::new(resp))
@@ -126,7 +142,11 @@
         }
 
         <span class="kw">let </span>req = req.into_inner().into();
-        <span class="kw">let </span>res = <span class="self">self</span>.in_memory().range(req).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>res = <span class="self">self
+            </span>.in_memory()
+            .range(req)
+            .<span class="kw">await
+            </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>resp = res.to_proto_resp(ResponseHeader::success(<span class="number">0</span>));
         <span class="prelude-val">Ok</span>(Response::new(resp))

@@ -600,6 +600,8 @@
 <span class="kw">use </span>common_meta::key::table_region::{TableRegionKey, TableRegionValue};
 <span class="kw">use </span>common_meta::key::table_route::{TableRouteKey, TableRouteValue <span class="kw">as </span>NextTableRouteValue};
 <span class="kw">use </span>common_meta::key::{RegionDistribution, TableMetaKey};
+<span class="kw">use </span>common_meta::kv_backend::etcd::EtcdStore;
+<span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_meta::range_stream::PaginationStream;
 <span class="kw">use </span>common_meta::rpc::router::TableRoute;
 <span class="kw">use </span>common_meta::rpc::store::{BatchDeleteRequest, BatchPutRequest, PutRequest, RangeRequest};
@@ -608,8 +610,6 @@
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>etcd_client::Client;
 <span class="kw">use </span>futures::TryStreamExt;
-<span class="kw">use </span>meta_srv::service::store::etcd::EtcdStore;
-<span class="kw">use </span>meta_srv::service::store::kv::{KvBackendAdapter, KvStoreRef};
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>v1_helper::{CatalogKey <span class="kw">as </span>v1CatalogKey, SchemaKey <span class="kw">as </span>v1SchemaKey, TableGlobalValue};
@@ -654,7 +654,7 @@
 }
 
 <span class="kw">struct </span>MigrateTableMetadata {
-    etcd_store: KvStoreRef,
+    etcd_store: KvBackendRef,
     dryrun: bool,
 
     skip_table_global_keys: bool,
@@ -696,7 +696,7 @@
         <span class="macro">info!</span>(<span class="string">&quot;Start scanning key from: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>key));
 
         <span class="kw">let </span><span class="kw-2">mut </span>stream = PaginationStream::new(
-            KvBackendAdapter::wrap(<span class="self">self</span>.etcd_store.clone()),
+            <span class="self">self</span>.etcd_store.clone(),
             RangeRequest::new().with_range(key, range_end),
             PAGE_SIZE,
             Arc::new(|kv: KeyValue| {
@@ -755,7 +755,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>keys = Vec::new();
         <span class="macro">info!</span>(<span class="string">&quot;Start scanning key from: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>key));
         <span class="kw">let </span><span class="kw-2">mut </span>stream = PaginationStream::new(
-            KvBackendAdapter::wrap(<span class="self">self</span>.etcd_store.clone()),
+            <span class="self">self</span>.etcd_store.clone(),
             RangeRequest::new().with_range(key, range_end),
             PAGE_SIZE,
             Arc::new(|kv: KeyValue| {
@@ -807,7 +807,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>keys = Vec::new();
         <span class="macro">info!</span>(<span class="string">&quot;Start scanning key from: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>key));
         <span class="kw">let </span><span class="kw-2">mut </span>stream = PaginationStream::new(
-            KvBackendAdapter::wrap(<span class="self">self</span>.etcd_store.clone()),
+            <span class="self">self</span>.etcd_store.clone(),
             RangeRequest::new().with_range(key, range_end),
             PAGE_SIZE,
             Arc::new(|kv: KeyValue| {
@@ -857,7 +857,7 @@
 
         <span class="macro">info!</span>(<span class="string">&quot;Start scanning key from: {}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span>key));
         <span class="kw">let </span><span class="kw-2">mut </span>stream = PaginationStream::new(
-            KvBackendAdapter::wrap(<span class="self">self</span>.etcd_store.clone()),
+            <span class="self">self</span>.etcd_store.clone(),
             RangeRequest::new().with_range(key, range_end.clone()),
             PAGE_SIZE,
             Arc::new(|kv: KeyValue| {
