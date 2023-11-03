@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["CreateMitoRegionSnafu","DecodeColumnValueSnafu","DeserializeSemanticTypeSnafu","MissingInternalColumnSnafu","TableAlreadyExistsSnafu"],"type":["Result"]};

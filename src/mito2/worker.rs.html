@@ -875,7 +875,7 @@
 }
 
 <span class="comment">// Tests methods.
-</span><span class="attr">#[cfg(test)]
+</span><span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
 </span><span class="kw">impl </span>WorkerGroup {
     <span class="doccomment">/// Starts a worker group with `write_buffer_manager` and `listener` for tests.
     ///
@@ -1260,12 +1260,12 @@
 <span class="doccomment">/// Wrapper that only calls event listener in tests.
 </span><span class="attr">#[derive(Default, Clone)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>WorkerListener {
-    <span class="attr">#[cfg(test)]
+    <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
     </span>listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
 }
 
 <span class="kw">impl </span>WorkerListener {
-    <span class="attr">#[cfg(test)]
+    <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
         listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
     ) -&gt; WorkerListener {
@@ -1274,7 +1274,7 @@
 
     <span class="doccomment">/// Flush is finished successfully.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_flush_success(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) {
-        <span class="attr">#[cfg(test)]
+        <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(listener) = <span class="kw-2">&amp;</span><span class="self">self</span>.listener {
             listener.on_flush_success(region_id);
         }
@@ -1284,14 +1284,14 @@
 
     <span class="doccomment">/// Engine is stalled.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_write_stall(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="attr">#[cfg(test)]
+        <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(listener) = <span class="kw-2">&amp;</span><span class="self">self</span>.listener {
             listener.on_write_stall();
         }
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>on_flush_begin(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) {
-        <span class="attr">#[cfg(test)]
+        <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(listener) = <span class="kw-2">&amp;</span><span class="self">self</span>.listener {
             listener.on_flush_begin(region_id).<span class="kw">await</span>;
         }
@@ -1300,7 +1300,7 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_later_drop_begin(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;Duration&gt; {
-        <span class="attr">#[cfg(test)]
+        <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(listener) = <span class="kw-2">&amp;</span><span class="self">self</span>.listener {
             <span class="kw">return </span>listener.on_later_drop_begin(region_id);
         }
@@ -1311,7 +1311,7 @@
 
     <span class="doccomment">/// On later drop task is finished.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>on_later_drop_end(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, removed: bool) {
-        <span class="attr">#[cfg(test)]
+        <span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(listener) = <span class="kw-2">&amp;</span><span class="self">self</span>.listener {
             listener.on_later_drop_end(region_id, removed);
         }

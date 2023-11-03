@@ -290,6 +290,8 @@
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -320,8 +322,8 @@
 </span><span class="kw">mod </span>drop_test;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>flush_test;
-<span class="attr">#[cfg(test)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>listener;
+<span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
+</span><span class="kw">pub mod </span>listener;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>open_test;
 <span class="attr">#[cfg(test)]
@@ -352,6 +354,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::region::RegionUsage;
 <span class="kw">use </span><span class="kw">crate</span>::request::WorkerRequest;
 <span class="kw">use </span><span class="kw">crate</span>::worker::WorkerGroup;
+
+<span class="kw">pub const </span>MITO_ENGINE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;mito&quot;</span>;
 
 <span class="doccomment">/// Region engine implementation for timeseries data.
 </span><span class="attr">#[derive(Clone)]
@@ -492,8 +496,8 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>RegionEngine <span class="kw">for </span>MitoEngine {
     <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;mito&quot;
-    </span>}
+        MITO_ENGINE_NAME
+    }
 
     <span class="kw">async fn </span>handle_request(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -557,7 +561,7 @@
 }
 
 <span class="comment">// Tests methods.
-</span><span class="attr">#[cfg(test)]
+</span><span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test&quot;</span>))]
 </span><span class="kw">impl </span>MitoEngine {
     <span class="doccomment">/// Returns a new [MitoEngine] for tests.
     </span><span class="kw">pub fn </span>new_for_test&lt;S: LogStore&gt;(
