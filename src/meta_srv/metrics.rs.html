@@ -32,6 +32,9 @@
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
 <a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -65,5 +68,8 @@
         <span class="macro">register_histogram_vec!</span>(<span class="string">&quot;meta_handler_execute&quot;</span>, <span class="string">&quot;meta handler execute&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;name&quot;</span>]).unwrap();
     <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_INACTIVE_REGIONS: IntGauge =
         <span class="macro">register_int_gauge!</span>(<span class="string">&quot;meta_inactive_regions&quot;</span>, <span class="string">&quot;meta inactive regions&quot;</span>).unwrap();
+    <span class="kw">pub static </span><span class="kw-2">ref </span>METRIC_META_LEADER_CACHED_KV_LOAD: HistogramVec =
+        <span class="macro">register_histogram_vec!</span>(<span class="string">&quot;meta_leader_cache_kv_load&quot;</span>, <span class="string">&quot;meta load cache&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;prefix&quot;</span>])
+            .unwrap();
 }
 </code></pre></div></section></main></body></html>

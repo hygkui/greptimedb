@@ -1118,6 +1118,14 @@
 <a href="#1118" id="1118">1118</a>
 <a href="#1119" id="1119">1119</a>
 <a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1211,12 +1219,20 @@
 <span class="kw">const </span>NAME_PATTERN: <span class="kw-2">&amp;</span>str = <span class="string">r&quot;[a-zA-Z_:-][a-zA-Z0-9_:\-\.]*&quot;</span>;
 
 <span class="kw">const </span>DATANODE_TABLE_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__dn_table&quot;</span>;
-<span class="kw">const </span>TABLE_INFO_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_info&quot;</span>;
-<span class="kw">const </span>TABLE_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_name&quot;</span>;
 <span class="kw">const </span>TABLE_REGION_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_region&quot;</span>;
-<span class="kw">const </span>CATALOG_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__catalog_name&quot;</span>;
-<span class="kw">const </span>SCHEMA_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__schema_name&quot;</span>;
-<span class="kw">const </span>TABLE_ROUTE_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_route&quot;</span>;
+
+<span class="kw">pub const </span>TABLE_INFO_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_info&quot;</span>;
+<span class="kw">pub const </span>TABLE_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_name&quot;</span>;
+<span class="kw">pub const </span>CATALOG_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__catalog_name&quot;</span>;
+<span class="kw">pub const </span>SCHEMA_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__schema_name&quot;</span>;
+<span class="kw">pub const </span>TABLE_ROUTE_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_route&quot;</span>;
+
+<span class="kw">pub const </span>CACHE_KEY_PREFIXES: [<span class="kw-2">&amp;</span>str; <span class="number">4</span>] = [
+    TABLE_NAME_KEY_PREFIX,
+    CATALOG_NAME_KEY_PREFIX,
+    SCHEMA_NAME_KEY_PREFIX,
+    TABLE_ROUTE_PREFIX,
+];
 
 <span class="kw">pub type </span>RegionDistribution = BTreeMap&lt;DatanodeId, Vec&lt;RegionNumber&gt;&gt;;
 

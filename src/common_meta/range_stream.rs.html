@@ -291,6 +291,15 @@
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -332,7 +341,16 @@
     </span>Error,
 }
 
-<span class="kw">pub const </span>DEFAULT_PAGE_SIZE: usize = <span class="number">512</span>;
+<span class="doccomment">/// The Range Request&#39;s default page size.
+///
+/// It dependents on upstream KvStore server side grpc message size limitation.
+/// (e.g., etcd has default grpc message size limitation is 4MiB)
+///
+/// Generally, almost all metadata is smaller than is 2700 Byte.
+/// Therefore, We can set the [DEFAULT_PAGE_SIZE] to 1536 statically.
+///
+/// TODO(weny): Considers updating the default page size dynamically.
+</span><span class="kw">pub const </span>DEFAULT_PAGE_SIZE: usize = <span class="number">1536</span>;
 
 <span class="kw">struct </span>PaginationStreamFactory {
     kv: KvBackendRef,

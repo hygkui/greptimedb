@@ -419,6 +419,25 @@
 <a href="#419" id="419">419</a>
 <a href="#420" id="420">420</a>
 <a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -445,7 +464,7 @@
 <span class="kw">use </span>common_grpc::channel_manager;
 <span class="kw">use </span>common_meta::ddl::DdlTaskExecutorRef;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
-<span class="kw">use </span>common_meta::kv_backend::{KvBackendRef, ResettableKvBackendRef};
+<span class="kw">use </span>common_meta::kv_backend::{KvBackendRef, ResettableKvBackend, ResettableKvBackendRef};
 <span class="kw">use </span>common_meta::sequence::SequenceRef;
 <span class="kw">use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_procedure::ProcedureManagerRef;
@@ -460,7 +479,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClientRef;
 <span class="kw">use </span><span class="kw">crate</span>::election::{Election, LeaderChangeMessage};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    InitMetadataSnafu, <span class="prelude-ty">Result</span>, StartProcedureManagerSnafu, StartTelemetryTaskSnafu,
+    <span class="self">self</span>, InitMetadataSnafu, <span class="prelude-ty">Result</span>, StartProcedureManagerSnafu, StartTelemetryTaskSnafu,
     StopProcedureManagerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::handler::HeartbeatHandlerGroup;
@@ -468,6 +487,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::pubsub::{PublishRef, SubscribeManagerRef};
 <span class="kw">use </span><span class="kw">crate</span>::selector::{Selector, SelectorType};
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
+<span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::LeaderCachedKvBackend;
+<span class="kw">use </span><span class="kw">crate</span>::state::{become_follower, become_leader, StateRef};
+
 <span class="kw">pub const </span>TABLE_ID_SEQ: <span class="kw-2">&amp;</span>str = <span class="string">&quot;table_id&quot;</span>;
 <span class="kw">pub const </span>METASRV_HOME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;/tmp/metasrv&quot;</span>;
 
@@ -597,10 +619,20 @@
     procedure_manager: ProcedureManagerRef,
     subscribe_manager: <span class="prelude-ty">Option</span>&lt;SubscribeManagerRef&gt;,
     greptimedb_telemetry_task: Arc&lt;GreptimeDBTelemetryTask&gt;,
+    leader_cached_kv_backend: Arc&lt;LeaderCachedKvBackend&gt;,
+    state: StateRef,
 }
 
 <span class="kw">impl </span>MetaStateHandler {
     <span class="kw">pub async fn </span>on_become_leader(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.state.write().unwrap().next_state(become_leader(<span class="bool-val">false</span>));
+
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.leader_cached_kv_backend.load().<span class="kw">await </span>{
+            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to load kv into leader cache kv store&quot;</span>);
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.state.write().unwrap().next_state(become_leader(<span class="bool-val">true</span>));
+        }
+
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.procedure_manager.start().<span class="kw">await </span>{
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to start procedure manager&quot;</span>);
         }
@@ -608,6 +640,8 @@
     }
 
     <span class="kw">pub async fn </span>on_become_follower(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.state.write().unwrap().next_state(become_follower());
+
         <span class="comment">// Stops the procedures.
         </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.procedure_manager.stop().<span class="kw">await </span>{
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to stop procedure manager&quot;</span>);
@@ -626,13 +660,14 @@
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>MetaSrv {
+    state: StateRef,
     started: Arc&lt;AtomicBool&gt;,
     options: MetaSrvOptions,
     <span class="comment">// It is only valid at the leader node and is used to temporarily
     // store some data that will not be persisted.
     </span>in_memory: ResettableKvBackendRef,
     kv_backend: KvBackendRef,
-    leader_cached_kv_backend: ResettableKvBackendRef,
+    leader_cached_kv_backend: Arc&lt;LeaderCachedKvBackend&gt;,
     table_id_sequence: SequenceRef,
     meta_peer_client: MetaPeerClientRef,
     selector: SelectorRef,
@@ -675,6 +710,8 @@
                 greptimedb_telemetry_task,
                 subscribe_manager,
                 procedure_manager,
+                state: <span class="self">self</span>.state.clone(),
+                leader_cached_kv_backend: leader_cached_kv_backend.clone(),
             };
             <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
                 <span class="kw">loop </span>{
@@ -720,6 +757,11 @@
                 <span class="macro">info!</span>(<span class="string">&quot;MetaSrv stopped&quot;</span>);
             });
         } <span class="kw">else </span>{
+            <span class="comment">// Always load kv into cached kv store.
+            </span><span class="self">self</span>.leader_cached_kv_backend
+                .load()
+                .<span class="kw">await
+                </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
             <span class="self">self</span>.procedure_manager
                 .start()
                 .<span class="kw">await
@@ -756,10 +798,6 @@
 
     <span class="kw">pub fn </span>kv_backend(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>KvBackendRef {
         <span class="kw-2">&amp;</span><span class="self">self</span>.kv_backend
-    }
-
-    <span class="kw">pub fn </span>leader_cached_kv_backend(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ResettableKvBackendRef {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.leader_cached_kv_backend
     }
 
     <span class="kw">pub fn </span>meta_peer_client(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MetaPeerClientRef {

@@ -365,6 +365,9 @@
 <a href="#365" id="365">365</a>
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -380,7 +383,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::sync::atomic::AtomicBool;
-<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::sync::{Arc, RwLock};
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>client::client_manager::DatanodeClients;
@@ -422,6 +425,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::selector::lease_based::LeaseBasedSelector;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::{CheckLeader, LeaderCachedKvBackend};
+<span class="kw">use </span><span class="kw">crate</span>::state::State;
 <span class="kw">use </span><span class="kw">crate</span>::table_meta_alloc::MetaSrvTableMetadataAllocator;
 
 <span class="comment">// TODO(fys): try use derive_builder macro
@@ -524,7 +528,18 @@
 
         <span class="kw">let </span>kv_backend = kv_backend.unwrap_or_else(|| Arc::new(MemoryKvBackend::new()));
         <span class="kw">let </span>in_memory = in_memory.unwrap_or_else(|| Arc::new(MemoryKvBackend::new()));
-        <span class="kw">let </span>leader_cached_kv_backend = build_leader_cached_kv_backend(<span class="kw-2">&amp;</span>election, <span class="kw-2">&amp;</span>kv_backend);
+
+        <span class="kw">let </span>state = Arc::new(RwLock::new(<span class="kw">match </span>election {
+            <span class="prelude-val">None </span>=&gt; State::leader(options.server_addr.to_string(), <span class="bool-val">true</span>),
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; State::follower(options.server_addr.to_string()),
+        }));
+
+        <span class="kw">let </span>leader_cached_kv_backend = Arc::new(LeaderCachedKvBackend::new(
+            state.clone(),
+            kv_backend.clone(),
+        ));
+        <span class="kw">let </span>kv_backend = leader_cached_kv_backend.clone() <span class="kw">as _</span>;
+
         <span class="kw">let </span>meta_peer_client = meta_peer_client
             .unwrap_or_else(|| build_default_meta_peer_client(<span class="kw-2">&amp;</span>election, <span class="kw-2">&amp;</span>in_memory));
         <span class="kw">let </span>selector = selector.unwrap_or_else(|| Arc::new(LeaseBasedSelector));
@@ -608,6 +623,7 @@
         <span class="kw">let </span>metasrv_home = options.data_home.to_string();
 
         <span class="prelude-val">Ok</span>(MetaSrv {
+            state,
             started,
             options,
             in_memory,
@@ -632,16 +648,6 @@
             plugins: plugins.unwrap_or_else(Plugins::default),
         })
     }
-}
-
-<span class="kw">fn </span>build_leader_cached_kv_backend(
-    election: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
-    kv_backend: <span class="kw-2">&amp;</span>KvBackendRef,
-) -&gt; Arc&lt;LeaderCachedKvBackend&gt; {
-    Arc::new(LeaderCachedKvBackend::new(
-        Arc::new(CheckLeaderByElection(election.clone())),
-        kv_backend.clone(),
-    ))
 }
 
 <span class="kw">fn </span>build_default_meta_peer_client(
