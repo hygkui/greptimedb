@@ -1366,7 +1366,7 @@
 
     <span class="doccomment">/// Split a [Timestamp] into seconds part and nanoseconds part.
     /// Notice the seconds part of split result is always rounded down to floor.
-    </span><span class="kw">fn </span>split(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (i64, u32) {
+    </span><span class="kw">pub fn </span>split(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (i64, u32) {
         <span class="kw">let </span>sec_mul = (TimeUnit::Second.factor() / <span class="self">self</span>.unit.factor()) <span class="kw">as </span>i64;
         <span class="kw">let </span>nsec_mul = (<span class="self">self</span>.unit.factor() / TimeUnit::Nanosecond.factor()) <span class="kw">as </span>i64;
 
