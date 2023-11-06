@@ -81,6 +81,10 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -104,6 +108,7 @@
 
 <span class="doccomment">/// Manages multiple object stores so that users can configure a storage for each table.
 /// This struct certainly have one default object store, and can have zero or more custom object stores.
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>ObjectStoreManager {
     stores: HashMap&lt;String, ObjectStore&gt;,
     default_object_store: ObjectStore,
@@ -113,19 +118,19 @@
     <span class="doccomment">/// Creates a new manager from the object store used as a default one.
     </span><span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str, object_store: ObjectStore) -&gt; <span class="self">Self </span>{
         ObjectStoreManager {
-            stores: [(name.to_string(), object_store.clone())].into(),
+            stores: [(name.to_lowercase(), object_store.clone())].into(),
             default_object_store: object_store,
         }
     }
 
     <span class="doccomment">/// Adds an object store to the manager.
     </span><span class="kw">pub fn </span>add(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, object_store: ObjectStore) {
-        <span class="self">self</span>.stores.insert(name.to_string(), object_store);
+        <span class="self">self</span>.stores.insert(name.to_lowercase(), object_store);
     }
 
     <span class="doccomment">/// Finds an object store corresponding to the name.
     </span><span class="kw">pub fn </span>find(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ObjectStore&gt; {
-        <span class="self">self</span>.stores.get(name)
+        <span class="self">self</span>.stores.get(<span class="kw-2">&amp;</span>name.to_lowercase())
     }
 
     <span class="kw">pub fn </span>default_object_store(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ObjectStore {
@@ -151,10 +156,12 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_manager_behavior() {
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;default&quot;</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>manager = ObjectStoreManager::new(<span class="string">&quot;default&quot;</span>, new_object_store(<span class="kw-2">&amp;</span>dir));
+        <span class="kw">let </span><span class="kw-2">mut </span>manager = ObjectStoreManager::new(<span class="string">&quot;Default&quot;</span>, new_object_store(<span class="kw-2">&amp;</span>dir));
 
         <span class="macro">assert!</span>(manager.find(<span class="string">&quot;default&quot;</span>).is_some());
+        <span class="macro">assert!</span>(manager.find(<span class="string">&quot;Default&quot;</span>).is_some());
         <span class="macro">assert!</span>(manager.find(<span class="string">&quot;Gcs&quot;</span>).is_none());
+        <span class="macro">assert!</span>(manager.find(<span class="string">&quot;gcs&quot;</span>).is_none());
 
         <span class="kw">let </span>dir = create_temp_dir(<span class="string">&quot;default&quot;</span>);
         manager.add(<span class="string">&quot;Gcs&quot;</span>, new_object_store(<span class="kw-2">&amp;</span>dir));
@@ -162,6 +169,7 @@
         <span class="comment">// Should not overwrite the default object store with the new one.
         </span><span class="macro">assert!</span>(manager.find(<span class="string">&quot;default&quot;</span>).is_some());
         <span class="macro">assert!</span>(manager.find(<span class="string">&quot;Gcs&quot;</span>).is_some());
+        <span class="macro">assert!</span>(manager.find(<span class="string">&quot;gcs&quot;</span>).is_some());
     }
 }
 </code></pre></div></section></main></body></html>

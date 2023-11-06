@@ -474,6 +474,13 @@
 <a href="#474" id="474">474</a>
 <a href="#475" id="475">475</a>
 <a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -615,6 +622,12 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Region {} not found&quot;</span>, region_id))]
     </span>RegionNotFound {
         region_id: RegionId,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Object store not found: {}&quot;</span>, object_store))]
+    </span>ObjectStoreNotFound {
+        object_store: String,
         location: Location,
     },
 
@@ -903,7 +916,8 @@
             | CreateDefault { .. }
             | InvalidParquet { .. } =&gt; StatusCode::Unexpected,
             RegionNotFound { .. } =&gt; StatusCode::RegionNotFound,
-            InvalidScanIndex { .. }
+            ObjectStoreNotFound { .. }
+            | InvalidScanIndex { .. }
             | InvalidMeta { .. }
             | InvalidRequest { .. }
             | FillDefault { .. }

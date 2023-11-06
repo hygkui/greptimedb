@@ -83,6 +83,8 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -104,12 +106,12 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::info;
 <span class="kw">use </span>object_store::util::join_path;
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::region_request::RegionOpenRequest;
 <span class="kw">use </span>store_api::storage::RegionId;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{OpenDalSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::error::{ObjectStoreNotFoundSnafu, OpenDalSnafu, RegionNotFoundSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::metrics::REGION_COUNT;
 <span class="kw">use </span><span class="kw">crate</span>::region::opener::RegionOpener;
 <span class="kw">use </span><span class="kw">crate</span>::worker::handle_drop::remove_region_dir_once;
@@ -124,21 +126,23 @@
         <span class="kw">if </span><span class="self">self</span>.regions.is_region_exists(region_id) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>));
         }
-
+        <span class="kw">let </span>object_store = <span class="kw">if let </span><span class="prelude-val">Some</span>(storage_name) = request.options.get(<span class="string">&quot;storage&quot;</span>) {
+            <span class="self">self</span>.object_store_manager
+                .find(storage_name)
+                .context(ObjectStoreNotFoundSnafu {
+                    object_store: storage_name.to_string(),
+                })<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.object_store_manager.default_object_store()
+        };
         <span class="comment">// Check if this region is pending drop. And clean the entire dir if so.
         </span><span class="kw">if </span>!<span class="self">self</span>.dropping_regions.is_region_exists(region_id)
-            &amp;&amp; <span class="self">self
-                </span>.object_store_manager
-                .default_object_store()
+            &amp;&amp; object_store
                 .is_exist(<span class="kw-2">&amp;</span>join_path(<span class="kw-2">&amp;</span>request.region_dir, DROPPING_MARKER_FILE))
                 .<span class="kw">await
                 </span>.context(OpenDalSnafu)<span class="question-mark">?
         </span>{
-            <span class="kw">let </span>result = remove_region_dir_once(
-                <span class="kw-2">&amp;</span>request.region_dir,
-                <span class="self">self</span>.object_store_manager.default_object_store(),
-            )
-            .<span class="kw">await</span>;
+            <span class="kw">let </span>result = remove_region_dir_once(<span class="kw-2">&amp;</span>request.region_dir, object_store).<span class="kw">await</span>;
             <span class="macro">info!</span>(<span class="string">&quot;Region {} is dropped, result: {:?}&quot;</span>, region_id, result);
             <span class="kw">return </span>RegionNotFoundSnafu { region_id }.fail();
         }
@@ -150,7 +154,7 @@
             region_id,
             <span class="kw-2">&amp;</span>request.region_dir,
             <span class="self">self</span>.memtable_builder.clone(),
-            <span class="self">self</span>.object_store_manager.default_object_store().clone(),
+            <span class="self">self</span>.object_store_manager.clone(),
             <span class="self">self</span>.scheduler.clone(),
         )
         .options(request.options)
