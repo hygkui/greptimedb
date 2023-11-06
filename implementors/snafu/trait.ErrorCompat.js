@@ -19,6 +19,7 @@
 "common_time":[["impl ErrorCompat for <a class=\"enum\" href=\"common_time/error/enum.Error.html\" title=\"enum common_time::error::Error\">Error</a>"]],
 "datanode":[["impl ErrorCompat for <a class=\"enum\" href=\"datanode/error/enum.Error.html\" title=\"enum datanode::error::Error\">Error</a>"]],
 "datatypes":[["impl ErrorCompat for <a class=\"enum\" href=\"datatypes/error/enum.Error.html\" title=\"enum datatypes::error::Error\">Error</a>"]],
+"decimal":[["impl ErrorCompat for <a class=\"enum\" href=\"decimal/error/enum.Error.html\" title=\"enum decimal::error::Error\">Error</a>"]],
 "file_engine":[["impl ErrorCompat for <a class=\"enum\" href=\"file_engine/error/enum.Error.html\" title=\"enum file_engine::error::Error\">Error</a>"]],
 "frontend":[["impl ErrorCompat for <a class=\"enum\" href=\"frontend/error/enum.Error.html\" title=\"enum frontend::error::Error\">Error</a>"]],
 "log_store":[["impl ErrorCompat for <a class=\"enum\" href=\"log_store/error/enum.Error.html\" title=\"enum log_store::error::Error\">Error</a>"]],
