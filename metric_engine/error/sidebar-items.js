@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["CreateMitoRegionSnafu","DecodeColumnValueSnafu","DeserializeSemanticTypeSnafu","MissingInternalColumnSnafu","TableAlreadyExistsSnafu"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["CollectRecordBatchStreamSnafu","CreateMitoRegionSnafu","DecodeColumnValueSnafu","DeserializeSemanticTypeSnafu","InternalColumnOccupiedSnafu","MissingInternalColumnSnafu","MitoReadOperationSnafu","MitoWriteOperationSnafu","TableAlreadyExistsSnafu"],"type":["Result"]};

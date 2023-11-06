@@ -130,6 +130,22 @@
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -169,6 +185,8 @@
     Version = <span class="number">0</span>,
     Sequence,
     OpType,
+    Tsid,
+    MetricName,
 }
 
 <span class="doccomment">/// Column id reserved by the engine.
@@ -197,6 +215,20 @@
     <span class="doccomment">/// Id for `__op_type` column.
     </span><span class="kw">pub const fn </span>op_type() -&gt; ColumnId {
         <span class="self">Self</span>::BASE | ReservedColumnType::OpType <span class="kw">as </span>ColumnId
+    }
+
+    <span class="doccomment">/// Id for storing TSID column.
+    ///
+    /// Used by: metric engine
+    </span><span class="kw">pub const fn </span>tsid() -&gt; ColumnId {
+        <span class="self">Self</span>::BASE | ReservedColumnType::Tsid <span class="kw">as </span>ColumnId
+    }
+
+    <span class="doccomment">/// Id for storing metric name column.
+    ///
+    /// Used by: metric engine
+    </span><span class="kw">pub const fn </span>metric_name() -&gt; ColumnId {
+        <span class="self">Self</span>::BASE | ReservedColumnType::MetricName <span class="kw">as </span>ColumnId
     }
 }
 

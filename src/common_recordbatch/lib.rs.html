@@ -375,7 +375,7 @@
 
 <span class="kw">pub type </span>SendableRecordBatchStream = Pin&lt;Box&lt;<span class="kw">dyn </span>RecordBatchStream + Send&gt;&gt;;
 
-<span class="attr">#[derive(Debug, Clone)]
+<span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>OrderOption {
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>options: SortOptions,
