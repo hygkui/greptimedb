@@ -1087,6 +1087,12 @@
 <a href="#1087" id="1087">1087</a>
 <a href="#1088" id="1088">1088</a>
 <a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1108,7 +1114,7 @@
 <span class="kw">use </span>std::sync::{Arc, RwLock};
 
 <span class="kw">use </span>api::v1::OpType;
-<span class="kw">use </span>common_telemetry::debug;
+<span class="kw">use </span>common_telemetry::{debug, error};
 <span class="kw">use </span>common_time::Timestamp;
 <span class="kw">use </span>datafusion::physical_plan::PhysicalExpr;
 <span class="kw">use </span>datafusion_common::ScalarValue;
@@ -1489,7 +1495,7 @@
     codec: <span class="kw-2">&amp;</span>Arc&lt;McmpRowCodec&gt;,
     pk: <span class="kw-2">&amp;</span>[u8],
     series: <span class="kw-2">&amp;mut </span>Series,
-    builders: <span class="kw-2">&amp;mut </span>Vec&lt;Box&lt;<span class="kw">dyn </span>MutableVector&gt;&gt;,
+    builders: <span class="kw-2">&amp;mut </span>[Box&lt;<span class="kw">dyn </span>MutableVector&gt;],
     pk_schema: arrow::datatypes::SchemaRef,
     predicate: <span class="kw-2">&amp;</span>[Arc&lt;<span class="kw">dyn </span>PhysicalExpr&gt;],
 ) -&gt; bool {
@@ -1500,11 +1506,18 @@
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(rb) = series.pk_cache.as_ref() {
         <span class="kw">let </span>res = prune_inner(predicate, rb).unwrap_or(<span class="bool-val">true</span>);
-        <span class="macro">debug!</span>(<span class="string">&quot;Prune primary key: {:?}, res: {:?}&quot;</span>, rb, res);
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;Prune primary key: {:?}, predicate: {:?}, res: {:?}&quot;</span>,
+            rb, predicate, res
+        );
         res
     } <span class="kw">else </span>{
-        <span class="kw">let </span><span class="prelude-val">Ok</span>(rb) = pk_to_record_batch(codec, pk, builders, pk_schema) <span class="kw">else </span>{
-            <span class="kw">return </span><span class="bool-val">true</span>;
+        <span class="kw">let </span>rb = <span class="kw">match </span>pk_to_record_batch(codec, pk, builders, pk_schema) {
+            <span class="prelude-val">Ok</span>(rb) =&gt; rb,
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(e; <span class="string">&quot;Failed to build record batch from primary keys&quot;</span>);
+                <span class="kw">return </span><span class="bool-val">true</span>;
+            }
         };
         <span class="kw">let </span>res = prune_inner(predicate, <span class="kw-2">&amp;</span>rb).unwrap_or(<span class="bool-val">true</span>);
         <span class="macro">debug!</span>(<span class="string">&quot;Prune primary key: {:?}, res: {:?}&quot;</span>, rb, res);
@@ -1548,11 +1561,10 @@
 <span class="kw">fn </span>pk_to_record_batch(
     codec: <span class="kw-2">&amp;</span>Arc&lt;McmpRowCodec&gt;,
     bytes: <span class="kw-2">&amp;</span>[u8],
-    builders: <span class="kw-2">&amp;mut </span>Vec&lt;Box&lt;<span class="kw">dyn </span>MutableVector&gt;&gt;,
+    builders: <span class="kw-2">&amp;mut </span>[Box&lt;<span class="kw">dyn </span>MutableVector&gt;],
     pk_schema: arrow::datatypes::SchemaRef,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;RecordBatch&gt; {
     <span class="kw">let </span>pk_values = codec.decode(bytes).unwrap();
-    <span class="macro">assert_eq!</span>(builders.len(), pk_values.len());
 
     <span class="kw">let </span>arrays = builders
         .iter_mut()
