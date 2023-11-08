@@ -1093,6 +1093,49 @@
 <a href="#1093" id="1093">1093</a>
 <a href="#1094" id="1094">1094</a>
 <a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1112,9 +1155,10 @@
 <span class="kw">use </span>std::fmt::{Debug, Formatter};
 <span class="kw">use </span>std::sync::atomic::{AtomicI64, AtomicU32, Ordering};
 <span class="kw">use </span>std::sync::{Arc, RwLock};
+<span class="kw">use </span>std::time::{Duration, Instant};
 
 <span class="kw">use </span>api::v1::OpType;
-<span class="kw">use </span>common_telemetry::{debug, error};
+<span class="kw">use </span>common_telemetry::{debug, error, trace};
 <span class="kw">use </span>common_time::Timestamp;
 <span class="kw">use </span>datafusion::physical_plan::PhysicalExpr;
 <span class="kw">use </span>datafusion_common::ScalarValue;
@@ -1142,6 +1186,7 @@
     AllocTracker, BoxedBatchIterator, KeyValues, Memtable, MemtableBuilder, MemtableId,
     MemtableRef, MemtableStats,
 };
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{READ_ROWS_TOTAL, READ_STAGE_ELAPSED};
 <span class="kw">use </span><span class="kw">crate</span>::read::{Batch, BatchBuilder, BatchColumn};
 <span class="kw">use </span><span class="kw">crate</span>::row_converter::{McmpRowCodec, RowCodec, SortField};
 
@@ -1414,6 +1459,7 @@
             pk_schema: primary_key_schema,
             primary_key_builders,
             codec: <span class="self">self</span>.codec.clone(),
+            metrics: Metrics::default(),
         }
     }
 }
@@ -1441,6 +1487,21 @@
     (builders, Arc::new(arrow::datatypes::Schema::new(fields)))
 }
 
+<span class="doccomment">/// Metrics for reading the memtable.
+</span><span class="attr">#[derive(Debug, Default)]
+</span><span class="kw">struct </span>Metrics {
+    <span class="doccomment">/// Total series in the memtable.
+    </span>total_series: usize,
+    <span class="doccomment">/// Number of series pruned.
+    </span>num_pruned_series: usize,
+    <span class="doccomment">/// Number of rows read.
+    </span>num_rows: usize,
+    <span class="doccomment">/// Number of batch read.
+    </span>num_batches: usize,
+    <span class="doccomment">/// Duration to scan the memtable.
+    </span>scan_cost: Duration,
+}
+
 <span class="kw">struct </span>Iter {
     metadata: RegionMetadataRef,
     series: Arc&lt;SeriesRwLockMap&gt;,
@@ -1450,12 +1511,30 @@
     pk_schema: arrow::datatypes::SchemaRef,
     primary_key_builders: Vec&lt;Box&lt;<span class="kw">dyn </span>MutableVector&gt;&gt;,
     codec: Arc&lt;McmpRowCodec&gt;,
+    metrics: Metrics,
+}
+
+<span class="kw">impl </span>Drop <span class="kw">for </span>Iter {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;Iter {} time series memtable, metrics: {:?}&quot;</span>,
+            <span class="self">self</span>.metadata.region_id, <span class="self">self</span>.metrics
+        );
+
+        READ_ROWS_TOTAL
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;time_series_memtable&quot;</span>])
+            .inc_by(<span class="self">self</span>.metrics.num_rows <span class="kw">as </span>u64);
+        READ_STAGE_ELAPSED
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;scan_memtable&quot;</span>])
+            .observe(<span class="self">self</span>.metrics.scan_cost.as_secs_f64());
+    }
 }
 
 <span class="kw">impl </span>Iterator <span class="kw">for </span>Iter {
     <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;Batch&gt;;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">let </span>start = Instant::now();
         <span class="kw">let </span>map = <span class="self">self</span>.series.read().unwrap();
         <span class="kw">let </span>range = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.last_key {
             <span class="prelude-val">None </span>=&gt; map.range::&lt;Vec&lt;u8&gt;, <span class="kw">_</span>&gt;(..),
@@ -1466,7 +1545,10 @@
 
         <span class="comment">// TODO(hl): maybe yield more than one time series to amortize range overhead.
         </span><span class="kw">for </span>(primary_key, series) <span class="kw">in </span>range {
+            <span class="self">self</span>.metrics.total_series += <span class="number">1</span>;
+
             <span class="kw">let </span><span class="kw-2">mut </span>series = series.write().unwrap();
+            <span class="kw">let </span>start = Instant::now();
             <span class="kw">if </span>!<span class="self">self</span>.predicate.is_empty()
                 &amp;&amp; !prune_primary_key(
                     <span class="kw-2">&amp;</span><span class="self">self</span>.codec,
@@ -1478,15 +1560,23 @@
                 )
             {
                 <span class="comment">// read next series
-                </span><span class="kw">continue</span>;
+                </span><span class="self">self</span>.metrics.num_pruned_series += <span class="number">1</span>;
+                <span class="kw">continue</span>;
             }
             <span class="self">self</span>.last_key = <span class="prelude-val">Some</span>(primary_key.clone());
 
             <span class="kw">let </span>values = series.compact(<span class="kw-2">&amp;</span><span class="self">self</span>.metadata);
-            <span class="kw">return </span><span class="prelude-val">Some</span>(
-                values.and_then(|v| v.to_batch(primary_key, <span class="kw-2">&amp;</span><span class="self">self</span>.metadata, <span class="kw-2">&amp;</span><span class="self">self</span>.projection)),
-            );
+            <span class="kw">let </span>batch =
+                values.and_then(|v| v.to_batch(primary_key, <span class="kw-2">&amp;</span><span class="self">self</span>.metadata, <span class="kw-2">&amp;</span><span class="self">self</span>.projection));
+
+            <span class="comment">// Update metrics.
+            </span><span class="self">self</span>.metrics.num_batches += <span class="number">1</span>;
+            <span class="self">self</span>.metrics.num_rows += batch.as_ref().map(|b| b.num_rows()).unwrap_or(<span class="number">0</span>);
+            <span class="self">self</span>.metrics.scan_cost += start.elapsed();
+            <span class="kw">return </span><span class="prelude-val">Some</span>(batch);
         }
+        <span class="self">self</span>.metrics.scan_cost += start.elapsed();
+
         <span class="prelude-val">None
     </span>}
 }
@@ -1505,12 +1595,7 @@
     }
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(rb) = series.pk_cache.as_ref() {
-        <span class="kw">let </span>res = prune_inner(predicate, rb).unwrap_or(<span class="bool-val">true</span>);
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;Prune primary key: {:?}, predicate: {:?}, res: {:?}&quot;</span>,
-            rb, predicate, res
-        );
-        res
+        prune_inner(predicate, rb).unwrap_or(<span class="bool-val">true</span>)
     } <span class="kw">else </span>{
         <span class="kw">let </span>rb = <span class="kw">match </span>pk_to_record_batch(codec, pk, builders, pk_schema) {
             <span class="prelude-val">Ok</span>(rb) =&gt; rb,
@@ -1520,7 +1605,6 @@
             }
         };
         <span class="kw">let </span>res = prune_inner(predicate, <span class="kw-2">&amp;</span>rb).unwrap_or(<span class="bool-val">true</span>);
-        <span class="macro">debug!</span>(<span class="string">&quot;Prune primary key: {:?}, res: {:?}&quot;</span>, rb, res);
         series.update_pk_cache(rb);
         res
     }
@@ -1547,9 +1631,11 @@
                 <span class="macro">unreachable!</span>(<span class="string">&quot;Unexpected primary key record batch evaluation result: {:?}, primary key: {:?}&quot;</span>, eva, primary_key);
             }
         };
-        <span class="macro">debug!</span>(
+        <span class="macro">trace!</span>(
             <span class="string">&quot;Evaluate primary key {:?} against filter: {:?}, result: {:?}&quot;</span>,
-            primary_key, expr, result
+            primary_key,
+            expr,
+            result
         );
         <span class="kw">if </span>!result {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);

@@ -1066,6 +1066,95 @@
 <a href="#1066" id="1066">1066</a>
 <a href="#1067" id="1067">1067</a>
 <a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1085,12 +1174,15 @@
 </span><span class="kw">use </span>std::cmp::Ordering;
 <span class="kw">use </span>std::collections::BinaryHeap;
 <span class="kw">use </span>std::mem;
+<span class="kw">use </span>std::time::{Duration, Instant};
 
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_telemetry::debug;
 <span class="kw">use </span>common_time::Timestamp;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::memtable::BoxedBatchIterator;
+<span class="kw">use </span><span class="kw">crate</span>::metrics::{MERGE_FILTER_ROWS_TOTAL, READ_STAGE_ELAPSED};
 <span class="kw">use </span><span class="kw">crate</span>::read::{Batch, BatchReader, BoxedBatchReader, Source};
 
 <span class="doccomment">/// Minimum batch size to output.
@@ -1119,11 +1211,14 @@
     <span class="doccomment">/// Suggested size of each batch. The batch returned by the reader can have more rows than the
     /// batch size.
     </span>batch_size: usize,
+    <span class="doccomment">/// Local metrics.
+    </span>metrics: Metrics,
 }
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>BatchReader <span class="kw">for </span>MergeReader {
     <span class="kw">async fn </span>next_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Batch&gt;&gt; {
+        <span class="kw">let </span>start = Instant::now();
         <span class="kw">while </span>!<span class="self">self</span>.hot.is_empty() &amp;&amp; <span class="self">self</span>.batch_merger.num_rows() &lt; <span class="self">self</span>.batch_size {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(current_key) = <span class="self">self</span>.batch_merger.primary_key() {
                 <span class="comment">// If the hottest node has a different key, we have finish collecting current key.
@@ -1136,28 +1231,55 @@
             <span class="kw">if </span><span class="self">self</span>.hot.len() == <span class="number">1 </span>{
                 <span class="comment">// No need to do merge sort if only one batch in the hot heap.
                 </span><span class="self">self</span>.fetch_batch_from_hottest().<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="self">self</span>.metrics.num_fetch_by_batches += <span class="number">1</span>;
             } <span class="kw">else </span>{
                 <span class="comment">// We could only fetch rows that less than the next node from the hottest node.
                 </span><span class="self">self</span>.fetch_rows_from_hottest().<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="self">self</span>.metrics.num_fetch_by_rows += <span class="number">1</span>;
             }
         }
 
         <span class="kw">if </span><span class="self">self</span>.batch_merger.is_empty() {
             <span class="comment">// Nothing fetched.
-            </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+            </span><span class="self">self</span>.metrics.scan_cost += start.elapsed();
+            <span class="comment">// Update deleted rows num.
+            </span><span class="self">self</span>.metrics.num_deleted_rows = <span class="self">self</span>.batch_merger.num_deleted_rows();
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         } <span class="kw">else </span>{
-            <span class="self">self</span>.batch_merger.merge_batches()
+            <span class="kw">let </span>batch = <span class="self">self</span>.batch_merger.merge_batches()<span class="question-mark">?</span>;
+            <span class="self">self</span>.metrics.scan_cost += start.elapsed();
+            <span class="self">self</span>.metrics.num_output_rows += batch.as_ref().map(|b| b.num_rows()).unwrap_or(<span class="number">0</span>);
+            <span class="prelude-val">Ok</span>(batch)
         }
+    }
+}
+
+<span class="kw">impl </span>Drop <span class="kw">for </span>MergeReader {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="macro">debug!</span>(<span class="string">&quot;Merge reader finished, metrics: {:?}&quot;</span>, <span class="self">self</span>.metrics);
+
+        MERGE_FILTER_ROWS_TOTAL
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;dedup&quot;</span>])
+            .inc_by(<span class="self">self</span>.metrics.num_duplicate_rows <span class="kw">as </span>u64);
+        MERGE_FILTER_ROWS_TOTAL
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;delete&quot;</span>])
+            .inc_by(<span class="self">self</span>.metrics.num_deleted_rows <span class="kw">as </span>u64);
+        READ_STAGE_ELAPSED
+            .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;merge&quot;</span>])
+            .observe(<span class="self">self</span>.metrics.scan_cost.as_secs_f64());
     }
 }
 
 <span class="kw">impl </span>MergeReader {
     <span class="doccomment">/// Creates and initializes a new [MergeReader].
     </span><span class="kw">pub async fn </span>new(sources: Vec&lt;Source&gt;, batch_size: usize) -&gt; <span class="prelude-ty">Result</span>&lt;MergeReader&gt; {
+        <span class="kw">let </span>start = Instant::now();
+        <span class="kw">let </span><span class="kw-2">mut </span>metrics = Metrics::default();
+
         <span class="kw">let </span><span class="kw-2">mut </span>cold = BinaryHeap::with_capacity(sources.len());
         <span class="kw">let </span>hot = BinaryHeap::with_capacity(sources.len());
         <span class="kw">for </span>source <span class="kw">in </span>sources {
-            <span class="kw">let </span>node = Node::new(source).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="kw">let </span>node = Node::new(source, <span class="kw-2">&amp;mut </span>metrics).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="kw">if </span>!node.is_eof() {
                 <span class="comment">// Ensure `cold` don&#39;t have eof nodes.
                 </span>cold.push(node);
@@ -1169,10 +1291,12 @@
             cold,
             batch_merger: BatchMerger::new(),
             batch_size,
+            metrics,
         };
         <span class="comment">// Initializes the reader.
         </span>reader.refill_hot();
 
+        reader.metrics.scan_cost += start.elapsed();
         <span class="prelude-val">Ok</span>(reader)
     }
 
@@ -1200,7 +1324,7 @@
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, <span class="self">self</span>.hot.len());
 
         <span class="kw">let </span><span class="kw-2">mut </span>hottest = <span class="self">self</span>.hot.pop().unwrap();
-        <span class="kw">let </span>batch = hottest.fetch_batch().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>batch = hottest.fetch_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>.metrics).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.batch_merger.push(batch)<span class="question-mark">?</span>;
         <span class="self">self</span>.reheap(hottest)
     }
@@ -1229,12 +1353,12 @@
         // value directly.
         </span><span class="kw">match </span>timestamps.binary_search(<span class="kw-2">&amp;</span>next_min_ts.value()) {
             <span class="prelude-val">Ok</span>(pos) =&gt; {
-                <span class="comment">// They have duplicate timestamps. Outputs timestamps before the duplciated timestamp.
+                <span class="comment">// They have duplicate timestamps. Outputs timestamps before the duplicated timestamp.
                 // Batch itself doesn&#39;t contain duplicate timestamps so timestamps before `pos`
                 // must be less than `next_min_ts`.
                 </span><span class="self">self</span>.batch_merger.push(top.slice(<span class="number">0</span>, pos))<span class="question-mark">?</span>;
                 <span class="comment">// This keep the duplicate timestamp in the node.
-                </span>top_node.skip_rows(pos).<span class="kw">await</span><span class="question-mark">?</span>;
+                </span>top_node.skip_rows(pos, <span class="kw-2">&amp;mut </span><span class="self">self</span>.metrics).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="comment">// The merge window should contain this timestamp so only nodes in the hot heap
                 // have this timestamp.
                 </span><span class="self">self</span>.filter_first_duplicate_timestamp_in_hot(top_node, next_min_ts)
@@ -1243,7 +1367,7 @@
             <span class="prelude-val">Err</span>(pos) =&gt; {
                 <span class="comment">// No duplicate timestamp. Outputs timestamp before `pos`.
                 </span><span class="self">self</span>.batch_merger.push(top.slice(<span class="number">0</span>, pos))<span class="question-mark">?</span>;
-                top_node.skip_rows(pos).<span class="kw">await</span><span class="question-mark">?</span>;
+                top_node.skip_rows(pos, <span class="kw-2">&amp;mut </span><span class="self">self</span>.metrics).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="self">self</span>.reheap(top_node)<span class="question-mark">?</span>;
             }
         }
@@ -1279,16 +1403,18 @@
 
             <span class="kw">if </span>max_seq &lt; next_first_seq {
                 <span class="comment">// The next node has larger seq.
-                </span>max_seq_node.skip_rows(<span class="number">1</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+                </span>max_seq_node.skip_rows(<span class="number">1</span>, <span class="kw-2">&amp;mut </span><span class="self">self</span>.metrics).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="self">self</span>.metrics.num_duplicate_rows += <span class="number">1</span>;
                 <span class="kw">if </span>!max_seq_node.is_eof() {
                     <span class="self">self</span>.cold.push(max_seq_node);
                 }
                 max_seq_node = next_node;
                 max_seq = next_first_seq;
             } <span class="kw">else </span>{
-                next_node.skip_rows(<span class="number">1</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+                next_node.skip_rows(<span class="number">1</span>, <span class="kw-2">&amp;mut </span><span class="self">self</span>.metrics).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="self">self</span>.metrics.num_duplicate_rows += <span class="number">1</span>;
                 <span class="kw">if </span>!next_node.is_eof() {
-                    <span class="comment">// If the next node is
+                    <span class="comment">// If the next node has smaller seq, skip that row.
                     </span><span class="self">self</span>.cold.push(next_node);
                 }
             }
@@ -1383,12 +1509,33 @@
     }
 }
 
+<span class="doccomment">/// Metrics for the merge reader.
+</span><span class="attr">#[derive(Debug, Default)]
+</span><span class="kw">struct </span>Metrics {
+    <span class="doccomment">/// Total scan cost of the reader.
+    </span>scan_cost: Duration,
+    <span class="doccomment">/// Number of times to fetch batches.
+    </span>num_fetch_by_batches: usize,
+    <span class="doccomment">/// Number of times to fetch rows.
+    </span>num_fetch_by_rows: usize,
+    <span class="doccomment">/// Number of input rows.
+    </span>num_input_rows: usize,
+    <span class="doccomment">/// Number of skipped duplicate rows.
+    </span>num_duplicate_rows: usize,
+    <span class="doccomment">/// Number of output rows.
+    </span>num_output_rows: usize,
+    <span class="doccomment">/// Number of deleted rows.
+    </span>num_deleted_rows: usize,
+}
+
 <span class="doccomment">/// Helper to collect and merge small batches for same primary key.
 </span><span class="kw">struct </span>BatchMerger {
     <span class="doccomment">/// Buffered non-empty batches to merge.
     </span>batches: Vec&lt;Batch&gt;,
     <span class="doccomment">/// Number of rows in the batch.
     </span>num_rows: usize,
+    <span class="doccomment">/// Number of rows deleted.
+    </span>num_deleted_rows: usize,
 }
 
 <span class="kw">impl </span>BatchMerger {
@@ -1397,12 +1544,18 @@
         BatchMerger {
             batches: Vec::new(),
             num_rows: <span class="number">0</span>,
+            num_deleted_rows: <span class="number">0</span>,
         }
     }
 
     <span class="doccomment">/// Returns the number of rows.
     </span><span class="kw">fn </span>num_rows(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.num_rows
+    }
+
+    <span class="doccomment">/// Returns the number of rows deleted.
+    </span><span class="kw">fn </span>num_deleted_rows(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.num_deleted_rows
     }
 
     <span class="doccomment">/// Returns true if the merger is empty.
@@ -1428,7 +1581,9 @@
             .map(|b| b.primary_key() == batch.primary_key())
             .unwrap_or(<span class="bool-val">true</span>));
 
+        <span class="kw">let </span>num_rows = batch.num_rows();
         batch.filter_deleted()<span class="question-mark">?</span>;
+        <span class="self">self</span>.num_deleted_rows += num_rows - batch.num_rows();
         <span class="kw">if </span>batch.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
@@ -1470,9 +1625,11 @@
     <span class="doccomment">/// Initialize a node.
     ///
     /// It tries to fetch one batch from the `source`.
-    </span><span class="kw">async fn </span>new(<span class="kw-2">mut </span>source: Source) -&gt; <span class="prelude-ty">Result</span>&lt;Node&gt; {
+    </span><span class="kw">async fn </span>new(<span class="kw-2">mut </span>source: Source, metrics: <span class="kw-2">&amp;mut </span>Metrics) -&gt; <span class="prelude-ty">Result</span>&lt;Node&gt; {
         <span class="comment">// Ensures batch is not empty.
         </span><span class="kw">let </span>current_batch = source.next_batch().<span class="kw">await</span><span class="question-mark">?</span>.map(CompareFirst);
+        metrics.num_input_rows += current_batch.as_ref().map(|b| b.<span class="number">0</span>.num_rows()).unwrap_or(<span class="number">0</span>);
+
         <span class="prelude-val">Ok</span>(Node {
             source,
             current_batch,
@@ -1505,10 +1662,15 @@
     ///
     /// # Panics
     /// Panics if the node has reached EOF.
-    </span><span class="kw">async fn </span>fetch_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Batch&gt; {
+    </span><span class="kw">async fn </span>fetch_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>, metrics: <span class="kw-2">&amp;mut </span>Metrics) -&gt; <span class="prelude-ty">Result</span>&lt;Batch&gt; {
         <span class="kw">let </span>current = <span class="self">self</span>.current_batch.take().unwrap();
         <span class="comment">// Ensures batch is not empty.
         </span><span class="self">self</span>.current_batch = <span class="self">self</span>.source.next_batch().<span class="kw">await</span><span class="question-mark">?</span>.map(CompareFirst);
+        metrics.num_input_rows += <span class="self">self
+            </span>.current_batch
+            .as_ref()
+            .map(|b| b.<span class="number">0</span>.num_rows())
+            .unwrap_or(<span class="number">0</span>);
         <span class="prelude-val">Ok</span>(current.<span class="number">0</span>)
     }
 
@@ -1536,13 +1698,14 @@
     ///
     /// # Panics
     /// Panics if the node is EOF.
-    </span><span class="kw">async fn </span>skip_rows(<span class="kw-2">&amp;mut </span><span class="self">self</span>, num_to_skip: usize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">async fn </span>skip_rows(<span class="kw-2">&amp;mut </span><span class="self">self</span>, num_to_skip: usize, metrics: <span class="kw-2">&amp;mut </span>Metrics) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>batch = <span class="self">self</span>.current_batch();
         <span class="macro">debug_assert!</span>(batch.num_rows() &gt;= num_to_skip);
+
         <span class="kw">let </span>remaining = batch.num_rows() - num_to_skip;
         <span class="kw">if </span>remaining == <span class="number">0 </span>{
             <span class="comment">// Nothing remains, we need to fetch next batch to ensure the batch is not empty.
-            </span><span class="self">self</span>.fetch_batch().<span class="kw">await</span><span class="question-mark">?</span>;
+            </span><span class="self">self</span>.fetch_batch(metrics).<span class="kw">await</span><span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             <span class="macro">debug_assert!</span>(!batch.is_empty());
             <span class="self">self</span>.current_batch = <span class="prelude-val">Some</span>(CompareFirst(batch.slice(num_to_skip, remaining)));
@@ -1678,6 +1841,10 @@
             ],
         )
         .<span class="kw">await</span>;
+
+        <span class="macro">assert_eq!</span>(<span class="number">8</span>, reader.metrics.num_input_rows);
+        <span class="macro">assert_eq!</span>(<span class="number">6</span>, reader.metrics.num_output_rows);
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, reader.metrics.num_deleted_rows);
     }
 
     <span class="attr">#[tokio::test]
@@ -1790,6 +1957,11 @@
             ],
         )
         .<span class="kw">await</span>;
+
+        <span class="macro">assert_eq!</span>(<span class="number">11</span>, reader.metrics.num_input_rows);
+        <span class="macro">assert_eq!</span>(<span class="number">7</span>, reader.metrics.num_output_rows);
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, reader.metrics.num_deleted_rows);
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, reader.metrics.num_duplicate_rows);
     }
 
     <span class="attr">#[tokio::test]
@@ -2119,6 +2291,11 @@
             .push(new_batch(<span class="string">b&quot;k1&quot;</span>, <span class="kw-2">&amp;</span>[<span class="number">2</span>], <span class="kw-2">&amp;</span>[<span class="number">10</span>], <span class="kw-2">&amp;</span>[OpType::Put], <span class="kw-2">&amp;</span>[<span class="number">22</span>]))
             .unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, merger.num_rows());
+        merger
+            .push(new_batch(<span class="string">b&quot;k1&quot;</span>, <span class="kw-2">&amp;</span>[<span class="number">3</span>], <span class="kw-2">&amp;</span>[<span class="number">10</span>], <span class="kw-2">&amp;</span>[OpType::Delete], <span class="kw-2">&amp;</span>[<span class="number">23</span>]))
+            .unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, merger.num_rows());
+
         <span class="kw">let </span>batch = merger.merge_batches().unwrap().unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, batch.num_rows());
         <span class="macro">assert_eq!</span>(
@@ -2132,6 +2309,7 @@
             )
         );
         <span class="macro">assert!</span>(merger.is_empty());
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, merger.num_deleted_rows());
     }
 }
 </code></pre></div></section></main></body></html>

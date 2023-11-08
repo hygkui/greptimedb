@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ParquetReader","ParquetReaderBuilder","RowGroupReaderBuilder"]};
+window.SIDEBAR_ITEMS = {"struct":["Metrics","ParquetReader","ParquetReaderBuilder","RowGroupReaderBuilder"]};

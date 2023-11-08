@@ -106,6 +106,23 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -213,5 +230,22 @@
     <span class="doccomment">/// Counter of failed compaction task.
     </span><span class="kw">pub static </span><span class="kw-2">ref </span>COMPACTION_FAILURE_COUNT: IntCounter =
         <span class="macro">register_int_counter!</span>(<span class="string">&quot;mito_compaction_failure_total&quot;</span>, <span class="string">&quot;mito compaction failure total&quot;</span>).unwrap();
-}
+    <span class="comment">// ------- End of compaction metrics.
+
+    // Query metrics.
+    </span><span class="doccomment">/// Timer of different stages in query.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>READ_STAGE_ELAPSED: HistogramVec = <span class="macro">register_histogram_vec!</span>(
+        <span class="string">&quot;mito_read_stage_elapsed&quot;</span>,
+        <span class="string">&quot;mito read stage elapsed&quot;</span>,
+        <span class="kw-2">&amp;</span>[STAGE_LABEL]
+    )
+    .unwrap();
+    <span class="doccomment">/// Counter of rows read.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>READ_ROWS_TOTAL: IntCounterVec =
+        <span class="macro">register_int_counter_vec!</span>(<span class="string">&quot;mito_read_rows_total&quot;</span>, <span class="string">&quot;mito read rows total&quot;</span>, <span class="kw-2">&amp;</span>[TYPE_LABEL]).unwrap();
+    <span class="doccomment">/// Counter of filtered rows during merge.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>MERGE_FILTER_ROWS_TOTAL: IntCounterVec =
+        <span class="macro">register_int_counter_vec!</span>(<span class="string">&quot;mito_merge_filter_rows_total&quot;</span>, <span class="string">&quot;mito merge filter rows total&quot;</span>, <span class="kw-2">&amp;</span>[TYPE_LABEL]).unwrap();
+    <span class="comment">// ------- End of query metrics.
+</span>}
 </code></pre></div></section></main></body></html>

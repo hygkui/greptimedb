@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SeqScan"]};
+window.SIDEBAR_ITEMS = {"struct":["Metrics","SeqScan"]};
