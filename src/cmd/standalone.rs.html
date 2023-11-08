@@ -973,13 +973,13 @@
     #[allow(unused_variables)]
     #[allow(clippy::diverging_sub_expression)]
     </span><span class="kw">async fn </span>build(<span class="self">self</span>, opts: MixOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Instance&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>fe_opts = opts.frontend;
         <span class="attr">#[allow(clippy::unnecessary_mut_passed)]
-        </span><span class="kw">let </span>fe_plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;mut </span>fe_opts)
+        </span><span class="kw">let </span>fe_opts = opts.frontend.clone();
+        <span class="kw">let </span>fe_plugins = plugins::setup_frontend_plugins(<span class="kw-2">&amp;</span>fe_opts)
             .<span class="kw">await
             </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>dn_opts = opts.datanode;
+        <span class="kw">let </span>dn_opts = opts.datanode.clone();
 
         <span class="macro">info!</span>(<span class="string">&quot;Standalone start command: {:#?}&quot;</span>, <span class="self">self</span>);
         <span class="macro">info!</span>(
@@ -995,8 +995,8 @@
         <span class="kw">let </span>metadata_dir = metadata_store_dir(<span class="kw-2">&amp;</span>opts.data_home);
         <span class="kw">let </span>(kv_backend, procedure_manager) = FeInstance::try_build_standalone_components(
             metadata_dir,
-            opts.metadata_store,
-            opts.procedure,
+            opts.metadata_store.clone(),
+            opts.procedure.clone(),
         )
         .<span class="kw">await
         </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
@@ -1034,7 +1034,7 @@
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
         frontend
-            .build_servers(<span class="kw-2">&amp;</span>fe_opts)
+            .build_servers(opts)
             .<span class="kw">await
             </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 

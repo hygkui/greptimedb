@@ -766,6 +766,9 @@
 <a href="#766" id="766">766</a>
 <a href="#767" id="767">767</a>
 <a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -856,7 +859,7 @@
     ParseSqlSnafu, PermissionSnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>, SqlExecInterceptedSnafu,
     TableOperationSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::frontend::FrontendOptions;
+<span class="kw">use </span><span class="kw">crate</span>::frontend::{FrontendOptions, TomlSerializable};
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::invalidate_table_cache::InvalidateTableCacheHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
@@ -1126,7 +1129,10 @@
         })
     }
 
-    <span class="kw">pub async fn </span>build_servers(<span class="kw-2">&amp;mut </span><span class="self">self</span>, opts: <span class="kw-2">&amp;</span>FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">pub async fn </span>build_servers(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        opts: <span class="kw">impl </span>Into&lt;FrontendOptions&gt; + TomlSerializable,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>servers = Services::build(opts, Arc::new(<span class="self">self</span>.clone()), <span class="self">self</span>.plugins.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.servers = Arc::new(servers);
 

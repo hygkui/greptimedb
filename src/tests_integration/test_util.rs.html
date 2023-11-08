@@ -615,6 +615,7 @@
 <a href="#615" id="615">615</a>
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -649,6 +650,7 @@
     AzblobConfig, DatanodeOptions, FileConfig, GcsConfig, ObjectStoreConfig, OssConfig, S3Config,
     StorageConfig,
 };
+<span class="kw">use </span>frontend::frontend::TomlSerializable;
 <span class="kw">use </span>frontend::instance::Instance;
 <span class="kw">use </span>frontend::service_config::{MysqlOptions, PostgresOptions};
 <span class="kw">use </span>object_store::services::{Azblob, Gcs, Oss, S3};
@@ -993,7 +995,7 @@ CREATE TABLE IF NOT EXISTS {table_name} (
             instance.instance.clone(),
         ))
         .with_script_handler(instance.instance.clone())
-        .with_greptime_config_options(instance.datanode_opts.to_toml_string());
+        .with_greptime_config_options(instance.mix_options.to_toml().unwrap());
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(user_provider) = user_provider {
         http_server.with_user_provider(user_provider);

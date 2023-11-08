@@ -115,6 +115,20 @@
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -132,12 +146,15 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>catalog::kvbackend::KvBackendCatalogManager;
+<span class="kw">use </span>cmd::options::MixOptions;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_config::KvBackendConfig;
 <span class="kw">use </span>common_meta::cache_invalidator::DummyKvCacheInvalidator;
 <span class="kw">use </span>common_procedure::options::ProcedureConfig;
+<span class="kw">use </span>common_telemetry::logging::LoggingOptions;
 <span class="kw">use </span>datanode::config::DatanodeOptions;
 <span class="kw">use </span>datanode::datanode::DatanodeBuilder;
+<span class="kw">use </span>frontend::frontend::FrontendOptions;
 <span class="kw">use </span>frontend::instance::{FrontendInstance, Instance, StandaloneDatanodeManager};
 
 <span class="kw">use </span><span class="kw">crate</span>::test_util::{<span class="self">self</span>, create_tmp_dir_and_datanode_opts, StorageType, TestGuard};
@@ -145,6 +162,7 @@
 <span class="kw">pub struct </span>GreptimeDbStandalone {
     <span class="kw">pub </span>instance: Arc&lt;Instance&gt;,
     <span class="kw">pub </span>datanode_opts: DatanodeOptions,
+    <span class="kw">pub </span>mix_options: MixOptions,
     <span class="kw">pub </span>guard: TestGuard,
 }
 
@@ -183,10 +201,12 @@
 
         <span class="kw">let </span>(opts, guard) = create_tmp_dir_and_datanode_opts(store_type, <span class="kw-2">&amp;</span><span class="self">self</span>.instance_name);
 
+        <span class="kw">let </span>procedure_config = ProcedureConfig::default();
+        <span class="kw">let </span>kv_backend_config = KvBackendConfig::default();
         <span class="kw">let </span>(kv_backend, procedure_manager) = Instance::try_build_standalone_components(
             <span class="macro">format!</span>(<span class="string">&quot;{}/kv&quot;</span>, <span class="kw-2">&amp;</span>opts.storage.data_home),
-            KvBackendConfig::default(),
-            ProcedureConfig::default(),
+            kv_backend_config.clone(),
+            procedure_config.clone(),
         )
         .<span class="kw">await
         </span>.unwrap();
@@ -227,7 +247,15 @@
 
         GreptimeDbStandalone {
             instance: Arc::new(instance),
-            datanode_opts: opts,
+            datanode_opts: opts.clone(),
+            mix_options: MixOptions {
+                data_home: opts.storage.data_home.to_string(),
+                procedure: procedure_config,
+                metadata_store: kv_backend_config,
+                frontend: FrontendOptions::default(),
+                datanode: opts,
+                logging: LoggingOptions::default(),
+            },
             guard,
         }
     }
