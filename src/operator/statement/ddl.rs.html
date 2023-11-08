@@ -666,7 +666,7 @@
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
 <span class="kw">use </span>api::v1::{column_def, AlterExpr, CreateTableExpr};
 <span class="kw">use </span>catalog::CatalogManagerRef;
-<span class="kw">use </span>chrono::DateTime;
+<span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
 <span class="kw">use </span>common_catalog::format_full_table_name;
 <span class="kw">use </span>common_meta::cache_invalidator::Context;
@@ -1125,7 +1125,7 @@
         next_column_id: column_schemas.len() <span class="kw">as </span>u32,
         region_numbers: <span class="macro">vec!</span>[],
         options: table_options,
-        created_on: DateTime::default(),
+        created_on: Utc::now(),
         partition_key_indices,
     };
 
