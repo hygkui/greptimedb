@@ -358,6 +358,38 @@
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
 <a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -385,7 +417,7 @@
 <span class="kw">use </span>tokio::sync::mpsc::{Receiver, Sender};
 <span class="kw">use </span>tokio::task::JoinHandle;
 
-<span class="kw">use </span><span class="kw">crate</span>::failure_detector::PhiAccrualFailureDetector;
+<span class="kw">use </span><span class="kw">crate</span>::failure_detector::{PhiAccrualFailureDetector, PhiAccrualFailureDetectorOptions};
 <span class="kw">use </span><span class="kw">crate</span>::handler::failure_handler::DatanodeHeartbeat;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::ElectionRef;
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_failover::RegionFailoverManager;
@@ -400,6 +432,7 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FailureDetectRunner {
     election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
     region_failover_manager: Arc&lt;RegionFailoverManager&gt;,
+    failure_detector_options: PhiAccrualFailureDetectorOptions,
 
     heartbeat_tx: Sender&lt;DatanodeHeartbeat&gt;,
     heartbeat_rx: <span class="prelude-ty">Option</span>&lt;Receiver&lt;DatanodeHeartbeat&gt;&gt;,
@@ -415,12 +448,14 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(
         election: <span class="prelude-ty">Option</span>&lt;ElectionRef&gt;,
         region_failover_manager: Arc&lt;RegionFailoverManager&gt;,
+        failure_detector_options: PhiAccrualFailureDetectorOptions,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>(heartbeat_tx, heartbeat_rx) = mpsc::channel::&lt;DatanodeHeartbeat&gt;(<span class="number">1024</span>);
         <span class="kw">let </span>(control_tx, control_rx) = mpsc::channel::&lt;FailureDetectControl&gt;(<span class="number">1024</span>);
         <span class="self">Self </span>{
             election,
             region_failover_manager,
+            failure_detector_options,
             heartbeat_tx,
             heartbeat_rx: <span class="prelude-val">Some</span>(heartbeat_rx),
             control_tx,
@@ -443,7 +478,10 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span>failure_detectors = Arc::new(FailureDetectorContainer(DashMap::new()));
+        <span class="kw">let </span>failure_detectors = Arc::new(FailureDetectorContainer {
+            detectors: DashMap::new(),
+            options: <span class="self">self</span>.failure_detector_options.clone(),
+        });
         <span class="self">self</span>.start_with(failure_detectors).<span class="kw">await
     </span>}
 
@@ -575,33 +613,49 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FailureDetectorContainer(DashMap&lt;RegionIdent, PhiAccrualFailureDetector&gt;);
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FailureDetectorContainer {
+    options: PhiAccrualFailureDetectorOptions,
+    detectors: DashMap&lt;RegionIdent, PhiAccrualFailureDetector&gt;,
+}
 
 <span class="kw">impl </span>FailureDetectorContainer {
     <span class="kw">fn </span>get_failure_detector(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         ident: RegionIdent,
     ) -&gt; <span class="kw">impl </span>DerefMut&lt;Target = PhiAccrualFailureDetector&gt; + <span class="lifetime">&#39;_ </span>{
-        <span class="self">self</span>.<span class="number">0</span>.entry(ident).or_default()
+        <span class="self">self</span>.detectors
+            .entry(ident)
+            .or_insert_with(|| PhiAccrualFailureDetector::from_options(<span class="self">self</span>.options.clone()))
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = FailureDetectorEntry&gt; + <span class="lifetime">&#39;_</span>&gt; {
-        Box::new(<span class="self">self</span>.<span class="number">0</span>.iter().map(<span class="kw">move </span>|e| FailureDetectorEntry { e })) <span class="kw">as _
+        Box::new(
+            <span class="self">self</span>.detectors
+                .iter()
+                .map(<span class="kw">move </span>|e| FailureDetectorEntry { e }),
+        ) <span class="kw">as _
     </span>}
 
     <span class="kw">fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, ident: <span class="kw-2">&amp;</span>RegionIdent) {
-        <span class="kw">let _ </span>= <span class="self">self</span>.<span class="number">0</span>.remove(ident);
+        <span class="kw">let _ </span>= <span class="self">self</span>.detectors.remove(ident);
     }
 
     <span class="kw">fn </span>clear(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="number">0</span>.clear()
+        <span class="self">self</span>.detectors.clear()
     }
 
     <span class="attr">#[cfg(test)]
     </span><span class="kw">fn </span>dump(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FailureDetectorContainer {
-        <span class="kw">let </span><span class="kw-2">mut </span>m = DashMap::with_capacity(<span class="self">self</span>.<span class="number">0</span>.len());
-        m.extend(<span class="self">self</span>.<span class="number">0</span>.iter().map(|x| (x.key().clone(), x.value().clone())));
-        <span class="self">Self</span>(m)
+        <span class="kw">let </span><span class="kw-2">mut </span>m = DashMap::with_capacity(<span class="self">self</span>.detectors.len());
+        m.extend(
+            <span class="self">self</span>.detectors
+                .iter()
+                .map(|x| (x.key().clone(), x.value().clone())),
+        );
+        <span class="self">Self </span>{
+            detectors: m,
+            options: <span class="self">self</span>.options.clone(),
+        }
     }
 }
 
@@ -614,7 +668,10 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_default_failure_detector_container() {
-        <span class="kw">let </span>container = FailureDetectorContainer(DashMap::new());
+        <span class="kw">let </span>container = FailureDetectorContainer {
+            detectors: DashMap::new(),
+            options: PhiAccrualFailureDetectorOptions::default(),
+        };
         <span class="kw">let </span>ident = RegionIdent {
             table_id: <span class="number">1</span>,
             cluster_id: <span class="number">3</span>,
@@ -623,7 +680,7 @@
             engine: <span class="string">&quot;mito2&quot;</span>.to_string(),
         };
         <span class="kw">let _ </span>= container.get_failure_detector(ident.clone());
-        <span class="macro">assert!</span>(container.<span class="number">0</span>.contains_key(<span class="kw-2">&amp;</span>ident));
+        <span class="macro">assert!</span>(container.detectors.contains_key(<span class="kw-2">&amp;</span>ident));
 
         {
             <span class="kw">let </span><span class="kw-2">mut </span>iter = container.iter();
@@ -632,12 +689,15 @@
         }
 
         container.clear();
-        <span class="macro">assert!</span>(container.<span class="number">0</span>.is_empty());
+        <span class="macro">assert!</span>(container.detectors.is_empty());
     }
 
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_control() {
-        <span class="kw">let </span>container = FailureDetectorContainer(DashMap::new());
+        <span class="kw">let </span>container = FailureDetectorContainer {
+            detectors: DashMap::new(),
+            options: PhiAccrualFailureDetectorOptions::default(),
+        };
 
         <span class="kw">let </span>ident = RegionIdent {
             table_id: <span class="number">1</span>,
@@ -649,7 +709,9 @@
         <span class="kw">let _ </span>= container.get_failure_detector(ident.clone());
 
         <span class="kw">let </span>region_failover_manager = create_region_failover_manager();
-        <span class="kw">let </span><span class="kw-2">mut </span>runner = FailureDetectRunner::new(<span class="prelude-val">None</span>, region_failover_manager);
+        <span class="kw">let </span>failure_detector_options = PhiAccrualFailureDetectorOptions::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>runner =
+            FailureDetectRunner::new(<span class="prelude-val">None</span>, region_failover_manager, failure_detector_options);
         runner.start_with(Arc::new(container)).<span class="kw">await</span>;
 
         <span class="kw">let </span>dump = runner.dump().<span class="kw">await</span>;
@@ -664,7 +726,9 @@
     <span class="attr">#[tokio::test(flavor = <span class="string">&quot;multi_thread&quot;</span>)]
     </span><span class="kw">async fn </span>test_heartbeat() {
         <span class="kw">let </span>region_failover_manager = create_region_failover_manager();
-        <span class="kw">let </span><span class="kw-2">mut </span>runner = FailureDetectRunner::new(<span class="prelude-val">None</span>, region_failover_manager);
+        <span class="kw">let </span>failure_detector_options = PhiAccrualFailureDetectorOptions::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>runner =
+            FailureDetectRunner::new(<span class="prelude-val">None</span>, region_failover_manager, failure_detector_options);
         runner.start().<span class="kw">await</span>;
 
         <span class="comment">// Generate 2000 heartbeats start from now. Heartbeat interval is one second, plus some random millis.

@@ -368,6 +368,10 @@
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -581,8 +585,12 @@
                         table_metadata_manager.clone(),
                     ));
                     <span class="prelude-val">Some</span>(
-                        RegionFailureHandler::try_new(election.clone(), region_failover_manager)
-                            .<span class="kw">await</span><span class="question-mark">?</span>,
+                        RegionFailureHandler::try_new(
+                            election.clone(),
+                            region_failover_manager,
+                            options.failure_detector.clone(),
+                        )
+                        .<span class="kw">await</span><span class="question-mark">?</span>,
                     )
                 } <span class="kw">else </span>{
                     <span class="prelude-val">None
