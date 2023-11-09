@@ -437,6 +437,14 @@
 <a href="#437" id="437">437</a>
 <a href="#438" id="438">438</a>
 <a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -460,6 +468,8 @@
 <span class="kw">use </span>datafusion_expr::expr::{Exists, InSubquery};
 <span class="kw">use </span>datafusion_expr::{col, Expr, LogicalPlan, LogicalPlanBuilder, Subquery};
 <span class="kw">use </span>datafusion_optimizer::analyzer::AnalyzerRule;
+<span class="kw">use </span>datafusion_optimizer::simplify_expressions::SimplifyExpressions;
+<span class="kw">use </span>datafusion_optimizer::{OptimizerContext, OptimizerRule};
 <span class="kw">use </span>substrait::{DFLogicalSubstraitConvertor, SubstraitPlan};
 <span class="kw">use </span>table::metadata::TableType;
 <span class="kw">use </span>table::table::adapter::DfTableProviderAdapter;
@@ -481,6 +491,12 @@
         plan: LogicalPlan,
         _config: <span class="kw-2">&amp;</span>ConfigOptions,
     ) -&gt; datafusion_common::Result&lt;LogicalPlan&gt; {
+        <span class="comment">// preprocess the input plan
+        </span><span class="kw">let </span>optimizer_context = OptimizerContext::new();
+        <span class="kw">let </span>plan = SimplifyExpressions::new()
+            .try_optimize(<span class="kw-2">&amp;</span>plan, <span class="kw-2">&amp;</span>optimizer_context)<span class="question-mark">?
+            </span>.unwrap_or(plan);
+
         <span class="kw">let </span>plan = plan.transform(<span class="kw-2">&amp;</span><span class="self">Self</span>::inspect_plan_with_subquery)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>rewriter = PlanRewriter::default();
         <span class="kw">let </span>result = plan.rewrite(<span class="kw-2">&amp;mut </span>rewriter)<span class="question-mark">?</span>;

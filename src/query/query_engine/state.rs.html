@@ -297,13 +297,13 @@
         <span class="kw">let </span>session_config = SessionConfig::new().with_create_default_catalog_and_schema(<span class="bool-val">false</span>);
         <span class="comment">// Apply the type conversion rule first.
         </span><span class="kw">let </span><span class="kw-2">mut </span>analyzer = Analyzer::new();
-        <span class="kw">if </span>with_dist_planner {
-            analyzer.rules.insert(<span class="number">0</span>, Arc::new(DistPlannerAnalyzer));
-        }
         analyzer.rules.insert(<span class="number">0</span>, Arc::new(TypeConversionRule));
         analyzer.rules.insert(<span class="number">0</span>, Arc::new(StringNormalizationRule));
         <span class="self">Self</span>::remove_analyzer_rule(<span class="kw-2">&amp;mut </span>analyzer.rules, CountWildcardRule {}.name());
         analyzer.rules.insert(<span class="number">0</span>, Arc::new(CountWildcardRule {}));
+        <span class="kw">if </span>with_dist_planner {
+            analyzer.rules.push(Arc::new(DistPlannerAnalyzer));
+        }
         <span class="kw">let </span><span class="kw-2">mut </span>optimizer = Optimizer::new();
         optimizer.rules.push(Arc::new(OrderHintRule));
 
