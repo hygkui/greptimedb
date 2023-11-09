@@ -679,6 +679,7 @@
 <a href="#679" id="679">679</a>
 <a href="#680" id="680">680</a>
 <a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -801,6 +802,7 @@
             waiters,
             file_purger,
             start_time,
+            sst_write_buffer_size,
         } = req;
 
         <span class="kw">let </span>region_metadata = current_version.metadata.clone();
@@ -848,7 +850,7 @@
             sst_layer: access_layer,
             outputs,
             expired_ssts,
-            sst_write_buffer_size: ReadableSize::mb(<span class="number">4</span>),
+            sst_write_buffer_size,
             compaction_time_window: <span class="prelude-val">Some</span>(time_window_size),
             request_sender,
             waiters,
@@ -1036,7 +1038,7 @@
             <span class="prelude-val">Ok</span>((added, deleted)) =&gt; {
                 <span class="macro">info!</span>(
                     <span class="string">&quot;Compacted SST files, input: {:?}, output: {:?}, window: {:?}&quot;</span>,
-                    added, deleted, <span class="self">self</span>.compaction_time_window
+                    deleted, added, <span class="self">self</span>.compaction_time_window
                 );
 
                 BackgroundNotify::CompactionFinished(CompactionFinished {

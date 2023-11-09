@@ -230,6 +230,19 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -246,12 +259,15 @@
 
 </span><span class="doccomment">//! Handling flush related requests.
 
-</span><span class="kw">use </span>common_telemetry::{error, info, warn};
+</span><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>common_time::util::current_time_millis;
 <span class="kw">use </span>store_api::logstore::LogStore;
 <span class="kw">use </span>store_api::region_request::RegionFlushRequest;
 <span class="kw">use </span>store_api::storage::RegionId;
 
+<span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{RegionTruncatedSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::flush::{FlushReason, RegionFlushTask};
 <span class="kw">use </span><span class="kw">crate</span>::manifest::action::{RegionEdit, RegionMetaAction, RegionMetaActionList};
@@ -271,7 +287,12 @@
             <span class="kw">return</span>;
         };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>task = <span class="self">self</span>.new_flush_task(<span class="kw-2">&amp;</span>region, FlushReason::Manual, request.row_group_size);
+        <span class="kw">let </span><span class="kw-2">mut </span>task = <span class="self">self</span>.new_flush_task(
+            <span class="kw-2">&amp;</span>region,
+            FlushReason::Manual,
+            request.row_group_size,
+            <span class="self">self</span>.config.clone(),
+        );
         task.push_sender(sender);
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
             <span class="self">self</span>.flush_scheduler
@@ -326,7 +347,8 @@
 
             <span class="kw">if </span>region.last_flush_millis() &lt; min_last_flush_time {
                 <span class="comment">// If flush time of this region is earlier than `min_last_flush_time`, we can flush this region.
-                </span><span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull, <span class="prelude-val">None</span>);
+                </span><span class="kw">let </span>task =
+                    <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull, <span class="prelude-val">None</span>, <span class="self">self</span>.config.clone());
                 <span class="self">self</span>.flush_scheduler.schedule_flush(
                     region.region_id,
                     <span class="kw-2">&amp;</span>region.version_control,
@@ -339,7 +361,8 @@
         // TODO(yingwen): Maybe flush more tables to reduce write buffer size.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(region) = max_mem_region {
             <span class="kw">if </span>!<span class="self">self</span>.flush_scheduler.is_flush_requested(region.region_id) {
-                <span class="kw">let </span>task = <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull, <span class="prelude-val">None</span>);
+                <span class="kw">let </span>task =
+                    <span class="self">self</span>.new_flush_task(region, FlushReason::EngineFull, <span class="prelude-val">None</span>, <span class="self">self</span>.config.clone());
                 <span class="self">self</span>.flush_scheduler.schedule_flush(
                     region.region_id,
                     <span class="kw-2">&amp;</span>region.version_control,
@@ -357,6 +380,7 @@
         region: <span class="kw-2">&amp;</span>MitoRegionRef,
         reason: FlushReason,
         row_group_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+        engine_config: Arc&lt;MitoConfig&gt;,
     ) -&gt; RegionFlushTask {
         <span class="comment">// TODO(yingwen): metrics for flush requested.
         </span>RegionFlushTask {
@@ -368,6 +392,7 @@
             memtable_builder: <span class="self">self</span>.memtable_builder.clone(),
             file_purger: region.file_purger.clone(),
             listener: <span class="self">self</span>.listener.clone(),
+            engine_config,
             row_group_size,
         }
     }
@@ -452,6 +477,7 @@
             <span class="kw-2">&amp;</span>region.access_layer,
             <span class="kw-2">&amp;</span>region.file_purger,
             OptionOutputTx::none(),
+            <span class="self">self</span>.config.clone(),
         ) {
             <span class="macro">warn!</span>(
                 <span class="string">&quot;Failed to schedule compaction after flush, region: {}, err: {}&quot;</span>,

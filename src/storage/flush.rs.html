@@ -492,6 +492,7 @@
 <a href="#492" id="492">492</a>
 <a href="#493" id="493">493</a>
 <a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -512,6 +513,7 @@
 <span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">pub use </span>picker::{FlushPicker, PickerConfig};
 <span class="kw">pub use </span>scheduler::{
@@ -763,8 +765,8 @@
             </span><span class="kw">let </span>iter = m.iter(iter_ctx.clone())<span class="question-mark">?</span>;
             <span class="kw">let </span>sst_layer = <span class="self">self</span>.sst_layer.clone();
             <span class="kw">let </span>write_options = WriteOptions {
-                sst_write_buffer_size: <span class="self">self</span>.engine_config.sst_write_buffer_size,
-            };
+                sst_write_buffer_size: ReadableSize::mb(<span class="number">8</span>), <span class="comment">// deprecated usage
+            </span>};
             futures.push(<span class="kw">async move </span>{
                 <span class="prelude-val">Ok</span>(sst_layer
                     .write_sst(file_id, Source::Iter(iter), <span class="kw-2">&amp;</span>write_options)

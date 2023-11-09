@@ -421,10 +421,6 @@
 <a href="#421" id="421">421</a>
 <a href="#422" id="422">422</a>
 <a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -677,8 +673,6 @@
     </span><span class="kw">pub </span>max_files_in_level0: usize,
     <span class="doccomment">/// Max task number for SST purge task after compaction.
     </span><span class="kw">pub </span>max_purge_tasks: usize,
-    <span class="doccomment">/// Buffer threshold while writing SST files
-    </span><span class="kw">pub </span>sst_write_buffer_size: ReadableSize,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>CompactionConfig {
@@ -687,7 +681,6 @@
             max_inflight_tasks: <span class="number">4</span>,
             max_files_in_level0: <span class="number">8</span>,
             max_purge_tasks: <span class="number">32</span>,
-            sst_write_buffer_size: ReadableSize::mb(<span class="number">8</span>),
         }
     }
 }
@@ -739,7 +732,6 @@
             manifest_gc_duration: value.storage.manifest.gc_duration,
             max_files_in_l0: value.storage.compaction.max_files_in_level0,
             max_purge_tasks: value.storage.compaction.max_purge_tasks,
-            sst_write_buffer_size: value.storage.compaction.sst_write_buffer_size,
             max_flush_tasks: value.storage.flush.max_flush_tasks,
             region_write_buffer_size: value.storage.flush.region_write_buffer_size,
             picker_schedule_interval: value.storage.flush.picker_schedule_interval,

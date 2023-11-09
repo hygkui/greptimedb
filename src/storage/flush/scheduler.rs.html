@@ -375,6 +375,7 @@
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
 <a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -393,6 +394,7 @@
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_runtime::{RepeatedTask, TaskFunction};
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
@@ -524,8 +526,8 @@
             compaction_time_window: req.compaction_time_window,
             sender: <span class="prelude-val">None</span>,
             picker: req.compaction_picker.clone(),
-            sst_write_buffer_size: req.engine_config.sst_write_buffer_size,
-            <span class="comment">// compaction triggered by flush always reschedules
+            sst_write_buffer_size: ReadableSize::mb(<span class="number">8</span>), <span class="comment">// deprecated usage
+            // compaction triggered by flush always reschedules
             </span>reschedule_on_finish: <span class="bool-val">true</span>,
         }
     }

@@ -1358,9 +1358,9 @@
         <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
 
         <span class="macro">ensure!</span>(!inner.is_closed(), error::ClosedRegionSnafu);
-        <span class="kw">let </span>sst_write_buffer_size = inner.engine_config.sst_write_buffer_size;
+        <span class="kw">let </span>sst_write_buffer_size = ReadableSize::mb(<span class="number">8</span>); <span class="comment">// deprecated usage
 
-        inner
+        </span>inner
             .manual_compact(
                 request,
                 <span class="self">self</span>.compaction_picker.clone(),

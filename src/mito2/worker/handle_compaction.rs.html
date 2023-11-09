@@ -98,6 +98,9 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -138,6 +141,7 @@
             <span class="kw-2">&amp;</span>region.access_layer,
             <span class="kw-2">&amp;</span>region.file_purger,
             sender,
+            <span class="self">self</span>.config.clone(),
         ) {
             <span class="macro">error!</span>(e; <span class="string">&quot;Failed to schedule compaction task for region: {}&quot;</span>, region_id);
         } <span class="kw">else </span>{
@@ -186,8 +190,10 @@
         }
         <span class="comment">// compaction finished.
         </span>request.on_success();
+
         <span class="comment">// Schedule next compaction if necessary.
-        </span><span class="self">self</span>.compaction_scheduler.on_compaction_finished(region_id);
+        </span><span class="self">self</span>.compaction_scheduler
+            .on_compaction_finished(region_id, <span class="self">self</span>.config.clone());
     }
 
     <span class="doccomment">/// When compaction fails, we simply log the error.

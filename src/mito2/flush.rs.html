@@ -735,6 +735,11 @@
 <a href="#735" id="735">735</a>
 <a href="#736" id="736">736</a>
 <a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -763,6 +768,7 @@
 <span class="kw">use </span>tokio::sync::mpsc;
 
 <span class="kw">use </span><span class="kw">crate</span>::access_layer::AccessLayerRef;
+<span class="kw">use </span><span class="kw">crate</span>::config::MitoConfig;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     Error, FlushRegionSnafu, RegionClosedSnafu, RegionDroppedSnafu, RegionTruncatedSnafu, <span class="prelude-ty">Result</span>,
 };
@@ -935,6 +941,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) memtable_builder: MemtableBuilderRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) file_purger: FilePurgerRef,
     <span class="kw">pub</span>(<span class="kw">crate</span>) listener: WorkerListener,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) engine_config: Arc&lt;MitoConfig&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) row_group_size: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 }
 
@@ -1026,8 +1033,10 @@
             .with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;flush_memtables&quot;</span>])
             .start_timer();
 
-        <span class="comment">// TODO(yingwen): Make it configurable.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>write_opts = WriteOptions::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>write_opts = WriteOptions {
+            write_buffer_size: <span class="self">self</span>.engine_config.sst_write_buffer_size,
+            ..Default::default()
+        };
         <span class="kw">if let </span><span class="prelude-val">Some</span>(row_group_size) = <span class="self">self</span>.row_group_size {
             write_opts.row_group_size = row_group_size;
         }
@@ -1460,6 +1469,7 @@
             memtable_builder: builder.memtable_builder(),
             file_purger: builder.file_purger(),
             listener: WorkerListener::default(),
+            engine_config: Arc::new(MitoConfig::default()),
             row_group_size: <span class="prelude-val">None</span>,
         };
         task.push_sender(OptionOutputTx::from(output_tx));
