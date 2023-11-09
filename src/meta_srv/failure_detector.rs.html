@@ -570,6 +570,8 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -588,9 +590,11 @@
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="doccomment">/// This is our port of Akka&#39;s &quot;[PhiAccrualFailureDetector](https://github.com/akka/akka/blob/main/akka-remote/src/main/scala/akka/remote/PhiAccrualFailureDetector.scala)&quot;
+<span class="doccomment">/// This is our port of Akka&#39;s &quot;[PhiAccrualFailureDetector](https://github.com/akka/akka/blob/v2.6.21/akka-remote/src/main/scala/akka/remote/PhiAccrualFailureDetector.scala)&quot;
+/// under Apache License 2.0.
+///
 /// You can find it&#39;s document here:
-/// &lt;https://doc.akka.io/docs/akka/current/typed/failure-detector.html&gt;
+/// &lt;https://doc.akka.io/docs/akka/2.6.21/typed/failure-detector.html&gt;
 ///
 /// Implementation of &#39;The Phi Accrual Failure Detector&#39; by Hayashibara et al. as defined in their
 /// paper: &lt;https://oneofus.la/have-emacs-will-hack/files/HDY04.pdf&gt;
@@ -644,7 +648,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>PhiAccrualFailureDetectorOptions {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="comment">// default configuration is the same as of Akka:
-        // https://github.com/akka/akka/blob/main/akka-cluster/src/main/resources/reference.conf#L181
+        // https://github.com/akka/akka/blob/v2.6.21/akka-cluster/src/main/resources/reference.conf#L181
         </span><span class="self">Self </span>{
             threshold: <span class="number">8_f32</span>,
             min_std_deviation_millis: <span class="number">100_f32</span>,
@@ -874,8 +878,8 @@
         <span class="macro">assert!</span>(fd.phi(now) &gt;= fd.threshold <span class="kw">as _</span>);
     }
 
-    <span class="comment">// The following test cases are port from Akka&#39;s test:
-    // [AccrualFailureDetectorSpec.scala](https://github.com/akka/akka/blob/main/akka-remote/src/test/scala/akka/remote/AccrualFailureDetectorSpec.scala).
+    <span class="comment">// The following test cases are port from Akka&#39;s tests under Apache License 2.0:
+    // [AccrualFailureDetectorSpec.scala](https://github.com/akka/akka/blob/v2.6.21/akka-remote/src/test/scala/akka/remote/AccrualFailureDetectorSpec.scala).
 
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>test_use_good_enough_cumulative_distribution_function() {
