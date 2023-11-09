@@ -93,6 +93,33 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -109,27 +136,50 @@
 
 </span><span class="kw">use </span>std::collections::HashSet;
 
-<span class="kw">use </span>common_meta::rpc::router::{convert_to_region_leader_map, RegionRoute};
+<span class="kw">use </span>common_meta::rpc::router::{
+    convert_to_region_leader_map, convert_to_region_leader_status_map, RegionRoute,
+};
 <span class="kw">use </span>store_api::storage::RegionId;
 
-<span class="kw">use </span><span class="kw">crate</span>::region::lease_keeper::utils::staled_leader_regions;
+<span class="kw">use </span><span class="kw">super</span>::utils::downgradable_leader_regions;
+<span class="kw">use </span><span class="kw">crate</span>::region::lease_keeper::utils::closable_leader_region;
 
-<span class="doccomment">/// Returns staled regions.
+<span class="doccomment">/// Returns Downgradable regions and Closable regions.
 ///
-/// It returns a region if the `datanode_id` isn&#39;t the corresponding leader peer in `region_routes`.
+/// - Downgradable regions:
+/// Region&#39;s peer(`datanode_id`) is the corresponding downgraded leader peer in `region_routes`.
+///
+/// - Closable regions:
+/// Region&#39;s peer(`datanode_id`) isn&#39;t the corresponding leader peer in `region_routes`.
 ///   - Expected as [RegionRole::Follower](store_api::region_engine::RegionRole::Follower) regions.
 ///   - Unexpected [RegionRole::Leader](store_api::region_engine::RegionRole::Leader) regions.
 </span><span class="kw">pub fn </span>find_staled_leader_regions(
     datanode_id: u64,
     datanode_regions: <span class="kw-2">&amp;</span>[RegionId],
     region_routes: <span class="kw-2">&amp;</span>[RegionRoute],
-) -&gt; HashSet&lt;RegionId&gt; {
+) -&gt; (HashSet&lt;RegionId&gt;, HashSet&lt;RegionId&gt;) {
     <span class="kw">let </span>region_leader_map = convert_to_region_leader_map(region_routes);
+    <span class="kw">let </span>region_leader_status_map = convert_to_region_leader_status_map(region_routes);
 
-    datanode_regions
+    <span class="kw">let </span>(downgradable, closable): (HashSet&lt;<span class="kw">_</span>&gt;, HashSet&lt;<span class="kw">_</span>&gt;) = datanode_regions
         .iter()
-        .filter_map(|region_id| staled_leader_regions(datanode_id, <span class="kw-2">*</span>region_id, <span class="kw-2">&amp;</span>region_leader_map))
-        .collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;()
+        .map(|region_id| {
+            (
+                downgradable_leader_regions(
+                    datanode_id,
+                    <span class="kw-2">*</span>region_id,
+                    <span class="kw-2">&amp;</span>region_leader_map,
+                    <span class="kw-2">&amp;</span>region_leader_status_map,
+                ),
+                closable_leader_region(datanode_id, <span class="kw-2">*</span>region_id, <span class="kw-2">&amp;</span>region_leader_map),
+            )
+        })
+        .unzip();
+
+    <span class="kw">let </span>downgradable = downgradable.into_iter().flatten().collect();
+    <span class="kw">let </span>closable = closable.into_iter().flatten().collect();
+
+    (downgradable, closable)
 }
 
 <span class="attr">#[cfg(test)]
@@ -157,18 +207,21 @@
         }];
 
         <span class="comment">// Grants lease.
-        // `staled_regions` should be empty, `region_id` is a active leader region of the `peer`
-        </span><span class="kw">let </span>staled_regions =
+        // `closable` should be empty, `region_id` is a active leader region of the `peer`
+        </span><span class="kw">let </span>(downgradable, closable) =
             find_staled_leader_regions(datanode_id, <span class="kw-2">&amp;</span>datanode_regions, <span class="kw-2">&amp;</span>region_routes);
 
-        <span class="macro">assert!</span>(staled_regions.is_empty());
+        <span class="macro">assert!</span>(closable.is_empty());
+        <span class="macro">assert!</span>(downgradable.is_empty());
 
         <span class="comment">// Unexpected Leader region.
-        // `staled_regions` should be vec![`region_id`];
-        </span><span class="kw">let </span>staled_regions = find_staled_leader_regions(datanode_id, <span class="kw-2">&amp;</span>datanode_regions, <span class="kw-2">&amp;</span>[]);
+        // `closable` should be vec![`region_id`];
+        </span><span class="kw">let </span>(downgradable, closable) =
+            find_staled_leader_regions(datanode_id, <span class="kw-2">&amp;</span>datanode_regions, <span class="kw-2">&amp;</span>[]);
 
-        <span class="macro">assert_eq!</span>(staled_regions.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(staled_regions.contains(<span class="kw-2">&amp;</span>region_id));
+        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>region_id));
+        <span class="macro">assert!</span>(downgradable.is_empty());
 
         <span class="kw">let </span>region_routes = <span class="macro">vec!</span>[RegionRoute {
             region: Region::new_test(region_id),
@@ -180,12 +233,13 @@
         <span class="kw">let </span>retained_active_regions = datanode_regions.clone();
 
         <span class="comment">// Expected as Follower region.
-        // `staled_regions` should be vec![`region_id`], `region_id` is RegionRole::Leader.
-        </span><span class="kw">let </span>staled_regions =
+        // `closable` should be vec![`region_id`], `region_id` is RegionRole::Leader.
+        </span><span class="kw">let </span>(downgradable, closable) =
             find_staled_leader_regions(datanode_id, <span class="kw-2">&amp;</span>retained_active_regions, <span class="kw-2">&amp;</span>region_routes);
 
-        <span class="macro">assert_eq!</span>(staled_regions.len(), <span class="number">1</span>);
-        <span class="macro">assert!</span>(staled_regions.contains(<span class="kw-2">&amp;</span>region_id));
+        <span class="macro">assert!</span>(downgradable.is_empty());
+        <span class="macro">assert_eq!</span>(closable.len(), <span class="number">1</span>);
+        <span class="macro">assert!</span>(closable.contains(<span class="kw-2">&amp;</span>region_id));
     }
 }
 </code></pre></div></section></main></body></html>
