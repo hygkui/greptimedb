@@ -439,6 +439,10 @@
 <a href="#439" id="439">439</a>
 <a href="#440" id="440">440</a>
 <a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -458,6 +462,8 @@
 <span class="kw">use </span>::auth::UserProviderRef;
 <span class="kw">use </span>axum::http::{<span class="self">self</span>, Request, StatusCode};
 <span class="kw">use </span>axum::response::Response;
+<span class="kw">use </span>base64::prelude::BASE64_STANDARD;
+<span class="kw">use </span>base64::Engine;
 <span class="kw">use </span>common_catalog::consts::DEFAULT_SCHEMA_NAME;
 <span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
 <span class="kw">use </span>common_error::ext::ErrorExt;
@@ -685,7 +691,9 @@
 }
 
 <span class="kw">fn </span>decode_basic(credential: Credential) -&gt; <span class="prelude-ty">Result</span>&lt;(Username, Password)&gt; {
-    <span class="kw">let </span>decoded = base64::decode(credential).context(error::InvalidBase64ValueSnafu)<span class="question-mark">?</span>;
+    <span class="kw">let </span>decoded = BASE64_STANDARD
+        .decode(credential)
+        .context(error::InvalidBase64ValueSnafu)<span class="question-mark">?</span>;
     <span class="kw">let </span>as_utf8 = String::from_utf8(decoded).context(error::InvalidUtf8ValueSnafu)<span class="question-mark">?</span>;
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>((user_id, password)) = as_utf8.split_once(<span class="string">&#39;:&#39;</span>) {
