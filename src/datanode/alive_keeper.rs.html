@@ -527,6 +527,24 @@
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
 <a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -546,6 +564,7 @@
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>api::v1::meta::GrantedRegion;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_error::status_code::StatusCode;
@@ -555,6 +574,7 @@
 };
 <span class="kw">use </span>common_telemetry::{debug, error, info, trace, warn};
 <span class="kw">use </span>snafu::OptionExt;
+<span class="kw">use </span>store_api::region_engine::RegionRole;
 <span class="kw">use </span>store_api::region_request::{RegionCloseRequest, RegionRequest};
 <span class="kw">use </span>store_api::storage::RegionId;
 <span class="attr">#[cfg(test)]
@@ -651,10 +671,11 @@
         }
     }
 
-    <span class="kw">async fn </span>keep_lived(<span class="kw-2">&amp;</span><span class="self">self</span>, designated_regions: Vec&lt;RegionId&gt;, deadline: Instant) {
-        <span class="kw">for </span>region_id <span class="kw">in </span>designated_regions {
+    <span class="kw">async fn </span>keep_lived(<span class="kw-2">&amp;</span><span class="self">self</span>, regions: <span class="kw-2">&amp;</span>[GrantedRegion], deadline: Instant) {
+        <span class="kw">for </span>region <span class="kw">in </span>regions {
+            <span class="kw">let </span>(role, region_id) = (region.role().into(), RegionId::from(region.region_id));
             <span class="kw">if let </span><span class="prelude-val">Some</span>(handle) = <span class="self">self</span>.find_handle(region_id).<span class="kw">await </span>{
-                handle.reset_deadline(deadline).<span class="kw">await</span>;
+                handle.reset_deadline(role, deadline).<span class="kw">await</span>;
             }
             <span class="comment">// Else the region alive keeper might be triggered by lagging messages, we can safely ignore it.
         </span>}
@@ -764,12 +785,8 @@
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>start_instant = <span class="self">self</span>.epoch + Duration::from_millis(region_lease.duration_since_epoch);
         <span class="kw">let </span>deadline = start_instant + Duration::from_secs(region_lease.lease_seconds);
-        <span class="kw">let </span>region_ids = region_lease
-            .region_ids
-            .iter()
-            .map(|id| RegionId::from_u64(<span class="kw-2">*</span>id))
-            .collect();
-        <span class="self">self</span>.keep_lived(region_ids, deadline).<span class="kw">await</span>;
+
+        <span class="self">self</span>.keep_lived(<span class="kw-2">&amp;</span>region_lease.regions, deadline).<span class="kw">await</span>;
         <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
@@ -780,7 +797,8 @@
     /// 4 * `heartbeat_interval_millis`
     </span>Start(u64),
     <span class="doccomment">/// Reset countdown deadline to the given instance.
-    </span>Reset(Instant),
+    /// (NextRole, Deadline)
+    </span>Reset((RegionRole, Instant)),
     <span class="doccomment">/// Returns the current deadline of the countdown task.
     </span><span class="attr">#[cfg(test)]
     </span>Deadline(oneshot::Sender&lt;Instant&gt;),
@@ -848,8 +866,12 @@
         <span class="prelude-val">None
     </span>}
 
-    <span class="kw">async fn </span>reset_deadline(<span class="kw-2">&amp;</span><span class="self">self</span>, deadline: Instant) {
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.tx.send(CountdownCommand::Reset(deadline)).<span class="kw">await </span>{
+    <span class="kw">async fn </span>reset_deadline(<span class="kw-2">&amp;</span><span class="self">self</span>, role: RegionRole, deadline: Instant) {
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self
+            </span>.tx
+            .send(CountdownCommand::Reset((role, deadline)))
+            .<span class="kw">await
+        </span>{
             <span class="macro">warn!</span>(
                 <span class="string">&quot;Failed to reset region alive keeper deadline: {e}. \
                 Maybe the task is stopped due to region been closed.&quot;
@@ -897,13 +919,13 @@
                             </span><span class="kw">let </span>first_deadline = Instant::now() + Duration::from_millis(heartbeat_interval_millis) * <span class="number">4</span>;
                             countdown.set(tokio::time::sleep_until(first_deadline));
                         },
-                        <span class="prelude-val">Some</span>(CountdownCommand::Reset(deadline)) =&gt; {
+                        <span class="prelude-val">Some</span>(CountdownCommand::Reset((role, deadline))) =&gt; {
                             <span class="kw">if </span>countdown.deadline() &lt; deadline {
                                 <span class="macro">trace!</span>(
                                     <span class="string">&quot;Reset deadline of region {region_id} to approximately {} seconds later&quot;</span>,
                                     (deadline - Instant::now()).as_secs_f32(),
                                 );
-                                <span class="kw">let _ </span>= <span class="self">self</span>.region_server.set_writable(<span class="self">self</span>.region_id, <span class="bool-val">true</span>);
+                                <span class="kw">let _ </span>= <span class="self">self</span>.region_server.set_writable(<span class="self">self</span>.region_id, role.writable());
                                 countdown.set(tokio::time::sleep_until(deadline));
                             }
                             <span class="comment">// Else the countdown could be either:
@@ -963,6 +985,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
+    <span class="kw">use </span>api::v1::meta::RegionRole;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::tests::mock_region_server;
 
@@ -984,7 +1008,13 @@
 
         <span class="comment">// extend lease then sleep
         </span>alive_keeper
-            .keep_lived(<span class="macro">vec!</span>[region_id], Instant::now() + Duration::from_millis(<span class="number">500</span>))
+            .keep_lived(
+                <span class="kw-2">&amp;</span>[GrantedRegion {
+                    region_id: region_id.as_u64(),
+                    role: RegionRole::Leader.into(),
+                }],
+                Instant::now() + Duration::from_millis(<span class="number">500</span>),
+            )
             .<span class="kw">await</span>;
         tokio::time::sleep(Duration::from_millis(<span class="number">500</span>)).<span class="kw">await</span>;
         <span class="macro">assert!</span>(alive_keeper.find_handle(region_id).<span class="kw">await</span>.is_some());
@@ -1028,7 +1058,10 @@
         <span class="comment">// reset deadline
         // a nearer deadline will be ignored
         </span>countdown_handle
-            .reset_deadline(Instant::now() + Duration::from_millis(heartbeat_interval_millis))
+            .reset_deadline(
+                RegionRole::Leader.into(),
+                Instant::now() + Duration::from_millis(heartbeat_interval_millis),
+            )
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(
             countdown_handle.deadline().<span class="kw">await</span>.unwrap()
@@ -1037,7 +1070,10 @@
 
         <span class="comment">// only a farther deadline will be accepted
         </span>countdown_handle
-            .reset_deadline(Instant::now() + Duration::from_millis(heartbeat_interval_millis * <span class="number">5</span>))
+            .reset_deadline(
+                RegionRole::Leader.into(),
+                Instant::now() + Duration::from_millis(heartbeat_interval_millis * <span class="number">5</span>),
+            )
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(
             countdown_handle.deadline().<span class="kw">await</span>.unwrap()

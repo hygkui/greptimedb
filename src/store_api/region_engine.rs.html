@@ -97,6 +97,12 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -132,6 +138,12 @@
     </span>Follower,
     <span class="comment">// Writable region(mito2).
     </span>Leader,
+}
+
+<span class="kw">impl </span>RegionRole {
+    <span class="kw">pub fn </span>writable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, RegionRole::Leader)
+    }
 }
 
 <span class="kw">impl </span>From&lt;RegionRole&gt; <span class="kw">for </span>PbRegionRole {

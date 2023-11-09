@@ -160,6 +160,20 @@
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -174,7 +188,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, RegionLease, Role};
+</span><span class="kw">use </span>api::v1::meta::{GrantedRegion, HeartbeatRequest, RegionLease, RegionRole, Role};
 <span class="kw">use </span>async_trait::async_trait;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
@@ -217,9 +231,17 @@
             .retain_active_regions(stat.cluster_id, stat.id, <span class="kw-2">&amp;mut </span>region_ids)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
+        <span class="kw">let </span>regions = region_ids
+            .into_iter()
+            .map(|region_id| GrantedRegion {
+                region_id,
+                role: RegionRole::Leader.into(),
+            })
+            .collect();
+
         acc.inactive_region_ids = inactive_region_ids;
         acc.region_lease = <span class="prelude-val">Some</span>(RegionLease {
-            region_ids,
+            regions,
             duration_since_epoch: req.duration_since_epoch,
             lease_seconds: <span class="self">self</span>.region_lease_seconds,
         });
@@ -232,9 +254,9 @@
 </span><span class="kw">mod </span>test {
     <span class="kw">use </span>std::sync::Arc;
 
+    <span class="kw">use </span>api::v1::meta::RegionRole;
     <span class="kw">use </span>common_meta::key::TableMetadataManager;
     <span class="kw">use </span>common_meta::{distributed_time_constants, RegionIdent};
-    <span class="kw">use </span>store_api::region_engine::RegionRole;
     <span class="kw">use </span>store_api::storage::{RegionId, RegionNumber};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -275,7 +297,7 @@
                 approximate_bytes: <span class="number">0</span>,
                 approximate_rows: <span class="number">0</span>,
                 engine: String::new(),
-                role: RegionRole::Leader,
+                role: RegionRole::Leader.into(),
             }
         };
         acc.stat = <span class="prelude-val">Some</span>(Stat {
@@ -314,7 +336,13 @@
 
         <span class="macro">assert!</span>(acc.region_lease.is_some());
         <span class="kw">let </span>lease = acc.region_lease.as_ref().unwrap();
-        <span class="macro">assert_eq!</span>(lease.region_ids, <span class="macro">vec!</span>[RegionId::new(table_id, <span class="number">2</span>).as_u64()]);
+        <span class="macro">assert_eq!</span>(
+            lease.regions,
+            <span class="macro">vec!</span>[GrantedRegion {
+                region_id: RegionId::new(table_id, <span class="number">2</span>).as_u64(),
+                role: RegionRole::Leader.into()
+            }]
+        );
         <span class="macro">assert_eq!</span>(lease.duration_since_epoch, <span class="number">1234</span>);
         <span class="macro">assert_eq!</span>(
             lease.lease_seconds,
