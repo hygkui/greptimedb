@@ -103,6 +103,55 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -122,7 +171,9 @@
 <span class="kw">use </span>common_error::ext::{BoxedError, ErrorExt};
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_macro::stack_trace_debug;
+<span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>snafu::{Location, Snafu};
+<span class="kw">use </span>store_api::storage::{RegionId, TableId};
 
 <span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
@@ -138,9 +189,9 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table `{}` already exists&quot;</span>, table_name))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Table `{}` already exists&quot;</span>, table_id))]
     </span>TableAlreadyExists {
-        table_name: String,
+        table_id: TableId,
         location: Location,
     },
 
@@ -156,6 +207,14 @@
     </span>DecodeColumnValue {
         <span class="attr">#[snafu(source)]
         </span>error: base64::DecodeError,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse table id from {}&quot;</span>, raw))]
+    </span>ParseTableId {
+        raw: String,
+        <span class="attr">#[snafu(source)]
+        </span>error: &lt;TableId <span class="kw">as </span>std::str::FromStr&gt;::Err,
         location: Location,
     },
 
@@ -179,6 +238,37 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Internal column {} is reserved&quot;</span>, column))]
     </span>InternalColumnOccupied { column: String, location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Required table option is missing&quot;</span>))]
+    </span>MissingRegionOption { location: Location },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Region options are conflicted&quot;</span>))]
+    </span>ConflictRegionOption { location: Location },
+
+    <span class="comment">// TODO: remove this
+    </span><span class="attr">#[snafu(display(<span class="string">&quot;Physical table {} not found&quot;</span>, physical_table))]
+    </span>PhysicalTableNotFound {
+        physical_table: String,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Physical region {} not found&quot;</span>, region_id))]
+    </span>PhysicalRegionNotFound {
+        region_id: RegionId,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Logical table {} not found&quot;</span>, table_id))]
+    </span>LogicalTableNotFound {
+        table_id: TableId,
+        location: Location,
+    },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Column type mismatch. Expect string, got {:?}&quot;</span>, column_type))]
+    </span>ColumnTypeMismatch {
+        column_type: ConcreteDataType,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T, E = Error&gt; = std::result::Result&lt;T, E&gt;;
@@ -188,11 +278,19 @@
         <span class="kw">use </span>Error::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="self">self </span>{
-            InternalColumnOccupied { .. } =&gt; StatusCode::InvalidArguments,
+            InternalColumnOccupied { .. }
+            | MissingRegionOption { .. }
+            | ConflictRegionOption { .. }
+            | ColumnTypeMismatch { .. } =&gt; StatusCode::InvalidArguments,
 
             MissingInternalColumn { .. }
             | DeserializeSemanticType { .. }
-            | DecodeColumnValue { .. } =&gt; StatusCode::Unexpected,
+            | DecodeColumnValue { .. }
+            | ParseTableId { .. } =&gt; StatusCode::Unexpected,
+
+            PhysicalTableNotFound { .. } | LogicalTableNotFound { .. } =&gt; StatusCode::TableNotFound,
+
+            PhysicalRegionNotFound { .. } =&gt; StatusCode::RegionNotFound,
 
             CreateMitoRegion { source, .. }
             | MitoReadOperation { source, .. }

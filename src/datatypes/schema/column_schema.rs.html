@@ -434,6 +434,16 @@
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -557,7 +567,11 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>with_default_constraint(
+    <span class="doccomment">/// Set default constraint.
+    ///
+    /// If a default constraint exists for the column, this method will
+    /// validate it against the column&#39;s data type and nullability.
+    </span><span class="kw">pub fn </span>with_default_constraint(
         <span class="kw-2">mut </span><span class="self">self</span>,
         default_constraint: <span class="prelude-ty">Option</span>&lt;ColumnDefaultConstraint&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
@@ -568,6 +582,12 @@
         <span class="self">self</span>.default_constraint = default_constraint;
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
+
+    <span class="doccomment">/// Set the nullablity to `true` of the column.
+    </span><span class="kw">pub fn </span>with_nullable_set(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.is_nullable = <span class="bool-val">true</span>;
+        <span class="self">self
+    </span>}
 
     <span class="doccomment">/// Creates a new [`ColumnSchema`] with given metadata.
     </span><span class="kw">pub fn </span>with_metadata(<span class="kw-2">mut </span><span class="self">self</span>, metadata: Metadata) -&gt; <span class="self">Self </span>{

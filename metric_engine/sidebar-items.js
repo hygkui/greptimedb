@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["engine","error","metadata_region","utils"]};
+window.SIDEBAR_ITEMS = {"mod":["data_region","engine","error","metadata_region","metrics","utils"]};
