@@ -572,6 +572,11 @@
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
 <a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -587,6 +592,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>std::collections::VecDeque;
+<span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
@@ -640,9 +646,12 @@
 #[serde(default)]
 </span><span class="kw">pub struct </span>PhiAccrualFailureDetectorOptions {
     <span class="kw">pub </span>threshold: f32,
-    <span class="kw">pub </span>min_std_deviation_millis: f32,
-    <span class="kw">pub </span>acceptable_heartbeat_pause_millis: u32,
-    <span class="kw">pub </span>first_heartbeat_estimate_millis: u32,
+    <span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>min_std_deviation: Duration,
+    <span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>acceptable_heartbeat_pause: Duration,
+    <span class="attr">#[serde(with = <span class="string">&quot;humantime_serde&quot;</span>)]
+    </span><span class="kw">pub </span>first_heartbeat_estimate: Duration,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>PhiAccrualFailureDetectorOptions {
@@ -651,9 +660,9 @@
         // https://github.com/akka/akka/blob/v2.6.21/akka-cluster/src/main/resources/reference.conf#L181
         </span><span class="self">Self </span>{
             threshold: <span class="number">8_f32</span>,
-            min_std_deviation_millis: <span class="number">100_f32</span>,
-            acceptable_heartbeat_pause_millis: <span class="number">3000</span>,
-            first_heartbeat_estimate_millis: <span class="number">1000</span>,
+            min_std_deviation: Duration::from_millis(<span class="number">100</span>),
+            acceptable_heartbeat_pause: Duration::from_millis(<span class="number">3000</span>),
+            first_heartbeat_estimate: Duration::from_millis(<span class="number">1000</span>),
         }
     }
 }
@@ -668,9 +677,10 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_options(options: PhiAccrualFailureDetectorOptions) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             threshold: options.threshold,
-            min_std_deviation_millis: options.min_std_deviation_millis,
-            acceptable_heartbeat_pause_millis: options.acceptable_heartbeat_pause_millis,
-            first_heartbeat_estimate_millis: options.first_heartbeat_estimate_millis,
+            min_std_deviation_millis: options.min_std_deviation.as_millis() <span class="kw">as </span>f32,
+            acceptable_heartbeat_pause_millis: options.acceptable_heartbeat_pause.as_millis()
+                <span class="kw">as </span>u32,
+            first_heartbeat_estimate_millis: options.first_heartbeat_estimate.as_millis() <span class="kw">as </span>u32,
             heartbeat_history: HeartbeatHistory::new(<span class="number">1000</span>),
             last_heartbeat_millis: <span class="prelude-val">None</span>,
         }
