@@ -272,6 +272,71 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -292,15 +357,16 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_meta::instruction::{Instruction, InstructionReply, SimpleReply};
 <span class="kw">use </span>common_meta::peer::Peer;
+<span class="kw">use </span>common_meta::rpc::router::RegionStatus;
 <span class="kw">use </span>common_meta::RegionIdent;
 <span class="kw">use </span>common_telemetry::{debug, info, warn};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">super</span>::activate_region::ActivateRegion;
 <span class="kw">use super</span>::{RegionFailoverContext, State};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    Error, <span class="prelude-ty">Result</span>, RetryLaterSnafu, SerializeToJsonSnafu, UnexpectedInstructionReplySnafu,
+    <span class="self">self</span>, Error, <span class="prelude-ty">Result</span>, RetryLaterSnafu, SerializeToJsonSnafu, UnexpectedInstructionReplySnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::handler::HeartbeatMailbox;
 <span class="kw">use </span><span class="kw">crate</span>::inactive_region_manager::InactiveRegionManager;
@@ -314,6 +380,35 @@
 <span class="kw">impl </span>DeactivateRegion {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(candidate: Peer) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ candidate }
+    }
+
+    <span class="kw">async fn </span>mark_leader_downgraded(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        ctx: <span class="kw-2">&amp;</span>RegionFailoverContext,
+        failed_region: <span class="kw-2">&amp;</span>RegionIdent,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>table_id = failed_region.table_id;
+
+        <span class="kw">let </span>table_route_value = ctx
+            .table_metadata_manager
+            .table_route_manager()
+            .get(table_id)
+            .<span class="kw">await
+            </span>.context(error::TableMetadataManagerSnafu)<span class="question-mark">?
+            </span>.context(error::TableRouteNotFoundSnafu { table_id })<span class="question-mark">?</span>;
+
+        ctx.table_metadata_manager
+            .update_leader_region_status(table_id, table_route_value, |region| {
+                <span class="kw">if </span>region.region.id.region_number() == failed_region.region_number {
+                    <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(RegionStatus::Downgraded))
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>}
+            })
+            .<span class="kw">await
+            </span>.context(error::UpdateTableRouteSnafu)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>send_close_region_message(
@@ -410,6 +505,7 @@
         failed_region: <span class="kw-2">&amp;</span>RegionIdent,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
         <span class="macro">info!</span>(<span class="string">&quot;Deactivating region: {failed_region:?}&quot;</span>);
+        <span class="self">self</span>.mark_leader_downgraded(ctx, failed_region).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>result = <span class="self">self</span>.send_close_region_message(ctx, failed_region).<span class="kw">await</span>;
         <span class="kw">let </span>mailbox_receiver = <span class="kw">match </span>result {
             <span class="prelude-val">Ok</span>(mailbox_receiver) =&gt; mailbox_receiver,
@@ -437,6 +533,40 @@
 
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::tests::TestingEnvBuilder;
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_mark_leader_downgraded() {
+        common_telemetry::init_default_ut_logging();
+
+        <span class="kw">let </span>env = TestingEnvBuilder::new().build().<span class="kw">await</span>;
+        <span class="kw">let </span>failed_region = env.failed_region(<span class="number">1</span>).<span class="kw">await</span>;
+
+        <span class="kw">let </span>state = DeactivateRegion::new(Peer::new(<span class="number">2</span>, <span class="string">&quot;&quot;</span>));
+
+        state
+            .mark_leader_downgraded(<span class="kw-2">&amp;</span>env.context, <span class="kw-2">&amp;</span>failed_region)
+            .<span class="kw">await
+            </span>.unwrap();
+
+        <span class="kw">let </span>table_id = failed_region.table_id;
+
+        <span class="kw">let </span>table_route_value = env
+            .context
+            .table_metadata_manager
+            .table_route_manager()
+            .get(table_id)
+            .<span class="kw">await
+            </span>.unwrap()
+            .unwrap();
+
+        <span class="kw">let </span>should_downgraded = table_route_value
+            .region_routes
+            .iter()
+            .find(|route| route.region.id.region_number() == failed_region.region_number)
+            .unwrap();
+
+        <span class="macro">assert!</span>(should_downgraded.is_leader_downgraded());
+    }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_deactivate_region_success() {
