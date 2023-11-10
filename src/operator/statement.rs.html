@@ -320,6 +320,7 @@
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -365,6 +366,7 @@
 <span class="kw">use </span>sql::statements::copy::{CopyDatabaseArgument, CopyTable, CopyTableArgument};
 <span class="kw">use </span>sql::statements::statement::Statement;
 <span class="kw">use </span>sql::statements::OptionMap;
+<span class="kw">use </span>sql::util::format_raw_object_name;
 <span class="kw">use </span>sqlparser::ast::ObjectName;
 <span class="kw">use </span>table::engine::TableReference;
 <span class="kw">use </span>table::requests::{CopyDatabaseRequest, CopyDirection, CopyTableRequest};
@@ -484,7 +486,7 @@
             Statement::CreateDatabase(stmt) =&gt; {
                 <span class="self">self</span>.create_database(
                     query_ctx.current_catalog(),
-                    <span class="kw-2">&amp;</span>stmt.name.to_string(),
+                    <span class="kw-2">&amp;</span>format_raw_object_name(<span class="kw-2">&amp;</span>stmt.name),
                     stmt.if_not_exists,
                 )
                 .<span class="kw">await
