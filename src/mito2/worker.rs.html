@@ -673,8 +673,6 @@
 <a href="#673" id="673">673</a>
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
-<a href="#676" id="676">676</a>
-<a href="#677" id="677">677</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -791,7 +789,6 @@
         log_store: Arc&lt;S&gt;,
         object_store_manager: ObjectStoreManagerRef,
     ) -&gt; WorkerGroup {
-        <span class="macro">assert!</span>(config.num_workers.is_power_of_two());
         <span class="kw">let </span>config = Arc::new(config);
         <span class="kw">let </span>write_buffer_manager = Arc::new(WriteBufferManagerImpl::new(
             config.global_write_buffer_size.as_bytes() <span class="kw">as </span>usize,
@@ -887,7 +884,6 @@
         write_buffer_manager: <span class="prelude-ty">Option</span>&lt;WriteBufferManagerRef&gt;,
         listener: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::engine::listener::EventListenerRef&gt;,
     ) -&gt; WorkerGroup {
-        <span class="macro">assert!</span>(config.num_workers.is_power_of_two());
         <span class="kw">let </span>config = Arc::new(config);
         <span class="kw">let </span>write_buffer_manager = write_buffer_manager.unwrap_or_else(|| {
             Arc::new(WriteBufferManagerImpl::new(
@@ -925,7 +921,7 @@
 }
 
 <span class="kw">fn </span>value_to_index(value: usize, num_workers: usize) -&gt; usize {
-    value &amp; (num_workers - <span class="number">1</span>)
+    value % num_workers
 }
 
 <span class="doccomment">/// Worker start config.

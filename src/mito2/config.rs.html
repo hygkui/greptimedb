@@ -129,9 +129,6 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -155,8 +152,6 @@
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="doccomment">/// Default region worker num.
-</span><span class="kw">const </span>DEFAULT_NUM_WORKERS: usize = <span class="number">1</span>;
 <span class="doccomment">/// Default max running background job.
 </span><span class="kw">const </span>DEFAULT_MAX_BG_JOB: usize = <span class="number">4</span>;
 
@@ -206,7 +201,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>MitoConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         MitoConfig {
-            num_workers: DEFAULT_NUM_WORKERS,
+            num_workers: num_cpus::get() / <span class="number">2</span>,
             worker_channel_size: <span class="number">128</span>,
             worker_request_batch_size: <span class="number">64</span>,
             manifest_checkpoint_distance: <span class="number">10</span>,
@@ -228,9 +223,8 @@
         <span class="comment">// Sanitize worker num.
         </span><span class="kw">let </span>num_workers_before = <span class="self">self</span>.num_workers;
         <span class="kw">if </span><span class="self">self</span>.num_workers == <span class="number">0 </span>{
-            <span class="self">self</span>.num_workers = DEFAULT_NUM_WORKERS;
+            <span class="self">self</span>.num_workers = num_cpus::get() / <span class="number">2</span>;
         }
-        <span class="self">self</span>.num_workers = <span class="self">self</span>.num_workers.next_power_of_two();
         <span class="kw">if </span>num_workers_before != <span class="self">self</span>.num_workers {
             <span class="macro">warn!</span>(
                 <span class="string">&quot;Sanitize worker num {} to {}&quot;</span>,
