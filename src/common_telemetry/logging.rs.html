@@ -223,9 +223,6 @@
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -251,7 +248,6 @@
 <span class="kw">pub use </span>tracing::{event, span, Level};
 <span class="kw">use </span>tracing_appender::non_blocking::WorkerGuard;
 <span class="kw">use </span>tracing_appender::rolling::{RollingFileAppender, Rotation};
-<span class="kw">use </span>tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 <span class="kw">use </span>tracing_log::LogTracer;
 <span class="kw">use </span>tracing_subscriber::fmt::Layer;
 <span class="kw">use </span>tracing_subscriber::layer::SubscriberExt;
@@ -368,7 +364,7 @@
     <span class="comment">// JSON log layer.
     </span><span class="kw">let </span>rolling_appender = RollingFileAppender::new(Rotation::HOURLY, dir, app_name);
     <span class="kw">let </span>(rolling_writer, rolling_writer_guard) = tracing_appender::non_blocking(rolling_appender);
-    <span class="kw">let </span>file_logging_layer = BunyanFormattingLayer::new(app_name.to_string(), rolling_writer);
+    <span class="kw">let </span>file_logging_layer = Layer::new().with_writer(rolling_writer);
     guards.push(rolling_writer_guard);
 
     <span class="comment">// error JSON log layer.
@@ -376,8 +372,7 @@
         RollingFileAppender::new(Rotation::HOURLY, dir, <span class="macro">format!</span>(<span class="string">&quot;{}-{}&quot;</span>, app_name, <span class="string">&quot;err&quot;</span>));
     <span class="kw">let </span>(err_rolling_writer, err_rolling_writer_guard) =
         tracing_appender::non_blocking(err_rolling_appender);
-    <span class="kw">let </span>err_file_logging_layer =
-        BunyanFormattingLayer::new(app_name.to_string(), err_rolling_writer);
+    <span class="kw">let </span>err_file_logging_layer = Layer::new().with_writer(err_rolling_writer);
     guards.push(err_rolling_writer_guard);
 
     <span class="comment">// resolve log level settings from:
@@ -431,7 +426,6 @@
     <span class="attr">#[cfg(not(feature = <span class="string">&quot;tokio-console&quot;</span>))]
     </span><span class="kw">let </span>subscriber = Registry::default()
         .with(filter)
-        .with(JsonStorageLayer)
         .with(stdout_logging_layer)
         .with(file_logging_layer)
         .with(err_file_logging_layer.with_filter(filter::LevelFilter::ERROR));
