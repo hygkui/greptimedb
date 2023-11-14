@@ -890,6 +890,12 @@
 <a href="#890" id="890">890</a>
 <a href="#891" id="891">891</a>
 <a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -929,6 +935,7 @@
 <span class="kw">use </span>common_query::AddColumnLocation;
 <span class="kw">use </span>common_time::Timestamp;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
+<span class="kw">use </span>datatypes::schema::constraint::{CURRENT_TIMESTAMP, CURRENT_TIMESTAMP_FN};
 <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, COMMENT_KEY};
 <span class="kw">use </span>datatypes::types::cast::CastOption;
 <span class="kw">use </span>datatypes::types::{cast, TimestampType};
@@ -1162,8 +1169,13 @@
                 ColumnDefaultConstraint::Value(sql_value_to_value(column_name, data_type, v)<span class="question-mark">?</span>)
             }
             ColumnOption::Default(Expr::Function(func)) =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>func = <span class="macro">format!</span>(<span class="string">&quot;{func}&quot;</span>).to_lowercase();
+                <span class="comment">// normalize CURRENT_TIMESTAMP to CURRENT_TIMESTAMP()
+                </span><span class="kw">if </span>func == CURRENT_TIMESTAMP {
+                    func = CURRENT_TIMESTAMP_FN.to_string();
+                }
                 <span class="comment">// Always use lowercase for function expression
-                </span>ColumnDefaultConstraint::Function(<span class="macro">format!</span>(<span class="string">&quot;{func}&quot;</span>).to_lowercase())
+                </span>ColumnDefaultConstraint::Function(func.to_lowercase())
             }
             ColumnOption::Default(expr) =&gt; {
                 <span class="kw">return </span>UnsupportedDefaultValueSnafu {
