@@ -223,7 +223,7 @@
         <span class="comment">// Sanitize worker num.
         </span><span class="kw">let </span>num_workers_before = <span class="self">self</span>.num_workers;
         <span class="kw">if </span><span class="self">self</span>.num_workers == <span class="number">0 </span>{
-            <span class="self">self</span>.num_workers = num_cpus::get() / <span class="number">2</span>;
+            <span class="self">self</span>.num_workers = (num_cpus::get() / <span class="number">2</span>).max(<span class="number">1</span>);
         }
         <span class="kw">if </span>num_workers_before != <span class="self">self</span>.num_workers {
             <span class="macro">warn!</span>(
