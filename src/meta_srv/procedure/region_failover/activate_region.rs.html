@@ -303,29 +303,6 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -359,7 +336,6 @@
     <span class="self">self</span>, Error, <span class="prelude-ty">Result</span>, RetryLaterSnafu, SerializeToJsonSnafu, UnexpectedInstructionReplySnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::handler::HeartbeatMailbox;
-<span class="kw">use </span><span class="kw">crate</span>::inactive_region_manager::InactiveRegionManager;
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_failover::OPEN_REGION_MESSAGE_TIMEOUT;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::{Channel, MailboxReceiver};
 
@@ -432,17 +408,6 @@
             input: instruction.to_string(),
         })<span class="question-mark">?</span>;
 
-        <span class="comment">// Ensure that metasrv will renew the lease for this candidate node.
-        //
-        // This operation may not be redundant, imagine the following scenario:
-        // This candidate once had the current region, and because it did not respond to the `close`
-        // command in time, it was considered an inactive node by metasrv, then it replied, and the
-        // current region failed over again, and the node was selected as a candidate, so it needs
-        // to clear its previous state first.
-        </span>InactiveRegionManager::new(<span class="kw-2">&amp;</span>ctx.in_memory)
-            .deregister_inactive_region(<span class="kw-2">&amp;</span>candidate_ident)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
         <span class="kw">let </span>ch = Channel::Datanode(<span class="self">self</span>.candidate.id);
         ctx.mailbox.send(<span class="kw-2">&amp;</span>ch, msg, timeout).<span class="kw">await
     </span>}
@@ -510,23 +475,12 @@
         ctx: <span class="kw-2">&amp;</span>RegionFailoverContext,
         failed_region: <span class="kw-2">&amp;</span>RegionIdent,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
-        <span class="kw">if </span><span class="self">self</span>.remark_inactive_region {
-            <span class="comment">// Remark the fail region as inactive to prevent it from renewing the lease.
-            </span>InactiveRegionManager::new(<span class="kw-2">&amp;</span>ctx.in_memory)
-                .register_inactive_region(failed_region)
-                .<span class="kw">await</span><span class="question-mark">?</span>;
-        }
-
         <span class="kw">let </span>mailbox_receiver = <span class="self">self
             </span>.send_open_region_message(ctx, failed_region, OPEN_REGION_MESSAGE_TIMEOUT)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="self">self</span>.handle_response(mailbox_receiver, failed_region).<span class="kw">await
     </span>}
-
-    <span class="kw">fn </span>remark_inactive_region_if_needed(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.remark_inactive_region = <span class="bool-val">true</span>;
-    }
 }
 
 <span class="attr">#[cfg(test)]

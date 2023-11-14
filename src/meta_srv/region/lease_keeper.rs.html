@@ -431,6 +431,9 @@
 <a href="#431" id="431">431</a>
 <a href="#432" id="432">432</a>
 <a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -449,6 +452,7 @@
 <span class="kw">pub mod </span>utils;
 
 <span class="kw">use </span>std::collections::{HashMap, HashSet};
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_meta::key::table_route::TableRouteValue;
 <span class="kw">use </span>common_meta::key::TableMetadataManagerRef;
@@ -458,6 +462,8 @@
 <span class="kw">use </span><span class="self">self</span>::mito::find_staled_leader_regions;
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::region::lease_keeper::utils::find_staled_follower_regions;
+
+<span class="kw">pub type </span>RegionLeaseKeeperRef = Arc&lt;RegionLeaseKeeper&gt;;
 
 <span class="kw">pub struct </span>RegionLeaseKeeper {
     table_metadata_manager: TableMetadataManagerRef,

@@ -545,6 +545,10 @@
 <a href="#545" id="545">545</a>
 <a href="#546" id="546">546</a>
 <a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -920,12 +924,16 @@
                             countdown.set(tokio::time::sleep_until(first_deadline));
                         },
                         <span class="prelude-val">Some</span>(CountdownCommand::Reset((role, deadline))) =&gt; {
+                            <span class="comment">// The first-time granted regions might be ignored because the `first_deadline` is larger than the `region_lease_timeout`.
+                            // Therefore, we set writable at the outside.
+                            // TODO(weny): Considers setting `first_deadline` to `region_lease_timeout`.
+                            </span><span class="kw">let _ </span>= <span class="self">self</span>.region_server.set_writable(<span class="self">self</span>.region_id, role.writable());
+
                             <span class="kw">if </span>countdown.deadline() &lt; deadline {
                                 <span class="macro">trace!</span>(
                                     <span class="string">&quot;Reset deadline of region {region_id} to approximately {} seconds later&quot;</span>,
                                     (deadline - Instant::now()).as_secs_f32(),
                                 );
-                                <span class="kw">let _ </span>= <span class="self">self</span>.region_server.set_writable(<span class="self">self</span>.region_id, role.writable());
                                 countdown.set(tokio::time::sleep_until(deadline));
                             }
                             <span class="comment">// Else the countdown could be either:

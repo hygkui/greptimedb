@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["mito","utils"],"struct":["RegionLeaseKeeper"]};
+window.SIDEBAR_ITEMS = {"mod":["mito","utils"],"struct":["RegionLeaseKeeper"],"type":["RegionLeaseKeeperRef"]};
