@@ -82,6 +82,8 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -163,6 +165,8 @@
 ) -&gt; error::Result&lt;BoxedBatchReader&gt; {
     SeqScan::new(sst_layer, ProjectionMapper::all(<span class="kw-2">&amp;</span>schema)<span class="question-mark">?</span>)
         .with_files(inputs.to_vec())
+        <span class="comment">// We ignore file not found error during compaction.
+        </span>.with_ignore_file_not_found(<span class="bool-val">true</span>)
         .build_reader()
         .<span class="kw">await
 </span>}
