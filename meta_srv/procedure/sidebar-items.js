@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["region_failover","utils"]};
+window.SIDEBAR_ITEMS = {"mod":["region_failover","region_migration","utils"]};

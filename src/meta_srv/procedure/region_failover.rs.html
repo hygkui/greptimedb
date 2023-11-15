@@ -769,8 +769,6 @@
 <a href="#769" id="769">769</a>
 <a href="#770" id="770">770</a>
 <a href="#771" id="771">771</a>
-<a href="#772" id="772">772</a>
-<a href="#773" id="773">773</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -819,6 +817,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, RegisterProcedureLoaderSnafu, <span class="prelude-ty">Result</span>, TableMetadataManagerSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::lock::DistLockRef;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{SelectorContext, SelectorRef};
+<span class="kw">use </span><span class="kw">crate</span>::procedure::utils::region_lock_key;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 
 <span class="kw">const </span>OPEN_REGION_MESSAGE_TIMEOUT: Duration = Duration::from_secs(<span class="number">30</span>);
@@ -1144,10 +1143,7 @@
 
     <span class="kw">fn </span>lock_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LockKey {
         <span class="kw">let </span>region_ident = <span class="kw-2">&amp;</span><span class="self">self</span>.node.failed_region;
-        <span class="kw">let </span>region_key = <span class="macro">format!</span>(
-            <span class="string">&quot;{}/region-{}&quot;</span>,
-            region_ident.table_id, region_ident.region_number
-        );
+        <span class="kw">let </span>region_key = region_lock_key(region_ident.table_id, region_ident.region_number);
         LockKey::single(region_key)
     }
 }

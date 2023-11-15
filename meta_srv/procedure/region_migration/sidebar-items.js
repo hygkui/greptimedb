@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["_State_registry"],"mod":["migration_end","migration_start"],"struct":["Context","PersistentContext","RegionMigrationData","RegionMigrationProcedure","VolatileContext"],"trait":["State"]};
