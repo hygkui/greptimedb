@@ -157,6 +157,14 @@
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
 <a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -178,7 +186,7 @@
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>parquet::basic::{Compression, Encoding, ZstdLevel};
 <span class="kw">use </span>parquet::file::metadata::KeyValue;
-<span class="kw">use </span>parquet::file::properties::WriterProperties;
+<span class="kw">use </span>parquet::file::properties::{WriterProperties, WriterPropertiesBuilder};
 <span class="kw">use </span>parquet::schema::types::ColumnPath;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
@@ -223,26 +231,15 @@
     </span><span class="kw">pub async fn </span>write_all(<span class="kw-2">&amp;mut </span><span class="self">self</span>, opts: <span class="kw-2">&amp;</span>WriteOptions) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SstInfo&gt;&gt; {
         <span class="kw">let </span>json = <span class="self">self</span>.metadata.to_json().context(InvalidMetadataSnafu)<span class="question-mark">?</span>;
         <span class="kw">let </span>key_value_meta = KeyValue::new(PARQUET_METADATA_KEY.to_string(), json);
-        <span class="kw">let </span>ts_column = <span class="self">self</span>.metadata.time_index_column();
 
         <span class="comment">// TODO(yingwen): Find and set proper column encoding for internal columns: op type and tsid.
         </span><span class="kw">let </span>props_builder = WriterProperties::builder()
             .set_key_value_metadata(<span class="prelude-val">Some</span>(<span class="macro">vec!</span>[key_value_meta]))
             .set_compression(Compression::ZSTD(ZstdLevel::default()))
             .set_encoding(Encoding::PLAIN)
-            .set_max_row_group_size(opts.row_group_size)
-            .set_column_encoding(
-                ColumnPath::new(<span class="macro">vec!</span>[SEQUENCE_COLUMN_NAME.to_string()]),
-                Encoding::DELTA_BINARY_PACKED,
-            )
-            .set_column_dictionary_enabled(
-                ColumnPath::new(<span class="macro">vec!</span>[SEQUENCE_COLUMN_NAME.to_string()]),
-                <span class="bool-val">false</span>,
-            )
-            .set_column_encoding(
-                ColumnPath::new(<span class="macro">vec!</span>[ts_column.column_schema.name.clone()]),
-                Encoding::DELTA_BINARY_PACKED,
-            );
+            .set_max_row_group_size(opts.row_group_size);
+
+        <span class="kw">let </span>props_builder = <span class="self">Self</span>::customize_column_config(props_builder, <span class="kw-2">&amp;</span><span class="self">self</span>.metadata);
         <span class="kw">let </span>writer_props = props_builder.build();
 
         <span class="kw">let </span>write_format = WriteFormat::new(<span class="self">self</span>.metadata.clone());
@@ -283,6 +280,25 @@
             file_size,
             num_rows: stats.num_rows,
         }))
+    }
+
+    <span class="doccomment">/// Customizes per-column config according to schema and maybe column cardinality.
+    </span><span class="kw">fn </span>customize_column_config(
+        builder: WriterPropertiesBuilder,
+        region_metadata: <span class="kw-2">&amp;</span>RegionMetadataRef,
+    ) -&gt; WriterPropertiesBuilder {
+        <span class="kw">let </span>ts_col = ColumnPath::new(<span class="macro">vec!</span>[region_metadata
+            .time_index_column()
+            .column_schema
+            .name
+            .clone()]);
+        <span class="kw">let </span>seq_col = ColumnPath::new(<span class="macro">vec!</span>[SEQUENCE_COLUMN_NAME.to_string()]);
+
+        builder
+            .set_column_encoding(seq_col.clone(), Encoding::DELTA_BINARY_PACKED)
+            .set_column_dictionary_enabled(seq_col, <span class="bool-val">false</span>)
+            .set_column_encoding(ts_col.clone(), Encoding::DELTA_BINARY_PACKED)
+            .set_column_dictionary_enabled(ts_col, <span class="bool-val">false</span>)
     }
 }
 
