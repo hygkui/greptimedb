@@ -34,6 +34,10 @@
 <a href="#34" id="34">34</a>
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -56,18 +60,22 @@
 <span class="macro">lazy_static! </span>{
     <span class="doccomment">/// Gauge for opened regions
     </span><span class="kw">pub static </span><span class="kw-2">ref </span>PHYSICAL_REGION_COUNT: IntGauge =
-        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;metric_physical_region_count&quot;</span>, <span class="string">&quot;metric engine physical region count&quot;</span>).unwrap();
+        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;metric_engine_physical_region_count&quot;</span>, <span class="string">&quot;metric engine physical region count&quot;</span>).unwrap();
 
     <span class="doccomment">/// Gauge of columns across all opened regions
     </span><span class="kw">pub static </span><span class="kw-2">ref </span>PHYSICAL_COLUMN_COUNT: IntGauge =
-        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;metric_physical_column_count&quot;</span>, <span class="string">&quot;metric engine physical column count&quot;</span>).unwrap();
+        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;metric_engine_physical_column_count&quot;</span>, <span class="string">&quot;metric engine physical column count&quot;</span>).unwrap();
 
     <span class="doccomment">/// Gauge for opened logical regions
     </span><span class="kw">pub static </span><span class="kw-2">ref </span>LOGICAL_REGION_COUNT: IntGauge =
-        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;metric_logical_region_count&quot;</span>, <span class="string">&quot;metric engine logical region count&quot;</span>).unwrap();
+        <span class="macro">register_int_gauge!</span>(<span class="string">&quot;metric_engine_logical_region_count&quot;</span>, <span class="string">&quot;metric engine logical region count&quot;</span>).unwrap();
 
-    <span class="doccomment">/// Gauge for opened logical regions
+    <span class="doccomment">/// Histogram for opened logical regions
     </span><span class="kw">pub static </span><span class="kw-2">ref </span>MITO_DDL_DURATION: Histogram =
         <span class="macro">register_histogram!</span>(<span class="string">&quot;metric_engine_mito_ddl&quot;</span>, <span class="string">&quot;metric engine mito ddl&quot;</span>).unwrap();
+
+    <span class="doccomment">/// Counter for forbidden operations
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>FORBIDDEN_OPERATION_COUNT: IntCounter =
+        <span class="macro">register_int_counter!</span>(<span class="string">&quot;metric_engine_forbidden_request&quot;</span>, <span class="string">&quot;metric forbidden request&quot;</span>).unwrap();
 }
 </code></pre></div></section></main></body></html>

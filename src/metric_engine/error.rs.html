@@ -150,8 +150,6 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -173,7 +171,7 @@
 <span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>snafu::{Location, Snafu};
-<span class="kw">use </span>store_api::storage::{RegionId, TableId};
+<span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="attr">#[derive(Snafu)]
 #[snafu(visibility(<span class="kw">pub</span>))]
@@ -189,9 +187,9 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Table `{}` already exists&quot;</span>, table_id))]
-    </span>TableAlreadyExists {
-        table_id: TableId,
+    <span class="attr">#[snafu(display(<span class="string">&quot;Region `{}` already exists&quot;</span>, region_id))]
+    </span>RegionAlreadyExists {
+        region_id: RegionId,
         location: Location,
     },
 
@@ -210,11 +208,11 @@
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse table id from {}&quot;</span>, raw))]
-    </span>ParseTableId {
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to parse region id from {}&quot;</span>, raw))]
+    </span>ParseRegionId {
         raw: String,
         <span class="attr">#[snafu(source)]
-        </span>error: &lt;TableId <span class="kw">as </span>std::str::FromStr&gt;::Err,
+        </span>error: &lt;u64 <span class="kw">as </span>std::str::FromStr&gt;::Err,
         location: Location,
     },
 
@@ -245,22 +243,15 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Region options are conflicted&quot;</span>))]
     </span>ConflictRegionOption { location: Location },
 
-    <span class="comment">// TODO: remove this
-    </span><span class="attr">#[snafu(display(<span class="string">&quot;Physical table {} not found&quot;</span>, physical_table))]
-    </span>PhysicalTableNotFound {
-        physical_table: String,
-        location: Location,
-    },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Physical region {} not found&quot;</span>, region_id))]
     </span>PhysicalRegionNotFound {
         region_id: RegionId,
         location: Location,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Logical table {} not found&quot;</span>, table_id))]
-    </span>LogicalTableNotFound {
-        table_id: TableId,
+    <span class="attr">#[snafu(display(<span class="string">&quot;Logical region {} not found&quot;</span>, region_id))]
+    </span>LogicalRegionNotFound {
+        region_id: RegionId,
         location: Location,
     },
 
@@ -269,6 +260,9 @@
         column_type: ConcreteDataType,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Alter request to physical region is forbidden&quot;</span>))]
+    </span>ForbiddenPhysicalAlter { location: Location },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T, E = Error&gt; = std::result::Result&lt;T, E&gt;;
@@ -283,14 +277,16 @@
             | ConflictRegionOption { .. }
             | ColumnTypeMismatch { .. } =&gt; StatusCode::InvalidArguments,
 
+            ForbiddenPhysicalAlter { .. } =&gt; StatusCode::Unsupported,
+
             MissingInternalColumn { .. }
             | DeserializeSemanticType { .. }
             | DecodeColumnValue { .. }
-            | ParseTableId { .. } =&gt; StatusCode::Unexpected,
+            | ParseRegionId { .. } =&gt; StatusCode::Unexpected,
 
-            PhysicalTableNotFound { .. } | LogicalTableNotFound { .. } =&gt; StatusCode::TableNotFound,
-
-            PhysicalRegionNotFound { .. } =&gt; StatusCode::RegionNotFound,
+            PhysicalRegionNotFound { .. } | LogicalRegionNotFound { .. } =&gt; {
+                StatusCode::RegionNotFound
+            }
 
             CreateMitoRegion { source, .. }
             | MitoReadOperation { source, .. }
@@ -298,7 +294,7 @@
 
             CollectRecordBatchStream { source, .. } =&gt; source.status_code(),
 
-            TableAlreadyExists { .. } =&gt; StatusCode::TableAlreadyExists,
+            RegionAlreadyExists { .. } =&gt; StatusCode::RegionAlreadyExists,
         }
     }
 

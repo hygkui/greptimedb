@@ -535,6 +535,24 @@
 <a href="#535" id="535">535</a>
 <a href="#536" id="536">536</a>
 <a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -568,15 +586,15 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     CollectRecordBatchStreamSnafu, DecodeColumnValueSnafu, DeserializeSemanticTypeSnafu,
-    MitoReadOperationSnafu, MitoWriteOperationSnafu, ParseTableIdSnafu, <span class="prelude-ty">Result</span>,
-    TableAlreadyExistsSnafu,
+    MitoReadOperationSnafu, MitoWriteOperationSnafu, ParseRegionIdSnafu, RegionAlreadyExistsSnafu,
+    <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use </span><span class="kw">crate</span>::utils;
 
 <span class="doccomment">/// The other two fields key and value will be used as a k-v storage.
-/// It contains two group of key (TABLE_ID refers to the logical table&#39;s id):
-/// - `__table_&lt;TABLE_ID&gt;` is used for marking table existence. It doesn&#39;t have value.
-/// - `__column_&lt;TABLE_ID&gt;_&lt;COLUMN_NAME&gt;` is used for marking column existence,
+/// It contains two group of key:
+/// - `__region_&lt;LOGICAL_REGION_ID&gt;` is used for marking table existence. It doesn&#39;t have value.
+/// - `__column_&lt;LOGICAL_REGION_ID&gt;_&lt;COLUMN_NAME&gt;` is used for marking column existence,
 ///   the value is column&#39;s semantic type. To avoid the key conflict, this column key
 ///   will be encoded by base64([STANDARD_NO_PAD]).
 ///
@@ -585,10 +603,6 @@
 /// every operation should be associated to a [RegionId], which is the physical
 /// table id + region sequence. This handler will transform the region group by
 /// itself.
-///
-/// Notice that all the `region_id` in the public interfaces refers to the
-/// physical region id of metadata region. While the `table_id` refers to
-/// the logical table id.
 </span><span class="kw">pub struct </span>MetadataRegion {
     mito: MitoEngine,
 }
@@ -602,16 +616,23 @@
     ///
     /// This method will check if the table key already exists, if so, it will return
     /// a [TableAlreadyExistsSnafu] error.
-    </span><span class="kw">pub async fn </span>add_table(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>region_id = utils::to_metadata_region_id(region_id);
-        <span class="kw">let </span>table_key = <span class="self">Self</span>::concat_table_key(table_id);
+    </span><span class="kw">pub async fn </span>add_logical_region(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        physical_region_id: RegionId,
+        logical_region_id: RegionId,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span>region_id = utils::to_metadata_region_id(physical_region_id);
+        <span class="kw">let </span>region_key = <span class="self">Self</span>::concat_region_key(logical_region_id);
 
         <span class="kw">let </span>put_success = <span class="self">self
-            </span>.put_conditionally(region_id, table_key, String::new())
+            </span>.put_if_absent(region_id, region_key, String::new())
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span>!put_success {
-            TableAlreadyExistsSnafu { table_id }.fail()
+            RegionAlreadyExistsSnafu {
+                region_id: logical_region_id,
+            }
+            .fail()
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(())
         }
@@ -623,15 +644,15 @@
     /// will return if the column is successfully added.
     </span><span class="kw">pub async fn </span>add_column(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        region_id: RegionId,
-        table_id: TableId,
+        physical_region_id: RegionId,
+        logical_region_id: RegionId,
         column_name: <span class="kw-2">&amp;</span>str,
         semantic_type: SemanticType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>region_id = utils::to_metadata_region_id(region_id);
-        <span class="kw">let </span>column_key = <span class="self">Self</span>::concat_column_key(table_id, column_name);
+        <span class="kw">let </span>region_id = utils::to_metadata_region_id(physical_region_id);
+        <span class="kw">let </span>column_key = <span class="self">Self</span>::concat_column_key(logical_region_id, column_name);
 
-        <span class="self">self</span>.put_conditionally(
+        <span class="self">self</span>.put_if_absent(
             region_id,
             column_key,
             <span class="self">Self</span>::serialize_semantic_type(semantic_type),
@@ -639,22 +660,26 @@
         .<span class="kw">await
     </span>}
 
-    <span class="doccomment">/// Check if the given table exists.
-    </span><span class="kw">pub async fn </span>is_table_exist(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, table_id: TableId) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>region_id = utils::to_metadata_region_id(region_id);
-        <span class="kw">let </span>table_key = <span class="self">Self</span>::concat_table_key(table_id);
-        <span class="self">self</span>.exist(region_id, <span class="kw-2">&amp;</span>table_key).<span class="kw">await
+    <span class="doccomment">/// Check if the given logical region exists.
+    </span><span class="kw">pub async fn </span>is_logical_region_exists(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        physical_region_id: RegionId,
+        logical_region_id: RegionId,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="kw">let </span>region_id = utils::to_metadata_region_id(physical_region_id);
+        <span class="kw">let </span>region_key = <span class="self">Self</span>::concat_region_key(logical_region_id);
+        <span class="self">self</span>.exists(region_id, <span class="kw-2">&amp;</span>region_key).<span class="kw">await
     </span>}
 
     <span class="doccomment">/// Check if the given column exists. Return the semantic type if exists.
     </span><span class="kw">pub async fn </span>column_semantic_type(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        region_id: RegionId,
-        table_id: TableId,
+        physical_region_id: RegionId,
+        logical_region_id: RegionId,
         column_name: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SemanticType&gt;&gt; {
-        <span class="kw">let </span>region_id = utils::to_metadata_region_id(region_id);
-        <span class="kw">let </span>column_key = <span class="self">Self</span>::concat_column_key(table_id, column_name);
+        <span class="kw">let </span>region_id = utils::to_metadata_region_id(physical_region_id);
+        <span class="kw">let </span>column_key = <span class="self">Self</span>::concat_column_key(logical_region_id, column_name);
         <span class="kw">let </span>semantic_type = <span class="self">self</span>.get(region_id, <span class="kw-2">&amp;</span>column_key).<span class="kw">await</span><span class="question-mark">?</span>;
         semantic_type
             .map(|s| <span class="self">Self</span>::deserialize_semantic_type(<span class="kw-2">&amp;</span>s))
@@ -664,36 +689,37 @@
 
 <span class="comment">// utils to concat and parse key/value
 </span><span class="kw">impl </span>MetadataRegion {
-    <span class="kw">pub fn </span>concat_table_key(table_id: TableId) -&gt; String {
-        <span class="macro">format!</span>(<span class="string">&quot;__table_{}&quot;</span>, table_id)
+    <span class="kw">pub fn </span>concat_region_key(region_id: RegionId) -&gt; String {
+        <span class="macro">format!</span>(<span class="string">&quot;__region_{}&quot;</span>, region_id.as_u64())
     }
 
     <span class="doccomment">/// Column name will be encoded by base64([STANDARD_NO_PAD])
-    </span><span class="kw">pub fn </span>concat_column_key(table_id: TableId, column_name: <span class="kw-2">&amp;</span>str) -&gt; String {
+    </span><span class="kw">pub fn </span>concat_column_key(region_id: RegionId, column_name: <span class="kw-2">&amp;</span>str) -&gt; String {
         <span class="kw">let </span>encoded_column_name = STANDARD_NO_PAD.encode(column_name);
-        <span class="macro">format!</span>(<span class="string">&quot;__column_{}_{}&quot;</span>, table_id, encoded_column_name)
+        <span class="macro">format!</span>(<span class="string">&quot;__column_{}_{}&quot;</span>, region_id.as_u64(), encoded_column_name)
     }
 
-    <span class="kw">pub fn </span>parse_table_key(key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt; {
-        key.strip_prefix(<span class="string">&quot;__table_&quot;</span>)
+    <span class="kw">pub fn </span>parse_region_key(key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt; {
+        key.strip_prefix(<span class="string">&quot;__region_&quot;</span>)
     }
 
-    <span class="doccomment">/// Parse column key to (table_name, column_name)
-    </span><span class="kw">pub fn </span>parse_column_key(key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(TableId, String)&gt;&gt; {
+    <span class="doccomment">/// Parse column key to (logical_region_id, column_name)
+    </span><span class="kw">pub fn </span>parse_column_key(key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(RegionId, String)&gt;&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(stripped) = key.strip_prefix(<span class="string">&quot;__column_&quot;</span>) {
             <span class="kw">let </span><span class="kw-2">mut </span>iter = stripped.split(<span class="string">&#39;_&#39;</span>);
 
-            <span class="kw">let </span>table_id_raw = iter.next().unwrap();
-            <span class="kw">let </span>table_id = table_id_raw
-                .parse()
-                .with_context(|<span class="kw">_</span>| ParseTableIdSnafu { raw: table_id_raw })<span class="question-mark">?</span>;
+            <span class="kw">let </span>region_id_raw = iter.next().unwrap();
+            <span class="kw">let </span>region_id = region_id_raw
+                .parse::&lt;u64&gt;()
+                .with_context(|<span class="kw">_</span>| ParseRegionIdSnafu { raw: region_id_raw })<span class="question-mark">?
+                </span>.into();
 
             <span class="kw">let </span>encoded_column_name = iter.next().unwrap();
             <span class="kw">let </span>column_name = STANDARD_NO_PAD
                 .decode(encoded_column_name)
                 .context(DecodeColumnValueSnafu)<span class="question-mark">?</span>;
 
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((table_id, String::from_utf8(column_name).unwrap())))
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((region_id, String::from_utf8(column_name).unwrap())))
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
@@ -716,13 +742,13 @@
 </span><span class="kw">impl </span>MetadataRegion {
     <span class="doccomment">/// Put if not exist, return if this put operation is successful (error other
     /// than &quot;key already exist&quot; will be wrapped in [Err]).
-    </span><span class="kw">pub async fn </span>put_conditionally(
+    </span><span class="kw">pub async fn </span>put_if_absent(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         key: String,
         value: String,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">if </span><span class="self">self</span>.exist(region_id, <span class="kw-2">&amp;</span>key).<span class="kw">await</span><span class="question-mark">? </span>{
+        <span class="kw">if </span><span class="self">self</span>.exists(region_id, <span class="kw-2">&amp;</span>key).<span class="kw">await</span><span class="question-mark">? </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
         }
 
@@ -740,7 +766,7 @@
     <span class="doccomment">/// Check if the given key exists.
     ///
     /// Notice that due to mito doesn&#39;t support transaction, TOCTTOU is possible.
-    </span><span class="kw">pub async fn </span>exist(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    </span><span class="kw">pub async fn </span>exists(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         <span class="kw">let </span>scan_req = <span class="self">Self</span>::build_read_request(key);
         <span class="kw">let </span>record_batch_stream = <span class="self">self
             </span>.mito
@@ -847,40 +873,40 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_concat_table_key() {
-        <span class="kw">let </span>table_id = <span class="number">12934</span>;
-        <span class="kw">let </span>expected = <span class="string">&quot;__table_12934&quot;</span>.to_string();
-        <span class="macro">assert_eq!</span>(MetadataRegion::concat_table_key(table_id), expected);
+        <span class="kw">let </span>region_id = RegionId::new(<span class="number">1234</span>, <span class="number">7844</span>);
+        <span class="kw">let </span>expected = <span class="string">&quot;__region_5299989651108&quot;</span>.to_string();
+        <span class="macro">assert_eq!</span>(MetadataRegion::concat_region_key(region_id), expected);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_concat_column_key() {
-        <span class="kw">let </span>table_id = <span class="number">91959</span>;
+        <span class="kw">let </span>region_id = RegionId::new(<span class="number">8489</span>, <span class="number">9184</span>);
         <span class="kw">let </span>column_name = <span class="string">&quot;my_column&quot;</span>;
-        <span class="kw">let </span>expected = <span class="string">&quot;__column_91959_bXlfY29sdW1u&quot;</span>.to_string();
+        <span class="kw">let </span>expected = <span class="string">&quot;__column_36459977384928_bXlfY29sdW1u&quot;</span>.to_string();
         <span class="macro">assert_eq!</span>(
-            MetadataRegion::concat_column_key(table_id, column_name),
+            MetadataRegion::concat_column_key(region_id, column_name),
             expected
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_parse_table_key() {
-        <span class="kw">let </span>table_id = <span class="number">93585</span>;
-        <span class="kw">let </span>encoded = MetadataRegion::concat_column_key(table_id, <span class="string">&quot;my_column&quot;</span>);
-        <span class="macro">assert_eq!</span>(encoded, <span class="string">&quot;__column_93585_bXlfY29sdW1u&quot;</span>);
+        <span class="kw">let </span>region_id = RegionId::new(<span class="number">87474</span>, <span class="number">10607</span>);
+        <span class="kw">let </span>encoded = MetadataRegion::concat_column_key(region_id, <span class="string">&quot;my_column&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoded, <span class="string">&quot;__column_375697969260911_bXlfY29sdW1u&quot;</span>);
 
         <span class="kw">let </span>decoded = MetadataRegion::parse_column_key(<span class="kw-2">&amp;</span>encoded).unwrap();
-        <span class="macro">assert_eq!</span>(decoded, <span class="prelude-val">Some</span>((table_id, <span class="string">&quot;my_column&quot;</span>.to_string())));
+        <span class="macro">assert_eq!</span>(decoded, <span class="prelude-val">Some</span>((region_id, <span class="string">&quot;my_column&quot;</span>.to_string())));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_parse_valid_column_key() {
-        <span class="kw">let </span>table_id = <span class="number">73952</span>;
-        <span class="kw">let </span>encoded = MetadataRegion::concat_column_key(table_id, <span class="string">&quot;my_column&quot;</span>);
-        <span class="macro">assert_eq!</span>(encoded, <span class="string">&quot;__column_73952_bXlfY29sdW1u&quot;</span>);
+        <span class="kw">let </span>region_id = RegionId::new(<span class="number">176</span>, <span class="number">910</span>);
+        <span class="kw">let </span>encoded = MetadataRegion::concat_column_key(region_id, <span class="string">&quot;my_column&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoded, <span class="string">&quot;__column_755914245006_bXlfY29sdW1u&quot;</span>);
 
         <span class="kw">let </span>decoded = MetadataRegion::parse_column_key(<span class="kw-2">&amp;</span>encoded).unwrap();
-        <span class="macro">assert_eq!</span>(decoded, <span class="prelude-val">Some</span>((table_id, <span class="string">&quot;my_column&quot;</span>.to_string())));
+        <span class="macro">assert_eq!</span>(decoded, <span class="prelude-val">Some</span>((region_id, <span class="string">&quot;my_column&quot;</span>.to_string())));
     }
 
     <span class="attr">#[test]
@@ -933,13 +959,13 @@
         <span class="kw">let </span>env = TestEnv::new().<span class="kw">await</span>;
         env.init_metric_region().<span class="kw">await</span>;
         <span class="kw">let </span>metadata_region = env.metadata_region();
-        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_region_id());
+        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_physical_region_id());
 
         <span class="comment">// Test inserting a new key-value pair
         </span><span class="kw">let </span>key = <span class="string">&quot;test_key&quot;</span>.to_string();
         <span class="kw">let </span>value = <span class="string">&quot;test_value&quot;</span>.to_string();
         <span class="kw">let </span>result = metadata_region
-            .put_conditionally(region_id, key.clone(), value.clone())
+            .put_if_absent(region_id, key.clone(), value.clone())
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
         <span class="macro">assert!</span>(result.unwrap());
@@ -956,7 +982,7 @@
 
         <span class="comment">// Test inserting the same key-value pair again
         </span><span class="kw">let </span>result = metadata_region
-            .put_conditionally(region_id, key.clone(), value.clone())
+            .put_if_absent(region_id, key.clone(), value.clone())
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
         <span class="macro">assert!</span>(!result.unwrap(),);
@@ -967,11 +993,11 @@
         <span class="kw">let </span>env = TestEnv::new().<span class="kw">await</span>;
         env.init_metric_region().<span class="kw">await</span>;
         <span class="kw">let </span>metadata_region = env.metadata_region();
-        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_region_id());
+        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_physical_region_id());
 
         <span class="comment">// Test checking for a non-existent key
         </span><span class="kw">let </span>key = <span class="string">&quot;test_key&quot;</span>.to_string();
-        <span class="kw">let </span>result = metadata_region.exist(region_id, <span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
+        <span class="kw">let </span>result = metadata_region.exists(region_id, <span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
         <span class="macro">assert!</span>(!result.unwrap());
 
@@ -983,7 +1009,7 @@
             .handle_request(region_id, RegionRequest::Put(put_request))
             .<span class="kw">await
             </span>.unwrap();
-        <span class="kw">let </span>result = metadata_region.exist(region_id, <span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
+        <span class="kw">let </span>result = metadata_region.exists(region_id, <span class="kw-2">&amp;</span>key).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
         <span class="macro">assert!</span>(result.unwrap(),);
     }
@@ -993,7 +1019,7 @@
         <span class="kw">let </span>env = TestEnv::new().<span class="kw">await</span>;
         env.init_metric_region().<span class="kw">await</span>;
         <span class="kw">let </span>metadata_region = env.metadata_region();
-        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_region_id());
+        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_physical_region_id());
 
         <span class="comment">// Test getting a non-existent key
         </span><span class="kw">let </span>key = <span class="string">&quot;test_key&quot;</span>.to_string();
@@ -1015,26 +1041,26 @@
     }
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_add_table() {
+    </span><span class="kw">async fn </span>test_add_logical_region() {
         <span class="kw">let </span>env = TestEnv::new().<span class="kw">await</span>;
         env.init_metric_region().<span class="kw">await</span>;
         <span class="kw">let </span>metadata_region = env.metadata_region();
-        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_region_id());
+        <span class="kw">let </span>physical_region_id = to_metadata_region_id(env.default_physical_region_id());
 
         <span class="comment">// add one table
-        </span><span class="kw">let </span>table_id = <span class="number">77889</span>;
+        </span><span class="kw">let </span>logical_region_id = RegionId::new(<span class="number">196</span>, <span class="number">2333</span>);
         metadata_region
-            .add_table(region_id, table_id)
+            .add_logical_region(physical_region_id, logical_region_id)
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert!</span>(metadata_region
-            .is_table_exist(region_id, table_id)
+            .is_logical_region_exists(physical_region_id, logical_region_id)
             .<span class="kw">await
             </span>.unwrap());
 
         <span class="comment">// add it again
         </span><span class="macro">assert!</span>(metadata_region
-            .add_table(region_id, table_id)
+            .add_logical_region(physical_region_id, logical_region_id)
             .<span class="kw">await
             </span>.is_err());
     }
@@ -1044,29 +1070,39 @@
         <span class="kw">let </span>env = TestEnv::new().<span class="kw">await</span>;
         env.init_metric_region().<span class="kw">await</span>;
         <span class="kw">let </span>metadata_region = env.metadata_region();
-        <span class="kw">let </span>region_id = to_metadata_region_id(env.default_region_id());
+        <span class="kw">let </span>physical_region_id = to_metadata_region_id(env.default_physical_region_id());
 
-        <span class="kw">let </span>table_id = <span class="number">23638</span>;
+        <span class="kw">let </span>logical_region_id = RegionId::new(<span class="number">868</span>, <span class="number">8390</span>);
         <span class="kw">let </span>column_name = <span class="string">&quot;column1&quot;</span>;
         <span class="kw">let </span>semantic_type = SemanticType::Tag;
         metadata_region
-            .add_column(region_id, table_id, column_name, semantic_type)
+            .add_column(
+                physical_region_id,
+                logical_region_id,
+                column_name,
+                semantic_type,
+            )
             .<span class="kw">await
             </span>.unwrap();
         <span class="kw">let </span>actual_semantic_type = metadata_region
-            .column_semantic_type(region_id, table_id, column_name)
+            .column_semantic_type(physical_region_id, logical_region_id, column_name)
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert_eq!</span>(actual_semantic_type, <span class="prelude-val">Some</span>(semantic_type));
 
         <span class="comment">// duplicate column won&#39;t be updated
         </span><span class="kw">let </span>is_updated = metadata_region
-            .add_column(region_id, table_id, column_name, SemanticType::Field)
+            .add_column(
+                physical_region_id,
+                logical_region_id,
+                column_name,
+                SemanticType::Field,
+            )
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert!</span>(!is_updated);
         <span class="kw">let </span>actual_semantic_type = metadata_region
-            .column_semantic_type(region_id, table_id, column_name)
+            .column_semantic_type(physical_region_id, logical_region_id, column_name)
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert_eq!</span>(actual_semantic_type, <span class="prelude-val">Some</span>(semantic_type));

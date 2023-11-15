@@ -968,7 +968,7 @@
 </span><span class="kw">pub struct </span>RegionCloseRequest {}
 
 <span class="doccomment">/// Alter metadata of a region.
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
 </span><span class="kw">pub struct </span>RegionAlterRequest {
     <span class="doccomment">/// The version of the schema before applying the alteration.
     </span><span class="kw">pub </span>schema_version: u64,
@@ -1021,7 +1021,7 @@
 }
 
 <span class="doccomment">/// Kind of the alteration.
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
 </span><span class="kw">pub enum </span>AlterKind {
     <span class="doccomment">/// Add columns to the region.
     </span>AddColumns {
@@ -1108,7 +1108,7 @@
 }
 
 <span class="doccomment">/// Adds a column.
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
 </span><span class="kw">pub struct </span>AddColumn {
     <span class="doccomment">/// Metadata of the column to add.
     </span><span class="kw">pub </span>column_metadata: ColumnMetadata,
@@ -1174,7 +1174,7 @@
 }
 
 <span class="doccomment">/// Location to add a column.
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, PartialEq, Eq, Clone)]
 </span><span class="kw">pub enum </span>AddColumnLocation {
     <span class="doccomment">/// Add the column to the first position of columns.
     </span>First,
