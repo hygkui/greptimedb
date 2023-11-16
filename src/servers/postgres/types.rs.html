@@ -804,6 +804,8 @@
 <a href="#804" id="804">804</a>
 <a href="#805" id="805">805</a>
 <a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -909,6 +911,7 @@
             }
         }
         Value::Interval(v) =&gt; builder.encode_field(<span class="kw-2">&amp;</span>PgInterval::from(<span class="kw-2">*</span>v)),
+        Value::Decimal128(v) =&gt; builder.encode_field(<span class="kw-2">&amp;</span>v.to_string()),
         Value::List(<span class="kw">_</span>) | Value::Duration(<span class="kw">_</span>) =&gt; {
             <span class="prelude-val">Err</span>(PgWireError::ApiError(Box::new(Error::Internal {
                 err_msg: <span class="macro">format!</span>(
@@ -937,6 +940,7 @@
         <span class="kw-2">&amp;</span>ConcreteDataType::Timestamp(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::TIMESTAMP),
         <span class="kw-2">&amp;</span>ConcreteDataType::Time(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::TIME),
         <span class="kw-2">&amp;</span>ConcreteDataType::Interval(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::INTERVAL),
+        <span class="kw-2">&amp;</span>ConcreteDataType::Decimal128(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Type::NUMERIC),
         <span class="kw-2">&amp;</span>ConcreteDataType::Duration(<span class="kw">_</span>)
         | <span class="kw-2">&amp;</span>ConcreteDataType::List(<span class="kw">_</span>)
         | <span class="kw-2">&amp;</span>ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; error::InternalSnafu {

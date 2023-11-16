@@ -896,6 +896,17 @@
 <a href="#896" id="896">896</a>
 <a href="#897" id="897">897</a>
 <a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -937,11 +948,11 @@
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>datatypes::schema::constraint::{CURRENT_TIMESTAMP, CURRENT_TIMESTAMP_FN};
 <span class="kw">use </span>datatypes::schema::{ColumnDefaultConstraint, ColumnSchema, COMMENT_KEY};
-<span class="kw">use </span>datatypes::types::cast::CastOption;
 <span class="kw">use </span>datatypes::types::{cast, TimestampType};
 <span class="kw">use </span>datatypes::value::{OrderedF32, OrderedF64, Value};
 <span class="kw">pub use </span>option_map::OptionMap;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
+<span class="kw">use </span>sqlparser::ast::ExactNumberInfo;
 <span class="kw">pub use </span>transform::{get_data_type_by_alias_name, transform_statements};
 
 <span class="kw">use </span><span class="kw">crate</span>::ast::{
@@ -1044,8 +1055,9 @@
                 <span class="kw">let </span>n  = parse_sql_number::&lt;i64&gt;(<span class="macro-nonterminal">$n</span>)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Value::Timestamp(Timestamp::new(n, t.unit())))
             },
+            <span class="comment">// TODO(QuenKar): parse decimal128 string with precision and scale
 
-            <span class="kw">_ </span>=&gt; ParseSqlValueSnafu {
+            </span><span class="kw">_ </span>=&gt; ParseSqlValueSnafu {
                 msg: <span class="macro">format!</span>(<span class="string">&quot;Fail to parse number {}, invalid column type: {:?}&quot;</span>,
                                 <span class="macro-nonterminal">$n</span>, <span class="macro-nonterminal">$data_type
                 </span>)}.fail(),
@@ -1121,11 +1133,9 @@
         }
     };
     <span class="kw">if </span>value.data_type() != <span class="kw-2">*</span>data_type {
-        cast::cast_with_opt(value, data_type, <span class="kw-2">&amp;</span>CastOption { strict: <span class="bool-val">true </span>}).with_context(|<span class="kw">_</span>| {
-            InvalidCastSnafu {
-                sql_value: sql_val.clone(),
-                datatype: data_type,
-            }
+        cast(value, data_type).with_context(|<span class="kw">_</span>| InvalidCastSnafu {
+            sql_value: sql_val.clone(),
+            datatype: data_type,
         })
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(value)
@@ -1310,6 +1320,15 @@
             </span>.map(|t| ConcreteDataType::timestamp_datatype(t.unit()))
             .unwrap_or(ConcreteDataType::timestamp_millisecond_datatype())),
         SqlDataType::Interval =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::interval_month_day_nano_datatype()),
+        SqlDataType::Decimal(exact_info) =&gt; <span class="kw">match </span>exact_info {
+            ExactNumberInfo::None =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::decimal128_default_datatype()),
+            <span class="comment">// refer to https://dev.mysql.com/doc/refman/8.0/en/fixed-point-types.html
+            // In standard SQL, the syntax DECIMAL(M) is equivalent to DECIMAL(M,0).
+            </span>ExactNumberInfo::Precision(p) =&gt; <span class="prelude-val">Ok</span>(ConcreteDataType::decimal128_datatype(<span class="kw-2">*</span>p <span class="kw">as </span>u8, <span class="number">0</span>)),
+            ExactNumberInfo::PrecisionAndScale(p, s) =&gt; {
+                <span class="prelude-val">Ok</span>(ConcreteDataType::decimal128_datatype(<span class="kw-2">*</span>p <span class="kw">as </span>u8, <span class="kw-2">*</span>s <span class="kw">as </span>i8))
+            }
+        },
         <span class="kw">_ </span>=&gt; error::SqlTypeNotSupportedSnafu {
             t: data_type.clone(),
         }
@@ -1343,6 +1362,9 @@
         )),
         ConcreteDataType::Interval(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Interval),
         ConcreteDataType::Binary(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Varbinary(<span class="prelude-val">None</span>)),
+        ConcreteDataType::Decimal128(d) =&gt; <span class="prelude-val">Ok</span>(SqlDataType::Decimal(
+            ExactNumberInfo::PrecisionAndScale(d.precision() <span class="kw">as </span>u64, d.scale() <span class="kw">as </span>u64),
+        )),
         ConcreteDataType::Duration(<span class="kw">_</span>)
         | ConcreteDataType::Null(<span class="kw">_</span>)
         | ConcreteDataType::List(<span class="kw">_</span>)

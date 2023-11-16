@@ -174,6 +174,12 @@
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -200,8 +206,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::LogicalPrimitiveType;
 <span class="kw">use </span><span class="kw">crate</span>::vectors::constant::ConstantVector;
 <span class="kw">use </span><span class="kw">crate</span>::vectors::{
-    BinaryVector, BooleanVector, ConcreteDataType, ListVector, NullVector, PrimitiveVector,
-    StringVector, UInt32Vector, Vector, VectorRef,
+    BinaryVector, BooleanVector, ConcreteDataType, Decimal128Vector, ListVector, NullVector,
+    PrimitiveVector, StringVector, UInt32Vector, Vector, VectorRef,
 };
 
 <span class="doccomment">/// Vector compute operations.
@@ -275,7 +281,13 @@
     )+};
 }
 
-<span class="macro">impl_scalar_vector_op!</span>(BinaryVector, BooleanVector, ListVector, StringVector);
+<span class="macro">impl_scalar_vector_op!</span>(
+    BinaryVector,
+    BooleanVector,
+    ListVector,
+    StringVector,
+    Decimal128Vector
+);
 
 <span class="kw">impl</span>&lt;T: LogicalPrimitiveType&gt; VectorOp <span class="kw">for </span>PrimitiveVector&lt;T&gt; {
     <span class="kw">fn </span>replicate(<span class="kw-2">&amp;</span><span class="self">self</span>, offsets: <span class="kw-2">&amp;</span>[usize]) -&gt; VectorRef {

@@ -314,6 +314,17 @@
 <a href="#314" id="314">314</a>
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -336,12 +347,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::{DurationType, TimeType, TimestampType};
 <span class="kw">use </span><span class="kw">crate</span>::vectors::constant::ConstantVector;
 <span class="kw">use </span><span class="kw">crate</span>::vectors::{
-    BinaryVector, BooleanVector, DateTimeVector, DateVector, DurationMicrosecondVector,
-    DurationMillisecondVector, DurationNanosecondVector, DurationSecondVector,
-    IntervalDayTimeVector, IntervalMonthDayNanoVector, IntervalYearMonthVector, ListVector,
-    PrimitiveVector, StringVector, TimeMicrosecondVector, TimeMillisecondVector,
-    TimeNanosecondVector, TimeSecondVector, TimestampMicrosecondVector, TimestampMillisecondVector,
-    TimestampNanosecondVector, TimestampSecondVector, Vector,
+    BinaryVector, BooleanVector, DateTimeVector, DateVector, Decimal128Vector,
+    DurationMicrosecondVector, DurationMillisecondVector, DurationNanosecondVector,
+    DurationSecondVector, IntervalDayTimeVector, IntervalMonthDayNanoVector,
+    IntervalYearMonthVector, ListVector, PrimitiveVector, StringVector, TimeMicrosecondVector,
+    TimeMillisecondVector, TimeNanosecondVector, TimeSecondVector, TimestampMicrosecondVector,
+    TimestampMillisecondVector, TimestampNanosecondVector, TimestampSecondVector, Vector,
 };
 <span class="kw">use </span><span class="kw">crate</span>::with_match_primitive_type_id;
 
@@ -467,6 +478,9 @@
                 <span class="macro">is_vector_eq!</span>(DurationNanosecondVector, lhs, rhs)
             }
         },
+        Decimal128(<span class="kw">_</span>) =&gt; {
+            <span class="macro">is_vector_eq!</span>(Decimal128Vector, lhs, rhs)
+        }
     }
 }
 
@@ -558,6 +572,9 @@
         assert_vector_ref_eq(Arc::new(DurationMillisecondVector::from_values([<span class="number">300</span>, <span class="number">310</span>])));
         assert_vector_ref_eq(Arc::new(DurationMicrosecondVector::from_values([<span class="number">300</span>, <span class="number">310</span>])));
         assert_vector_ref_eq(Arc::new(DurationNanosecondVector::from_values([<span class="number">300</span>, <span class="number">310</span>])));
+        assert_vector_ref_eq(Arc::new(Decimal128Vector::from_values(<span class="macro">vec!</span>[
+            <span class="number">1i128</span>, <span class="number">2i128</span>, <span class="number">3i128</span>,
+        ])));
     }
 
     <span class="attr">#[test]
@@ -627,6 +644,11 @@
         assert_vector_ref_ne(
             Arc::new(DurationSecondVector::from_values([<span class="number">300</span>, <span class="number">310</span>])),
             Arc::new(DurationSecondVector::from_values([<span class="number">300</span>, <span class="number">320</span>])),
+        );
+
+        assert_vector_ref_ne(
+            Arc::new(Decimal128Vector::from_values([<span class="number">300i128</span>, <span class="number">310i128</span>])),
+            Arc::new(Decimal128Vector::from_values([<span class="number">300i128</span>, <span class="number">320i128</span>])),
         );
     }
 }

@@ -54,6 +54,8 @@
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -73,6 +75,7 @@
 <span class="kw">pub mod </span>cast;
 <span class="kw">mod </span>date_type;
 <span class="kw">mod </span>datetime_type;
+<span class="kw">mod </span>decimal_type;
 <span class="kw">mod </span>dictionary_type;
 <span class="kw">mod </span>duration_type;
 <span class="kw">mod </span>interval_type;
@@ -85,9 +88,10 @@
 
 <span class="kw">pub use </span>binary_type::BinaryType;
 <span class="kw">pub use </span>boolean_type::BooleanType;
-<span class="kw">pub use </span>cast::cast_with_opt;
+<span class="kw">pub use </span>cast::{cast, cast_with_opt};
 <span class="kw">pub use </span>date_type::DateType;
 <span class="kw">pub use </span>datetime_type::DateTimeType;
+<span class="kw">pub use </span>decimal_type::Decimal128Type;
 <span class="kw">pub use </span>dictionary_type::DictionaryType;
 <span class="kw">pub use </span>duration_type::{
     DurationMicrosecondType, DurationMillisecondType, DurationNanosecondType, DurationSecondType,

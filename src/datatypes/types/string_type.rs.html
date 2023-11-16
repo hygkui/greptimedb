@@ -86,6 +86,7 @@
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -168,6 +169,7 @@
             Value::Time(v) =&gt; <span class="prelude-val">Some</span>(Value::String(StringBytes::from(v.to_iso8601_string()))),
             Value::Interval(v) =&gt; <span class="prelude-val">Some</span>(Value::String(StringBytes::from(v.to_iso8601_string()))),
             Value::Duration(v) =&gt; <span class="prelude-val">Some</span>(Value::String(StringBytes::from(v.to_string()))),
+            Value::Decimal128(v) =&gt; <span class="prelude-val">Some</span>(Value::String(StringBytes::from(v.to_string()))),
 
             <span class="comment">// StringBytes is only support for utf-8, Value::Binary is not allowed.
             </span>Value::Binary(<span class="kw">_</span>) | Value::List(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,

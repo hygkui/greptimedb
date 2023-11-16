@@ -810,6 +810,52 @@
 <a href="#810" id="810">810</a>
 <a href="#811" id="811">811</a>
 <a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -831,6 +877,8 @@
 <span class="kw">use </span>arrow::datatypes::{
     DataType <span class="kw">as </span>ArrowDataType, IntervalUnit <span class="kw">as </span>ArrowIntervalUnit, TimeUnit <span class="kw">as </span>ArrowTimeUnit,
 };
+<span class="kw">use </span>arrow_schema::DECIMAL_DEFAULT_SCALE;
+<span class="kw">use </span>common_decimal::decimal128::DECIMAL128_MAX_PRECISION;
 <span class="kw">use </span>common_time::interval::IntervalUnit;
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>paste::paste;
@@ -839,13 +887,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, Error, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::type_id::LogicalTypeId;
 <span class="kw">use </span><span class="kw">crate</span>::types::{
-    BinaryType, BooleanType, DateTimeType, DateType, DictionaryType, DurationMicrosecondType,
-    DurationMillisecondType, DurationNanosecondType, DurationSecondType, DurationType, Float32Type,
-    Float64Type, Int16Type, Int32Type, Int64Type, Int8Type, IntervalDayTimeType,
-    IntervalMonthDayNanoType, IntervalType, IntervalYearMonthType, ListType, NullType, StringType,
-    TimeMillisecondType, TimeType, TimestampMicrosecondType, TimestampMillisecondType,
-    TimestampNanosecondType, TimestampSecondType, TimestampType, UInt16Type, UInt32Type,
-    UInt64Type, UInt8Type,
+    BinaryType, BooleanType, DateTimeType, DateType, Decimal128Type, DictionaryType,
+    DurationMicrosecondType, DurationMillisecondType, DurationNanosecondType, DurationSecondType,
+    DurationType, Float32Type, Float64Type, Int16Type, Int32Type, Int64Type, Int8Type,
+    IntervalDayTimeType, IntervalMonthDayNanoType, IntervalType, IntervalYearMonthType, ListType,
+    NullType, StringType, TimeMillisecondType, TimeType, TimestampMicrosecondType,
+    TimestampMillisecondType, TimestampNanosecondType, TimestampSecondType, TimestampType,
+    UInt16Type, UInt32Type, UInt64Type, UInt8Type,
 };
 <span class="kw">use </span><span class="kw">crate</span>::value::Value;
 <span class="kw">use </span><span class="kw">crate</span>::vectors::MutableVector;
@@ -867,6 +915,9 @@
     UInt64(UInt64Type),
     Float32(Float32Type),
     Float64(Float64Type),
+
+    <span class="comment">// Decimal128 type:
+    </span>Decimal128(Decimal128Type),
 
     <span class="comment">// String types:
     </span>Binary(BinaryType),
@@ -914,6 +965,9 @@
             ConcreteDataType::Dictionary(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Dictionary&quot;</span>),
             ConcreteDataType::Interval(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Interval&quot;</span>),
             ConcreteDataType::Duration(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Duration&quot;</span>),
+            ConcreteDataType::Decimal128(d) =&gt; {
+                <span class="macro">write!</span>(f, <span class="string">&quot;Decimal128({},{})&quot;</span>, d.precision(), d.scale())
+            }
         }
     }
 }
@@ -962,6 +1016,7 @@
                 | ConcreteDataType::Time(<span class="kw">_</span>)
                 | ConcreteDataType::Interval(<span class="kw">_</span>)
                 | ConcreteDataType::Duration(<span class="kw">_</span>)
+                | ConcreteDataType::Decimal128(<span class="kw">_</span>)
         )
     }
 
@@ -993,6 +1048,10 @@
 
     <span class="kw">pub fn </span>is_timestamp(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="macro">matches!</span>(<span class="self">self</span>, ConcreteDataType::Timestamp(<span class="kw">_</span>))
+    }
+
+    <span class="kw">pub fn </span>is_decimal(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, ConcreteDataType::Decimal128(<span class="kw">_</span>))
     }
 
     <span class="kw">pub fn </span>numerics() -&gt; Vec&lt;ConcreteDataType&gt; {
@@ -1043,6 +1102,13 @@
         <span class="kw">match </span><span class="self">self </span>{
             ConcreteDataType::Int64(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(TimeType::Millisecond(TimeMillisecondType)),
             ConcreteDataType::Time(t) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>t),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+        }
+    }
+
+    <span class="kw">pub fn </span>as_decimal128(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Decimal128Type&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            ConcreteDataType::Decimal128(d) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>d),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
@@ -1103,6 +1169,9 @@
             ArrowDataType::Time64(u) =&gt; ConcreteDataType::Time(TimeType::from_unit(u.into())),
             ArrowDataType::Duration(u) =&gt; {
                 ConcreteDataType::Duration(DurationType::from_unit(u.into()))
+            }
+            ArrowDataType::Decimal128(precision, scale) =&gt; {
+                ConcreteDataType::decimal128_datatype(<span class="kw-2">*</span>precision, <span class="kw-2">*</span>scale)
             }
             <span class="kw">_ </span>=&gt; {
                 <span class="kw">return </span>error::UnsupportedArrowTypeSnafu {
@@ -1266,6 +1335,14 @@
     ) -&gt; ConcreteDataType {
         ConcreteDataType::Dictionary(DictionaryType::new(key_type, value_type))
     }
+
+    <span class="kw">pub fn </span>decimal128_datatype(precision: u8, scale: i8) -&gt; ConcreteDataType {
+        ConcreteDataType::Decimal128(Decimal128Type::new(precision, scale))
+    }
+
+    <span class="kw">pub fn </span>decimal128_default_datatype() -&gt; ConcreteDataType {
+        <span class="self">Self</span>::decimal128_datatype(DECIMAL128_MAX_PRECISION, DECIMAL_DEFAULT_SCALE)
+    }
 }
 
 <span class="doccomment">/// Data type abstraction.
@@ -1426,6 +1503,14 @@
     }
 
     <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_is_decimal() {
+        <span class="macro">assert!</span>(!ConcreteDataType::int32_datatype().is_decimal());
+        <span class="macro">assert!</span>(!ConcreteDataType::float32_datatype().is_decimal());
+        <span class="macro">assert!</span>(ConcreteDataType::decimal128_datatype(<span class="number">10</span>, <span class="number">2</span>).is_decimal());
+        <span class="macro">assert!</span>(ConcreteDataType::decimal128_datatype(<span class="number">18</span>, <span class="number">6</span>).is_decimal());
+    }
+
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_is_stringifiable() {
         <span class="macro">assert!</span>(!ConcreteDataType::int32_datatype().is_stringifiable());
         <span class="macro">assert!</span>(!ConcreteDataType::float32_datatype().is_stringifiable());
@@ -1482,6 +1567,8 @@
 
         <span class="macro">assert!</span>(!ConcreteDataType::float32_datatype().is_signed());
         <span class="macro">assert!</span>(!ConcreteDataType::float64_datatype().is_signed());
+
+        <span class="macro">assert!</span>(ConcreteDataType::decimal128_datatype(<span class="number">10</span>, <span class="number">2</span>).is_signed());
     }
 
     <span class="attr">#[test]
@@ -1507,6 +1594,7 @@
         <span class="macro">assert!</span>(!ConcreteDataType::duration_millisecond_datatype().is_unsigned());
         <span class="macro">assert!</span>(!ConcreteDataType::duration_microsecond_datatype().is_unsigned());
         <span class="macro">assert!</span>(!ConcreteDataType::duration_nanosecond_datatype().is_unsigned());
+        <span class="macro">assert!</span>(!ConcreteDataType::decimal128_datatype(<span class="number">10</span>, <span class="number">2</span>).is_unsigned());
 
         <span class="macro">assert!</span>(ConcreteDataType::uint8_datatype().is_unsigned());
         <span class="macro">assert!</span>(ConcreteDataType::uint16_datatype().is_unsigned());
@@ -1619,6 +1707,10 @@
         <span class="macro">assert_eq!</span>(
             ConcreteDataType::duration_second_datatype().to_string(),
             <span class="string">&quot;Duration&quot;
+        </span>);
+        <span class="macro">assert_eq!</span>(
+            ConcreteDataType::decimal128_datatype(<span class="number">10</span>, <span class="number">2</span>).to_string(),
+            <span class="string">&quot;Decimal128(10,2)&quot;
         </span>);
     }
 }

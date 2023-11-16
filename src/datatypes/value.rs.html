@@ -2307,6 +2307,33 @@
 <a href="#2307" id="2307">2307</a>
 <a href="#2308" id="2308">2308</a>
 <a href="#2309" id="2309">2309</a>
+<a href="#2310" id="2310">2310</a>
+<a href="#2311" id="2311">2311</a>
+<a href="#2312" id="2312">2312</a>
+<a href="#2313" id="2313">2313</a>
+<a href="#2314" id="2314">2314</a>
+<a href="#2315" id="2315">2315</a>
+<a href="#2316" id="2316">2316</a>
+<a href="#2317" id="2317">2317</a>
+<a href="#2318" id="2318">2318</a>
+<a href="#2319" id="2319">2319</a>
+<a href="#2320" id="2320">2320</a>
+<a href="#2321" id="2321">2321</a>
+<a href="#2322" id="2322">2322</a>
+<a href="#2323" id="2323">2323</a>
+<a href="#2324" id="2324">2324</a>
+<a href="#2325" id="2325">2325</a>
+<a href="#2326" id="2326">2326</a>
+<a href="#2327" id="2327">2327</a>
+<a href="#2328" id="2328">2328</a>
+<a href="#2329" id="2329">2329</a>
+<a href="#2330" id="2330">2330</a>
+<a href="#2331" id="2331">2331</a>
+<a href="#2332" id="2332">2332</a>
+<a href="#2333" id="2333">2333</a>
+<a href="#2334" id="2334">2334</a>
+<a href="#2335" id="2335">2335</a>
+<a href="#2336" id="2336">2336</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -2328,6 +2355,7 @@
 
 <span class="kw">use </span>arrow::datatypes::{DataType <span class="kw">as </span>ArrowDataType, Field};
 <span class="kw">use </span>common_base::bytes::{Bytes, StringBytes};
+<span class="kw">use </span>common_decimal::Decimal128;
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>common_time::date::Date;
 <span class="kw">use </span>common_time::datetime::DateTime;
@@ -2369,6 +2397,9 @@
     Int64(i64),
     Float32(OrderedF32),
     Float64(OrderedF64),
+
+    <span class="comment">// Decimal type:
+    </span>Decimal128(Decimal128),
 
     <span class="comment">// String types:
     </span>String(StringBytes),
@@ -2425,6 +2456,7 @@
                     .join(<span class="string">&quot;, &quot;</span>);
                 <span class="macro">write!</span>(f, <span class="string">&quot;{}[{}]&quot;</span>, v.datatype.name(), items)
             }
+            Value::Decimal128(v) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, v),
         }
     }
 }
@@ -2457,6 +2489,7 @@
             Value::Interval(v) =&gt; ConcreteDataType::interval_datatype(v.unit()),
             Value::List(list) =&gt; ConcreteDataType::list_datatype(list.datatype().clone()),
             Value::Duration(d) =&gt; ConcreteDataType::duration_datatype(d.unit()),
+            Value::Decimal128(d) =&gt; ConcreteDataType::decimal128_datatype(d.precision(), d.scale()),
         }
     }
 
@@ -2501,6 +2534,7 @@
             Value::Time(v) =&gt; ValueRef::Time(<span class="kw-2">*</span>v),
             Value::Interval(v) =&gt; ValueRef::Interval(<span class="kw-2">*</span>v),
             Value::Duration(v) =&gt; ValueRef::Duration(<span class="kw-2">*</span>v),
+            Value::Decimal128(v) =&gt; ValueRef::Decimal128(<span class="kw-2">*</span>v),
         }
     }
 
@@ -2580,6 +2614,7 @@
                 TimeUnit::Microsecond =&gt; LogicalTypeId::DurationMicrosecond,
                 TimeUnit::Nanosecond =&gt; LogicalTypeId::DurationNanosecond,
             },
+            Value::Decimal128(<span class="kw">_</span>) =&gt; LogicalTypeId::Decimal128,
         }
     }
 
@@ -2627,6 +2662,10 @@
                 IntervalUnit::MonthDayNano =&gt; ScalarValue::IntervalMonthDayNano(<span class="prelude-val">Some</span>(v.to_i128())),
             },
             Value::Duration(d) =&gt; duration_to_scalar_value(d.unit(), <span class="prelude-val">Some</span>(d.value())),
+            Value::Decimal128(d) =&gt; {
+                <span class="kw">let </span>(v, p, s) = d.to_scalar_value();
+                ScalarValue::Decimal128(v, p, s)
+            }
         };
 
         <span class="prelude-val">Ok</span>(scalar_value)
@@ -2666,6 +2705,7 @@
         ),
         ConcreteDataType::Time(t) =&gt; time_to_scalar_value(t.unit(), <span class="prelude-val">None</span>)<span class="question-mark">?</span>,
         ConcreteDataType::Duration(d) =&gt; duration_to_scalar_value(d.unit(), <span class="prelude-val">None</span>),
+        ConcreteDataType::Decimal128(d) =&gt; ScalarValue::Decimal128(<span class="prelude-val">None</span>, d.precision(), d.scale()),
     })
 }
 
@@ -2842,6 +2882,8 @@
 <span class="macro">impl_try_from_value!</span>(DateTime, DateTime);
 <span class="macro">impl_try_from_value!</span>(Timestamp, Timestamp);
 <span class="macro">impl_try_from_value!</span>(Interval, Interval);
+<span class="macro">impl_try_from_value!</span>(Duration, Duration);
+<span class="macro">impl_try_from_value!</span>(Decimal128, Decimal128);
 
 <span class="macro">macro_rules! </span>impl_value_from {
     (<span class="macro-nonterminal">$Variant</span>: ident, <span class="macro-nonterminal">$Type</span>: ident) =&gt; {
@@ -2884,6 +2926,7 @@
 <span class="macro">impl_value_from!</span>(Interval, Interval);
 <span class="macro">impl_value_from!</span>(Duration, Duration);
 <span class="macro">impl_value_from!</span>(String, String);
+<span class="macro">impl_value_from!</span>(Decimal128, Decimal128);
 
 <span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>str&gt; <span class="kw">for </span>Value {
     <span class="kw">fn </span>from(string: <span class="kw-2">&amp;</span>str) -&gt; Value {
@@ -2929,6 +2972,7 @@
             Value::Time(v) =&gt; serde_json::to_value(v.value())<span class="question-mark">?</span>,
             Value::Interval(v) =&gt; serde_json::to_value(v.to_i128())<span class="question-mark">?</span>,
             Value::Duration(v) =&gt; serde_json::to_value(v.value())<span class="question-mark">?</span>,
+            Value::Decimal128(v) =&gt; serde_json::to_value(v.to_string())<span class="question-mark">?</span>,
         };
 
         <span class="prelude-val">Ok</span>(json_value)
@@ -3149,6 +3193,7 @@
             ValueRef::Interval(v) =&gt; Value::Interval(v),
             ValueRef::Duration(v) =&gt; Value::Duration(v),
             ValueRef::List(v) =&gt; v.to_value(),
+            ValueRef::Decimal128(v) =&gt; Value::Decimal128(v),
         }
     }
 }
@@ -3170,6 +3215,9 @@
     Int64(i64),
     Float32(OrderedF32),
     Float64(OrderedF64),
+
+    <span class="comment">// Decimal type:
+    </span>Decimal128(Decimal128),
 
     <span class="comment">// String types:
     </span>String(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str),
@@ -3312,6 +3360,11 @@
     </span><span class="kw">pub fn </span>as_list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ListValueRef&gt;&gt; {
         <span class="macro">impl_as_for_value_ref!</span>(<span class="self">self</span>, List)
     }
+
+    <span class="doccomment">/// Cast itself to [Decimal128].
+    </span><span class="kw">pub fn </span>as_decimal128(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Decimal128&gt;&gt; {
+        <span class="macro">impl_as_for_value_ref!</span>(<span class="self">self</span>, Decimal128)
+    }
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; PartialOrd <span class="kw">for </span>ValueRef&lt;<span class="lifetime">&#39;a</span>&gt; {
@@ -3362,6 +3415,7 @@
 <span class="macro">impl_value_ref_from!</span>(Time, Time);
 <span class="macro">impl_value_ref_from!</span>(Interval, Interval);
 <span class="macro">impl_value_ref_from!</span>(Duration, Duration);
+<span class="macro">impl_value_ref_from!</span>(Decimal128, Decimal128);
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt; <span class="kw">for </span>ValueRef&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">fn </span>from(string: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str) -&gt; ValueRef&lt;<span class="lifetime">&#39;a</span>&gt; {
@@ -3452,6 +3506,7 @@
             ValueRef::Time(<span class="kw">_</span>) =&gt; <span class="number">16</span>,
             ValueRef::Duration(<span class="kw">_</span>) =&gt; <span class="number">16</span>,
             ValueRef::Interval(<span class="kw">_</span>) =&gt; <span class="number">24</span>,
+            ValueRef::Decimal128(<span class="kw">_</span>) =&gt; <span class="number">32</span>,
             ValueRef::List(v) =&gt; <span class="kw">match </span>v {
                 ListValueRef::Indexed { vector, .. } =&gt; vector.memory_size() / vector.len(),
                 ListValueRef::Ref { val } =&gt; val.estimated_size(),
@@ -4536,8 +4591,6 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_value_ref_estimated_size() {
-        <span class="macro">assert_eq!</span>(std::mem::size_of::&lt;ValueRef&gt;(), <span class="number">24</span>);
-
         check_value_ref_size_eq(<span class="kw-2">&amp;</span>ValueRef::Boolean(<span class="bool-val">true</span>), <span class="number">1</span>);
         check_value_ref_size_eq(<span class="kw-2">&amp;</span>ValueRef::UInt8(<span class="number">1</span>), <span class="number">1</span>);
         check_value_ref_size_eq(<span class="kw-2">&amp;</span>ValueRef::UInt16(<span class="number">1</span>), <span class="number">2</span>);
@@ -4613,7 +4666,8 @@
                 idx: <span class="number">2</span>,
             }),
             <span class="number">85</span>,
-        )
+        );
+        check_value_ref_size_eq(<span class="kw-2">&amp;</span>ValueRef::Decimal128(Decimal128::new(<span class="number">1234</span>, <span class="number">3</span>, <span class="number">1</span>)), <span class="number">32</span>)
     }
 }
 </code></pre></div></section></main></body></html>

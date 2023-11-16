@@ -126,6 +126,9 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -157,6 +160,8 @@
     UInt64,
     Float32,
     Float64,
+
+    Decimal128,
 
     <span class="comment">// String types:
     </span>String,
@@ -251,6 +256,7 @@
             LogicalTypeId::DurationMillisecond =&gt; ConcreteDataType::duration_millisecond_datatype(),
             LogicalTypeId::DurationMicrosecond =&gt; ConcreteDataType::duration_microsecond_datatype(),
             LogicalTypeId::DurationNanosecond =&gt; ConcreteDataType::duration_nanosecond_datatype(),
+            LogicalTypeId::Decimal128 =&gt; ConcreteDataType::decimal128_default_datatype(),
         }
     }
 }
