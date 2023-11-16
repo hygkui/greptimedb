@@ -519,6 +519,23 @@
 <a href="#519" id="519">519</a>
 <a href="#520" id="520">520</a>
 <a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -773,11 +790,9 @@
     <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;Decimal128&gt;;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
-        <span class="prelude-val">Some</span>(
-            <span class="self">self</span>.iter
-                .next()
-                .and_then(|v| v.map(|v| Decimal128::new(v, <span class="self">self</span>.precision, <span class="self">self</span>.scale))),
-        )
+        <span class="self">self</span>.iter
+            .next()
+            .map(|item| item.map(|v| Decimal128::new(v, <span class="self">self</span>.precision, <span class="self">self</span>.scale)))
     }
 
     <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
@@ -1039,5 +1054,24 @@
         <span class="comment">// because 100 is out of Decimal(3, 1) range, so it will be null
         </span><span class="macro">assert!</span>(array.is_null(<span class="number">4</span>));
     }
+}
+
+<span class="attr">#[test]
+</span><span class="kw">fn </span>test_decimal28_vector_iter_data() {
+    <span class="kw">let </span>vector = Decimal128Vector::from_values(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>])
+        .with_precision_and_scale(<span class="number">3</span>, <span class="number">1</span>)
+        .unwrap();
+    <span class="kw">let </span><span class="kw-2">mut </span>iter = vector.iter_data();
+    <span class="macro">assert_eq!</span>(iter.next(), <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(Decimal128::new(<span class="number">1</span>, <span class="number">3</span>, <span class="number">1</span>))));
+    <span class="macro">assert_eq!</span>(iter.next(), <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(Decimal128::new(<span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>))));
+    <span class="macro">assert_eq!</span>(iter.next(), <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(Decimal128::new(<span class="number">3</span>, <span class="number">3</span>, <span class="number">1</span>))));
+    <span class="macro">assert_eq!</span>(iter.next(), <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(Decimal128::new(<span class="number">4</span>, <span class="number">3</span>, <span class="number">1</span>))));
+    <span class="macro">assert_eq!</span>(iter.next(), <span class="prelude-val">None</span>);
+
+    <span class="kw">let </span>values = vector
+        .iter_data()
+        .filter_map(|v| v.map(|x| x.val() * <span class="number">2</span>))
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+    <span class="macro">assert_eq!</span>(values, <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>]);
 }
 </code></pre></div></section></main></body></html>
