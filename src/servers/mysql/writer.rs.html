@@ -280,6 +280,19 @@
 <a href="#280" id="280">280</a>
 <a href="#281" id="281">281</a>
 <a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -299,6 +312,7 @@
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::{RecordBatch, SendableRecordBatchStream};
+<span class="kw">use </span>common_telemetry::{debug, error};
 <span class="kw">use </span>datatypes::prelude::{ConcreteDataType, Value};
 <span class="kw">use </span>datatypes::schema::SchemaRef;
 <span class="kw">use </span>futures::StreamExt;
@@ -429,10 +443,16 @@
                             .<span class="kw">await</span><span class="question-mark">?
                         </span>}
                         <span class="prelude-val">Err</span>(e) =&gt; {
-                            <span class="kw">let </span>err = e.to_string();
+                            <span class="kw">if </span>e.status_code().should_log_error() {
+                                <span class="macro">error!</span>(e; <span class="string">&quot;Failed to handle mysql query&quot;</span>);
+                            } <span class="kw">else </span>{
+                                <span class="macro">debug!</span>(<span class="string">&quot;Failed to handle mysql query, error: {e:?}&quot;</span>);
+                            }
+                            <span class="kw">let </span>err = e.output_msg();
                             row_writer
                                 .finish_error(ErrorKind::ER_INTERNAL_ERROR, <span class="kw-2">&amp;</span>err.as_bytes())
                                 .<span class="kw">await</span><span class="question-mark">?</span>;
+
                             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
                         }
                     }
@@ -494,6 +514,12 @@
         METRIC_ERROR_COUNTER
             .with_label_values(<span class="kw-2">&amp;</span>[METRIC_ERROR_COUNTER_LABEL_MYSQL])
             .inc();
+
+        <span class="kw">if </span>error.status_code().should_log_error() {
+            <span class="macro">error!</span>(error; <span class="string">&quot;Failed to handle mysql query&quot;</span>);
+        } <span class="kw">else </span>{
+            <span class="macro">debug!</span>(<span class="string">&quot;Failed to handle mysql query, error: {error:?}&quot;</span>);
+        }
 
         <span class="kw">let </span>kind = ErrorKind::ER_INTERNAL_ERROR;
         <span class="kw">let </span>error = error.output_msg();
