@@ -186,7 +186,7 @@
     Sequence,
     OpType,
     Tsid,
-    MetricName,
+    TableId,
 }
 
 <span class="doccomment">/// Column id reserved by the engine.
@@ -224,11 +224,11 @@
         <span class="self">Self</span>::BASE | ReservedColumnType::Tsid <span class="kw">as </span>ColumnId
     }
 
-    <span class="doccomment">/// Id for storing metric name column.
+    <span class="doccomment">/// Id for storing logical table id column.
     ///
     /// Used by: metric engine
-    </span><span class="kw">pub const fn </span>metric_name() -&gt; ColumnId {
-        <span class="self">Self</span>::BASE | ReservedColumnType::MetricName <span class="kw">as </span>ColumnId
+    </span><span class="kw">pub const fn </span>table_id() -&gt; ColumnId {
+        <span class="self">Self</span>::BASE | ReservedColumnType::TableId <span class="kw">as </span>ColumnId
     }
 }
 

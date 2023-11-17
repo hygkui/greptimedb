@@ -211,6 +211,21 @@
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -226,12 +241,15 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>api::v1::SemanticType;
+<span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::tracing::warn;
 <span class="kw">use </span>mito2::engine::MitoEngine;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::metadata::ColumnMetadata;
 <span class="kw">use </span>store_api::region_engine::RegionEngine;
-<span class="kw">use </span>store_api::region_request::{AddColumn, AlterKind, RegionAlterRequest, RegionRequest};
+<span class="kw">use </span>store_api::region_request::{
+    AddColumn, AlterKind, RegionAlterRequest, RegionPutRequest, RegionRequest,
+};
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{
@@ -335,6 +353,18 @@
 
         <span class="prelude-val">Ok</span>(())
     }
+
+    <span class="kw">pub async fn </span>write_data(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        region_id: RegionId,
+        request: RegionPutRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+        <span class="kw">let </span>region_id = utils::to_data_region_id(region_id);
+        <span class="self">self</span>.mito
+            .handle_request(region_id, RegionRequest::Put(request))
+            .<span class="kw">await
+            </span>.context(MitoWriteOperationSnafu)
+    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -397,7 +427,7 @@
         <span class="kw">let </span>expected = <span class="macro">vec!</span>[
             <span class="string">&quot;greptime_timestamp&quot;</span>,
             <span class="string">&quot;greptime_value&quot;</span>,
-            <span class="string">&quot;__metric&quot;</span>,
+            <span class="string">&quot;__table_id&quot;</span>,
             <span class="string">&quot;__tsid&quot;</span>,
             <span class="string">&quot;job&quot;</span>,
             <span class="string">&quot;tag2&quot;</span>,

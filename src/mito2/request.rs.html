@@ -1126,7 +1126,6 @@
 <a href="#1126" id="1126">1126</a>
 <a href="#1127" id="1127">1127</a>
 <a href="#1128" id="1128">1128</a>
-<a href="#1129" id="1129">1129</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1154,8 +1153,7 @@
 <span class="kw">use </span>api::v1::{ColumnDataType, ColumnSchema, OpType, Rows, SemanticType, Value};
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_query::Output::AffectedRows;
-<span class="kw">use </span>common_telemetry::tracing::log::info;
-<span class="kw">use </span>common_telemetry::warn;
+<span class="kw">use </span>common_telemetry::{info, warn};
 <span class="kw">use </span>datatypes::prelude::DataType;
 <span class="kw">use </span>prometheus::HistogramTimer;
 <span class="kw">use </span>prost::Message;

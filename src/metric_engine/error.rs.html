@@ -150,6 +150,15 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -261,6 +270,13 @@
         location: Location,
     },
 
+    <span class="attr">#[snafu(display(<span class="string">&quot;Column {} not found in logical region {}&quot;</span>, name, region_id))]
+    </span>ColumnNotFound {
+        name: String,
+        region_id: RegionId,
+        location: Location,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Alter request to physical region is forbidden&quot;</span>))]
     </span>ForbiddenPhysicalAlter { location: Location },
 }
@@ -287,6 +303,8 @@
             PhysicalRegionNotFound { .. } | LogicalRegionNotFound { .. } =&gt; {
                 StatusCode::RegionNotFound
             }
+
+            ColumnNotFound { .. } =&gt; StatusCode::TableColumnNotFound,
 
             CreateMitoRegion { source, .. }
             | MitoReadOperation { source, .. }
