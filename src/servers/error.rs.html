@@ -582,6 +582,15 @@
 <a href="#582" id="582">582</a>
 <a href="#583" id="583">583</a>
 <a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -966,6 +975,13 @@
         actual: i32,
         location: Location,
     },
+
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to convert to json&quot;</span>))]
+    </span>ToJson {
+        <span class="attr">#[snafu(source)]
+        </span>error: serde_json::error::Error,
+        location: Location,
+    },
 }
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -1059,6 +1075,8 @@
             Metrics { source } =&gt; source.status_code(),
 
             ConvertScalarValue { source, .. } =&gt; source.status_code(),
+
+            ToJson { .. } =&gt; StatusCode::Internal,
         }
     }
 

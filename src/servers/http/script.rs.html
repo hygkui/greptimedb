@@ -133,6 +133,16 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -153,22 +163,22 @@
 <span class="kw">use </span>axum::extract::{Json, Query, RawBody, State};
 <span class="kw">use </span>common_catalog::consts::DEFAULT_CATALOG_NAME;
 <span class="kw">use </span>common_error::ext::ErrorExt;
+<span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>schemars::JsonSchema;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>session::context::QueryContext;
+<span class="kw">use </span>snafu::ResultExt;
 
+<span class="kw">use </span><span class="kw">crate</span>::error::{HyperSnafu, InvalidUtf8ValueSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::http::{ApiState, JsonResponse};
 
 <span class="macro">macro_rules! </span>json_err {
     (<span class="macro-nonterminal">$e</span>: expr) =&gt; {{
-        <span class="kw">return </span>Json(JsonResponse::with_error(
-            <span class="macro">format!</span>(<span class="string">&quot;Invalid argument: {}&quot;</span>, <span class="macro-nonterminal">$e</span>),
-            common_error::status_code::StatusCode::InvalidArguments,
-        ));
+        <span class="kw">return </span>Json(JsonResponse::with_error(<span class="macro-nonterminal">$e</span>));
     }};
 
     (<span class="macro-nonterminal">$msg</span>: expr, <span class="macro-nonterminal">$code</span>: expr) =&gt; {{
-        <span class="kw">return </span>Json(JsonResponse::with_error(<span class="macro-nonterminal">$msg</span>.to_string(), <span class="macro-nonterminal">$code</span>));
+        <span class="kw">return </span>Json(JsonResponse::with_error_message(<span class="macro-nonterminal">$msg</span>.to_string(), <span class="macro-nonterminal">$code</span>));
     }};
 }
 
@@ -195,18 +205,19 @@
         <span class="kw">let </span>schema = params.db.as_ref();
 
         <span class="kw">if </span>schema.is_none() || schema.unwrap().is_empty() {
-            <span class="macro">json_err!</span>(<span class="string">&quot;invalid schema&quot;</span>)
+            <span class="macro">json_err!</span>(<span class="string">&quot;invalid schema&quot;</span>, StatusCode::InvalidArguments)
         }
 
         <span class="kw">let </span>name = params.name.as_ref();
 
         <span class="kw">if </span>name.is_none() || name.unwrap().is_empty() {
-            <span class="macro">json_err!</span>(<span class="string">&quot;invalid name&quot;</span>);
+            <span class="macro">json_err!</span>(<span class="string">&quot;invalid name&quot;</span>, StatusCode::InvalidArguments);
         }
 
-        <span class="kw">let </span>bytes = <span class="macro">unwrap_or_json_err!</span>(hyper::body::to_bytes(body).<span class="kw">await</span>);
+        <span class="kw">let </span>bytes = <span class="macro">unwrap_or_json_err!</span>(hyper::body::to_bytes(body).<span class="kw">await</span>.context(HyperSnafu));
 
-        <span class="kw">let </span>script = <span class="macro">unwrap_or_json_err!</span>(String::from_utf8(bytes.to_vec()));
+        <span class="kw">let </span>script =
+            <span class="macro">unwrap_or_json_err!</span>(String::from_utf8(bytes.to_vec()).context(InvalidUtf8ValueSnafu));
 
         <span class="comment">// Safety: schema and name are already checked above.
         </span><span class="kw">let </span>query_ctx = QueryContext::with(<span class="kw-2">&amp;</span>catalog, schema.unwrap());
@@ -215,12 +226,18 @@
             .<span class="kw">await
         </span>{
             <span class="prelude-val">Ok</span>(()) =&gt; JsonResponse::with_output(<span class="prelude-val">None</span>),
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">json_err!</span>(<span class="macro">format!</span>(<span class="string">&quot;Insert script error: {e}&quot;</span>), e.status_code()),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">json_err!</span>(
+                <span class="macro">format!</span>(<span class="string">&quot;Insert script error: {}&quot;</span>, e.output_msg()),
+                e.status_code()
+            ),
         };
 
         Json(body)
     } <span class="kw">else </span>{
-        <span class="macro">json_err!</span>(<span class="string">&quot;Script execution not supported, missing script handler&quot;</span>);
+        <span class="macro">json_err!</span>(
+            <span class="string">&quot;Script execution not supported, missing script handler&quot;</span>,
+            StatusCode::Unsupported
+        );
     }
 }
 
@@ -247,13 +264,13 @@
         <span class="kw">let </span>schema = params.db.as_ref();
 
         <span class="kw">if </span>schema.is_none() || schema.unwrap().is_empty() {
-            <span class="macro">json_err!</span>(<span class="string">&quot;invalid schema&quot;</span>)
+            <span class="macro">json_err!</span>(<span class="string">&quot;invalid schema&quot;</span>, StatusCode::InvalidArguments)
         }
 
         <span class="kw">let </span>name = params.name.as_ref();
 
         <span class="kw">if </span>name.is_none() || name.unwrap().is_empty() {
-            <span class="macro">json_err!</span>(<span class="string">&quot;invalid name&quot;</span>);
+            <span class="macro">json_err!</span>(<span class="string">&quot;invalid name&quot;</span>, StatusCode::InvalidArguments);
         }
 
         <span class="comment">// Safety: schema and name are already checked above.
@@ -265,7 +282,10 @@
 
         Json(resp.with_execution_time(start.elapsed().as_millis()))
     } <span class="kw">else </span>{
-        <span class="macro">json_err!</span>(<span class="string">&quot;Script execution not supported, missing script handler&quot;</span>);
+        <span class="macro">json_err!</span>(
+            <span class="string">&quot;Script execution not supported, missing script handler&quot;</span>,
+            StatusCode::Unsupported
+        );
     }
 }
 </code></pre></div></section></main></body></html>
