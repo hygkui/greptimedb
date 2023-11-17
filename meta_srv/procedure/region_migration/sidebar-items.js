@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["_State_registry"],"mod":["migration_end","migration_start"],"struct":["Context","PersistentContext","RegionMigrationData","RegionMigrationProcedure","VolatileContext"],"trait":["State"]};
+window.SIDEBAR_ITEMS = {"constant":["_State_registry"],"mod":["downgrade_leader_region","migration_end","migration_start","open_candidate_region"],"struct":["Context","ContextFactoryImpl","PersistentContext","RegionMigrationData","RegionMigrationDataOwned","RegionMigrationProcedure","VolatileContext"],"trait":["ContextFactory","State"]};

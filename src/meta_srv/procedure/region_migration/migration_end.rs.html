@@ -37,6 +37,7 @@
 <a href="#37" id="37">37</a>
 <a href="#38" id="38">38</a>
 <a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -51,11 +52,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>common_procedure::Status;
+</span><span class="kw">use </span>std::any::Any;
+
+<span class="kw">use </span>common_procedure::Status;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::{Context, PersistentContext, State, VolatileContext};
+<span class="kw">use </span><span class="kw">crate</span>::procedure::region_migration::{Context, State};
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>RegionMigrationEnd;
@@ -63,17 +66,16 @@
 <span class="attr">#[async_trait::async_trait]
 #[typetag::serde]
 </span><span class="kw">impl </span>State <span class="kw">for </span>RegionMigrationEnd {
-    <span class="kw">async fn </span>next(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        <span class="kw">_</span>: <span class="kw-2">&amp;</span>Context,
-        <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>PersistentContext,
-        <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>VolatileContext,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
+    <span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
         <span class="prelude-val">Ok</span>(Box::new(RegionMigrationEnd))
     }
 
     <span class="kw">fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Status {
         Status::Done
     }
+
+    <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {
+        <span class="self">self
+    </span>}
 }
 </code></pre></div></section></main></body></html>
