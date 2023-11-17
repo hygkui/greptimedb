@@ -375,6 +375,10 @@
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
 <a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -429,6 +433,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_failover::RegionFailoverManager;
 <span class="kw">use </span><span class="kw">crate</span>::pubsub::PublishRef;
+<span class="kw">use </span><span class="kw">crate</span>::region::lease_keeper::OpeningRegionKeeper;
 <span class="kw">use </span><span class="kw">crate</span>::selector::lease_based::LeaseBasedSelector;
 <span class="kw">use </span><span class="kw">crate</span>::service::mailbox::MailboxRef;
 <span class="kw">use </span><span class="kw">crate</span>::service::store::cached_kv::{CheckLeader, LeaderCachedKvBackend};
@@ -574,6 +579,7 @@
             <span class="kw-2">&amp;</span>table_id_sequence,
         );
         <span class="kw">let _ </span>= ddl_manager.try_start();
+        <span class="kw">let </span>opening_region_keeper = Arc::new(OpeningRegionKeeper::default());
 
         <span class="kw">let </span>handler_group = <span class="kw">match </span>handler_group {
             <span class="prelude-val">Some</span>(handler_group) =&gt; handler_group,
@@ -608,6 +614,7 @@
                 <span class="kw">let </span>region_lease_handler = RegionLeaseHandler::new(
                     distributed_time_constants::REGION_LEASE_SECS,
                     table_metadata_manager.clone(),
+                    opening_region_keeper.clone(),
                 );
 
                 <span class="kw">let </span>group = HeartbeatHandlerGroup::new(pushers);
@@ -660,6 +667,7 @@
             )
             .<span class="kw">await</span>,
             plugins: plugins.unwrap_or_else(Plugins::default),
+            opening_region_keeper,
         })
     }
 }
