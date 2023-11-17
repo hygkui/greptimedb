@@ -360,26 +360,6 @@
 <a href="#360" id="360">360</a>
 <a href="#361" id="361">361</a>
 <a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
-<a href="#380" id="380">380</a>
-<a href="#381" id="381">381</a>
-<a href="#382" id="382">382</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -411,6 +391,7 @@
 <span class="kw">use </span>common_recordbatch::error::ExternalSnafu;
 <span class="kw">use </span>common_recordbatch::RecordBatchStreamAdaptor;
 <span class="kw">use </span>common_telemetry::logging;
+<span class="kw">use </span>common_telemetry::tracing_context::W3cTrace;
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
@@ -529,21 +510,21 @@
 
     <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.client.make_database_client()<span class="question-mark">?</span>.inner;
-        <span class="kw">let </span>request = <span class="self">self</span>.to_rpc_request(request, <span class="number">0</span>);
+        <span class="kw">let </span>request = <span class="self">self</span>.to_rpc_request(request);
         <span class="kw">let </span>response = client.handle(request).<span class="kw">await</span><span class="question-mark">?</span>.into_inner();
         from_grpc_response(response)
     }
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>to_rpc_request(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request, trace_id: u64) -&gt; GreptimeRequest {
+    </span><span class="kw">fn </span>to_rpc_request(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request) -&gt; GreptimeRequest {
         GreptimeRequest {
             header: <span class="prelude-val">Some</span>(RequestHeader {
                 catalog: <span class="self">self</span>.catalog.clone(),
                 schema: <span class="self">self</span>.schema.clone(),
                 authorization: <span class="self">self</span>.ctx.auth_header.clone(),
                 dbname: <span class="self">self</span>.dbname.clone(),
-                trace_id,
-                span_id: <span class="number">0</span>,
+                <span class="comment">// TODO(Taylor-lagrange): add client grpc tracing
+                </span>tracing_context: W3cTrace::new(),
             }),
             request: <span class="prelude-val">Some</span>(request),
         }
@@ -554,23 +535,17 @@
         </span>S: AsRef&lt;str&gt;,
     {
         <span class="kw">let </span>_timer = metrics::METRIC_GRPC_SQL.start_timer();
-        <span class="self">self</span>.do_get(
-            Request::Query(QueryRequest {
-                query: <span class="prelude-val">Some</span>(Query::Sql(sql.as_ref().to_string())),
-            }),
-            <span class="number">0</span>,
-        )
+        <span class="self">self</span>.do_get(Request::Query(QueryRequest {
+            query: <span class="prelude-val">Some</span>(Query::Sql(sql.as_ref().to_string())),
+        }))
         .<span class="kw">await
     </span>}
 
-    <span class="kw">pub async fn </span>logical_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, logical_plan: Vec&lt;u8&gt;, trace_id: u64) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">pub async fn </span>logical_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, logical_plan: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>_timer = metrics::METRIC_GRPC_LOGICAL_PLAN.start_timer();
-        <span class="self">self</span>.do_get(
-            Request::Query(QueryRequest {
-                query: <span class="prelude-val">Some</span>(Query::LogicalPlan(logical_plan)),
-            }),
-            trace_id,
-        )
+        <span class="self">self</span>.do_get(Request::Query(QueryRequest {
+            query: <span class="prelude-val">Some</span>(Query::LogicalPlan(logical_plan)),
+        }))
         .<span class="kw">await
     </span>}
 
@@ -582,68 +557,53 @@
         step: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>_timer = metrics::METRIC_GRPC_PROMQL_RANGE_QUERY.start_timer();
-        <span class="self">self</span>.do_get(
-            Request::Query(QueryRequest {
-                query: <span class="prelude-val">Some</span>(Query::PromRangeQuery(PromRangeQuery {
-                    query: promql.to_string(),
-                    start: start.to_string(),
-                    end: end.to_string(),
-                    step: step.to_string(),
-                })),
-            }),
-            <span class="number">0</span>,
-        )
+        <span class="self">self</span>.do_get(Request::Query(QueryRequest {
+            query: <span class="prelude-val">Some</span>(Query::PromRangeQuery(PromRangeQuery {
+                query: promql.to_string(),
+                start: start.to_string(),
+                end: end.to_string(),
+                step: step.to_string(),
+            })),
+        }))
         .<span class="kw">await
     </span>}
 
     <span class="kw">pub async fn </span>create(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: CreateTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>_timer = metrics::METRIC_GRPC_CREATE_TABLE.start_timer();
-        <span class="self">self</span>.do_get(
-            Request::Ddl(DdlRequest {
-                expr: <span class="prelude-val">Some</span>(DdlExpr::CreateTable(expr)),
-            }),
-            <span class="number">0</span>,
-        )
+        <span class="self">self</span>.do_get(Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::CreateTable(expr)),
+        }))
         .<span class="kw">await
     </span>}
 
     <span class="kw">pub async fn </span>alter(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: AlterExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>_timer = metrics::METRIC_GRPC_ALTER.start_timer();
-        <span class="self">self</span>.do_get(
-            Request::Ddl(DdlRequest {
-                expr: <span class="prelude-val">Some</span>(DdlExpr::Alter(expr)),
-            }),
-            <span class="number">0</span>,
-        )
+        <span class="self">self</span>.do_get(Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::Alter(expr)),
+        }))
         .<span class="kw">await
     </span>}
 
     <span class="kw">pub async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: DropTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>_timer = metrics::METRIC_GRPC_DROP_TABLE.start_timer();
-        <span class="self">self</span>.do_get(
-            Request::Ddl(DdlRequest {
-                expr: <span class="prelude-val">Some</span>(DdlExpr::DropTable(expr)),
-            }),
-            <span class="number">0</span>,
-        )
+        <span class="self">self</span>.do_get(Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::DropTable(expr)),
+        }))
         .<span class="kw">await
     </span>}
 
     <span class="kw">pub async fn </span>truncate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, expr: TruncateTableExpr) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>_timer = metrics::METRIC_GRPC_TRUNCATE_TABLE.start_timer();
-        <span class="self">self</span>.do_get(
-            Request::Ddl(DdlRequest {
-                expr: <span class="prelude-val">Some</span>(DdlExpr::TruncateTable(expr)),
-            }),
-            <span class="number">0</span>,
-        )
+        <span class="self">self</span>.do_get(Request::Ddl(DdlRequest {
+            expr: <span class="prelude-val">Some</span>(DdlExpr::TruncateTable(expr)),
+        }))
         .<span class="kw">await
     </span>}
 
-    <span class="kw">async fn </span>do_get(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request, trace_id: u64) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="kw">async fn </span>do_get(<span class="kw-2">&amp;</span><span class="self">self</span>, request: Request) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="comment">// FIXME(paomian): should be added some labels for metrics
         </span><span class="kw">let </span>_timer = metrics::METRIC_GRPC_DO_GET.start_timer();
-        <span class="kw">let </span>request = <span class="self">self</span>.to_rpc_request(request, trace_id);
+        <span class="kw">let </span>request = <span class="self">self</span>.to_rpc_request(request);
         <span class="kw">let </span>request = Ticket {
             ticket: request.encode_to_vec().into(),
         };

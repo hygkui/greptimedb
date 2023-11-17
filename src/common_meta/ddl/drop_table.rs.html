@@ -279,6 +279,7 @@
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
 <a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -303,6 +304,7 @@
 <span class="kw">use </span>common_procedure::{
     Context <span class="kw">as </span>ProcedureContext, LockKey, Procedure, <span class="prelude-ty">Result </span><span class="kw">as </span>ProcedureResult, Status,
 };
+<span class="kw">use </span>common_telemetry::tracing_context::TracingContext;
 <span class="kw">use </span>common_telemetry::{debug, info};
 <span class="kw">use </span>futures::future::join_all;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -438,7 +440,7 @@
 
                 <span class="kw">let </span>request = RegionRequest {
                     header: <span class="prelude-val">Some</span>(RegionRequestHeader {
-                        trace_id: common_telemetry::trace_id().unwrap_or_default(),
+                        tracing_context: TracingContext::from_current_span().to_w3c(),
                         ..Default::default()
                     }),
                     body: <span class="prelude-val">Some</span>(region_request::Body::Drop(PbDropRegionRequest {

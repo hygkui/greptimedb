@@ -1066,6 +1066,17 @@
 <a href="#1066" id="1066">1066</a>
 <a href="#1067" id="1067">1067</a>
 <a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1091,7 +1102,8 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>backon::ExponentialBuilder;
 <span class="kw">use </span>common_runtime::{RepeatedTask, TaskFunction};
-<span class="kw">use </span>common_telemetry::{info, logging};
+<span class="kw">use </span>common_telemetry::tracing_context::{FutureExt, TracingContext};
+<span class="kw">use </span>common_telemetry::{info, logging, tracing};
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>tokio::sync::watch::{<span class="self">self</span>, Receiver, Sender};
 <span class="kw">use </span>tokio::sync::{Mutex <span class="kw">as </span>TokioMutex, Notify};
@@ -1520,9 +1532,19 @@
             DuplicateProcedureSnafu { procedure_id },
         );
 
+        <span class="kw">let </span>tracing_context = TracingContext::from_current_span();
+
         <span class="kw">let </span>_handle = common_runtime::spawn_bg(<span class="kw">async move </span>{
             <span class="comment">// Run the root procedure.
-            </span>runner.run().<span class="kw">await</span>;
+            // The task was moved to another runtime for execution.
+            // In order not to interrupt tracing, a span needs to be created to continue tracing the current task.
+            </span>runner
+                .run()
+                .trace(
+                    tracing_context
+                        .attach(<span class="macro">tracing::info_span!</span>(<span class="string">&quot;LocalManager::submit_root_procedure&quot;</span>)),
+                )
+                .<span class="kw">await</span>;
         });
 
         <span class="prelude-val">Ok</span>(watcher)

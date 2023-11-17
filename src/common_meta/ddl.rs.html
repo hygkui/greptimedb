@@ -69,6 +69,8 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -86,6 +88,7 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::meta::Partition;
+<span class="kw">use </span>common_telemetry::tracing_context::W3cTrace;
 <span class="kw">use </span>store_api::storage::TableId;
 <span class="kw">use </span>table::metadata::RawTableInfo;
 
@@ -105,6 +108,7 @@
 <span class="attr">#[derive(Debug, Default)]
 </span><span class="kw">pub struct </span>ExecutorContext {
     <span class="kw">pub </span>cluster_id: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    <span class="kw">pub </span>tracing_context: <span class="prelude-ty">Option</span>&lt;W3cTrace&gt;,
 }
 
 <span class="attr">#[async_trait::async_trait]

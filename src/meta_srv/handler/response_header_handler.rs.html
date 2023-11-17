@@ -108,6 +108,7 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -163,6 +164,7 @@
     <span class="kw">use </span>common_meta::key::TableMetadataManager;
     <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
     <span class="kw">use </span>common_meta::sequence::Sequence;
+    <span class="kw">use </span>common_telemetry::tracing_context::W3cTrace;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::cluster::MetaPeerClientBuilder;
@@ -199,7 +201,7 @@
         };
 
         <span class="kw">let </span>req = HeartbeatRequest {
-            header: <span class="prelude-val">Some</span>(RequestHeader::new((<span class="number">1</span>, <span class="number">2</span>), Role::Datanode)),
+            header: <span class="prelude-val">Some</span>(RequestHeader::new((<span class="number">1</span>, <span class="number">2</span>), Role::Datanode, W3cTrace::new())),
             ..Default::default()
         };
         <span class="kw">let </span><span class="kw-2">mut </span>acc = HeartbeatAccumulator::default();

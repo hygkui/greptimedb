@@ -319,6 +319,7 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -342,6 +343,7 @@
 <span class="kw">use </span>common_procedure::error::{FromJsonSnafu, <span class="prelude-ty">Result </span><span class="kw">as </span>ProcedureResult, ToJsonSnafu};
 <span class="kw">use </span>common_procedure::{Context <span class="kw">as </span>ProcedureContext, LockKey, Procedure, Status};
 <span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>common_telemetry::tracing_context::TracingContext;
 <span class="kw">use </span>futures::future::join_all;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
@@ -520,7 +522,7 @@
             <span class="kw">for </span>request <span class="kw">in </span>requests {
                 <span class="kw">let </span>request = RegionRequest {
                     header: <span class="prelude-val">Some</span>(RegionRequestHeader {
-                        trace_id: common_telemetry::trace_id().unwrap_or_default(),
+                        tracing_context: TracingContext::from_current_span().to_w3c(),
                         ..Default::default()
                     }),
                     body: <span class="prelude-val">Some</span>(request),

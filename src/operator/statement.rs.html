@@ -321,6 +321,9 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -355,6 +358,7 @@
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::Output;
+<span class="kw">use </span>common_telemetry::tracing;
 <span class="kw">use </span>common_time::range::TimestampRange;
 <span class="kw">use </span>common_time::Timestamp;
 <span class="kw">use </span>partition::manager::{PartitionRuleManager, PartitionRuleManagerRef};
@@ -411,7 +415,8 @@
         }
     }
 
-    <span class="kw">pub async fn </span>execute_stmt(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>execute_stmt(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         stmt: QueryStatement,
         query_ctx: QueryContextRef,
@@ -524,7 +529,8 @@
             </span>.context(PlanStatementSnafu)
     }
 
-    <span class="kw">async fn </span>plan_exec(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: QueryStatement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">async fn </span>plan_exec(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: QueryStatement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>plan = <span class="self">self</span>.plan(stmt, query_ctx.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.query_engine
             .execute(plan, query_ctx)

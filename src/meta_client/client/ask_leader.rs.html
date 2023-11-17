@@ -150,6 +150,11 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -171,6 +176,7 @@
 <span class="kw">use </span>api::v1::meta::{AskLeaderRequest, RequestHeader, Role};
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
 <span class="kw">use </span>common_meta::distributed_time_constants::META_KEEP_ALIVE_INTERVAL_SECS;
+<span class="kw">use </span>common_telemetry::tracing_context::TracingContext;
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>rand::seq::SliceRandom;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -229,7 +235,11 @@
         peers.shuffle(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
         <span class="kw">let </span>req = AskLeaderRequest {
-            header: <span class="prelude-val">Some</span>(RequestHeader::new(<span class="self">self</span>.id, <span class="self">self</span>.role)),
+            header: <span class="prelude-val">Some</span>(RequestHeader::new(
+                <span class="self">self</span>.id,
+                <span class="self">self</span>.role,
+                TracingContext::from_current_span().to_w3c(),
+            )),
         };
 
         <span class="kw">let </span>(tx, <span class="kw-2">mut </span>rx) = tokio::sync::mpsc::channel(peers.len());

@@ -347,6 +347,7 @@
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
 <a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -606,6 +607,7 @@
     <span class="kw">use </span>api::v1::meta::store_server::Store;
     <span class="kw">use </span>api::v1::meta::<span class="kw-2">*</span>;
     <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
+    <span class="kw">use </span>common_telemetry::tracing_context::W3cTrace;
     <span class="kw">use </span>tonic::IntoRequest;
 
     <span class="kw">use </span><span class="kw">crate</span>::metasrv::builder::MetaSrvBuilder;
@@ -624,7 +626,7 @@
         <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = RangeRequest::default();
-        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode);
+        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new());
         <span class="kw">let </span>res = meta_srv.range(req.into_request()).<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= res.unwrap();
@@ -635,7 +637,7 @@
         <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = PutRequest::default();
-        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode);
+        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new());
         <span class="kw">let </span>res = meta_srv.put(req.into_request()).<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= res.unwrap();
@@ -646,7 +648,7 @@
         <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = BatchGetRequest::default();
-        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode);
+        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new());
         <span class="kw">let </span>res = meta_srv.batch_get(req.into_request()).<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= res.unwrap();
@@ -657,7 +659,7 @@
         <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = BatchPutRequest::default();
-        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode);
+        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new());
         <span class="kw">let </span>res = meta_srv.batch_put(req.into_request()).<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= res.unwrap();
@@ -668,7 +670,7 @@
         <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = BatchDeleteRequest::default();
-        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode);
+        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new());
         <span class="kw">let </span>res = meta_srv.batch_delete(req.into_request()).<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= res.unwrap();
@@ -679,7 +681,7 @@
         <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = CompareAndPutRequest::default();
-        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode);
+        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new());
         <span class="kw">let </span>res = meta_srv.compare_and_put(req.into_request()).<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= res.unwrap();
@@ -690,7 +692,7 @@
         <span class="kw">let </span>meta_srv = new_meta_srv().<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>req = DeleteRangeRequest::default();
-        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode);
+        req.set_header((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new());
         <span class="kw">let </span>res = meta_srv.delete_range(req.into_request()).<span class="kw">await</span>;
 
         <span class="kw">let _ </span>= res.unwrap();

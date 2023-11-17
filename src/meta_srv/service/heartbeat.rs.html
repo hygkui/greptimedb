@@ -220,6 +220,7 @@
 <a href="#220" id="220">220</a>
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -390,6 +391,7 @@
     <span class="kw">use </span>api::v1::meta::heartbeat_server::Heartbeat;
     <span class="kw">use </span>api::v1::meta::<span class="kw-2">*</span>;
     <span class="kw">use </span>common_meta::kv_backend::memory::MemoryKvBackend;
+    <span class="kw">use </span>common_telemetry::tracing_context::W3cTrace;
     <span class="kw">use </span>tonic::IntoRequest;
 
     <span class="kw">use </span><span class="kw">super</span>::get_node_id;
@@ -406,7 +408,7 @@
             </span>.unwrap();
 
         <span class="kw">let </span>req = AskLeaderRequest {
-            header: <span class="prelude-val">Some</span>(RequestHeader::new((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode)),
+            header: <span class="prelude-val">Some</span>(RequestHeader::new((<span class="number">1</span>, <span class="number">1</span>), Role::Datanode, W3cTrace::new())),
         };
 
         <span class="kw">let </span>res = meta_srv.ask_leader(req.into_request()).<span class="kw">await</span>.unwrap();

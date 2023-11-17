@@ -253,6 +253,9 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -277,6 +280,7 @@
 <span class="kw">use </span>common_meta::datanode_manager::{AffectedRows, DatanodeManagerRef};
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_query::Output;
+<span class="kw">use </span>common_telemetry::tracing_context::TracingContext;
 <span class="kw">use </span>futures_util::future;
 <span class="kw">use </span>partition::manager::PartitionRuleManagerRef;
 <span class="kw">use </span>session::context::QueryContextRef;
@@ -374,8 +378,10 @@
         requests: RegionDeleteRequests,
         ctx: <span class="kw-2">&amp;</span>QueryContextRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;AffectedRows&gt; {
-        <span class="kw">let </span>header: RegionRequestHeader = ctx.as_ref().into();
-        <span class="kw">let </span>request_factory = RegionRequestFactory::new(header);
+        <span class="kw">let </span>request_factory = RegionRequestFactory::new(RegionRequestHeader {
+            tracing_context: TracingContext::from_current_span().to_w3c(),
+            dbname: ctx.get_db_string(),
+        });
 
         <span class="kw">let </span>tasks = <span class="self">self
             </span>.group_requests_by_peer(requests)

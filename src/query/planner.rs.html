@@ -108,6 +108,10 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -127,6 +131,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>catalog::table_source::DfTableSourceProvider;
 <span class="kw">use </span>common_error::ext::BoxedError;
+<span class="kw">use </span>common_telemetry::tracing;
 <span class="kw">use </span>datafusion::execution::context::SessionState;
 <span class="kw">use </span>datafusion_sql::planner::{ParserOptions, SqlToRel};
 <span class="kw">use </span>promql::planner::PromPlanner;
@@ -161,7 +166,8 @@
         }
     }
 
-    <span class="kw">async fn </span>plan_sql(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: Statement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">async fn </span>plan_sql(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: Statement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
         <span class="kw">let </span>df_stmt = (<span class="kw-2">&amp;</span>stmt).try_into().context(SqlSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>table_provider = DfTableSourceProvider::new(
@@ -195,7 +201,8 @@
         <span class="prelude-val">Ok</span>(LogicalPlan::DfPlan(plan))
     }
 
-    <span class="kw">async fn </span>plan_pql(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: EvalStmt, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">async fn </span>plan_pql(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: EvalStmt, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
         <span class="kw">let </span>table_provider = DfTableSourceProvider::new(
             <span class="self">self</span>.engine_state.catalog_manager().clone(),
             <span class="self">self</span>.engine_state.disallow_cross_schema_query(),
@@ -211,7 +218,8 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>LogicalPlanner <span class="kw">for </span>DfLogicalPlanner {
-    <span class="kw">async fn </span>plan(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: QueryStatement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">async fn </span>plan(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: QueryStatement, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;LogicalPlan&gt; {
         <span class="kw">match </span>stmt {
             QueryStatement::Sql(stmt) =&gt; <span class="self">self</span>.plan_sql(stmt, query_ctx).<span class="kw">await</span>,
             QueryStatement::Promql(stmt) =&gt; <span class="self">self</span>.plan_pql(stmt, query_ctx).<span class="kw">await</span>,

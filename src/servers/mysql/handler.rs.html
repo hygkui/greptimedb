@@ -458,10 +458,6 @@
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -488,7 +484,7 @@
 <span class="kw">use </span>common_catalog::parse_catalog_and_schema_from_db_string;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::{error, logging, warn};
+<span class="kw">use </span>common_telemetry::{error, logging, tracing, warn};
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>opensrv_mysql::{
     AsyncMysqlShim, Column, ErrorKind, InitWriter, ParamParser, ParamValue, QueryResultWriter,
@@ -555,18 +551,14 @@
         }
     }
 
-    <span class="kw">async fn </span>do_query(<span class="kw-2">&amp;</span><span class="self">self</span>, query: <span class="kw-2">&amp;</span>str, query_ctx: QueryContextRef) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">async fn </span>do_query(<span class="kw-2">&amp;</span><span class="self">self</span>, query: <span class="kw-2">&amp;</span>str, query_ctx: QueryContextRef) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(output) =
             <span class="kw">crate</span>::mysql::federated::check(query, query_ctx.clone(), <span class="self">self</span>.session.clone())
         {
             <span class="macro">vec!</span>[<span class="prelude-val">Ok</span>(output)]
         } <span class="kw">else </span>{
-            <span class="kw">let </span>trace_id = query_ctx.trace_id();
-            common_telemetry::TRACE_ID
-                .scope(trace_id, <span class="kw">async move </span>{
-                    <span class="self">self</span>.query_handler.do_query(query, query_ctx).<span class="kw">await
-                </span>})
-                .<span class="kw">await
+            <span class="self">self</span>.query_handler.do_query(query, query_ctx).<span class="kw">await
         </span>}
     }
 

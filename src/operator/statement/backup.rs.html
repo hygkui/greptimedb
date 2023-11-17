@@ -86,6 +86,7 @@
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -102,7 +103,7 @@
 
 </span><span class="kw">use </span>common_datasource::file_format::Format;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>common_telemetry::{info, tracing};
 <span class="kw">use </span>session::context::QueryContextBuilder;
 <span class="kw">use </span>snafu::{ensure, ResultExt};
 <span class="kw">use </span>table::requests::{CopyDatabaseRequest, CopyDirection, CopyTableRequest};
@@ -115,7 +116,8 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>COPY_DATABASE_TIME_END_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;end_time&quot;</span>;
 
 <span class="kw">impl </span>StatementExecutor {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>copy_database(<span class="kw-2">&amp;</span><span class="self">self</span>, req: CopyDatabaseRequest) -&gt; error::Result&lt;Output&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>copy_database(<span class="kw-2">&amp;</span><span class="self">self</span>, req: CopyDatabaseRequest) -&gt; error::Result&lt;Output&gt; {
         <span class="comment">// location must end with / so that every table is exported to a file.
         </span><span class="macro">ensure!</span>(
             req.location.ends_with(<span class="string">&#39;/&#39;</span>),

@@ -401,6 +401,21 @@
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
 <a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -418,7 +433,8 @@
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>common_procedure::{watcher, ProcedureId, ProcedureManagerRef, ProcedureWithId};
-<span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>common_telemetry::tracing_context::{FutureExt, TracingContext};
+<span class="kw">use </span>common_telemetry::{info, tracing};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::cache_invalidator::CacheInvalidatorRef;
@@ -543,7 +559,8 @@
             })
     }
 
-    <span class="kw">pub async fn </span>submit_alter_table_task(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>submit_alter_table_task(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         alter_table_task: AlterTableTask,
@@ -559,7 +576,8 @@
         <span class="self">self</span>.submit_procedure(procedure_with_id).<span class="kw">await
     </span>}
 
-    <span class="kw">pub async fn </span>submit_create_table_task(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>submit_create_table_task(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         create_table_task: CreateTableTask,
@@ -575,7 +593,8 @@
         <span class="self">self</span>.submit_procedure(procedure_with_id).<span class="kw">await
     </span>}
 
-    <span class="kw">pub async fn </span>submit_drop_table_task(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>submit_drop_table_task(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         drop_table_task: DropTableTask,
@@ -597,7 +616,8 @@
         <span class="self">self</span>.submit_procedure(procedure_with_id).<span class="kw">await
     </span>}
 
-    <span class="kw">pub async fn </span>submit_truncate_table_task(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>submit_truncate_table_task(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cluster_id: u64,
         truncate_table_task: TruncateTableTask,
@@ -786,22 +806,32 @@
         ctx: <span class="kw-2">&amp;</span>ExecutorContext,
         request: SubmitDdlTaskRequest,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SubmitDdlTaskResponse&gt; {
-        <span class="kw">let </span>cluster_id = ctx.cluster_id.unwrap_or_default();
-        <span class="macro">info!</span>(<span class="string">&quot;Submitting Ddl task: {:?}&quot;</span>, request.task);
-        <span class="kw">match </span>request.task {
-            CreateTable(create_table_task) =&gt; {
-                handle_create_table_task(<span class="self">self</span>, cluster_id, create_table_task).<span class="kw">await
-            </span>}
-            DropTable(drop_table_task) =&gt; {
-                handle_drop_table_task(<span class="self">self</span>, cluster_id, drop_table_task).<span class="kw">await
-            </span>}
-            AlterTable(alter_table_task) =&gt; {
-                handle_alter_table_task(<span class="self">self</span>, cluster_id, alter_table_task).<span class="kw">await
-            </span>}
-            TruncateTable(truncate_table_task) =&gt; {
-                handle_truncate_table_task(<span class="self">self</span>, cluster_id, truncate_table_task).<span class="kw">await
-            </span>}
+        <span class="kw">let </span>span = ctx
+            .tracing_context
+            .as_ref()
+            .map(TracingContext::from_w3c)
+            .unwrap_or(TracingContext::from_current_span())
+            .attach(<span class="macro">tracing::info_span!</span>(<span class="string">&quot;DdlManager::submit_ddl_task&quot;</span>));
+        <span class="kw">async move </span>{
+            <span class="kw">let </span>cluster_id = ctx.cluster_id.unwrap_or_default();
+            <span class="macro">info!</span>(<span class="string">&quot;Submitting Ddl task: {:?}&quot;</span>, request.task);
+            <span class="kw">match </span>request.task {
+                CreateTable(create_table_task) =&gt; {
+                    handle_create_table_task(<span class="self">self</span>, cluster_id, create_table_task).<span class="kw">await
+                </span>}
+                DropTable(drop_table_task) =&gt; {
+                    handle_drop_table_task(<span class="self">self</span>, cluster_id, drop_table_task).<span class="kw">await
+                </span>}
+                AlterTable(alter_table_task) =&gt; {
+                    handle_alter_table_task(<span class="self">self</span>, cluster_id, alter_table_task).<span class="kw">await
+                </span>}
+                TruncateTable(truncate_table_task) =&gt; {
+                    handle_truncate_table_task(<span class="self">self</span>, cluster_id, truncate_table_task).<span class="kw">await
+                </span>}
+            }
         }
-    }
+        .trace(span)
+        .<span class="kw">await
+    </span>}
 }
 </code></pre></div></section></main></body></html>

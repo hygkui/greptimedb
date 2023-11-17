@@ -136,6 +136,22 @@
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -165,6 +181,8 @@
 <span class="kw">use </span>common_meta::rpc::router::{Region, RegionRoute};
 <span class="kw">use </span>common_meta::sequence::{Sequence, SequenceRef};
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
+<span class="kw">use </span>common_telemetry::tracing;
+<span class="kw">use </span>common_telemetry::tracing_context::{FutureExt, TracingContext};
 <span class="kw">use </span>datanode::region_server::RegionServer;
 <span class="kw">use </span>servers::grpc::region_server::RegionServerHandler;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -209,8 +227,15 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>Datanode <span class="kw">for </span>RegionInvoker {
     <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegionRequest) -&gt; MetaResult&lt;AffectedRows&gt; {
+        <span class="kw">let </span>span = request
+            .header
+            .as_ref()
+            .map(|h| TracingContext::from_w3c(<span class="kw-2">&amp;</span>h.tracing_context))
+            .unwrap_or_default()
+            .attach(<span class="macro">tracing::info_span!</span>(<span class="string">&quot;RegionInvoker::handle_region_request&quot;</span>));
         <span class="kw">let </span>response = <span class="self">self
             </span>.handle_inner(request)
+            .trace(span)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(meta_error::ExternalSnafu)<span class="question-mark">?</span>;
@@ -221,8 +246,15 @@
     }
 
     <span class="kw">async fn </span>handle_query(<span class="kw-2">&amp;</span><span class="self">self</span>, request: QueryRequest) -&gt; MetaResult&lt;SendableRecordBatchStream&gt; {
+        <span class="kw">let </span>span = request
+            .header
+            .as_ref()
+            .map(|h| TracingContext::from_w3c(<span class="kw-2">&amp;</span>h.tracing_context))
+            .unwrap_or_default()
+            .attach(<span class="macro">tracing::info_span!</span>(<span class="string">&quot;RegionInvoker::handle_query&quot;</span>));
         <span class="self">self</span>.region_server
             .handle_read(request)
+            .trace(span)
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .context(meta_error::ExternalSnafu)

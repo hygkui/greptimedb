@@ -91,6 +91,14 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -112,7 +120,9 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_error::ext::ErrorExt;
 <span class="kw">use </span>common_runtime::Runtime;
-<span class="kw">use </span>common_telemetry::{debug, error, TRACE_ID};
+<span class="kw">use </span>common_telemetry::tracing::info_span;
+<span class="kw">use </span>common_telemetry::tracing_context::{FutureExt, TracingContext};
+<span class="kw">use </span>common_telemetry::{debug, error};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>tonic::{Request, Response};
 
@@ -138,12 +148,14 @@
     }
 
     <span class="kw">async fn </span>handle(<span class="kw-2">&amp;</span><span class="self">self</span>, request: RegionRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RegionResponse&gt; {
-        <span class="kw">let </span>trace_id = request
-            .header
-            .context(InvalidQuerySnafu {
-                reason: <span class="string">&quot;Expecting non-empty region request header.&quot;</span>,
-            })<span class="question-mark">?
-            </span>.trace_id;
+        <span class="kw">let </span>tracing_context = TracingContext::from_w3c(
+            <span class="kw-2">&amp;</span>request
+                .header
+                .context(InvalidQuerySnafu {
+                    reason: <span class="string">&quot;Expecting non-empty region request header.&quot;</span>,
+                })<span class="question-mark">?
+                </span>.tracing_context,
+        );
         <span class="kw">let </span>query = request.body.context(InvalidQuerySnafu {
             reason: <span class="string">&quot;Expecting non-empty region request body.&quot;</span>,
         })<span class="question-mark">?</span>;
@@ -157,17 +169,21 @@
         //   - Obtaining a `JoinHandle` to get the panic message (if there&#39;s any).
         //     From its docs, `JoinHandle` is cancel safe. The task keeps running even it&#39;s handle been dropped.
         // 2. avoid the handler blocks the gRPC runtime incidentally.
-        </span><span class="kw">let </span>handle = <span class="self">self</span>.runtime.spawn(TRACE_ID.scope(trace_id, <span class="kw">async move </span>{
-            handler.handle(query).<span class="kw">await</span>.map_err(|e| {
-                <span class="kw">if </span>e.status_code().should_log_error() {
-                    <span class="macro">error!</span>(e; <span class="string">&quot;Failed to handle request&quot;</span>);
-                } <span class="kw">else </span>{
-                    <span class="comment">// Currently, we still print a debug log.
-                    </span><span class="macro">debug!</span>(<span class="string">&quot;Failed to handle request, err: {:?}&quot;</span>, e);
-                }
-                e
-            })
-        }));
+        </span><span class="kw">let </span>handle = <span class="self">self</span>.runtime.spawn(<span class="kw">async move </span>{
+            handler
+                .handle(query)
+                .trace(tracing_context.attach(<span class="macro">info_span!</span>(<span class="string">&quot;RegionServerRequestHandler::handle&quot;</span>)))
+                .<span class="kw">await
+                </span>.map_err(|e| {
+                    <span class="kw">if </span>e.status_code().should_log_error() {
+                        <span class="macro">error!</span>(e; <span class="string">&quot;Failed to handle request&quot;</span>);
+                    } <span class="kw">else </span>{
+                        <span class="comment">// Currently, we still print a debug log.
+                        </span><span class="macro">debug!</span>(<span class="string">&quot;Failed to handle request, err: {}&quot;</span>, e);
+                    }
+                    e
+                })
+        });
 
         handle.<span class="kw">await</span>.context(JoinTaskSnafu)<span class="question-mark">?
     </span>}

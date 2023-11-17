@@ -301,6 +301,15 @@
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
 <a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -322,6 +331,7 @@
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
 <span class="kw">use </span>common_meta::rpc::util;
 <span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>common_telemetry::tracing_context::TracingContext;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::{mpsc, RwLock};
 <span class="kw">use </span>tokio_stream::wrappers::ReceiverStream;
@@ -352,7 +362,11 @@
 
     <span class="attr">#[inline]
     </span><span class="kw">pub async fn </span>send(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: HeartbeatRequest) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
+        req.set_header(
+            <span class="self">self</span>.id,
+            <span class="self">self</span>.role,
+            TracingContext::from_current_span().to_w3c(),
+        );
         <span class="self">self</span>.sender.send(req).<span class="kw">await</span>.map_err(|e| {
             error::SendHeartbeatSnafu {
                 err_msg: e.to_string(),
@@ -510,7 +524,11 @@
 
         <span class="kw">let </span>(sender, receiver) = mpsc::channel::&lt;HeartbeatRequest&gt;(<span class="number">128</span>);
 
-        <span class="kw">let </span>header = RequestHeader::new(<span class="self">self</span>.id, <span class="self">self</span>.role);
+        <span class="kw">let </span>header = RequestHeader::new(
+            <span class="self">self</span>.id,
+            <span class="self">self</span>.role,
+            TracingContext::from_current_span().to_w3c(),
+        );
         <span class="kw">let </span>handshake = HeartbeatRequest {
             header: <span class="prelude-val">Some</span>(header),
             ..Default::default()

@@ -615,6 +615,7 @@
 <a href="#615" id="615">615</a>
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -646,7 +647,7 @@
 <span class="kw">use </span>common_datasource::util::find_dir_and_filename;
 <span class="kw">use </span>common_recordbatch::adapter::ParquetRecordBatchStreamAdapter;
 <span class="kw">use </span>common_recordbatch::DfSendableRecordBatchStream;
-<span class="kw">use </span>common_telemetry::debug;
+<span class="kw">use </span>common_telemetry::{debug, tracing};
 <span class="kw">use </span>datafusion::datasource::listing::PartitionedFile;
 <span class="kw">use </span>datafusion::datasource::object_store::ObjectStoreUrl;
 <span class="kw">use </span>datafusion::datasource::physical_plan::{FileOpener, FileScanConfig, FileStream};
@@ -854,7 +855,8 @@
         }
     }
 
-    <span class="kw">pub async fn </span>copy_table_from(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>copy_table_from(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: CopyTableRequest,
         query_ctx: QueryContextRef,

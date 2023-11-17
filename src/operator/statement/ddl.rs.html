@@ -646,6 +646,12 @@
 <a href="#646" id="646">646</a>
 <a href="#647" id="647">647</a>
 <a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -676,7 +682,7 @@
 <span class="kw">use </span>common_meta::rpc::router::{Partition, Partition <span class="kw">as </span>MetaPartition};
 <span class="kw">use </span>common_meta::table_name::TableName;
 <span class="kw">use </span>common_query::Output;
-<span class="kw">use </span>common_telemetry::info;
+<span class="kw">use </span>common_telemetry::{info, tracing};
 <span class="kw">use </span>datatypes::prelude::ConcreteDataType;
 <span class="kw">use </span>datatypes::schema::RawSchema;
 <span class="kw">use </span>partition::partition::{PartitionBound, PartitionDef};
@@ -706,12 +712,14 @@
         <span class="self">self</span>.catalog_manager.clone()
     }
 
-    <span class="kw">pub async fn </span>create_table(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: CreateTable, ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;TableRef&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>create_table(<span class="kw-2">&amp;</span><span class="self">self</span>, stmt: CreateTable, ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;TableRef&gt; {
         <span class="kw">let </span>create_expr = <span class="kw-2">&amp;mut </span>expr_factory::create_to_expr(<span class="kw-2">&amp;</span>stmt, ctx)<span class="question-mark">?</span>;
         <span class="self">self</span>.create_table_inner(create_expr, stmt.partitions).<span class="kw">await
     </span>}
 
-    <span class="kw">pub async fn </span>create_external_table(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>create_external_table(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         create_expr: CreateExternalTable,
         ctx: QueryContextRef,
@@ -799,7 +807,8 @@
         <span class="prelude-val">Ok</span>(table)
     }
 
-    <span class="kw">pub async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>drop_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>table = <span class="self">self
             </span>.catalog_manager
             .table(
@@ -829,7 +838,8 @@
         <span class="prelude-val">Ok</span>(Output::AffectedRows(<span class="number">0</span>))
     }
 
-    <span class="kw">pub async fn </span>truncate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>truncate_table(<span class="kw-2">&amp;</span><span class="self">self</span>, table_name: TableName) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>table = <span class="self">self
             </span>.catalog_manager
             .table(
@@ -869,7 +879,8 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub async fn </span>alter_table(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>alter_table(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         alter_table: AlterTable,
         query_ctx: QueryContextRef,
@@ -995,7 +1006,8 @@
             </span>.context(error::ExecuteDdlSnafu)
     }
 
-    <span class="kw">pub async fn </span>create_database(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>create_database(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         catalog: <span class="kw-2">&amp;</span>str,
         database: <span class="kw-2">&amp;</span>str,

@@ -22,7 +22,7 @@ var srcIndex = JSON.parse('{\
 "common_query":["",[["logical_plan",[],["accumulator.rs","expr.rs","udaf.rs","udf.rs"]]],["columnar_value.rs","error.rs","function.rs","lib.rs","logical_plan.rs","physical_plan.rs","prelude.rs","signature.rs"]],\
 "common_recordbatch":["",[],["adapter.rs","error.rs","lib.rs","recordbatch.rs","util.rs"]],\
 "common_runtime":["",[],["error.rs","global.rs","lib.rs","metrics.rs","repeated_task.rs","runtime.rs"]],\
-"common_telemetry":["",[],["lib.rs","logging.rs","macros.rs","metric.rs","panic_hook.rs"]],\
+"common_telemetry":["",[],["lib.rs","logging.rs","macros.rs","metric.rs","panic_hook.rs","tracing_context.rs"]],\
 "common_test_util":["",[],["lib.rs","ports.rs","temp_dir.rs"]],\
 "common_time":["",[],["date.rs","datetime.rs","duration.rs","error.rs","interval.rs","lib.rs","range.rs","time.rs","timestamp.rs","timestamp_millis.rs","timezone.rs","util.rs"]],\
 "common_version":["",[],["lib.rs"]],\

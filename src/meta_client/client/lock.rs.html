@@ -184,6 +184,15 @@
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -204,6 +213,7 @@
 <span class="kw">use </span>api::v1::meta::lock_client::LockClient;
 <span class="kw">use </span>api::v1::meta::{LockRequest, LockResponse, Role, UnlockRequest, UnlockResponse};
 <span class="kw">use </span>common_grpc::channel_manager::ChannelManager;
+<span class="kw">use </span>common_telemetry::tracing_context::TracingContext;
 <span class="kw">use </span>snafu::{ensure, OptionExt, ResultExt};
 <span class="kw">use </span>tokio::sync::RwLock;
 <span class="kw">use </span>tonic::transport::Channel;
@@ -313,7 +323,11 @@
 
     <span class="kw">async fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: LockRequest) -&gt; <span class="prelude-ty">Result</span>&lt;LockResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
+        req.set_header(
+            <span class="self">self</span>.id,
+            <span class="self">self</span>.role,
+            TracingContext::from_current_span().to_w3c(),
+        );
         <span class="kw">let </span>res = client.lock(req).<span class="kw">await</span>.map_err(error::Error::from)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())
@@ -321,7 +335,11 @@
 
     <span class="kw">async fn </span>unlock(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: UnlockRequest) -&gt; <span class="prelude-ty">Result</span>&lt;UnlockResponse&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self</span>.random_client()<span class="question-mark">?</span>;
-        req.set_header(<span class="self">self</span>.id, <span class="self">self</span>.role);
+        req.set_header(
+            <span class="self">self</span>.id,
+            <span class="self">self</span>.role,
+            TracingContext::from_current_span().to_w3c(),
+        );
         <span class="kw">let </span>res = client.unlock(req).<span class="kw">await</span>.map_err(error::Error::from)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(res.into_inner())

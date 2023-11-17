@@ -35,6 +35,8 @@
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
 <a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -50,6 +52,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>common_query::Output;
+<span class="kw">use </span>common_telemetry::tracing;
 <span class="kw">use </span>query::parser::QueryStatement;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>sql::statements::insert::Insert;
@@ -59,7 +62,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 
 <span class="kw">impl </span>StatementExecutor {
-    <span class="kw">pub async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, insert: Box&lt;Insert&gt;, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub async fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, insert: Box&lt;Insert&gt;, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">if </span>insert.can_extract_values() {
             <span class="comment">// Fast path: plain insert (&quot;insert with literal values&quot;) is executed directly
             </span><span class="self">self</span>.inserter

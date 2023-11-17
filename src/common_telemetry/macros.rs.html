@@ -232,9 +232,6 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -254,14 +251,12 @@
 </span><span class="macro">macro_rules! </span>log {
     <span class="comment">// log!(target: &quot;my_target&quot;, Level::INFO, &quot;a {} event&quot;, &quot;log&quot;);
     </span>(target: <span class="macro-nonterminal">$target</span>:expr, <span class="macro-nonterminal">$lvl</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {{
-        <span class="kw">let </span>_trace_id = <span class="macro-nonterminal">$crate::trace_id</span>();
-        <span class="macro-nonterminal">$</span><span class="macro">crate::logging::event!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$lvl</span>, trace_id = _trace_id, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::tracing::event!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$lvl</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     }};
 
     <span class="comment">// log!(Level::INFO, &quot;a log event&quot;)
     </span>(<span class="macro-nonterminal">$lvl</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {{
-        <span class="kw">let </span>_trace_id = <span class="macro-nonterminal">$crate::trace_id</span>();
-        <span class="macro-nonterminal">$</span><span class="macro">crate::logging::event!</span>(<span class="macro-nonterminal">$lvl</span>, trace_id = _trace_id, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::tracing::event!</span>(<span class="macro-nonterminal">$lvl</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     }};
 }
 
@@ -270,14 +265,14 @@
 </span><span class="macro">macro_rules! </span>error {
     <span class="comment">// error!(target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
     </span>(target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::tracing::Level::ERROR</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     });
 
     <span class="comment">// error!(e; target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
     </span>(<span class="macro-nonterminal">$e</span>:expr; target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
             <span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>,
-            <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
+            <span class="macro-nonterminal">$crate::tracing::Level::ERROR</span>,
             err = <span class="question-mark">?</span><span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
@@ -287,7 +282,7 @@
     </span>(%<span class="macro-nonterminal">$e</span>:expr; target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
             <span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>,
-            <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
+            <span class="macro-nonterminal">$crate::tracing::Level::ERROR</span>,
             err = %<span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
@@ -296,7 +291,7 @@
     <span class="comment">// error!(e; &quot;a {} event&quot;, &quot;log&quot;)
     </span>(<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
-            <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
+            <span class="macro-nonterminal">$crate::tracing::Level::ERROR</span>,
             err = <span class="question-mark">?</span><span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
@@ -305,7 +300,7 @@
     <span class="comment">// error!(%e; &quot;a {} event&quot;, &quot;log&quot;)
     </span>(%<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
-            <span class="macro-nonterminal">$crate::logging::Level::ERROR</span>,
+            <span class="macro-nonterminal">$crate::tracing::Level::ERROR</span>,
             err = %<span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
@@ -313,7 +308,7 @@
 
     <span class="comment">// error!(&quot;a {} event&quot;, &quot;log&quot;)
     </span>($(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::logging::Level::ERROR</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::tracing::Level::ERROR</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     });
 }
 
@@ -322,13 +317,13 @@
 </span><span class="macro">macro_rules! </span>warn {
     <span class="comment">// warn!(target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
     </span>(target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::logging::Level::WARN</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::tracing::Level::WARN</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 
     <span class="comment">// warn!(e; &quot;a {} event&quot;, &quot;log&quot;)
     </span>(<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
-            <span class="macro-nonterminal">$crate::logging::Level::WARN</span>,
+            <span class="macro-nonterminal">$crate::tracing::Level::WARN</span>,
             err = <span class="question-mark">?</span><span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
@@ -337,7 +332,7 @@
     <span class="comment">// warn!(%e; &quot;a {} event&quot;, &quot;log&quot;)
     </span>(%<span class="macro-nonterminal">$e</span>:expr; $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; ({
         <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(
-            <span class="macro-nonterminal">$crate::logging::Level::WARN</span>,
+            <span class="macro-nonterminal">$crate::tracing::Level::WARN</span>,
             err = %<span class="macro-nonterminal">$e</span>,
             $(<span class="macro-nonterminal">$arg</span>)+
         )
@@ -345,7 +340,7 @@
 
     <span class="comment">// warn!(&quot;a {} event&quot;, &quot;log&quot;)
     </span>($(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::logging::Level::WARN</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::tracing::Level::WARN</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 }
 
@@ -354,12 +349,12 @@
 </span><span class="macro">macro_rules! </span>info {
     <span class="comment">// info!(target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
     </span>(target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::logging::Level::INFO</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::tracing::Level::INFO</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 
     <span class="comment">// info!(&quot;a {} event&quot;, &quot;log&quot;)
     </span>($(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::logging::Level::INFO</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::tracing::Level::INFO</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 }
 
@@ -368,12 +363,12 @@
 </span><span class="macro">macro_rules! </span>debug {
     <span class="comment">// debug!(target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
     </span>(target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::logging::Level::DEBUG</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::tracing::Level::DEBUG</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 
     <span class="comment">// debug!(&quot;a {} event&quot;, &quot;log&quot;)
     </span>($(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::logging::Level::DEBUG</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::tracing::Level::DEBUG</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 }
 
@@ -382,12 +377,12 @@
 </span><span class="macro">macro_rules! </span>trace {
     <span class="comment">// trace!(target: &quot;my_target&quot;, &quot;a {} event&quot;, &quot;log&quot;)
     </span>(target: <span class="macro-nonterminal">$target</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::logging::Level::TRACE</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$target</span>, <span class="macro-nonterminal">$crate::tracing::Level::TRACE</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 
     <span class="comment">// trace!(&quot;a {} event&quot;, &quot;log&quot;)
     </span>($(<span class="macro-nonterminal">$arg</span>:tt)+) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::logging::Level::TRACE</span>, $(<span class="macro-nonterminal">$arg</span>)+)
+        <span class="macro-nonterminal">$</span><span class="macro">crate::log!</span>(<span class="macro-nonterminal">$crate::tracing::Level::TRACE</span>, $(<span class="macro-nonterminal">$arg</span>)+)
     };
 }
 
@@ -395,8 +390,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>common_error::mock::MockError;
     <span class="kw">use </span>common_error::status_code::StatusCode;
-
-    <span class="kw">use </span><span class="kw">crate</span>::logging::Level;
+    <span class="kw">use </span>tracing::Level;
 
     <span class="macro">macro_rules! </span>all_log_macros {
         ($(<span class="macro-nonterminal">$arg</span>:tt)<span class="kw-2">*</span>) =&gt; {

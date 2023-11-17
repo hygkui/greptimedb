@@ -148,6 +148,7 @@
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -173,7 +174,7 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_recordbatch::adapter::DfRecordBatchStreamAdapter;
 <span class="kw">use </span>common_recordbatch::SendableRecordBatchStream;
-<span class="kw">use </span>common_telemetry::debug;
+<span class="kw">use </span>common_telemetry::{debug, tracing};
 <span class="kw">use </span>datafusion::datasource::DefaultTableSource;
 <span class="kw">use </span>datafusion_common::TableReference <span class="kw">as </span>DfTableReference;
 <span class="kw">use </span>datafusion_expr::LogicalPlanBuilder;
@@ -234,7 +235,8 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>copy_table_to(
+    <span class="attr">#[tracing::instrument(skip_all)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>copy_table_to(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: CopyTableRequest,
         query_ctx: QueryContextRef,
