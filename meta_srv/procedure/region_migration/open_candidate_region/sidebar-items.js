@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["OpenCandidateRegion"]};
+window.SIDEBAR_ITEMS = {"constant":["OPEN_CANDIDATE_REGION_TIMEOUT"],"struct":["OpenCandidateRegion"]};

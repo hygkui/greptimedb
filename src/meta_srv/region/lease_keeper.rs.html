@@ -541,6 +541,13 @@
 <a href="#541" id="541">541</a>
 <a href="#542" id="542">542</a>
 <a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -711,6 +718,13 @@
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.inner.write().unwrap();
         inner.remove(<span class="kw-2">&amp;</span>(<span class="self">self</span>.datanode_id, <span class="self">self</span>.region_id));
+    }
+}
+
+<span class="kw">impl </span>OpeningRegionGuard {
+    <span class="doccomment">/// Returns opening region info.
+    </span><span class="kw">pub fn </span>info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (DatanodeId, RegionId) {
+        (<span class="self">self</span>.datanode_id, <span class="self">self</span>.region_id)
     }
 }
 

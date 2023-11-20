@@ -692,6 +692,20 @@
 <a href="#692" id="692">692</a>
 <a href="#693" id="693">693</a>
 <a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -710,9 +724,11 @@
 <span class="kw">use </span>common_error::status_code::StatusCode;
 <span class="kw">use </span>common_macro::stack_trace_debug;
 <span class="kw">use </span>common_meta::peer::Peer;
+<span class="kw">use </span>common_meta::DatanodeId;
 <span class="kw">use </span>common_runtime::JoinError;
 <span class="kw">use </span>servers::define_into_tonic_status;
 <span class="kw">use </span>snafu::{Location, Snafu};
+<span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>table::metadata::TableId;
 <span class="kw">use </span>tokio::sync::mpsc::error::SendError;
 <span class="kw">use </span>tonic::codegen::http;
@@ -723,6 +739,17 @@
 #[snafu(visibility(<span class="kw">pub</span>))]
 #[stack_trace_debug]
 </span><span class="kw">pub enum </span>Error {
+    <span class="attr">#[snafu(display(
+        <span class="string">&quot;Another procedure is opening the region: {} on peer: {}&quot;</span>,
+        region_id,
+        peer_id
+    ))]
+    </span>RegionOpeningRace {
+        location: Location,
+        peer_id: DatanodeId,
+        region_id: RegionId,
+    },
+
     <span class="attr">#[snafu(display(<span class="string">&quot;Failed to create default catalog and schema&quot;</span>))]
     </span>InitMetadata {
         location: Location,
@@ -1319,7 +1346,8 @@
             | Error::UnexpectedInstructionReply { .. }
             | Error::Unexpected { .. }
             | Error::Txn { .. }
-            | Error::TableIdChanged { .. } =&gt; StatusCode::Unexpected,
+            | Error::TableIdChanged { .. }
+            | Error::RegionOpeningRace { .. } =&gt; StatusCode::Unexpected,
             Error::TableNotFound { .. } =&gt; StatusCode::TableNotFound,
             Error::InvalidateTableCache { source, .. } =&gt; source.status_code(),
             Error::RequestDatanode { source, .. } =&gt; source.status_code(),
