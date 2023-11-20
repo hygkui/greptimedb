@@ -732,7 +732,7 @@
         <span class="macro">assert_eq!</span>([<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], mapper.column_ids());
         <span class="macro">assert_eq!</span>([<span class="number">3</span>, <span class="number">4</span>], mapper.batch_fields());
 
-        <span class="kw">let </span>cache = CacheManager::new(<span class="number">0</span>, <span class="number">1024</span>);
+        <span class="kw">let </span>cache = CacheManager::new(<span class="number">0</span>, <span class="number">1024</span>, <span class="number">0</span>);
         <span class="kw">let </span>batch = new_batch(<span class="number">0</span>, <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="kw-2">&amp;</span>[(<span class="number">3</span>, <span class="number">3</span>), (<span class="number">4</span>, <span class="number">4</span>)], <span class="number">3</span>);
         <span class="kw">let </span>record_batch = mapper.convert(<span class="kw-2">&amp;</span>batch, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>cache)).unwrap();
         <span class="kw">let </span>expect = <span class="string">&quot;\

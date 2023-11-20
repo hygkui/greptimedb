@@ -123,6 +123,27 @@
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -161,8 +182,6 @@
             <span class="kw-2">&amp;</span>[TYPE_LABEL]
         )
         .unwrap();
-
-
 
     <span class="comment">// ------ Flush related metrics
     </span><span class="doccomment">/// Counter of scheduled flush requests.
@@ -247,5 +266,28 @@
     </span><span class="kw">pub static </span><span class="kw-2">ref </span>MERGE_FILTER_ROWS_TOTAL: IntCounterVec =
         <span class="macro">register_int_counter_vec!</span>(<span class="string">&quot;mito_merge_filter_rows_total&quot;</span>, <span class="string">&quot;mito merge filter rows total&quot;</span>, <span class="kw-2">&amp;</span>[TYPE_LABEL]).unwrap();
     <span class="comment">// ------- End of query metrics.
-</span>}
+
+    // Cache related metrics.
+    </span><span class="doccomment">/// Cache hit counter.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>CACHE_HIT: IntCounterVec = <span class="macro">register_int_counter_vec!</span>(
+        <span class="string">&quot;mito_cache_hit&quot;</span>,
+        <span class="string">&quot;mito cache hit&quot;</span>,
+        <span class="kw-2">&amp;</span>[TYPE_LABEL]
+    )
+    .unwrap();
+    <span class="doccomment">/// Cache miss counter.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>CACHE_MISS: IntCounterVec = <span class="macro">register_int_counter_vec!</span>(
+        <span class="string">&quot;mito_cache_miss&quot;</span>,
+        <span class="string">&quot;mito cache miss&quot;</span>,
+        <span class="kw-2">&amp;</span>[TYPE_LABEL]
+    )
+    .unwrap();
+    <span class="doccomment">/// Cache size in bytes.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>CACHE_BYTES: IntGaugeVec = <span class="macro">register_int_gauge_vec!</span>(
+        <span class="string">&quot;mito_cache_bytes&quot;</span>,
+        <span class="string">&quot;mito cache bytes&quot;</span>,
+        <span class="kw-2">&amp;</span>[TYPE_LABEL]
+    )
+    .unwrap();
+}
 </code></pre></div></section></main></body></html>

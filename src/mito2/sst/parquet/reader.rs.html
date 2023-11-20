@@ -441,6 +441,18 @@
 <a href="#441" id="441">441</a>
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -626,6 +638,7 @@
             file_reader: reader,
             projection: projection_mask,
             field_levels,
+            cache_manager: <span class="self">self</span>.cache_manager.clone(),
         };
 
         <span class="kw">let </span>metrics = Metrics {
@@ -735,6 +748,8 @@
     </span>projection: ProjectionMask,
     <span class="doccomment">/// Field levels to read.
     </span>field_levels: FieldLevels,
+    <span class="doccomment">/// Cache.
+    </span>cache_manager: <span class="prelude-ty">Option</span>&lt;CacheManagerRef&gt;,
 }
 
 <span class="kw">impl </span>RowGroupReaderBuilder {
@@ -745,7 +760,13 @@
 
     <span class="doccomment">/// Builds a [ParquetRecordBatchReader] to read the row group at `row_group_idx`.
     </span><span class="kw">async fn </span>build(<span class="kw-2">&amp;mut </span><span class="self">self</span>, row_group_idx: usize) -&gt; <span class="prelude-ty">Result</span>&lt;ParquetRecordBatchReader&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>row_group = InMemoryRowGroup::create(<span class="kw-2">&amp;</span><span class="self">self</span>.parquet_meta, row_group_idx);
+        <span class="kw">let </span><span class="kw-2">mut </span>row_group = InMemoryRowGroup::create(
+            <span class="self">self</span>.file_handle.region_id(),
+            <span class="self">self</span>.file_handle.file_id(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.parquet_meta,
+            row_group_idx,
+            <span class="self">self</span>.cache_manager.clone(),
+        );
         <span class="comment">// Fetches data into memory.
         </span>row_group
             .fetch(<span class="kw-2">&amp;mut </span><span class="self">self</span>.file_reader, <span class="kw-2">&amp;</span><span class="self">self</span>.projection, <span class="prelude-val">None</span>)
@@ -777,6 +798,9 @@
     /// Not `None` if [ParquetReader::stream] is not `None`.
     </span>read_format: ReadFormat,
     <span class="doccomment">/// Builder to build row group readers.
+    ///
+    /// The builder contains the file handle, so don&#39;t drop the builder while using
+    /// the [ParquetReader].
     </span>reader_builder: RowGroupReaderBuilder,
     <span class="doccomment">/// Reader of current row group.
     </span>current_reader: <span class="prelude-ty">Option</span>&lt;ParquetRecordBatchReader&gt;,

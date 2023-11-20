@@ -673,6 +673,8 @@
 <a href="#673" id="673">673</a>
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -797,6 +799,7 @@
         <span class="kw">let </span>cache_manager = Arc::new(CacheManager::new(
             config.sst_meta_cache_size.as_bytes(),
             config.vector_cache_size.as_bytes(),
+            config.page_cache_size.as_bytes(),
         ));
 
         <span class="kw">let </span>workers = (<span class="number">0</span>..config.num_workers)
@@ -894,6 +897,7 @@
         <span class="kw">let </span>cache_manager = Arc::new(CacheManager::new(
             config.sst_meta_cache_size.as_bytes(),
             config.vector_cache_size.as_bytes(),
+            config.page_cache_size.as_bytes(),
         ));
 
         <span class="kw">let </span>workers = (<span class="number">0</span>..config.num_workers)
