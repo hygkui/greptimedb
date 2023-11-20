@@ -393,7 +393,7 @@
     <span class="kw">let </span>in_memory = Arc::new(MemoryKvBackend::new()) <span class="kw">as </span>ResettableKvBackendRef;
 
     <span class="kw">let </span>selector = <span class="kw">match </span>opts.selector {
-        SelectorType::LoadBased =&gt; Arc::new(LoadBasedSelector) <span class="kw">as </span>SelectorRef,
+        SelectorType::LoadBased =&gt; Arc::new(LoadBasedSelector::default()) <span class="kw">as </span>SelectorRef,
         SelectorType::LeaseBased =&gt; Arc::new(LeaseBasedSelector) <span class="kw">as </span>SelectorRef,
     };
 

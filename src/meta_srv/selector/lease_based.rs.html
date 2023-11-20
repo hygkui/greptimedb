@@ -49,6 +49,15 @@
 <a href="#49" id="49">49</a>
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -64,13 +73,13 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>api::v1::meta::Peer;
-<span class="kw">use </span>rand::seq::SliceRandom;
-<span class="kw">use </span>rand::thread_rng;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::lease;
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::SelectorContext;
-<span class="kw">use </span><span class="kw">crate</span>::selector::{Namespace, Selector};
+<span class="kw">use </span><span class="kw">crate</span>::selector::common::choose_peers;
+<span class="kw">use </span><span class="kw">crate</span>::selector::weighted_choose::{RandomWeightedChoose, WeightedItem};
+<span class="kw">use </span><span class="kw">crate</span>::selector::{Namespace, Selector, SelectorOptions};
 
 <span class="kw">pub struct </span>LeaseBasedSelector;
 
@@ -79,25 +88,34 @@
     <span class="kw">type </span>Context = SelectorContext;
     <span class="kw">type </span>Output = Vec&lt;Peer&gt;;
 
-    <span class="kw">async fn </span>select(<span class="kw-2">&amp;</span><span class="self">self</span>, ns: Namespace, ctx: <span class="kw-2">&amp;</span><span class="self">Self</span>::Context) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
-        <span class="comment">// filter out the nodes out lease
-        </span><span class="kw">let </span><span class="kw-2">mut </span>lease_kvs: Vec&lt;<span class="kw">_</span>&gt; =
-            lease::alive_datanodes(ns, <span class="kw-2">&amp;</span>ctx.meta_peer_client, ctx.datanode_lease_secs)
-                .<span class="kw">await</span><span class="question-mark">?
-                </span>.into_iter()
-                .collect();
+    <span class="kw">async fn </span>select(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        ns: Namespace,
+        ctx: <span class="kw-2">&amp;</span><span class="self">Self</span>::Context,
+        opts: SelectorOptions,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
+        <span class="comment">// 1. get alive datanodes.
+        </span><span class="kw">let </span>lease_kvs =
+            lease::alive_datanodes(ns, <span class="kw-2">&amp;</span>ctx.meta_peer_client, ctx.datanode_lease_secs).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        lease_kvs.shuffle(<span class="kw-2">&amp;mut </span>thread_rng());
-
-        <span class="kw">let </span>peers = lease_kvs
+        <span class="comment">// 2. compute weight array, but the weight of each item is the same.
+        </span><span class="kw">let </span>weight_array = lease_kvs
             .into_iter()
-            .map(|(k, v)| Peer {
-                id: k.node_id,
-                addr: v.node_addr,
+            .map(|(k, v)| WeightedItem {
+                item: Peer {
+                    id: k.node_id,
+                    addr: v.node_addr.clone(),
+                },
+                weight: <span class="number">1</span>,
+                reverse_weight: <span class="number">1</span>,
             })
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            .collect();
 
-        <span class="prelude-val">Ok</span>(peers)
+        <span class="comment">// 3. choose peers by weight_array.
+        </span><span class="kw">let </span>weighted_choose = <span class="kw-2">&amp;mut </span>RandomWeightedChoose::default();
+        <span class="kw">let </span>selected = choose_peers(weight_array, <span class="kw-2">&amp;</span>opts, weighted_choose)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(selected)
     }
 }
 </code></pre></div></section></main></body></html>

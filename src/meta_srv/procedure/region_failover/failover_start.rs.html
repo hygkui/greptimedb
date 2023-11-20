@@ -131,6 +131,8 @@
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -157,6 +159,7 @@
 <span class="kw">use </span><span class="kw">super</span>::deactivate_region::DeactivateRegion;
 <span class="kw">use super</span>::{RegionFailoverContext, State};
 <span class="kw">use </span><span class="kw">crate</span>::error::{RegionFailoverCandidatesNotFoundSnafu, <span class="prelude-ty">Result</span>, RetryLaterSnafu};
+<span class="kw">use </span><span class="kw">crate</span>::selector::SelectorOptions;
 
 <span class="attr">#[derive(Serialize, Deserialize, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>RegionFailoverStart {
@@ -183,9 +186,10 @@
         selector_ctx.table_id = <span class="prelude-val">Some</span>(failed_region.table_id);
 
         <span class="kw">let </span>cluster_id = failed_region.cluster_id;
+        <span class="kw">let </span>opts = SelectorOptions::default();
         <span class="kw">let </span>candidates = ctx
             .selector
-            .select(cluster_id, <span class="kw-2">&amp;</span>selector_ctx)
+            .select(cluster_id, <span class="kw-2">&amp;</span>selector_ctx, opts)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.iter()
             .filter_map(|p| {

@@ -195,7 +195,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, InvalidHeartbeatRequestSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::keys::StatKey;
 
-<span class="attr">#[derive(Debug, Default, Serialize, Deserialize)]
+<span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>Stat {
     <span class="kw">pub </span>timestamp_millis: i64,
     <span class="kw">pub </span>cluster_id: u64,
@@ -214,7 +214,7 @@
     </span><span class="kw">pub </span>node_epoch: u64,
 }
 
-<span class="attr">#[derive(Debug, Serialize, Deserialize)]
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>RegionStat {
     <span class="doccomment">/// The region_id.
     </span><span class="kw">pub </span>id: u64,
