@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAGIC_SIZE","MIN_FILE_SIZE"],"struct":["PuffinFileReader"]};

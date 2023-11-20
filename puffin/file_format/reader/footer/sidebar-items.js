@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FLAGS_SIZE","MIN_FOOTER_SIZE","PAYLOAD_SIZE_SIZE"],"enum":["ParseStage"],"struct":["BytesToRead","FooterParser","StageParser"]};
