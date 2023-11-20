@@ -262,39 +262,6 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -444,7 +411,6 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>std::io::Write;
-    <span class="kw">use </span>std::time::Duration;
 
     <span class="kw">use </span>common_test_util::temp_dir::create_named_temp_file;
     <span class="kw">use </span>datanode::config::{DatanodeOptions, ObjectStoreConfig};
@@ -476,11 +442,6 @@
             read_batch_size = 128
             sync_write = false
 
-            [storage.compaction]
-            max_inflight_tasks = 3
-            max_files_in_level0 = 7
-            max_purge_tasks = 32
-
             [logging]
             level = &quot;debug&quot;
             dir = &quot;/tmp/greptimedb/test/logs&quot;
@@ -491,17 +452,6 @@
         temp_env::with_vars(
             <span class="comment">// The following environment variables will be used to override the values in the config file.
             </span>[
-                (
-                    <span class="comment">// storage.manifest.checkpoint_margin = 99
-                    </span>[
-                        env_prefix.to_string(),
-                        <span class="string">&quot;storage&quot;</span>.to_uppercase(),
-                        <span class="string">&quot;manifest&quot;</span>.to_uppercase(),
-                        <span class="string">&quot;checkpoint_margin&quot;</span>.to_uppercase(),
-                    ]
-                    .join(ENV_VAR_SEP),
-                    <span class="prelude-val">Some</span>(<span class="string">&quot;99&quot;</span>),
-                ),
                 (
                     <span class="comment">// storage.type = S3
                     </span>[
@@ -521,17 +471,6 @@
                     ]
                     .join(ENV_VAR_SEP),
                     <span class="prelude-val">Some</span>(<span class="string">&quot;mybucket&quot;</span>),
-                ),
-                (
-                    <span class="comment">// storage.manifest.gc_duration = 42s
-                    </span>[
-                        env_prefix.to_string(),
-                        <span class="string">&quot;storage&quot;</span>.to_uppercase(),
-                        <span class="string">&quot;manifest&quot;</span>.to_uppercase(),
-                        <span class="string">&quot;gc_duration&quot;</span>.to_uppercase(),
-                    ]
-                    .join(ENV_VAR_SEP),
-                    <span class="prelude-val">Some</span>(<span class="string">&quot;42s&quot;</span>),
                 ),
                 (
                     <span class="comment">// wal.dir = /other/wal/dir
@@ -563,17 +502,12 @@
                 .unwrap();
 
                 <span class="comment">// Check the configs from environment variables.
-                </span><span class="macro">assert_eq!</span>(opts.storage.manifest.checkpoint_margin, <span class="prelude-val">Some</span>(<span class="number">99</span>));
-                <span class="kw">match </span>opts.storage.store {
+                </span><span class="kw">match </span>opts.storage.store {
                     ObjectStoreConfig::S3(s3_config) =&gt; {
                         <span class="macro">assert_eq!</span>(s3_config.bucket, <span class="string">&quot;mybucket&quot;</span>.to_string());
                     }
                     <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;unexpected store type&quot;</span>),
                 }
-                <span class="macro">assert_eq!</span>(
-                    opts.storage.manifest.gc_duration,
-                    <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">42</span>))
-                );
                 <span class="macro">assert_eq!</span>(
                     opts.meta_client.unwrap().metasrv_addrs,
                     <span class="macro">vec!</span>[

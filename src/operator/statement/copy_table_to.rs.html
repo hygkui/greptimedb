@@ -147,8 +147,6 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -168,6 +166,7 @@
 <span class="kw">use </span>common_base::readable_size::ReadableSize;
 <span class="kw">use </span>common_datasource::file_format::csv::stream_to_csv;
 <span class="kw">use </span>common_datasource::file_format::json::stream_to_json;
+<span class="kw">use </span>common_datasource::file_format::parquet::stream_to_parquet;
 <span class="kw">use </span>common_datasource::file_format::Format;
 <span class="kw">use </span>common_datasource::object_store::{build_backend, parse_url};
 <span class="kw">use </span>common_datasource::util::find_dir_and_filename;
@@ -182,16 +181,16 @@
 <span class="kw">use </span>query::plan::LogicalPlan;
 <span class="kw">use </span>session::context::QueryContextRef;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
-<span class="kw">use </span>storage::sst::SstInfo;
-<span class="kw">use </span>storage::{ParquetWriter, Source};
 <span class="kw">use </span>table::engine::TableReference;
 <span class="kw">use </span>table::requests::CopyTableRequest;
 <span class="kw">use </span>table::table::adapter::DfTableProviderAdapter;
 
-<span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, BuildDfLogicalPlanSnafu, ExecLogicalPlanSnafu, <span class="prelude-ty">Result</span>, WriteParquetSnafu,
-};
+<span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, BuildDfLogicalPlanSnafu, ExecLogicalPlanSnafu, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::statement::StatementExecutor;
+
+<span class="comment">// The buffer size should be greater than 5MB (minimum multipart upload size).
+</span><span class="doccomment">/// Buffer size to flush data to object stores.
+</span><span class="kw">const </span>WRITE_BUFFER_THRESHOLD: ReadableSize = ReadableSize::mb(<span class="number">8</span>);
 
 <span class="kw">impl </span>StatementExecutor {
     <span class="kw">async fn </span>stream_to_file(
@@ -201,7 +200,7 @@
         object_store: ObjectStore,
         path: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;usize&gt; {
-        <span class="kw">let </span>threshold = ReadableSize::mb(<span class="number">4</span>).as_bytes() <span class="kw">as </span>usize;
+        <span class="kw">let </span>threshold = WRITE_BUFFER_THRESHOLD.as_bytes() <span class="kw">as </span>usize;
 
         <span class="kw">match </span>format {
             Format::Csv(<span class="kw">_</span>) =&gt; stream_to_csv(
@@ -220,17 +219,14 @@
             )
             .<span class="kw">await
             </span>.context(error::WriteStreamToFileSnafu { path }),
-            Format::Parquet(<span class="kw">_</span>) =&gt; {
-                <span class="kw">let </span>writer = ParquetWriter::new(path, Source::Stream(stream), object_store);
-                <span class="kw">let </span>rows_copied = writer
-                    .write_sst(<span class="kw-2">&amp;</span>storage::sst::WriteOptions::default())
-                    .<span class="kw">await
-                    </span>.context(WriteParquetSnafu)<span class="question-mark">?
-                    </span>.map(|SstInfo { num_rows, .. }| num_rows)
-                    .unwrap_or(<span class="number">0</span>);
-
-                <span class="prelude-val">Ok</span>(rows_copied)
-            }
+            Format::Parquet(<span class="kw">_</span>) =&gt; stream_to_parquet(
+                Box::pin(DfRecordBatchStreamAdapter::new(stream)),
+                object_store,
+                path,
+                threshold,
+            )
+            .<span class="kw">await
+            </span>.context(error::WriteStreamToFileSnafu { path }),
             <span class="kw">_ </span>=&gt; error::UnsupportedFormatSnafu { format: <span class="kw-2">*</span>format }.fail(),
         }
     }
