@@ -553,6 +553,7 @@
 <a href="#553" id="553">553</a>
 <a href="#554" id="554">554</a>
 <a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -568,19 +569,18 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>api::v1::value::ValueData;
-<span class="kw">use </span>api::v1::{<span class="self">self</span>, ColumnDataType, ColumnSchema, Row, Rows, SemanticType, Value};
+<span class="kw">use </span>api::v1::{ColumnDataType, ColumnSchema, Row, Rows, SemanticType, Value};
 <span class="kw">use </span>base64::engine::general_purpose::STANDARD_NO_PAD;
 <span class="kw">use </span>base64::Engine;
 <span class="kw">use </span>common_recordbatch::util::collect;
-<span class="kw">use </span>datafusion::prelude::{col, lit, Expr};
-<span class="kw">use </span>datatypes::vectors::StringVector;
+<span class="kw">use </span>datafusion::prelude::{col, lit};
 <span class="kw">use </span>mito2::engine::MitoEngine;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>store_api::region_engine::RegionEngine;
-<span class="kw">use </span>store_api::region_request::{RegionPutRequest, RegionReadRequest};
-<span class="kw">use </span>store_api::storage::{RegionId, ScanRequest, TableId};
+<span class="kw">use </span>store_api::region_request::RegionPutRequest;
+<span class="kw">use </span>store_api::storage::{RegionId, ScanRequest};
 
-<span class="kw">use </span><span class="kw">crate</span>::engine::{
+<span class="kw">use </span><span class="kw">crate</span>::consts::{
     METADATA_SCHEMA_KEY_COLUMN_NAME, METADATA_SCHEMA_TIMESTAMP_COLUMN_NAME,
     METADATA_SCHEMA_VALUE_COLUMN_INDEX, METADATA_SCHEMA_VALUE_COLUMN_NAME,
 };
@@ -699,11 +699,13 @@
         <span class="macro">format!</span>(<span class="string">&quot;__column_{}_{}&quot;</span>, region_id.as_u64(), encoded_column_name)
     }
 
-    <span class="kw">pub fn </span>parse_region_key(key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt; {
+    <span class="attr">#[allow(dead_code)]
+    </span><span class="kw">pub fn </span>parse_region_key(key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt; {
         key.strip_prefix(<span class="string">&quot;__region_&quot;</span>)
     }
 
     <span class="doccomment">/// Parse column key to (logical_region_id, column_name)
+    </span><span class="attr">#[allow(dead_code)]
     </span><span class="kw">pub fn </span>parse_column_key(key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(RegionId, String)&gt;&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(stripped) = key.strip_prefix(<span class="string">&quot;__column_&quot;</span>) {
             <span class="kw">let </span><span class="kw-2">mut </span>iter = stripped.split(<span class="string">&#39;_&#39;</span>);
@@ -790,7 +792,7 @@
             .handle_query(region_id, scan_req)
             .<span class="kw">await
             </span>.context(MitoReadOperationSnafu)<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>scan_result = collect(record_batch_stream)
+        <span class="kw">let </span>scan_result = collect(record_batch_stream)
             .<span class="kw">await
             </span>.context(CollectRecordBatchStreamSnafu)<span class="question-mark">?</span>;
 
