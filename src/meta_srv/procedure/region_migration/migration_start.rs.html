@@ -287,17 +287,6 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -317,7 +306,7 @@
 <span class="kw">use </span>common_meta::peer::Peer;
 <span class="kw">use </span>common_meta::rpc::router::RegionRoute;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>snafu::{location, Location, OptionExt, ResultExt};
+<span class="kw">use </span>snafu::OptionExt;
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">super</span>::downgrade_leader_region::DowngradeLeaderRegion;
@@ -341,9 +330,8 @@
     /// Otherwise go to the OpenCandidateRegion state.
     </span><span class="kw">async fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Context) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>State&gt;&gt; {
         <span class="kw">let </span>region_id = ctx.persistent_ctx.region_id;
-        <span class="kw">let </span>to_peer = <span class="kw-2">&amp;</span>ctx.persistent_ctx.to_peer;
-
         <span class="kw">let </span>region_route = <span class="self">self</span>.retrieve_region_route(ctx, region_id).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>to_peer = <span class="kw-2">&amp;</span>ctx.persistent_ctx.to_peer;
 
         <span class="kw">if </span><span class="self">self</span>.check_leader_region_on_peer(<span class="kw-2">&amp;</span>region_route, to_peer)<span class="question-mark">? </span>{
             <span class="prelude-val">Ok</span>(Box::new(RegionMigrationEnd))
@@ -370,21 +358,11 @@
     /// - Failed to retrieve the metadata of table.
     </span><span class="kw">async fn </span>retrieve_region_route(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ctx: <span class="kw-2">&amp;</span>Context,
+        ctx: <span class="kw-2">&amp;mut </span>Context,
         region_id: RegionId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;RegionRoute&gt; {
         <span class="kw">let </span>table_id = region_id.table_id();
-        <span class="kw">let </span>table_route = ctx
-            .table_metadata_manager
-            .table_route_manager()
-            .get(table_id)
-            .<span class="kw">await
-            </span>.context(error::TableMetadataManagerSnafu)
-            .map_err(|e| error::Error::RetryLater {
-                reason: e.to_string(),
-                location: <span class="macro">location!</span>(),
-            })<span class="question-mark">?
-            </span>.context(error::TableRouteNotFoundSnafu { table_id })<span class="question-mark">?</span>;
+        <span class="kw">let </span>table_route = ctx.get_table_route_value().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>region_route = table_route
             .region_routes
@@ -465,10 +443,10 @@
         <span class="kw">let </span>state = RegionMigrationStart;
         <span class="kw">let </span>env = TestingEnv::new();
         <span class="kw">let </span>persistent_context = new_persistent_context();
-        <span class="kw">let </span>ctx = env.context_factory().new_context(persistent_context);
+        <span class="kw">let </span><span class="kw-2">mut </span>ctx = env.context_factory().new_context(persistent_context);
 
         <span class="kw">let </span>err = state
-            .retrieve_region_route(<span class="kw-2">&amp;</span>ctx, RegionId::new(<span class="number">1024</span>, <span class="number">1</span>))
+            .retrieve_region_route(<span class="kw-2">&amp;mut </span>ctx, RegionId::new(<span class="number">1024</span>, <span class="number">1</span>))
             .<span class="kw">await
             </span>.unwrap_err();
 
@@ -484,7 +462,7 @@
         <span class="kw">let </span>from_peer = persistent_context.from_peer.clone();
 
         <span class="kw">let </span>env = TestingEnv::new();
-        <span class="kw">let </span>ctx = env.context_factory().new_context(persistent_context);
+        <span class="kw">let </span><span class="kw-2">mut </span>ctx = env.context_factory().new_context(persistent_context);
 
         <span class="kw">let </span>table_info = new_test_table_info(<span class="number">1024</span>, <span class="macro">vec!</span>[<span class="number">1</span>]).into();
         <span class="kw">let </span>region_route = RegionRoute {
@@ -499,7 +477,7 @@
             </span>.unwrap();
 
         <span class="kw">let </span>err = state
-            .retrieve_region_route(<span class="kw-2">&amp;</span>ctx, RegionId::new(<span class="number">1024</span>, <span class="number">3</span>))
+            .retrieve_region_route(<span class="kw-2">&amp;mut </span>ctx, RegionId::new(<span class="number">1024</span>, <span class="number">3</span>))
             .<span class="kw">await
             </span>.unwrap_err();
 

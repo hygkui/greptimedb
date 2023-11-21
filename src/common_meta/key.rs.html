@@ -1878,7 +1878,7 @@
     </span><span class="kw">pub async fn </span>update_leader_region_status&lt;F&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_id: TableId,
-        current_table_route_value: DeserializedValueWithBytes&lt;TableRouteValue&gt;,
+        current_table_route_value: <span class="kw-2">&amp;</span>DeserializedValueWithBytes&lt;TableRouteValue&gt;,
         next_region_route_status: F,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;
     <span class="kw">where
@@ -1905,7 +1905,7 @@
 
         <span class="kw">let </span>(update_table_route_txn, on_update_table_route_failure) = <span class="self">self
             </span>.table_route_manager()
-            .build_update_txn(table_id, <span class="kw-2">&amp;</span>current_table_route_value, <span class="kw-2">&amp;</span>new_table_route_value)<span class="question-mark">?</span>;
+            .build_update_txn(table_id, current_table_route_value, <span class="kw-2">&amp;</span>new_table_route_value)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>r = <span class="self">self</span>.kv_backend.txn(update_table_route_txn).<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -2341,7 +2341,7 @@
             </span>.unwrap();
 
         table_metadata_manager
-            .update_leader_region_status(table_id, current_table_route_value, |region_route| {
+            .update_leader_region_status(table_id, <span class="kw-2">&amp;</span>current_table_route_value, |region_route| {
                 <span class="kw">if </span>region_route.leader_status.is_some() {
                     <span class="prelude-val">None
                 </span>} <span class="kw">else </span>{

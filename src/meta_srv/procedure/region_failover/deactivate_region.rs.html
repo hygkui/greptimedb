@@ -383,7 +383,7 @@
             </span>.context(error::TableRouteNotFoundSnafu { table_id })<span class="question-mark">?</span>;
 
         ctx.table_metadata_manager
-            .update_leader_region_status(table_id, table_route_value, |region| {
+            .update_leader_region_status(table_id, <span class="kw-2">&amp;</span>table_route_value, |region| {
                 <span class="kw">if </span>region.region.id.region_number() == failed_region.region_number {
                     <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(RegionStatus::Downgraded))
                 } <span class="kw">else </span>{
