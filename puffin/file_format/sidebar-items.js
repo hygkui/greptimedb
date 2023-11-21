@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MAGIC"],"mod":["reader"],"struct":["Flags"]};
+window.SIDEBAR_ITEMS = {"constant":["FLAGS_SIZE","MAGIC","MAGIC_SIZE","MIN_FILE_SIZE","MIN_FOOTER_SIZE","PAYLOAD_SIZE_SIZE"],"mod":["reader","writer"],"struct":["Flags"]};

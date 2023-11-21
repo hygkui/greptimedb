@@ -168,9 +168,6 @@
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -196,9 +193,9 @@
     MagicNotMatchedSnafu, ReadSnafu, <span class="prelude-ty">Result</span>, SeekSnafu, UnexpectedPuffinFileSizeSnafu,
     UnsupportedDecompressionSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::file_format::reader::footer::{FooterParser, MIN_FOOTER_SIZE};
+<span class="kw">use </span><span class="kw">crate</span>::file_format::reader::footer::FooterParser;
 <span class="kw">use </span><span class="kw">crate</span>::file_format::reader::{PuffinAsyncReader, PuffinSyncReader};
-<span class="kw">use </span><span class="kw">crate</span>::file_format::MAGIC;
+<span class="kw">use </span><span class="kw">crate</span>::file_format::{MAGIC, MAGIC_SIZE, MIN_FILE_SIZE};
 <span class="kw">use </span><span class="kw">crate</span>::file_metadata::FileMetadata;
 <span class="kw">use </span><span class="kw">crate</span>::partial_reader::PartialReader;
 
@@ -215,9 +212,6 @@
     <span class="doccomment">/// The metadata of the puffin file, which is parsed from the footer
     </span>metadata: <span class="prelude-ty">Option</span>&lt;FileMetadata&gt;,
 }
-
-<span class="kw">pub const </span>MAGIC_SIZE: u64 = MAGIC.len() <span class="kw">as </span>u64;
-<span class="kw">pub const </span>MIN_FILE_SIZE: u64 = MAGIC_SIZE + MIN_FOOTER_SIZE;
 
 <span class="kw">impl</span>&lt;R&gt; PuffinFileReader&lt;R&gt; {
     <span class="kw">pub fn </span>new(source: R) -&gt; <span class="self">Self </span>{

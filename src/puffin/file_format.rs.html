@@ -53,6 +53,15 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -97,14 +106,23 @@
 //! UTF-8 encoded JSON payload representing a single [`FileMetadata`] object.
 
 </span><span class="kw">pub mod </span>reader;
+<span class="kw">pub mod </span>writer;
 
 <span class="kw">use </span>bitflags::bitflags;
 
 <span class="kw">pub const </span>MAGIC: [u8; <span class="number">4</span>] = [<span class="number">0x50</span>, <span class="number">0x46</span>, <span class="number">0x41</span>, <span class="number">0x31</span>];
 
+<span class="kw">pub const </span>MAGIC_SIZE: u64 = MAGIC.len() <span class="kw">as </span>u64;
+<span class="kw">pub const </span>MIN_FILE_SIZE: u64 = MAGIC_SIZE + MIN_FOOTER_SIZE;
+<span class="kw">pub const </span>FLAGS_SIZE: u64 = <span class="number">4</span>;
+<span class="kw">pub const </span>PAYLOAD_SIZE_SIZE: u64 = <span class="number">4</span>;
+<span class="kw">pub const </span>MIN_FOOTER_SIZE: u64 = MAGIC_SIZE * <span class="number">2 </span>+ FLAGS_SIZE + PAYLOAD_SIZE_SIZE;
+
 <span class="macro">bitflags! </span>{
     <span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     </span><span class="kw">pub struct </span>Flags: u32 {
+        <span class="kw">const </span>DEFAULT = <span class="number">0b00000000</span>;
+
         <span class="kw">const </span>FOOTER_PAYLOAD_COMPRESSED_LZ4 = <span class="number">0b00000001</span>;
     }
 }
