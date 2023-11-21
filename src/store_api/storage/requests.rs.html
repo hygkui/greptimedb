@@ -379,11 +379,6 @@
 <a href="#379" id="379">379</a>
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
-<a href="#382" id="382">382</a>
-<a href="#383" id="383">383</a>
-<a href="#384" id="384">384</a>
-<a href="#385" id="385">385</a>
-<a href="#386" id="386">386</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -412,7 +407,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     BuildColumnDescriptorSnafu, Error, InvalidDefaultConstraintSnafu, InvalidRawRegionRequestSnafu,
 };
-<span class="kw">use </span><span class="kw">crate</span>::storage::{ColumnDescriptor, ColumnDescriptorBuilder, RegionDescriptor, SequenceNumber};
+<span class="kw">use </span><span class="kw">crate</span>::storage::{ColumnDescriptor, ColumnDescriptorBuilder, RegionDescriptor};
 
 <span class="doccomment">/// Write request holds a collection of updates to apply to a region.
 ///
@@ -434,11 +429,6 @@
 
 <span class="attr">#[derive(Default, Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>ScanRequest {
-    <span class="doccomment">/// Max sequence number to read, None for latest sequence.
-    ///
-    /// Default is None. Only returns data whose sequence number is less than or
-    /// equal to the `sequence`.
-    </span><span class="kw">pub </span>sequence: <span class="prelude-ty">Option</span>&lt;SequenceNumber&gt;,
     <span class="doccomment">/// Indices of columns to read, `None` to read all columns.
     </span><span class="kw">pub </span>projection: <span class="prelude-ty">Option</span>&lt;Vec&lt;usize&gt;&gt;,
     <span class="doccomment">/// Filters pushed down
