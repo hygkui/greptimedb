@@ -231,8 +231,6 @@
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -257,7 +255,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{<span class="self">self</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span><span class="kw">crate</span>::handler::node_stat::Stat;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::keys::{StatKey, StatValue};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 
@@ -317,9 +315,9 @@
         _req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         ctx: <span class="kw-2">&amp;mut </span>Context,
         acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">let </span><span class="prelude-val">Some</span>(current_stat) = acc.stat.take() <span class="kw">else </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         };
 
         <span class="kw">let </span>key = current_stat.stat_key();
@@ -353,7 +351,7 @@
         epoch_stats.push(current_stat);
 
         <span class="kw">if </span>!refresh &amp;&amp; epoch_stats.len() &lt; MAX_CACHED_STATS_PER_KEY {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         }
 
         <span class="kw">let </span>value: Vec&lt;u8&gt; = StatValue {
@@ -372,13 +370,12 @@
             .<span class="kw">await
             </span>.context(error::KvBackendSnafu)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::sync::atomic::AtomicBool;
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>common_meta::key::TableMetadataManager;
@@ -415,7 +412,6 @@
             meta_peer_client,
             mailbox,
             election: <span class="prelude-val">None</span>,
-            skip_all: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
             is_infancy: <span class="bool-val">false</span>,
             table_metadata_manager: Arc::new(TableMetadataManager::new(kv_backend.clone())),
         };

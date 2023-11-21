@@ -66,7 +66,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 <span class="kw">use </span><span class="kw">crate</span>::pubsub::{Message, PublishRef};
 
@@ -91,11 +91,11 @@
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>Context,
         <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">let </span>msg = Message::Heartbeat(Box::new(req.clone()));
         <span class="self">self</span>.publish.send_msg(msg).<span class="kw">await</span>;
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 </code></pre></div></section></main></body></html>

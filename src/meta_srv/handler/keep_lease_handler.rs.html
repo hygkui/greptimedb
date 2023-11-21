@@ -92,7 +92,7 @@
 <span class="kw">use </span>common_time::util <span class="kw">as </span>time_util;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::keys::{LeaseKey, LeaseValue};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 
@@ -109,13 +109,13 @@
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         ctx: <span class="kw-2">&amp;mut </span>Context,
         _acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">let </span>HeartbeatRequest { header, peer, .. } = req;
         <span class="kw">let </span><span class="prelude-val">Some</span>(header) = <span class="kw-2">&amp;</span>header <span class="kw">else </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         };
         <span class="kw">let </span><span class="prelude-val">Some</span>(peer) = <span class="kw-2">&amp;</span>peer <span class="kw">else </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         };
 
         <span class="kw">let </span>key = LeaseKey {
@@ -143,7 +143,7 @@
             <span class="macro">warn!</span>(<span class="string">&quot;Failed to update lease KV, peer: {peer:?}, {err}&quot;</span>);
         }
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 </code></pre></div></section></main></body></html>

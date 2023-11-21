@@ -432,7 +432,7 @@
 <span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 <span class="kw">use </span><span class="kw">crate</span>::region::lease_keeper::{OpeningRegionKeeperRef, RegionLeaseKeeperRef};
 <span class="kw">use </span><span class="kw">crate</span>::region::RegionLeaseKeeper;
@@ -500,9 +500,9 @@
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         _ctx: <span class="kw-2">&amp;mut </span>Context,
         acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">let </span><span class="prelude-val">Some</span>(stat) = acc.stat.as_ref() <span class="kw">else </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         };
 
         <span class="kw">let </span>regions = stat.regions();
@@ -562,7 +562,7 @@
             lease_seconds: <span class="self">self</span>.region_lease_seconds,
         });
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 

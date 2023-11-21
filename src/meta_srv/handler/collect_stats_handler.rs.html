@@ -71,7 +71,7 @@
 
 <span class="kw">use </span><span class="kw">super</span>::node_stat::Stat;
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 
 <span class="kw">pub struct </span>CollectStatsHandler;
@@ -87,11 +87,11 @@
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         _ctx: <span class="kw-2">&amp;mut </span>Context,
         acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">if </span>req.mailbox_message.is_some() {
             <span class="comment">// If the heartbeat is a mailbox message, it may have no other valid information,
             // so we don&#39;t need to collect stats.
-            </span><span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            </span><span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         }
 
         <span class="kw">match </span>Stat::try_from(req.clone()) {
@@ -103,7 +103,7 @@
             }
         };
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 </code></pre></div></section></main></body></html>

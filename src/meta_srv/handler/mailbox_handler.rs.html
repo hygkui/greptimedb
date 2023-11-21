@@ -40,6 +40,7 @@
 <a href="#40" id="40">40</a>
 <a href="#41" id="41">41</a>
 <a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -57,7 +58,7 @@
 </span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, Role};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 
 <span class="kw">pub struct </span>MailboxHandler;
@@ -73,13 +74,14 @@
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         ctx: <span class="kw-2">&amp;mut </span>Context,
         _acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(message) = <span class="kw-2">&amp;</span>req.mailbox_message {
-            ctx.mailbox.on_recv(message.id, <span class="prelude-val">Ok</span>(message.clone())).<span class="kw">await</span><span class="question-mark">?</span>;
-            ctx.set_skip_all();
-        }
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
+        <span class="kw">let </span><span class="prelude-val">Some</span>(message) = <span class="kw-2">&amp;</span>req.mailbox_message <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
+        };
 
-        <span class="prelude-val">Ok</span>(())
+        ctx.mailbox.on_recv(message.id, <span class="prelude-val">Ok</span>(message.clone())).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(HandleControl::Done)
     }
 }
 </code></pre></div></section></main></body></html>

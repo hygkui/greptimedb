@@ -107,8 +107,6 @@
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -126,7 +124,7 @@
 </span><span class="kw">use </span>api::v1::meta::{HeartbeatRequest, ResponseHeader, Role, PROTOCOL_VERSION};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 
 <span class="kw">pub struct </span>ResponseHeaderHandler;
@@ -142,7 +140,7 @@
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         _ctx: <span class="kw-2">&amp;mut </span>Context,
         acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">let </span>HeartbeatRequest { header, .. } = req;
         <span class="kw">let </span>res_header = ResponseHeader {
             protocol_version: PROTOCOL_VERSION,
@@ -151,13 +149,12 @@
         };
         acc.header = <span class="prelude-val">Some</span>(res_header);
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::sync::atomic::AtomicBool;
     <span class="kw">use </span>std::sync::Arc;
 
     <span class="kw">use </span>api::v1::meta::{HeartbeatResponse, RequestHeader};
@@ -195,7 +192,6 @@
             meta_peer_client,
             mailbox,
             election: <span class="prelude-val">None</span>,
-            skip_all: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
             is_infancy: <span class="bool-val">false</span>,
             table_metadata_manager: Arc::new(TableMetadataManager::new(kv_backend.clone())),
         };

@@ -163,6 +163,7 @@
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -190,7 +191,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::failure_detector::PhiAccrualFailureDetectorOptions;
 <span class="kw">use </span><span class="kw">crate</span>::handler::failure_handler::runner::{FailureDetectControl, FailureDetectRunner};
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::{Context, ElectionRef};
 <span class="kw">use </span><span class="kw">crate</span>::procedure::region_failover::RegionFailoverManager;
 
@@ -235,7 +236,7 @@
         <span class="kw">_</span>: <span class="kw-2">&amp;</span>HeartbeatRequest,
         ctx: <span class="kw-2">&amp;mut </span>Context,
         acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">if </span>ctx.is_infancy {
             <span class="self">self</span>.failure_detect_runner
                 .send_control(FailureDetectControl::Purge)
@@ -243,7 +244,7 @@
         }
 
         <span class="kw">let </span><span class="prelude-val">Some</span>(stat) = acc.stat.as_ref() <span class="kw">else </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         };
 
         <span class="kw">let </span>heartbeat = DatanodeHeartbeat {
@@ -266,7 +267,8 @@
         };
 
         <span class="self">self</span>.failure_detect_runner.send_heartbeat(heartbeat).<span class="kw">await</span>;
-        <span class="prelude-val">Ok</span>(())
+
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 

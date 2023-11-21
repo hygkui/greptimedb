@@ -71,7 +71,7 @@
 <span class="kw">use </span>common_telemetry::warn;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
-<span class="kw">use </span><span class="kw">crate</span>::handler::{HeartbeatAccumulator, HeartbeatHandler};
+<span class="kw">use </span><span class="kw">crate</span>::handler::{HandleControl, HeartbeatAccumulator, HeartbeatHandler};
 <span class="kw">use </span><span class="kw">crate</span>::metasrv::Context;
 
 <span class="kw">pub struct </span>FilterInactiveRegionStatsHandler;
@@ -87,9 +87,9 @@
         req: <span class="kw-2">&amp;</span>HeartbeatRequest,
         _ctx: <span class="kw-2">&amp;mut </span>Context,
         acc: <span class="kw-2">&amp;mut </span>HeartbeatAccumulator,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;HandleControl&gt; {
         <span class="kw">if </span>acc.inactive_region_ids.is_empty() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         }
 
         <span class="macro">warn!</span>(
@@ -98,12 +98,12 @@
         );
 
         <span class="kw">let </span><span class="prelude-val">Some</span>(stat) = acc.stat.as_mut() <span class="kw">else </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(HandleControl::Continue);
         };
 
         stat.retain_active_region_stats(<span class="kw-2">&amp;</span>acc.inactive_region_ids);
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(HandleControl::Continue)
     }
 }
 </code></pre></div></section></main></body></html>

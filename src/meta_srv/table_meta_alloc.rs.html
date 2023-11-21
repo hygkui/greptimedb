@@ -135,6 +135,15 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -228,7 +237,16 @@
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="kw">if </span>peers.len() &lt; partitions.len() {
-        <span class="macro">warn!</span>(<span class="string">&quot;Create table failed due to no enough available datanodes, table: {}, partition number: {}, datanode number: {}&quot;</span>, format_full_table_name(<span class="kw-2">&amp;</span>table_info.catalog_name,<span class="kw-2">&amp;</span>table_info.schema_name,<span class="kw-2">&amp;</span>table_info.name), partitions.len(), peers.len());
+        <span class="macro">warn!</span>(
+            <span class="string">&quot;Create table failed due to no enough available datanodes, table: {}, partition number: {}, datanode number: {}&quot;</span>,
+            format_full_table_name(
+                <span class="kw-2">&amp;</span>table_info.catalog_name,
+                <span class="kw-2">&amp;</span>table_info.schema_name,
+                <span class="kw-2">&amp;</span>table_info.name
+            ),
+            partitions.len(),
+            peers.len()
+        );
         <span class="kw">return </span>error::NoEnoughAvailableDatanodeSnafu {
             required: partitions.len(),
             available: peers.len(),
