@@ -235,6 +235,7 @@
 <a href="#235" id="235">235</a>
 <a href="#236" id="236">236</a>
 <a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -331,6 +332,7 @@
 
     <span class="kw">use </span>api::v1::meta::Peer;
     <span class="kw">use </span>store_api::region_engine::RegionRole;
+    <span class="kw">use </span>store_api::storage::RegionId;
 
     <span class="kw">use super</span>::{RegionNumsBasedWeightCompute, WeightCompute};
     <span class="kw">use </span><span class="kw">crate</span>::handler::node_stat::{RegionStat, Stat};
@@ -426,7 +428,7 @@
             addr: <span class="string">&quot;127.0.0.1:3001&quot;</span>.to_string(),
             region_num: <span class="number">11</span>,
             region_stats: <span class="macro">vec!</span>[RegionStat {
-                id: <span class="number">111</span>,
+                id: RegionId::from_u64(<span class="number">111</span>),
                 rcus: <span class="number">1</span>,
                 wcus: <span class="number">1</span>,
                 approximate_bytes: <span class="number">1</span>,
@@ -443,7 +445,7 @@
             addr: <span class="string">&quot;127.0.0.1:3002&quot;</span>.to_string(),
             region_num: <span class="number">12</span>,
             region_stats: <span class="macro">vec!</span>[RegionStat {
-                id: <span class="number">112</span>,
+                id: RegionId::from_u64(<span class="number">112</span>),
                 rcus: <span class="number">1</span>,
                 wcus: <span class="number">1</span>,
                 approximate_bytes: <span class="number">1</span>,
@@ -460,7 +462,7 @@
             addr: <span class="string">&quot;127.0.0.1:3003&quot;</span>.to_string(),
             region_num: <span class="number">13</span>,
             region_stats: <span class="macro">vec!</span>[RegionStat {
-                id: <span class="number">113</span>,
+                id: RegionId::from_u64(<span class="number">113</span>),
                 rcus: <span class="number">1</span>,
                 wcus: <span class="number">1</span>,
                 approximate_bytes: <span class="number">1</span>,

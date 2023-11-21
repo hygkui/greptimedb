@@ -167,9 +167,6 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -217,7 +214,7 @@
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>RegionStat {
     <span class="doccomment">/// The region_id.
-    </span><span class="kw">pub </span>id: u64,
+    </span><span class="kw">pub </span>id: RegionId,
     <span class="doccomment">/// The read capacity units during this period
     </span><span class="kw">pub </span>rcus: i64,
     <span class="doccomment">/// The write capacity units during this period
@@ -247,13 +244,10 @@
 
     <span class="doccomment">/// Returns a tuple array containing [RegionId] and [RegionRole].
     </span><span class="kw">pub fn </span>regions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(RegionId, RegionRole)&gt; {
-        <span class="self">self</span>.region_stats
-            .iter()
-            .map(|s| (RegionId::from(s.id), s.role))
-            .collect()
+        <span class="self">self</span>.region_stats.iter().map(|s| (s.id, s.role)).collect()
     }
 
-    <span class="kw">pub fn </span>retain_active_region_stats(<span class="kw-2">&amp;mut </span><span class="self">self</span>, inactive_region_ids: <span class="kw-2">&amp;</span>HashSet&lt;u64&gt;) {
+    <span class="kw">pub fn </span>retain_active_region_stats(<span class="kw-2">&amp;mut </span><span class="self">self</span>, inactive_region_ids: <span class="kw-2">&amp;</span>HashSet&lt;RegionId&gt;) {
         <span class="kw">if </span>inactive_region_ids.is_empty() {
             <span class="kw">return</span>;
         }
@@ -312,7 +306,7 @@
 
     <span class="kw">fn </span>try_from(value: api::v1::meta::RegionStat) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            id: value.region_id,
+            id: RegionId::from_u64(value.region_id),
             rcus: value.rcus,
             wcus: value.wcus,
             approximate_bytes: value.approximate_bytes,

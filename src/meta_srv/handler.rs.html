@@ -518,6 +518,7 @@
 <a href="#518" id="518">518</a>
 <a href="#519" id="519">519</a>
 <a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -548,6 +549,7 @@
 <span class="kw">use </span>dashmap::DashMap;
 <span class="kw">use </span>futures::future::join_all;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
+<span class="kw">use </span>store_api::storage::RegionId;
 <span class="kw">use </span>tokio::sync::mpsc::Sender;
 <span class="kw">use </span>tokio::sync::{oneshot, Notify, RwLock};
 
@@ -604,7 +606,7 @@
     <span class="kw">pub </span>header: <span class="prelude-ty">Option</span>&lt;ResponseHeader&gt;,
     <span class="kw">pub </span>instructions: Vec&lt;Instruction&gt;,
     <span class="kw">pub </span>stat: <span class="prelude-ty">Option</span>&lt;Stat&gt;,
-    <span class="kw">pub </span>inactive_region_ids: HashSet&lt;u64&gt;,
+    <span class="kw">pub </span>inactive_region_ids: HashSet&lt;RegionId&gt;,
     <span class="kw">pub </span>region_lease: <span class="prelude-ty">Option</span>&lt;RegionLease&gt;,
 }
 

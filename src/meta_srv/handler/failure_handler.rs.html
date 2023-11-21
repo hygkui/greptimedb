@@ -186,7 +186,6 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>common_catalog::consts::default_engine;
 <span class="kw">use </span>common_meta::RegionIdent;
-<span class="kw">use </span>store_api::storage::RegionId;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="kw">use </span><span class="kw">crate</span>::failure_detector::PhiAccrualFailureDetectorOptions;
@@ -252,7 +251,7 @@
                 .region_stats
                 .iter()
                 .map(|x| {
-                    <span class="kw">let </span>region_id = RegionId::from(x.id);
+                    <span class="kw">let </span>region_id = x.id;
                     RegionIdent {
                         cluster_id: stat.cluster_id,
                         datanode_id: stat.id,
@@ -275,6 +274,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>store_api::region_engine::RegionRole;
+    <span class="kw">use </span>store_api::storage::RegionId;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::handler::node_stat::{RegionStat, Stat};
@@ -300,7 +300,7 @@
         <span class="kw">let </span>acc = <span class="kw-2">&amp;mut </span>HeartbeatAccumulator::default();
         <span class="kw">fn </span>new_region_stat(region_id: u64) -&gt; RegionStat {
             RegionStat {
-                id: region_id,
+                id: RegionId::from_u64(region_id),
                 rcus: <span class="number">0</span>,
                 wcus: <span class="number">0</span>,
                 approximate_bytes: <span class="number">0</span>,
