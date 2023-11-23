@@ -1182,6 +1182,15 @@
 <a href="#1182" id="1182">1182</a>
 <a href="#1183" id="1183">1183</a>
 <a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1205,7 +1214,7 @@
 
 <span class="kw">use </span>arrow::datatypes::TimeUnit <span class="kw">as </span>ArrowTimeUnit;
 <span class="kw">use </span>chrono::{
-    DateTime, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, TimeZone <span class="kw">as </span>ChronoTimeZone,
+    DateTime, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, TimeZone <span class="kw">as </span>ChronoTimeZone, Utc,
 };
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
@@ -1434,6 +1443,15 @@
     <span class="kw">pub fn </span>to_chrono_datetime(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;NaiveDateTime&gt; {
         <span class="kw">let </span>(sec, nsec) = <span class="self">self</span>.split();
         NaiveDateTime::from_timestamp_opt(sec, nsec)
+    }
+
+    <span class="kw">pub fn </span>to_chrono_datetime_with_timezone(<span class="kw-2">&amp;</span><span class="self">self</span>, tz: <span class="prelude-ty">Option</span>&lt;TimeZone&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;NaiveDateTime&gt; {
+        <span class="kw">let </span>datetime = <span class="self">self</span>.to_chrono_datetime();
+        datetime.map(|v| <span class="kw">match </span>tz {
+            <span class="prelude-val">Some</span>(TimeZone::Offset(offset)) =&gt; offset.from_utc_datetime(<span class="kw-2">&amp;</span>v).naive_local(),
+            <span class="prelude-val">Some</span>(TimeZone::Named(tz)) =&gt; tz.from_utc_datetime(<span class="kw-2">&amp;</span>v).naive_local(),
+            <span class="prelude-val">None </span>=&gt; Utc.from_utc_datetime(<span class="kw-2">&amp;</span>v).naive_local(),
+        })
     }
 
     <span class="doccomment">/// Convert timestamp to chrono date.

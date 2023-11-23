@@ -178,6 +178,16 @@
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -195,10 +205,11 @@
 </span><span class="kw">use </span>std::fmt::{Display, Formatter};
 <span class="kw">use </span>std::str::FromStr;
 
-<span class="kw">use </span>chrono::{LocalResult, NaiveDateTime};
+<span class="kw">use </span>chrono::{LocalResult, NaiveDateTime, TimeZone <span class="kw">as </span>ChronoTimeZone, Utc};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, InvalidDateStrSnafu, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span><span class="kw">crate</span>::timezone::TimeZone;
 <span class="kw">use </span><span class="kw">crate</span>::util::{format_utc_datetime, local_datetime_to_utc};
 <span class="kw">use </span><span class="kw">crate</span>::Date;
 
@@ -286,6 +297,15 @@
     <span class="doccomment">/// Convert to [NaiveDateTime].
     </span><span class="kw">pub fn </span>to_chrono_datetime(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;NaiveDateTime&gt; {
         NaiveDateTime::from_timestamp_millis(<span class="self">self</span>.<span class="number">0</span>)
+    }
+
+    <span class="kw">pub fn </span>to_chrono_datetime_with_timezone(<span class="kw-2">&amp;</span><span class="self">self</span>, tz: <span class="prelude-ty">Option</span>&lt;TimeZone&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;NaiveDateTime&gt; {
+        <span class="kw">let </span>datetime = <span class="self">self</span>.to_chrono_datetime();
+        datetime.map(|v| <span class="kw">match </span>tz {
+            <span class="prelude-val">Some</span>(TimeZone::Offset(offset)) =&gt; offset.from_utc_datetime(<span class="kw-2">&amp;</span>v).naive_local(),
+            <span class="prelude-val">Some</span>(TimeZone::Named(tz)) =&gt; tz.from_utc_datetime(<span class="kw-2">&amp;</span>v).naive_local(),
+            <span class="prelude-val">None </span>=&gt; Utc.from_utc_datetime(<span class="kw-2">&amp;</span>v).naive_local(),
+        })
     }
 
     <span class="doccomment">/// Convert to [common_time::date].
