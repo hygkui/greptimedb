@@ -612,22 +612,6 @@
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
-<a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
-<a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
-<a href="#629" id="629">629</a>
-<a href="#630" id="630">630</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -663,35 +647,16 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::rpc::KeyValue;
 
-<span class="kw">pub struct </span>KvPair&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>etcd_client::KeyValue);
-
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; KvPair&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// Creates a `KvPair` from etcd KeyValue
-    </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new(kv: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>etcd_client::KeyValue) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(kv)
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>from_etcd_kv(kv: <span class="kw-2">&amp;</span>etcd_client::KeyValue) -&gt; KeyValue {
-        KeyValue::from(KvPair::new(kv))
-    }
-}
-
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;KvPair&lt;<span class="lifetime">&#39;a</span>&gt;&gt; <span class="kw">for </span>KeyValue {
-    <span class="kw">fn </span>from(kv: KvPair&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            key: kv.<span class="number">0</span>.key().to_vec(),
-            value: kv.<span class="number">0</span>.value().to_vec(),
-        }
-    }
-}
-
 <span class="comment">// Maximum number of operations permitted in a transaction.
 // The etcd default configuration&#39;s `--max-txn-ops` is 128.
 //
 // For more detail, see: https://etcd.io/docs/v3.5/op-guide/configuration/
 </span><span class="kw">const </span>MAX_TXN_SIZE: usize = <span class="number">128</span>;
+
+<span class="kw">fn </span>convert_key_value(kv: etcd_client::KeyValue) -&gt; KeyValue {
+    <span class="kw">let </span>(key, value) = kv.into_key_value();
+    KeyValue { key, value }
+}
 
 <span class="kw">pub struct </span>EtcdStore {
     client: Client,
@@ -754,7 +719,7 @@
     <span class="kw">async fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: RangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RangeResponse&gt; {
         <span class="kw">let </span>Get { key, options } = req.try_into()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>res = <span class="self">self
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self
             </span>.client
             .kv_client()
             .get(key, options)
@@ -762,9 +727,9 @@
             </span>.context(error::EtcdFailedSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>kvs = res
-            .kvs()
-            .iter()
-            .map(KvPair::from_etcd_kv)
+            .take_kvs()
+            .into_iter()
+            .map(convert_key_value)
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="prelude-val">Ok</span>(RangeResponse {
@@ -780,14 +745,14 @@
             options,
         } = req.try_into()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>res = <span class="self">self
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self
             </span>.client
             .kv_client()
             .put(key, value, options)
             .<span class="kw">await
             </span>.context(error::EtcdFailedSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>prev_kv = res.prev_key().map(KvPair::from_etcd_kv);
+        <span class="kw">let </span>prev_kv = res.take_prev_key().map(convert_key_value);
         <span class="prelude-val">Ok</span>(PutResponse { prev_kv })
     }
 
@@ -796,7 +761,7 @@
 
         <span class="kw">let </span>put_ops = kvs
             .into_iter()
-            .map(|kv| (TxnOp::put(kv.key, kv.value, options.clone())))
+            .map(|kv| TxnOp::put(kv.key, kv.value, options.clone()))
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">let </span>txn_responses = <span class="self">self</span>.do_multi_txn(put_ops).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -805,9 +770,9 @@
         <span class="kw">for </span>txn_res <span class="kw">in </span>txn_responses {
             <span class="kw">for </span>op_res <span class="kw">in </span>txn_res.op_responses() {
                 <span class="kw">match </span>op_res {
-                    TxnOpResponse::Put(put_res) =&gt; {
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(prev_kv) = put_res.prev_key() {
-                            prev_kvs.push(KvPair::from_etcd_kv(prev_kv));
+                    TxnOpResponse::Put(<span class="kw-2">mut </span>put_res) =&gt; {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(prev_kv) = put_res.take_prev_key().map(convert_key_value) {
+                            prev_kvs.push(prev_kv);
                         }
                     }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
@@ -823,7 +788,7 @@
 
         <span class="kw">let </span>get_ops: Vec&lt;<span class="kw">_</span>&gt; = keys
             .into_iter()
-            .map(|k| TxnOp::get(k, options.clone()))
+            .map(|key| TxnOp::get(key, options.clone()))
             .collect();
 
         <span class="kw">let </span>txn_responses = <span class="self">self</span>.do_multi_txn(get_ops).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -831,12 +796,11 @@
         <span class="kw">let </span><span class="kw-2">mut </span>kvs = <span class="macro">vec!</span>[];
         <span class="kw">for </span>txn_res <span class="kw">in </span>txn_responses {
             <span class="kw">for </span>op_res <span class="kw">in </span>txn_res.op_responses() {
-                <span class="kw">let </span>get_res = <span class="kw">match </span>op_res {
+                <span class="kw">let </span><span class="kw-2">mut </span>get_res = <span class="kw">match </span>op_res {
                     TxnOpResponse::Get(get_res) =&gt; get_res,
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 };
-
-                kvs.extend(get_res.kvs().iter().map(KvPair::from_etcd_kv));
+                kvs.extend(get_res.take_kvs().into_iter().map(convert_key_value));
             }
         }
 
@@ -882,8 +846,8 @@
             })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>prev_kv = <span class="kw">match </span>op_res {
-            TxnOpResponse::Put(res) =&gt; res.prev_key().map(KvPair::from_etcd_kv),
-            TxnOpResponse::Get(res) =&gt; res.kvs().first().map(KvPair::from_etcd_kv),
+            TxnOpResponse::Put(<span class="kw-2">mut </span>res) =&gt; res.take_prev_key().map(convert_key_value),
+            TxnOpResponse::Get(<span class="kw-2">mut </span>res) =&gt; res.take_kvs().into_iter().next().map(convert_key_value),
             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
         };
 
@@ -893,7 +857,7 @@
     <span class="kw">async fn </span>delete_range(<span class="kw-2">&amp;</span><span class="self">self</span>, req: DeleteRangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;DeleteRangeResponse&gt; {
         <span class="kw">let </span>Delete { key, options } = req.try_into()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>res = <span class="self">self
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self
             </span>.client
             .kv_client()
             .delete(key, options)
@@ -901,9 +865,9 @@
             </span>.context(error::EtcdFailedSnafu)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>prev_kvs = res
-            .prev_kvs()
-            .iter()
-            .map(KvPair::from_etcd_kv)
+            .take_prev_kvs()
+            .into_iter()
+            .map(convert_key_value)
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="prelude-val">Ok</span>(DeleteRangeResponse {
@@ -919,7 +883,7 @@
 
         <span class="kw">let </span>delete_ops = keys
             .into_iter()
-            .map(|k| TxnOp::delete(k, options.clone()))
+            .map(|key| TxnOp::delete(key, options.clone()))
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">let </span>txn_responses = <span class="self">self</span>.do_multi_txn(delete_ops).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -927,10 +891,14 @@
         <span class="kw">for </span>txn_res <span class="kw">in </span>txn_responses {
             <span class="kw">for </span>op_res <span class="kw">in </span>txn_res.op_responses() {
                 <span class="kw">match </span>op_res {
-                    TxnOpResponse::Delete(delete_res) =&gt; {
-                        delete_res.prev_kvs().iter().for_each(|kv| {
-                            prev_kvs.push(KvPair::from_etcd_kv(kv));
-                        });
+                    TxnOpResponse::Delete(<span class="kw-2">mut </span>delete_res) =&gt; {
+                        delete_res
+                            .take_prev_kvs()
+                            .into_iter()
+                            .map(convert_key_value)
+                            .for_each(|kv| {
+                                prev_kvs.push(kv);
+                            });
                     }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }

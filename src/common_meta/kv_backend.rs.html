@@ -137,6 +137,7 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -151,12 +152,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">pub mod </span>etcd;
-<span class="kw">pub mod </span>memory;
-<span class="kw">pub mod </span>test;
-<span class="kw">pub mod </span>txn;
-
-<span class="kw">use </span>std::any::Any;
+</span><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -170,6 +166,12 @@
     DeleteRangeResponse, PutRequest, PutResponse, RangeRequest, RangeResponse,
 };
 <span class="kw">use </span><span class="kw">crate</span>::rpc::KeyValue;
+
+<span class="kw">pub mod </span>chroot;
+<span class="kw">pub mod </span>etcd;
+<span class="kw">pub mod </span>memory;
+<span class="kw">pub mod </span>test;
+<span class="kw">pub mod </span>txn;
 
 <span class="kw">pub type </span>KvBackendRef = Arc&lt;<span class="kw">dyn </span>KvBackend&lt;Error = Error&gt; + Send + Sync&gt;;
 

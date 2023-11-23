@@ -494,6 +494,7 @@
 <a href="#494" id="494">494</a>
 <a href="#495" id="495">495</a>
 <a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -508,11 +509,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>etcd;
-
-<span class="kw">use </span>common_error::ext::ErrorExt;
+</span><span class="kw">use </span>common_error::ext::ErrorExt;
 
 <span class="kw">use </span><span class="kw">crate</span>::rpc::store::{DeleteRangeResponse, PutResponse, RangeResponse};
+
+<span class="kw">mod </span>etcd;
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">pub trait </span>TxnService: Sync + Send {
@@ -618,7 +619,8 @@
 
 <span class="attr">#[derive(Debug, Clone, Default, PartialEq)]
 </span><span class="kw">pub struct </span>Txn {
-    req: TxnRequest,
+    <span class="comment">// HACK - chroot would modify this field
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) req: TxnRequest,
     c_when: bool,
     c_then: bool,
     c_else: bool,
