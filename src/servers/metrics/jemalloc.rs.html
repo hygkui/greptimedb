@@ -77,7 +77,6 @@
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -92,16 +91,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>error;
-
-<span class="kw">use </span>common_telemetry::error;
-<span class="kw">use </span>error::UpdateJemallocMetricsSnafu;
+</span><span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>lazy_static::lazy_static;
 <span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>prometheus::<span class="kw-2">*</span>;
 <span class="kw">use </span>snafu::ResultExt;
 <span class="kw">use </span>tikv_jemalloc_ctl::stats::{allocated_mib, resident_mib};
 <span class="kw">use </span>tikv_jemalloc_ctl::{epoch, epoch_mib, stats};
+
+<span class="kw">use </span><span class="kw">crate</span>::error::UpdateJemallocMetricsSnafu;
 
 <span class="macro">lazy_static! </span>{
     <span class="kw">pub static </span><span class="kw-2">ref </span>SYS_JEMALLOC_RESIDEN: IntGauge = <span class="macro">register_int_gauge!</span>(

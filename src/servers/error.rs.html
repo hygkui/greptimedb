@@ -591,6 +591,9 @@
 <a href="#591" id="591">591</a>
 <a href="#592" id="592">592</a>
 <a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -932,8 +935,12 @@
         source: <span class="kw">crate</span>::http::pprof::nix::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
-    </span>Metrics { source: BoxedError },
+    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to update jemalloc metrics&quot;</span>))]
+    </span>UpdateJemallocMetrics {
+        <span class="attr">#[snafu(source)]
+        </span>error: tikv_jemalloc_ctl::Error,
+        location: Location,
+    },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;DataFrame operation error&quot;</span>))]
     </span>DataFrame {
@@ -1001,7 +1008,8 @@
             | TcpIncoming { .. }
             | CatalogError { .. }
             | GrpcReflectionService { .. }
-            | BuildHttpResponse { .. } =&gt; StatusCode::Internal,
+            | BuildHttpResponse { .. }
+            | UpdateJemallocMetrics { .. } =&gt; StatusCode::Internal,
 
             CollectRecordbatch { .. } =&gt; StatusCode::EngineExecuteQuery,
 
@@ -1071,8 +1079,6 @@
 
             <span class="attr">#[cfg(feature = <span class="string">&quot;pprof&quot;</span>)]
             </span>DumpPprof { source, .. } =&gt; source.status_code(),
-
-            Metrics { source } =&gt; source.status_code(),
 
             ConvertScalarValue { source, .. } =&gt; source.status_code(),
 

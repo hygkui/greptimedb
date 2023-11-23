@@ -550,7 +550,7 @@
         source: table::error::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;Internal error&quot;</span>))]
     </span>Internal {
         location: Location,
         source: BoxedError,
@@ -586,7 +586,7 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Illegal access to catalog: {} and schema: {}&quot;</span>, catalog, schema))]
     </span>QueryAccessDenied { catalog: String, schema: String },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;&quot;</span>))]
+    <span class="attr">#[snafu(display(<span class="string">&quot;DataFusion error&quot;</span>))]
     </span>Datafusion {
         <span class="attr">#[snafu(source)]
         </span>error: DataFusionError,
