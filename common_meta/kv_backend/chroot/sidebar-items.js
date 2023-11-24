@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["chroot_key_value_with","chroot_txn_response","key_prepend_root","key_strip_root","range_end_prepend_root","txn_prepend_root"],"struct":["ChrootKvBackend"]};
+window.SIDEBAR_ITEMS = {"struct":["ChrootKvBackend"]};

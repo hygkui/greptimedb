@@ -254,6 +254,23 @@
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -297,9 +314,9 @@
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">async fn </span>txn(<span class="kw-2">&amp;</span><span class="self">self</span>, txn: Txn) -&gt; <span class="prelude-ty">Result</span>&lt;TxnResponse, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>txn = txn_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, txn);
+        <span class="kw">let </span>txn = <span class="self">self</span>.txn_prepend_root(txn);
         <span class="kw">let </span>txn_res = <span class="self">self</span>.inner.txn(txn).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(chroot_txn_response(<span class="kw-2">&amp;</span><span class="self">self</span>.root, txn_res))
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.chroot_txn_response(txn_res))
     }
 }
 
@@ -314,33 +331,33 @@
     </span>}
 
     <span class="kw">async fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: RangeRequest) -&gt; <span class="prelude-ty">Result</span>&lt;RangeResponse, <span class="self">Self</span>::Error&gt; {
-        req.key = key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, req.key);
-        req.range_end = range_end_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, req.range_end);
+        req.key = <span class="self">self</span>.key_prepend_root(req.key);
+        req.range_end = <span class="self">self</span>.range_end_prepend_root(req.range_end);
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.inner.range(req).<span class="kw">await</span><span class="question-mark">?</span>;
         res.kvs = res
             .kvs
             .drain(..)
-            .map(chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root))
+            .map(<span class="self">self</span>.chroot_key_value_with())
             .collect();
         <span class="prelude-val">Ok</span>(res)
     }
 
     <span class="kw">async fn </span>put(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: PutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;PutResponse, <span class="self">Self</span>::Error&gt; {
-        req.key = key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, req.key);
+        req.key = <span class="self">self</span>.key_prepend_root(req.key);
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.inner.put(req).<span class="kw">await</span><span class="question-mark">?</span>;
-        res.prev_kv = res.prev_kv.take().map(chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root));
+        res.prev_kv = res.prev_kv.take().map(<span class="self">self</span>.chroot_key_value_with());
         <span class="prelude-val">Ok</span>(res)
     }
 
     <span class="kw">async fn </span>batch_put(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>req: BatchPutRequest) -&gt; <span class="prelude-ty">Result</span>&lt;BatchPutResponse, <span class="self">Self</span>::Error&gt; {
         <span class="kw">for </span>kv <span class="kw">in </span>req.kvs.iter_mut() {
-            kv.key = key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, kv.key.drain(..).collect());
+            kv.key = <span class="self">self</span>.key_prepend_root(kv.key.drain(..).collect());
         }
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.inner.batch_put(req).<span class="kw">await</span><span class="question-mark">?</span>;
         res.prev_kvs = res
             .prev_kvs
             .drain(..)
-            .map(chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root))
+            .map(<span class="self">self</span>.chroot_key_value_with())
             .collect();
         <span class="prelude-val">Ok</span>(res)
     }
@@ -349,13 +366,13 @@
         req.keys = req
             .keys
             .drain(..)
-            .map(|key| key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, key))
+            .map(|key| <span class="self">self</span>.key_prepend_root(key))
             .collect();
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.inner.batch_get(req).<span class="kw">await</span><span class="question-mark">?</span>;
         res.kvs = res
             .kvs
             .drain(..)
-            .map(chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root))
+            .map(<span class="self">self</span>.chroot_key_value_with())
             .collect();
         <span class="prelude-val">Ok</span>(res)
     }
@@ -364,9 +381,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="kw-2">mut </span>req: CompareAndPutRequest,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;CompareAndPutResponse, <span class="self">Self</span>::Error&gt; {
-        req.key = key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, req.key);
+        req.key = <span class="self">self</span>.key_prepend_root(req.key);
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.inner.compare_and_put(req).<span class="kw">await</span><span class="question-mark">?</span>;
-        res.prev_kv = res.prev_kv.take().map(chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root));
+        res.prev_kv = res.prev_kv.take().map(<span class="self">self</span>.chroot_key_value_with());
         <span class="prelude-val">Ok</span>(res)
     }
 
@@ -374,13 +391,13 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="kw-2">mut </span>req: DeleteRangeRequest,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;DeleteRangeResponse, <span class="self">Self</span>::Error&gt; {
-        req.key = key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, req.key);
-        req.range_end = range_end_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, req.range_end);
+        req.key = <span class="self">self</span>.key_prepend_root(req.key);
+        req.range_end = <span class="self">self</span>.range_end_prepend_root(req.range_end);
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.inner.delete_range(req).<span class="kw">await</span><span class="question-mark">?</span>;
         res.prev_kvs = res
             .prev_kvs
             .drain(..)
-            .map(chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root))
+            .map(<span class="self">self</span>.chroot_key_value_with())
             .collect();
         <span class="prelude-val">Ok</span>(res)
     }
@@ -392,122 +409,139 @@
         req.keys = req
             .keys
             .drain(..)
-            .map(|key| key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>.root, key))
+            .map(|key| <span class="self">self</span>.key_prepend_root(key))
             .collect();
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="self">self</span>.inner.batch_delete(req).<span class="kw">await</span><span class="question-mark">?</span>;
         res.prev_kvs = res
             .prev_kvs
             .drain(..)
-            .map(chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>.root))
+            .map(<span class="self">self</span>.chroot_key_value_with())
             .collect();
         <span class="prelude-val">Ok</span>(res)
     }
 }
 
-<span class="kw">fn </span>key_strip_root(root: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>key: Vec&lt;u8&gt;) -&gt; Vec&lt;u8&gt; {
-    <span class="macro">debug_assert!</span>(
-        key.starts_with(root),
-        <span class="string">&quot;key={}, root={}&quot;</span>,
-        String::from_utf8_lossy(<span class="kw-2">&amp;</span>key),
-        String::from_utf8_lossy(root),
-    );
-    key.split_off(root.len())
-}
-
-<span class="kw">fn </span>chroot_key_value_with(root: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="kw">impl </span>FnMut(KeyValue) -&gt; KeyValue + <span class="lifetime">&#39;_ </span>{
-    |kv| KeyValue {
-        key: key_strip_root(root, kv.key),
-        value: kv.value,
+<span class="kw">impl </span>ChrootKvBackend {
+    <span class="kw">fn </span>key_strip_root(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>key: Vec&lt;u8&gt;) -&gt; Vec&lt;u8&gt; {
+        <span class="kw">let </span>root = <span class="kw-2">&amp;</span><span class="self">self</span>.root;
+        <span class="macro">debug_assert!</span>(
+            key.starts_with(root),
+            <span class="string">&quot;key={}, root={}&quot;</span>,
+            String::from_utf8_lossy(<span class="kw-2">&amp;</span>key),
+            String::from_utf8_lossy(root),
+        );
+        key.split_off(root.len())
     }
-}
-<span class="kw">fn </span>chroot_txn_response(root: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>txn_res: TxnResponse) -&gt; TxnResponse {
-    <span class="kw">for </span>resp <span class="kw">in </span>txn_res.responses.iter_mut() {
-        <span class="kw">match </span>resp {
-            TxnOpResponse::ResponsePut(r) =&gt; {
-                r.prev_kv = r.prev_kv.take().map(chroot_key_value_with(root));
-            }
-            TxnOpResponse::ResponseGet(r) =&gt; {
-                r.kvs = r.kvs.drain(..).map(chroot_key_value_with(root)).collect();
-            }
-            TxnOpResponse::ResponseDelete(r) =&gt; {
-                r.prev_kvs = r
-                    .prev_kvs
-                    .drain(..)
-                    .map(chroot_key_value_with(root))
-                    .collect();
-            }
+
+    <span class="kw">fn </span>chroot_key_value_with(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>FnMut(KeyValue) -&gt; KeyValue + <span class="lifetime">&#39;_ </span>{
+        |kv| KeyValue {
+            key: <span class="self">self</span>.key_strip_root(kv.key),
+            value: kv.value,
         }
     }
-    txn_res
-}
-
-<span class="kw">fn </span>key_prepend_root(root: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>key: Vec&lt;u8&gt;) -&gt; Vec&lt;u8&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>new_key = root.to_vec();
-    new_key.append(<span class="kw-2">&amp;mut </span>key);
-    new_key
-}
-
-<span class="comment">// see namespace.prefixInterval - https://github.com/etcd-io/etcd/blob/v3.5.10/client/v3/namespace/util.go
-</span><span class="kw">fn </span>range_end_prepend_root(root: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>range_end: Vec&lt;u8&gt;) -&gt; Vec&lt;u8&gt; {
-    <span class="kw">if </span>range_end == [<span class="number">0</span>] {
-        <span class="comment">// the edge of the keyspace
-        </span><span class="kw">let </span><span class="kw-2">mut </span>new_end = root.to_vec();
-        <span class="kw">let </span><span class="kw-2">mut </span>ok = <span class="bool-val">false</span>;
-        <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..new_end.len()).rev() {
-            new_end[i] = new_end[i].wrapping_add(<span class="number">1</span>);
-            <span class="kw">if </span>new_end[i] != <span class="number">0 </span>{
-                ok = <span class="bool-val">true</span>;
-                <span class="kw">break</span>;
+    <span class="kw">fn </span>chroot_txn_response(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>txn_res: TxnResponse) -&gt; TxnResponse {
+        <span class="kw">for </span>resp <span class="kw">in </span>txn_res.responses.iter_mut() {
+            <span class="kw">match </span>resp {
+                TxnOpResponse::ResponsePut(r) =&gt; {
+                    r.prev_kv = r.prev_kv.take().map(<span class="self">self</span>.chroot_key_value_with());
+                }
+                TxnOpResponse::ResponseGet(r) =&gt; {
+                    r.kvs = r.kvs.drain(..).map(<span class="self">self</span>.chroot_key_value_with()).collect();
+                }
+                TxnOpResponse::ResponseDelete(r) =&gt; {
+                    r.prev_kvs = r
+                        .prev_kvs
+                        .drain(..)
+                        .map(<span class="self">self</span>.chroot_key_value_with())
+                        .collect();
+                }
             }
         }
-        <span class="kw">if </span>!ok {
-            <span class="comment">// 0xff..ff =&gt; 0x00
-            </span>new_end = <span class="macro">vec!</span>[<span class="number">0</span>];
-        }
-        new_end
-    } <span class="kw">else if </span>!range_end.is_empty() {
-        <span class="kw">let </span><span class="kw-2">mut </span>new_end = root.to_vec();
-        new_end.append(<span class="kw-2">&amp;mut </span>range_end);
-        new_end
-    } <span class="kw">else </span>{
-        <span class="macro">vec!</span>[]
+        txn_res
     }
-}
 
-<span class="kw">fn </span>txn_prepend_root(root: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>txn: Txn) -&gt; Txn {
-    <span class="kw">fn </span>op_prepend_root(root: <span class="kw-2">&amp;</span>[u8], op: TxnOp) -&gt; TxnOp {
-        <span class="kw">match </span>op {
-            TxnOp::Put(k, v) =&gt; TxnOp::Put(key_prepend_root(root, k), v),
-            TxnOp::Get(k) =&gt; TxnOp::Get(key_prepend_root(root, k)),
-            TxnOp::Delete(k) =&gt; TxnOp::Delete(key_prepend_root(root, k)),
+    <span class="kw">fn </span>key_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>key: Vec&lt;u8&gt;) -&gt; Vec&lt;u8&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>new_key = <span class="self">self</span>.root.clone();
+        new_key.append(<span class="kw-2">&amp;mut </span>key);
+        new_key
+    }
+
+    <span class="comment">// see namespace.prefixInterval - https://github.com/etcd-io/etcd/blob/v3.5.10/client/v3/namespace/util.go
+    </span><span class="kw">fn </span>range_end_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>range_end: Vec&lt;u8&gt;) -&gt; Vec&lt;u8&gt; {
+        <span class="kw">let </span>root = <span class="kw-2">&amp;</span><span class="self">self</span>.root;
+        <span class="kw">if </span>range_end == [<span class="number">0</span>] {
+            <span class="comment">// the edge of the keyspace
+            </span><span class="kw">let </span><span class="kw-2">mut </span>new_end = root.clone();
+            <span class="kw">let </span><span class="kw-2">mut </span>ok = <span class="bool-val">false</span>;
+            <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..new_end.len()).rev() {
+                new_end[i] = new_end[i].wrapping_add(<span class="number">1</span>);
+                <span class="kw">if </span>new_end[i] != <span class="number">0 </span>{
+                    ok = <span class="bool-val">true</span>;
+                    <span class="kw">break</span>;
+                }
+            }
+            <span class="kw">if </span>!ok {
+                <span class="comment">// 0xff..ff =&gt; 0x00
+                </span>new_end = <span class="macro">vec!</span>[<span class="number">0</span>];
+            }
+            new_end
+        } <span class="kw">else if </span>!range_end.is_empty() {
+            <span class="kw">let </span><span class="kw-2">mut </span>new_end = root.clone();
+            new_end.append(<span class="kw-2">&amp;mut </span>range_end);
+            new_end
+        } <span class="kw">else </span>{
+            <span class="macro">vec!</span>[]
         }
     }
 
-    txn.req.success = txn
-        .req
-        .success
-        .drain(..)
-        .map(|op| op_prepend_root(root, op))
-        .collect();
+    <span class="kw">fn </span>txn_prepend_root(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>txn: Txn) -&gt; Txn {
+        <span class="kw">let </span>op_prepend_root = |op: TxnOp| <span class="kw">match </span>op {
+            TxnOp::Put(k, v) =&gt; TxnOp::Put(<span class="self">self</span>.key_prepend_root(k), v),
+            TxnOp::Get(k) =&gt; TxnOp::Get(<span class="self">self</span>.key_prepend_root(k)),
+            TxnOp::Delete(k) =&gt; TxnOp::Delete(<span class="self">self</span>.key_prepend_root(k)),
+        };
+        txn.req.success = txn.req.success.drain(..).map(op_prepend_root).collect();
+        txn.req.failure = txn.req.failure.drain(..).map(op_prepend_root).collect();
+        txn.req.compare = txn
+            .req
+            .compare
+            .drain(..)
+            .map(|cmp| <span class="kw">super</span>::txn::Compare {
+                key: <span class="self">self</span>.key_prepend_root(cmp.key),
+                cmp: cmp.cmp,
+                target: cmp.target,
+            })
+            .collect();
+        txn
+    }
+}
 
-    txn.req.failure = txn
-        .req
-        .failure
-        .drain(..)
-        .map(|op| op_prepend_root(root, op))
-        .collect();
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::sync::Arc;
 
-    txn.req.compare = txn
-        .req
-        .compare
-        .drain(..)
-        .map(|cmp| <span class="kw">super</span>::txn::Compare {
-            key: key_prepend_root(root, cmp.key),
-            cmp: cmp.cmp,
-            target: cmp.target,
-        })
-        .collect();
+    <span class="kw">use </span><span class="kw">crate</span>::kv_backend::chroot::ChrootKvBackend;
+    <span class="kw">use </span><span class="kw">crate</span>::kv_backend::memory::MemoryKvBackend;
 
-    txn
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_prefix_key_and_range_end() {
+        <span class="kw">fn </span>run_test_case(pfx: <span class="kw-2">&amp;</span>[u8], key: <span class="kw-2">&amp;</span>[u8], end: <span class="kw-2">&amp;</span>[u8], w_key: <span class="kw-2">&amp;</span>[u8], w_end: <span class="kw-2">&amp;</span>[u8]) {
+            <span class="kw">let </span>chroot = ChrootKvBackend::new(pfx.into(), Arc::new(MemoryKvBackend::new()));
+            <span class="macro">assert_eq!</span>(chroot.key_prepend_root(key.into()), w_key);
+            <span class="macro">assert_eq!</span>(chroot.range_end_prepend_root(end.into()), w_end);
+        }
+
+        <span class="comment">// single key
+        </span>run_test_case(<span class="string">b&quot;pfx/&quot;</span>, <span class="string">b&quot;a&quot;</span>, <span class="string">b&quot;&quot;</span>, <span class="string">b&quot;pfx/a&quot;</span>, <span class="string">b&quot;&quot;</span>);
+
+        <span class="comment">// range
+        </span>run_test_case(<span class="string">b&quot;pfx/&quot;</span>, <span class="string">b&quot;abc&quot;</span>, <span class="string">b&quot;def&quot;</span>, <span class="string">b&quot;pfx/abc&quot;</span>, <span class="string">b&quot;pfx/def&quot;</span>);
+
+        <span class="comment">// one-sided range (HACK - b&#39;/&#39; + 1 = b&#39;0&#39;)
+        </span>run_test_case(<span class="string">b&quot;pfx/&quot;</span>, <span class="string">b&quot;abc&quot;</span>, <span class="string">b&quot;\0&quot;</span>, <span class="string">b&quot;pfx/abc&quot;</span>, <span class="string">b&quot;pfx0&quot;</span>);
+
+        <span class="comment">// one-sided range, end of keyspace
+        </span>run_test_case(<span class="string">b&quot;\xFF\xFF&quot;</span>, <span class="string">b&quot;abc&quot;</span>, <span class="string">b&quot;\0&quot;</span>, <span class="string">b&quot;\xff\xffabc&quot;</span>, <span class="string">b&quot;\0&quot;</span>);
+    }
 }
 </code></pre></div></section></main></body></html>
