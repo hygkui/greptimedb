@@ -146,6 +146,11 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -230,6 +235,11 @@
     </span><span class="kw">pub const fn </span>table_id() -&gt; ColumnId {
         <span class="self">Self</span>::BASE | ReservedColumnType::TableId <span class="kw">as </span>ColumnId
     }
+
+    <span class="doccomment">/// Test if the column id is reserved.
+    </span><span class="kw">pub fn </span>is_reserved(column_id: ColumnId) -&gt; bool {
+        column_id &amp; <span class="self">Self</span>::BASE != <span class="number">0
+    </span>}
 }
 
 <span class="comment">// -----------------------------------------------------------------------------

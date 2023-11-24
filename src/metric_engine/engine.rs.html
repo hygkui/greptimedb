@@ -197,8 +197,6 @@
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -216,6 +214,8 @@
 </span><span class="kw">mod </span>alter;
 <span class="kw">mod </span>create;
 <span class="kw">mod </span>put;
+<span class="kw">mod </span>read;
+<span class="kw">mod </span>region_metadata;
 <span class="kw">mod </span>state;
 
 <span class="kw">use </span>std::sync::Arc;
@@ -275,7 +275,7 @@
 /// they support are different. List below:
 ///
 /// | Operations | Logical Region | Physical Region |
-/// | :--------: | :------------: | :-------------: |
+/// | ---------- | -------------- | --------------- |
 /// |   Create   |       ✅        |        ✅        |
 /// |    Drop    |       ✅        |        ❌        |
 /// |   Write    |       ✅        |        ❌        |
@@ -314,7 +314,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: RegionRequest,
-    ) -&gt; std::result::Result&lt;Output, BoxedError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Output, BoxedError&gt; {
         <span class="kw">let </span>result = <span class="kw">match </span>request {
             RegionRequest::Put(put) =&gt; <span class="self">self</span>.inner.put_region(region_id, put).<span class="kw">await</span>,
             RegionRequest::Delete(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
@@ -344,15 +344,15 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         region_id: RegionId,
         request: ScanRequest,
-    ) -&gt; std::result::Result&lt;SendableRecordBatchStream, BoxedError&gt; {
-        <span class="macro">todo!</span>()
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SendableRecordBatchStream, BoxedError&gt; {
+        <span class="self">self</span>.inner
+            .read_region(region_id, request)
+            .<span class="kw">await
+            </span>.map_err(BoxedError::new)
     }
 
     <span class="doccomment">/// Retrieves region&#39;s metadata.
-    </span><span class="kw">async fn </span>get_metadata(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        region_id: RegionId,
-    ) -&gt; std::result::Result&lt;RegionMetadataRef, BoxedError&gt; {
+    </span><span class="kw">async fn </span>get_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Result</span>&lt;RegionMetadataRef, BoxedError&gt; {
         <span class="macro">todo!</span>()
     }
 
@@ -362,15 +362,11 @@
     }
 
     <span class="doccomment">/// Stops the engine
-    </span><span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::result::Result&lt;(), BoxedError&gt; {
+    </span><span class="kw">async fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), BoxedError&gt; {
         <span class="macro">todo!</span>()
     }
 
-    <span class="kw">fn </span>set_writable(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        region_id: RegionId,
-        writable: bool,
-    ) -&gt; std::result::Result&lt;(), BoxedError&gt; {
+    <span class="kw">fn </span>set_writable(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId, writable: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(), BoxedError&gt; {
         <span class="macro">todo!</span>()
     }
 

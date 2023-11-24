@@ -87,6 +87,12 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -100,6 +106,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+</span><span class="doccomment">//! Internal states of metric engine
 
 </span><span class="kw">use </span>std::collections::{HashMap, HashSet};
 
@@ -162,6 +170,10 @@
             .insert(logical_region_id);
         <span class="self">self</span>.logical_regions
             .insert(logical_region_id, physical_region_id);
+    }
+
+    <span class="kw">pub fn </span>get_physical_region_id(<span class="kw-2">&amp;</span><span class="self">self</span>, logical_region_id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;RegionId&gt; {
+        <span class="self">self</span>.logical_regions.get(<span class="kw-2">&amp;</span>logical_region_id).copied()
     }
 
     <span class="kw">pub fn </span>physical_columns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>HashMap&lt;RegionId, HashSet&lt;String&gt;&gt; {

@@ -241,7 +241,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>physical_region_id = {
             <span class="kw">let </span>state = <span class="kw-2">&amp;</span><span class="self">self</span>.state.read().<span class="kw">await</span>;
-            <span class="kw-2">*</span>state.logical_regions().get(<span class="kw-2">&amp;</span>region_id).with_context(|| {
+            state.get_physical_region_id(region_id).with_context(|| {
                 <span class="macro">error!</span>(<span class="string">&quot;Trying to alter an nonexistent region {region_id}&quot;</span>);
                 LogicalRegionNotFoundSnafu { region_id }
             })<span class="question-mark">?
