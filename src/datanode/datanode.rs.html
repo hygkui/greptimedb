@@ -503,6 +503,76 @@
 <a href="#503" id="503">503</a>
 <a href="#504" id="504">504</a>
 <a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -519,10 +589,11 @@
 
 </span><span class="doccomment">//! Datanode implementation.
 
-</span><span class="kw">use </span>std::path::Path;
+</span><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::net::SocketAddr;
+<span class="kw">use </span>std::path::Path;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>catalog::kvbackend::MetaKvBackend;
 <span class="kw">use </span>catalog::memory::MemoryCatalogManager;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_error::ext::BoxedError;
@@ -531,8 +602,9 @@
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">pub use </span>common_procedure::options::ProcedureConfig;
 <span class="kw">use </span>common_runtime::Runtime;
-<span class="kw">use </span>common_telemetry::{error, info};
+<span class="kw">use </span>common_telemetry::{error, info, warn};
 <span class="kw">use </span>file_engine::engine::FileRegionEngine;
+<span class="kw">use </span>futures::future;
 <span class="kw">use </span>futures_util::future::try_join_all;
 <span class="kw">use </span>futures_util::StreamExt;
 <span class="kw">use </span>log_store::raft_engine::log_store::RaftEngineLogStore;
@@ -541,6 +613,10 @@
 <span class="kw">use </span>object_store::manager::{ObjectStoreManager, ObjectStoreManagerRef};
 <span class="kw">use </span>object_store::util::normalize_dir;
 <span class="kw">use </span>query::QueryEngineFactory;
+<span class="kw">use </span>servers::grpc::{GrpcServer, GrpcServerConfig};
+<span class="kw">use </span>servers::http::HttpServerBuilder;
+<span class="kw">use </span>servers::metrics_handler::MetricsHandler;
+<span class="kw">use </span>servers::server::{start_server, ServerHandler, ServerHandlers};
 <span class="kw">use </span>servers::Mode;
 <span class="kw">use </span>snafu::{OptionExt, ResultExt};
 <span class="kw">use </span>store_api::logstore::LogStore;
@@ -553,26 +629,26 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{DatanodeOptions, RegionEngineConfig};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    CreateDirSnafu, GetMetadataSnafu, MissingKvBackendSnafu, MissingMetaClientSnafu,
-    MissingMetasrvOptsSnafu, MissingNodeIdSnafu, OpenLogStoreSnafu, <span class="prelude-ty">Result</span>, RuntimeResourceSnafu,
-    ShutdownInstanceSnafu,
+    CreateDirSnafu, GetMetadataSnafu, MissingKvBackendSnafu, MissingNodeIdSnafu, OpenLogStoreSnafu,
+    ParseAddrSnafu, <span class="prelude-ty">Result</span>, RuntimeResourceSnafu, ShutdownInstanceSnafu, ShutdownServerSnafu,
+    StartServerSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::event_listener::{
     new_region_server_event_channel, NoopRegionServerEventListener, RegionServerEventListenerRef,
     RegionServerEventReceiver,
 };
 <span class="kw">use </span><span class="kw">crate</span>::greptimedb_telemetry::get_greptimedb_telemetry_task;
-<span class="kw">use </span><span class="kw">crate</span>::heartbeat::{new_metasrv_client, HeartbeatTask};
-<span class="kw">use </span><span class="kw">crate</span>::region_server::RegionServer;
-<span class="kw">use </span><span class="kw">crate</span>::server::Services;
+<span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
+<span class="kw">use </span><span class="kw">crate</span>::region_server::{DummyTableProviderFactory, RegionServer};
 <span class="kw">use </span><span class="kw">crate</span>::store;
 
 <span class="kw">const </span>OPEN_REGION_PARALLELISM: usize = <span class="number">16</span>;
+<span class="kw">const </span>REGION_SERVER_SERVICE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;REGION_SERVER_SERVICE&quot;</span>;
+<span class="kw">const </span>DATANODE_HTTP_SERVICE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;DATANODE_HTTP_SERVICE&quot;</span>;
 
 <span class="doccomment">/// Datanode service.
 </span><span class="kw">pub struct </span>Datanode {
-    opts: DatanodeOptions,
-    services: <span class="prelude-ty">Option</span>&lt;Services&gt;,
+    services: ServerHandlers,
     heartbeat_task: <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;,
     region_event_receiver: <span class="prelude-ty">Option</span>&lt;RegionServerEventReceiver&gt;,
     region_server: RegionServer,
@@ -588,9 +664,16 @@
         <span class="self">self</span>.start_heartbeat().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.wait_coordinated().<span class="kw">await</span>;
 
-        <span class="kw">let _ </span>= <span class="self">self</span>.greptimedb_telemetry_task.start();
+        <span class="self">self</span>.start_telemetry();
+
         <span class="self">self</span>.start_services().<span class="kw">await
     </span>}
+
+    <span class="kw">pub fn </span>start_telemetry(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.greptimedb_telemetry_task.start() {
+            <span class="macro">warn!</span>(e; <span class="string">&quot;Failed to start telemetry task!&quot;</span>);
+        }
+    }
 
     <span class="kw">pub async fn </span>start_heartbeat(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(task) = <span class="kw-2">&amp;</span><span class="self">self</span>.heartbeat_task {
@@ -611,19 +694,17 @@
 
     <span class="doccomment">/// Start services of datanode. This method call will block until services are shutdown.
     </span><span class="kw">pub async fn </span>start_services(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(service) = <span class="self">self</span>.services.as_mut() {
-            service.start(<span class="kw-2">&amp;</span><span class="self">self</span>.opts).<span class="kw">await
-        </span>} <span class="kw">else </span>{
-            <span class="prelude-val">Ok</span>(())
-        }
+        <span class="kw">let _ </span>= future::try_join_all(<span class="self">self</span>.services.values().map(start_server))
+            .<span class="kw">await
+            </span>.context(StartServerSnafu)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>shutdown_services(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(service) = <span class="self">self</span>.services.as_ref() {
-            service.shutdown().<span class="kw">await
-        </span>} <span class="kw">else </span>{
-            <span class="prelude-val">Ok</span>(())
-        }
+        <span class="kw">let _ </span>= future::try_join_all(<span class="self">self</span>.services.values().map(|server| server.<span class="number">0</span>.shutdown()))
+            .<span class="kw">await
+            </span>.context(ShutdownServerSnafu)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">pub async fn </span>shutdown(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -655,17 +736,21 @@
     plugins: Plugins,
     meta_client: <span class="prelude-ty">Option</span>&lt;MetaClient&gt;,
     kv_backend: <span class="prelude-ty">Option</span>&lt;KvBackendRef&gt;,
+    enable_region_server_service: bool,
+    enable_http_service: bool,
 }
 
 <span class="kw">impl </span>DatanodeBuilder {
     <span class="doccomment">/// `kv_backend` is optional. If absent, the builder will try to build one
     /// by using the given `opts`
-    </span><span class="kw">pub fn </span>new(opts: DatanodeOptions, kv_backend: <span class="prelude-ty">Option</span>&lt;KvBackendRef&gt;, plugins: Plugins) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(opts: DatanodeOptions, plugins: Plugins) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             opts,
             plugins,
             meta_client: <span class="prelude-val">None</span>,
-            kv_backend,
+            kv_backend: <span class="prelude-val">None</span>,
+            enable_region_server_service: <span class="bool-val">false</span>,
+            enable_http_service: <span class="bool-val">false</span>,
         }
     }
 
@@ -676,76 +761,63 @@
         </span>}
     }
 
+    <span class="kw">pub fn </span>with_kv_backend(<span class="self">self</span>, kv_backend: KvBackendRef) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            kv_backend: <span class="prelude-val">Some</span>(kv_backend),
+            ..<span class="self">self
+        </span>}
+    }
+
+    <span class="kw">pub fn </span>enable_region_server_service(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            enable_region_server_service: <span class="bool-val">true</span>,
+            ..<span class="self">self
+        </span>}
+    }
+
+    <span class="kw">pub fn </span>enable_http_service(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            enable_http_service: <span class="bool-val">true</span>,
+            ..<span class="self">self
+        </span>}
+    }
+
     <span class="kw">pub async fn </span>build(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Datanode&gt; {
         <span class="kw">let </span>mode = <span class="kw-2">&amp;</span><span class="self">self</span>.opts.mode;
 
-        <span class="comment">// build meta client
-        </span><span class="kw">let </span>meta_client = <span class="kw">match </span>mode {
-            Mode::Distributed =&gt; {
-                <span class="kw">let </span>meta_client = <span class="kw">if let </span><span class="prelude-val">Some</span>(meta_client) = <span class="self">self</span>.meta_client.take() {
-                    meta_client
-                } <span class="kw">else </span>{
-                    <span class="kw">let </span>node_id = <span class="self">self</span>.opts.node_id.context(MissingNodeIdSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>meta_client = <span class="self">self</span>.meta_client.take();
 
-                    <span class="kw">let </span>meta_config = <span class="self">self
-                        </span>.opts
-                        .meta_client
-                        .as_ref()
-                        .context(MissingMetasrvOptsSnafu)<span class="question-mark">?</span>;
+        <span class="comment">// If metasrv client is provided, we will use it to control the region server.
+        // Otherwise the region server is self-controlled, meaning no heartbeat and immediately
+        // writable upon open.
+        </span><span class="kw">let </span>controlled_by_metasrv = meta_client.is_some();
 
-                    new_metasrv_client(node_id, meta_config).<span class="kw">await</span><span class="question-mark">?
-                </span>};
-                <span class="prelude-val">Some</span>(meta_client)
-            }
-            Mode::Standalone =&gt; <span class="prelude-val">None</span>,
-        };
-
-        <span class="comment">// build kv-backend
-        </span><span class="kw">let </span>kv_backend = <span class="kw">match </span>mode {
-            Mode::Distributed =&gt; Arc::new(MetaKvBackend {
-                client: Arc::new(meta_client.clone().context(MissingMetaClientSnafu)<span class="question-mark">?</span>),
-            }),
-            Mode::Standalone =&gt; <span class="self">self</span>.kv_backend.clone().context(MissingKvBackendSnafu)<span class="question-mark">?</span>,
-        };
+        <span class="kw">let </span>kv_backend = <span class="self">self</span>.kv_backend.take().context(MissingKvBackendSnafu)<span class="question-mark">?</span>;
 
         <span class="comment">// build and initialize region server
         </span><span class="kw">let </span>log_store = <span class="self">Self</span>::build_log_store(<span class="kw-2">&amp;</span><span class="self">self</span>.opts).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>(region_event_listener, region_event_receiver) = <span class="kw">match </span>mode {
-            Mode::Distributed =&gt; {
-                <span class="kw">let </span>(tx, rx) = new_region_server_event_channel();
-                (Box::new(tx) <span class="kw">as </span>RegionServerEventListenerRef, <span class="prelude-val">Some</span>(rx))
-            }
-            Mode::Standalone =&gt; (
-                Box::new(NoopRegionServerEventListener) <span class="kw">as </span>RegionServerEventListenerRef,
-                <span class="prelude-val">None</span>,
-            ),
+
+        <span class="kw">let </span>(region_event_listener, region_event_receiver) = <span class="kw">if </span>controlled_by_metasrv {
+            <span class="kw">let </span>(tx, rx) = new_region_server_event_channel();
+            (Box::new(tx) <span class="kw">as _</span>, <span class="prelude-val">Some</span>(rx))
+        } <span class="kw">else </span>{
+            (Box::new(NoopRegionServerEventListener) <span class="kw">as _</span>, <span class="prelude-val">None</span>)
         };
 
-        <span class="kw">let </span>region_server = <span class="self">Self</span>::new_region_server(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.opts,
-            <span class="self">self</span>.plugins.clone(),
-            log_store,
-            region_event_listener,
-        )
-        .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="self">self</span>.initialize_region_server(<span class="kw-2">&amp;</span>region_server, kv_backend, <span class="macro">matches!</span>(mode, Mode::Standalone))
+        <span class="kw">let </span>region_server = <span class="self">self
+            </span>.new_region_server(log_store, region_event_listener)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>heartbeat_task = <span class="kw">match </span>mode {
-            Mode::Distributed =&gt; {
-                <span class="kw">let </span>meta_client = meta_client.context(MissingMetaClientSnafu)<span class="question-mark">?</span>;
+        <span class="self">self</span>.initialize_region_server(<span class="kw-2">&amp;</span>region_server, kv_backend, !controlled_by_metasrv)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
 
-                <span class="kw">let </span>heartbeat_task =
-                    HeartbeatTask::try_new(<span class="kw-2">&amp;</span><span class="self">self</span>.opts, region_server.clone(), meta_client).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="prelude-val">Some</span>(heartbeat_task)
-            }
-            Mode::Standalone =&gt; <span class="prelude-val">None</span>,
-        };
+        <span class="kw">let </span>heartbeat_task = <span class="kw">if let </span><span class="prelude-val">Some</span>(meta_client) = meta_client {
+            <span class="prelude-val">Some</span>(HeartbeatTask::try_new(<span class="kw-2">&amp;</span><span class="self">self</span>.opts, region_server.clone(), meta_client).<span class="kw">await</span><span class="question-mark">?</span>)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
 
-        <span class="kw">let </span>services = <span class="kw">match </span>mode {
-            Mode::Distributed =&gt; <span class="prelude-val">Some</span>(Services::try_new(region_server.clone(), <span class="kw-2">&amp;</span><span class="self">self</span>.opts).<span class="kw">await</span><span class="question-mark">?</span>),
-            Mode::Standalone =&gt; <span class="prelude-val">None</span>,
-        };
+        <span class="kw">let </span>services = <span class="self">self</span>.create_datanode_services(<span class="kw-2">&amp;</span>region_server)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>greptimedb_telemetry_task = get_greptimedb_telemetry_task(
             <span class="prelude-val">Some</span>(<span class="self">self</span>.opts.storage.data_home.clone()),
@@ -762,7 +834,6 @@
             </span>};
 
         <span class="prelude-val">Ok</span>(Datanode {
-            opts: <span class="self">self</span>.opts,
             services,
             heartbeat_task,
             region_server,
@@ -771,6 +842,68 @@
             leases_notifier,
             plugins: <span class="self">self</span>.plugins.clone(),
         })
+    }
+
+    <span class="kw">fn </span>create_datanode_services(<span class="kw-2">&amp;</span><span class="self">self</span>, region_server: <span class="kw-2">&amp;</span>RegionServer) -&gt; <span class="prelude-ty">Result</span>&lt;ServerHandlers&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>services = HashMap::new();
+
+        <span class="kw">if </span><span class="self">self</span>.enable_region_server_service {
+            services.insert(
+                REGION_SERVER_SERVICE_NAME.to_string(),
+                <span class="self">self</span>.create_region_server_service(region_server)<span class="question-mark">?</span>,
+            );
+        }
+
+        <span class="kw">if </span><span class="self">self</span>.enable_http_service {
+            services.insert(
+                DATANODE_HTTP_SERVICE_NAME.to_string(),
+                <span class="self">self</span>.create_http_service()<span class="question-mark">?</span>,
+            );
+        }
+
+        <span class="prelude-val">Ok</span>(services)
+    }
+
+    <span class="kw">fn </span>create_region_server_service(<span class="kw-2">&amp;</span><span class="self">self</span>, region_server: <span class="kw-2">&amp;</span>RegionServer) -&gt; <span class="prelude-ty">Result</span>&lt;ServerHandler&gt; {
+        <span class="kw">let </span>opts = <span class="kw-2">&amp;</span><span class="self">self</span>.opts;
+
+        <span class="kw">let </span>config = GrpcServerConfig {
+            max_recv_message_size: opts.rpc_max_recv_message_size.as_bytes() <span class="kw">as </span>usize,
+            max_send_message_size: opts.rpc_max_send_message_size.as_bytes() <span class="kw">as </span>usize,
+        };
+
+        <span class="kw">let </span>server = Box::new(GrpcServer::new(
+            <span class="prelude-val">Some</span>(config),
+            <span class="prelude-val">None</span>,
+            <span class="prelude-val">None</span>,
+            <span class="prelude-val">Some</span>(Arc::new(region_server.clone()) <span class="kw">as _</span>),
+            <span class="prelude-val">Some</span>(Arc::new(region_server.clone()) <span class="kw">as _</span>),
+            <span class="prelude-val">None</span>,
+            region_server.runtime(),
+        ));
+
+        <span class="kw">let </span>addr: SocketAddr = opts.rpc_addr.parse().context(ParseAddrSnafu {
+            addr: <span class="kw-2">&amp;</span>opts.rpc_addr,
+        })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>((server, addr))
+    }
+
+    <span class="kw">fn </span>create_http_service(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ServerHandler&gt; {
+        <span class="kw">let </span>opts = <span class="kw-2">&amp;</span><span class="self">self</span>.opts;
+
+        <span class="kw">let </span>server = Box::new(
+            HttpServerBuilder::new(opts.http.clone())
+                .with_metrics_handler(MetricsHandler)
+                .with_greptime_config_options(opts.to_toml_string())
+                .build(),
+        );
+
+        <span class="kw">let </span>addr = opts.http.addr.parse().context(ParseAddrSnafu {
+            addr: <span class="kw-2">&amp;</span>opts.http.addr,
+        })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>((server, addr))
     }
 
     <span class="doccomment">/// Open all regions belong to this datanode.
@@ -834,18 +967,19 @@
     }
 
     <span class="kw">async fn </span>new_region_server(
-        opts: <span class="kw-2">&amp;</span>DatanodeOptions,
-        plugins: Plugins,
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
         log_store: Arc&lt;RaftEngineLogStore&gt;,
         event_listener: RegionServerEventListenerRef,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;RegionServer&gt; {
+        <span class="kw">let </span>opts = <span class="kw-2">&amp;</span><span class="self">self</span>.opts;
+
         <span class="kw">let </span>query_engine_factory = QueryEngineFactory::new_with_plugins(
             <span class="comment">// query engine in datanode only executes plan with resolved table source.
             </span>MemoryCatalogManager::with_default_setup(),
             <span class="prelude-val">None</span>,
             <span class="prelude-val">None</span>,
             <span class="bool-val">false</span>,
-            plugins,
+            <span class="self">self</span>.plugins.clone(),
         );
         <span class="kw">let </span>query_engine = query_engine_factory.query_engine();
 
@@ -857,8 +991,15 @@
                 .context(RuntimeResourceSnafu)<span class="question-mark">?</span>,
         );
 
-        <span class="kw">let </span><span class="kw-2">mut </span>region_server =
-            RegionServer::new(query_engine.clone(), runtime.clone(), event_listener);
+        <span class="kw">let </span>table_provider_factory = Arc::new(DummyTableProviderFactory);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>region_server = RegionServer::with_table_provider(
+            query_engine,
+            runtime,
+            event_listener,
+            table_provider_factory,
+        );
+
         <span class="kw">let </span>object_store = store::new_object_store(opts).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>object_store_manager = ObjectStoreManager::new(
             <span class="string">&quot;default&quot;</span>, <span class="comment">// TODO: use a name which is set in the configuration when #919 is done.
@@ -977,7 +1118,6 @@
                 node_id: <span class="prelude-val">Some</span>(<span class="number">0</span>),
                 ..Default::default()
             },
-            <span class="prelude-val">None</span>,
             Plugins::default(),
         );
 

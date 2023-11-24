@@ -525,14 +525,6 @@
 <a href="#525" id="525">525</a>
 <a href="#526" id="526">526</a>
 <a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -747,9 +739,6 @@
     <span class="attr">#[snafu(display(<span class="string">&quot;Expect KvBackend but not found&quot;</span>))]
     </span>MissingKvBackend { location: Location },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Expect MetaClient but not found&quot;</span>))]
-    </span>MissingMetaClient { location: Location },
-
     <span class="attr">#[snafu(display(<span class="string">&quot;Invalid SQL, error: {}&quot;</span>, msg))]
     </span>InvalidSql { msg: String },
 
@@ -829,9 +818,6 @@
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id in Datanode config&quot;</span>))]
     </span>MissingNodeId { location: Location },
-
-    <span class="attr">#[snafu(display(<span class="string">&quot;Missing node id option in distributed mode&quot;</span>))]
-    </span>MissingMetasrvOpts { location: Location },
 
     <span class="attr">#[snafu(display(<span class="string">&quot;Missing required field: {}&quot;</span>, name))]
     </span>MissingRequiredField { name: String, location: Location },
@@ -1012,13 +998,11 @@
             | SchemaExists { .. }
             | DatabaseNotFound { .. }
             | MissingNodeId { .. }
-            | MissingMetasrvOpts { .. }
             | ColumnNoneDefaultValue { .. }
             | MissingWalDirConfig { .. }
             | PrepareImmutableTable { .. }
             | ColumnDataType { .. }
-            | MissingKvBackend { .. }
-            | MissingMetaClient { .. } =&gt; StatusCode::InvalidArguments,
+            | MissingKvBackend { .. } =&gt; StatusCode::InvalidArguments,
 
             EncodeJson { .. } | PayloadNotExist { .. } | Unexpected { .. } =&gt; {
                 StatusCode::Unexpected

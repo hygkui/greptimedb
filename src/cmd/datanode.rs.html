@@ -443,6 +443,28 @@
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
 <a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -457,15 +479,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>std::time::Duration;
+</span><span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::time::Duration;
 
+<span class="kw">use </span>catalog::kvbackend::MetaKvBackend;
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>common_telemetry::logging;
 <span class="kw">use </span>datanode::config::DatanodeOptions;
 <span class="kw">use </span>datanode::datanode::{Datanode, DatanodeBuilder};
 <span class="kw">use </span>meta_client::MetaClientOptions;
 <span class="kw">use </span>servers::Mode;
-<span class="kw">use </span>snafu::ResultExt;
+<span class="kw">use </span>snafu::{OptionExt, ResultExt};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{MissingConfigSnafu, <span class="prelude-ty">Result</span>, ShutdownDatanodeSnafu, StartDatanodeSnafu};
 <span class="kw">use </span><span class="kw">crate</span>::options::{Options, TopLevelOptions};
@@ -622,7 +646,27 @@
         <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode start command: {:#?}&quot;</span>, <span class="self">self</span>);
         <span class="macro">logging::info!</span>(<span class="string">&quot;Datanode options: {:#?}&quot;</span>, opts);
 
-        <span class="kw">let </span>datanode = DatanodeBuilder::new(opts, <span class="prelude-val">None</span>, plugins)
+        <span class="kw">let </span>node_id = opts
+            .node_id
+            .context(MissingConfigSnafu { msg: <span class="string">&quot;&#39;node_id&#39;&quot; </span>})<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>meta_config = opts.meta_client.as_ref().context(MissingConfigSnafu {
+            msg: <span class="string">&quot;&#39;meta_client_options&#39;&quot;</span>,
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>meta_client = datanode::heartbeat::new_metasrv_client(node_id, meta_config)
+            .<span class="kw">await
+            </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>meta_backend = Arc::new(MetaKvBackend {
+            client: Arc::new(meta_client.clone()),
+        });
+
+        <span class="kw">let </span>datanode = DatanodeBuilder::new(opts, plugins)
+            .with_meta_client(meta_client)
+            .with_kv_backend(meta_backend)
+            .enable_region_server_service()
+            .enable_http_service()
             .build()
             .<span class="kw">await
             </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;

@@ -213,11 +213,11 @@
 
         <span class="kw">let </span>plugins = <span class="self">self</span>.plugin.unwrap_or_default();
 
-        <span class="kw">let </span>datanode =
-            DatanodeBuilder::new(opts.clone(), <span class="prelude-val">Some</span>(kv_backend.clone()), plugins.clone())
-                .build()
-                .<span class="kw">await
-                </span>.unwrap();
+        <span class="kw">let </span>datanode = DatanodeBuilder::new(opts.clone(), plugins.clone())
+            .with_kv_backend(kv_backend.clone())
+            .build()
+            .<span class="kw">await
+            </span>.unwrap();
 
         <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
             kv_backend.clone(),

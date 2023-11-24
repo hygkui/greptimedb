@@ -649,12 +649,6 @@
 <a href="#649" id="649">649</a>
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
-<a href="#652" id="652">652</a>
-<a href="#653" id="653">653</a>
-<a href="#654" id="654">654</a>
-<a href="#655" id="655">655</a>
-<a href="#656" id="656">656</a>
-<a href="#657" id="657">657</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -826,9 +820,7 @@
 
 <span class="kw">impl </span>Instance {
     <span class="kw">pub async fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="comment">// Start datanode instance before starting services, to avoid requests come in before internal components are started.
-        </span><span class="self">self</span>.datanode.start().<span class="kw">await</span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
-        <span class="macro">info!</span>(<span class="string">&quot;Datanode instance started&quot;</span>);
+        <span class="self">self</span>.datanode.start_telemetry();
 
         <span class="self">self</span>.procedure_manager
             .start()
@@ -982,10 +974,8 @@
         <span class="kw">let </span>dn_opts = opts.datanode.clone();
 
         <span class="macro">info!</span>(<span class="string">&quot;Standalone start command: {:#?}&quot;</span>, <span class="self">self</span>);
-        <span class="macro">info!</span>(
-            <span class="string">&quot;Standalone frontend options: {:#?}, datanode options: {:#?}&quot;</span>,
-            fe_opts, dn_opts
-        );
+
+        <span class="macro">info!</span>(<span class="string">&quot;Building standalone instance with {opts:#?}&quot;</span>);
 
         <span class="comment">// Ensure the data_home directory exists.
         </span>fs::create_dir_all(path::Path::new(<span class="kw-2">&amp;</span>opts.data_home)).context(CreateDirSnafu {
@@ -1001,14 +991,12 @@
         .<span class="kw">await
         </span>.context(StartFrontendSnafu)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>datanode = DatanodeBuilder::new(
-            dn_opts.clone(),
-            <span class="prelude-val">Some</span>(kv_backend.clone()),
-            Default::default(),
-        )
-        .build()
-        .<span class="kw">await
-        </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>datanode = DatanodeBuilder::new(dn_opts, fe_plugins.clone())
+            .with_kv_backend(kv_backend.clone())
+            .build()
+            .<span class="kw">await
+            </span>.context(StartDatanodeSnafu)<span class="question-mark">?</span>;
+
         <span class="kw">let </span>region_server = datanode.region_server();
 
         <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
