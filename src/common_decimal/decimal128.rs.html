@@ -415,6 +415,21 @@
 <a href="#415" id="415">415</a>
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -513,9 +528,24 @@
         <span class="self">self</span>.scale
     }
 
-    <span class="doccomment">/// Convert to ScalarValue
+    <span class="doccomment">/// Convert to ScalarValue(value,precision,scale)
     </span><span class="kw">pub fn </span>to_scalar_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="prelude-ty">Option</span>&lt;i128&gt;, u8, i8) {
         (<span class="prelude-val">Some</span>(<span class="self">self</span>.value), <span class="self">self</span>.precision, <span class="self">self</span>.scale)
+    }
+
+    <span class="doccomment">/// split the self.value(i128) to (high-64 bit, low-64 bit), and
+    /// the precision, scale information is discarded.
+    ///
+    /// Return: (high-64 bit, low-64 bit)
+    </span><span class="kw">pub fn </span>split_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (i64, i64) {
+        ((<span class="self">self</span>.value &gt;&gt; <span class="number">64</span>) <span class="kw">as </span>i64, <span class="self">self</span>.value <span class="kw">as </span>i64)
+    }
+
+    <span class="doccomment">/// Convert from precision, scale, a i128 value which
+    /// represents by two i64 value(high-64 bit, low-64 bit).
+    </span><span class="kw">pub fn </span>from_value_precision_scale(hi: i64, lo: i64, precision: u8, scale: i8) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>value = (hi <span class="kw">as </span>i128) &lt;&lt; <span class="number">64 </span>| lo <span class="kw">as </span>i128;
+        <span class="self">Self</span>::new(value, precision, scale)
     }
 }
 

@@ -1140,6 +1140,10 @@
 <a href="#1140" id="1140">1140</a>
 <a href="#1141" id="1141">1141</a>
 <a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1223,7 +1227,11 @@
                     .context(ConvertDatatypesSnafu)<span class="question-mark">?</span>,
             )
         };
-        <span class="kw">let </span>data_type = ColumnDataTypeWrapper::new(column_def.data_type()).into();
+        <span class="kw">let </span>data_type = ColumnDataTypeWrapper::new(
+            column_def.data_type(),
+            column_def.datatype_extension.clone(),
+        )
+        .into();
         <span class="kw">let </span>column_schema = ColumnSchema::new(column_def.name, data_type, column_def.is_nullable)
             .with_default_constraint(default_constrain)
             .context(ConvertDatatypesSnafu)<span class="question-mark">?</span>;

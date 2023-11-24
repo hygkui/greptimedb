@@ -415,6 +415,30 @@
 <a href="#415" id="415">415</a>
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -433,7 +457,7 @@
 <span class="kw">use </span>std::fmt::Display;
 
 <span class="kw">use </span>api::helper::values_with_capacity;
-<span class="kw">use </span>api::v1::{Column, ColumnDataType, SemanticType};
+<span class="kw">use </span>api::v1::{Column, ColumnDataType, ColumnDataTypeExtension, SemanticType};
 <span class="kw">use </span>common_base::BitVec;
 <span class="kw">use </span>common_time::timestamp::TimeUnit;
 <span class="kw">use </span>snafu::ensure;
@@ -467,6 +491,7 @@
             column_name,
             ColumnDataType::TimestampMillisecond,
             SemanticType::Timestamp,
+            <span class="prelude-val">None</span>,
         );
         <span class="macro">ensure!</span>(
             column.datatype == ColumnDataType::TimestampMillisecond <span class="kw">as </span>i32,
@@ -486,7 +511,8 @@
     }
 
     <span class="kw">pub fn </span>write_tag(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_name: <span class="kw-2">&amp;</span>str, value: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(idx, column) = <span class="self">self</span>.mut_column(column_name, ColumnDataType::String, SemanticType::Tag);
+        <span class="kw">let </span>(idx, column) =
+            <span class="self">self</span>.mut_column(column_name, ColumnDataType::String, SemanticType::Tag, <span class="prelude-val">None</span>);
         <span class="macro">ensure!</span>(
             column.datatype == ColumnDataType::String <span class="kw">as </span>i32,
             TypeMismatchSnafu {
@@ -503,8 +529,12 @@
     }
 
     <span class="kw">pub fn </span>write_u64(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_name: <span class="kw-2">&amp;</span>str, value: u64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(idx, column) =
-            <span class="self">self</span>.mut_column(column_name, ColumnDataType::Uint64, SemanticType::Field);
+        <span class="kw">let </span>(idx, column) = <span class="self">self</span>.mut_column(
+            column_name,
+            ColumnDataType::Uint64,
+            SemanticType::Field,
+            <span class="prelude-val">None</span>,
+        );
         <span class="macro">ensure!</span>(
             column.datatype == ColumnDataType::Uint64 <span class="kw">as </span>i32,
             TypeMismatchSnafu {
@@ -521,8 +551,12 @@
     }
 
     <span class="kw">pub fn </span>write_i64(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_name: <span class="kw-2">&amp;</span>str, value: i64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(idx, column) =
-            <span class="self">self</span>.mut_column(column_name, ColumnDataType::Int64, SemanticType::Field);
+        <span class="kw">let </span>(idx, column) = <span class="self">self</span>.mut_column(
+            column_name,
+            ColumnDataType::Int64,
+            SemanticType::Field,
+            <span class="prelude-val">None</span>,
+        );
         <span class="macro">ensure!</span>(
             column.datatype == ColumnDataType::Int64 <span class="kw">as </span>i32,
             TypeMismatchSnafu {
@@ -539,8 +573,12 @@
     }
 
     <span class="kw">pub fn </span>write_f64(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_name: <span class="kw-2">&amp;</span>str, value: f64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(idx, column) =
-            <span class="self">self</span>.mut_column(column_name, ColumnDataType::Float64, SemanticType::Field);
+        <span class="kw">let </span>(idx, column) = <span class="self">self</span>.mut_column(
+            column_name,
+            ColumnDataType::Float64,
+            SemanticType::Field,
+            <span class="prelude-val">None</span>,
+        );
         <span class="macro">ensure!</span>(
             column.datatype == ColumnDataType::Float64 <span class="kw">as </span>i32,
             TypeMismatchSnafu {
@@ -557,8 +595,12 @@
     }
 
     <span class="kw">pub fn </span>write_string(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_name: <span class="kw-2">&amp;</span>str, value: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(idx, column) =
-            <span class="self">self</span>.mut_column(column_name, ColumnDataType::String, SemanticType::Field);
+        <span class="kw">let </span>(idx, column) = <span class="self">self</span>.mut_column(
+            column_name,
+            ColumnDataType::String,
+            SemanticType::Field,
+            <span class="prelude-val">None</span>,
+        );
         <span class="macro">ensure!</span>(
             column.datatype == ColumnDataType::String <span class="kw">as </span>i32,
             TypeMismatchSnafu {
@@ -575,8 +617,12 @@
     }
 
     <span class="kw">pub fn </span>write_bool(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_name: <span class="kw-2">&amp;</span>str, value: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>(idx, column) =
-            <span class="self">self</span>.mut_column(column_name, ColumnDataType::Boolean, SemanticType::Field);
+        <span class="kw">let </span>(idx, column) = <span class="self">self</span>.mut_column(
+            column_name,
+            ColumnDataType::Boolean,
+            SemanticType::Field,
+            <span class="prelude-val">None</span>,
+        );
         <span class="macro">ensure!</span>(
             column.datatype == ColumnDataType::Boolean <span class="kw">as </span>i32,
             TypeMismatchSnafu {
@@ -618,6 +664,7 @@
         column_name: <span class="kw-2">&amp;</span>str,
         datatype: ColumnDataType,
         semantic_type: SemanticType,
+        datatype_extension: <span class="prelude-ty">Option</span>&lt;ColumnDataTypeExtension&gt;,
     ) -&gt; (usize, <span class="kw-2">&amp;mut </span>Column) {
         <span class="kw">let </span>column_names = <span class="kw-2">&amp;mut </span><span class="self">self</span>.column_name_index;
         <span class="kw">let </span>column_idx = <span class="kw">match </span>column_names.get(column_name) {
@@ -635,6 +682,7 @@
                     values: <span class="prelude-val">Some</span>(values_with_capacity(datatype, to_insert)),
                     datatype: datatype <span class="kw">as </span>i32,
                     null_mask: Vec::default(),
+                    datatype_extension,
                 });
                 <span class="kw">let _ </span>= column_names.insert(column_name.to_string(), new_idx);
                 new_idx

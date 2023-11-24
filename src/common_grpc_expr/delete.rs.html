@@ -119,6 +119,8 @@
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -157,14 +159,16 @@
         values,
         null_mask,
         datatype,
+        datatype_extension,
         ..
     } <span class="kw">in </span>request.key_columns
     {
         <span class="kw">let </span><span class="prelude-val">Some</span>(values) = values <span class="kw">else </span>{ <span class="kw">continue </span>};
 
-        <span class="kw">let </span>datatype: ConcreteDataType = ColumnDataTypeWrapper::try_new(datatype)
-            .context(ColumnDataTypeSnafu)<span class="question-mark">?
-            </span>.into();
+        <span class="kw">let </span>datatype: ConcreteDataType =
+            ColumnDataTypeWrapper::try_new(datatype, datatype_extension)
+                .context(ColumnDataTypeSnafu)<span class="question-mark">?
+                </span>.into();
         <span class="kw">let </span>vector = add_values_to_builder(datatype, values, row_count, null_mask)<span class="question-mark">?</span>;
 
         <span class="macro">ensure!</span>(

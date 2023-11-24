@@ -371,6 +371,14 @@
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
 <a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -675,31 +683,37 @@
             column_name: <span class="string">&quot;schema&quot;</span>.to_string(),
             datatype: ColumnDataType::String.into(),
             semantic_type: SemanticType::Tag.into(),
+            ..Default::default()
         },
         PbColumnSchema {
             column_name: <span class="string">&quot;name&quot;</span>.to_string(),
             datatype: ColumnDataType::String.into(),
             semantic_type: SemanticType::Tag.into(),
+            ..Default::default()
         },
         PbColumnSchema {
             column_name: <span class="string">&quot;engine&quot;</span>.to_string(),
             datatype: ColumnDataType::String.into(),
             semantic_type: SemanticType::Tag.into(),
+            ..Default::default()
         },
         PbColumnSchema {
             column_name: <span class="string">&quot;script&quot;</span>.to_string(),
             datatype: ColumnDataType::String.into(),
             semantic_type: SemanticType::Field.into(),
+            ..Default::default()
         },
         PbColumnSchema {
             column_name: <span class="string">&quot;greptime_timestamp&quot;</span>.to_string(),
             datatype: ColumnDataType::TimestampMillisecond.into(),
             semantic_type: SemanticType::Timestamp.into(),
+            ..Default::default()
         },
         PbColumnSchema {
             column_name: <span class="string">&quot;gmt_modified&quot;</span>.to_string(),
             datatype: ColumnDataType::TimestampMillisecond.into(),
             semantic_type: SemanticType::Field.into(),
+            ..Default::default()
         },
     ]
 }
@@ -731,7 +745,9 @@
             <span class="kw">let </span>cs = ColumnSchema::new(
                 c.column_name,
                 <span class="comment">// Safety: the type always exists
-                </span>ColumnDataTypeWrapper::try_new(c.datatype).unwrap().into(),
+                </span>ColumnDataTypeWrapper::try_new(c.datatype, c.datatype_extension)
+                    .unwrap()
+                    .into(),
                 <span class="bool-val">false</span>,
             );
             <span class="kw">if </span>c.semantic_type == SemanticType::Timestamp <span class="kw">as </span>i32 {

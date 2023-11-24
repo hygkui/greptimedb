@@ -311,6 +311,8 @@
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -528,6 +530,7 @@
                 column_name: name.to_string(),
                 datatype: datatype <span class="kw">as </span>i32,
                 semantic_type: semantic_type <span class="kw">as </span>i32,
+                ..Default::default()
             });
             one_row.push(value.into());
         } <span class="kw">else </span>{
@@ -582,6 +585,7 @@
             column_name: name,
             datatype: ColumnDataType::TimestampMillisecond <span class="kw">as </span>i32,
             semantic_type: SemanticType::Timestamp <span class="kw">as </span>i32,
+            ..Default::default()
         });
         one_row.push(ValueData::TimestampMillisecondValue(ts).into())
     } <span class="kw">else </span>{

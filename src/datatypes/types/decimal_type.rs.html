@@ -73,6 +73,23 @@
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -88,6 +105,7 @@
 // limitations under the License.
 
 </span><span class="kw">use </span>arrow_schema::DataType <span class="kw">as </span>ArrowDataType;
+<span class="kw">use </span>common_decimal::decimal128::DECIMAL128_MAX_PRECISION;
 <span class="kw">use </span>common_decimal::Decimal128;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
@@ -107,7 +125,17 @@
 
 <span class="kw">impl </span>Decimal128Type {
     <span class="kw">pub fn </span>new(precision: u8, scale: i8) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ precision, scale }
+        <span class="comment">// assert precision and scale is valid
+        </span><span class="macro">assert!</span>(
+            precision &gt; <span class="number">0 </span>&amp;&amp; precision &lt;= DECIMAL128_MAX_PRECISION,
+            <span class="string">&quot;precision should be in [1, {}]&quot;</span>,
+            DECIMAL128_MAX_PRECISION
+        );
+        <span class="macro">assert!</span>(
+            scale &gt;= <span class="number">0 </span>&amp;&amp; scale &lt;= precision <span class="kw">as </span>i8,
+            <span class="string">&quot;scale should be in [0, precision]&quot;
+        </span>);
+        Decimal128Type { precision, scale }
     }
 
     <span class="kw">pub fn </span>precision(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
@@ -121,7 +149,8 @@
 
 <span class="kw">impl </span>DataType <span class="kw">for </span>Decimal128Type {
     <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;decimal128&quot;
+        <span class="comment">// TODO(QuenKar): support precision and scale information in name
+        </span><span class="string">&quot;decimal&quot;
     </span>}
 
     <span class="kw">fn </span>logical_type_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LogicalTypeId {
@@ -137,7 +166,12 @@
     }
 
     <span class="kw">fn </span>create_mutable_vector(<span class="kw-2">&amp;</span><span class="self">self</span>, capacity: usize) -&gt; Box&lt;<span class="kw">dyn </span>MutableVector&gt; {
-        Box::new(Decimal128VectorBuilder::with_capacity(capacity))
+        Box::new(
+            Decimal128VectorBuilder::with_capacity(capacity)
+                .with_precision_and_scale(<span class="self">self</span>.precision, <span class="self">self</span>.scale)
+                <span class="comment">// safe to unwrap because we have validated the precision and scale in new()
+                </span>.unwrap(),
+        )
     }
 
     <span class="kw">fn </span>try_cast(<span class="kw-2">&amp;</span><span class="self">self</span>, val: Value) -&gt; <span class="prelude-ty">Option</span>&lt;Value&gt; {

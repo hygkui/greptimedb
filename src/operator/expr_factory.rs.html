@@ -434,6 +434,7 @@
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -453,8 +454,8 @@
 <span class="kw">use </span>api::helper::ColumnDataTypeWrapper;
 <span class="kw">use </span>api::v1::alter_expr::Kind;
 <span class="kw">use </span>api::v1::{
-    AddColumn, AddColumns, AlterExpr, Column, ColumnDataType, CreateTableExpr, DropColumn,
-    DropColumns, RenameTable, SemanticType,
+    AddColumn, AddColumns, AlterExpr, Column, ColumnDataType, ColumnDataTypeExtension,
+    CreateTableExpr, DropColumn, DropColumns, RenameTable, SemanticType,
 };
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_grpc_expr::util::ColumnExpr;
@@ -748,14 +749,14 @@
     column_schemas: Vec&lt;ColumnSchema&gt;,
     primary_keys: <span class="kw-2">&amp;</span>[String],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;api::v1::ColumnDef&gt;&gt; {
-    <span class="kw">let </span>column_datatypes = column_schemas
+    <span class="kw">let </span>column_datatypes: Vec&lt;(ColumnDataType, <span class="prelude-ty">Option</span>&lt;ColumnDataTypeExtension&gt;)&gt; = column_schemas
         .iter()
         .map(|c| {
             ColumnDataTypeWrapper::try_from(c.data_type.clone())
-                .map(|w| w.datatype())
+                .map(|w| w.to_parts())
                 .context(ColumnDataTypeSnafu)
         })
-        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;ColumnDataType&gt;&gt;&gt;()<span class="question-mark">?</span>;
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
     column_schemas
         .iter()
@@ -776,7 +777,7 @@
 
             <span class="prelude-val">Ok</span>(api::v1::ColumnDef {
                 name: schema.name.clone(),
-                data_type: datatype <span class="kw">as </span>i32,
+                data_type: datatype.<span class="number">0 </span><span class="kw">as </span>i32,
                 is_nullable: schema.is_nullable(),
                 default_constraint: <span class="kw">match </span>schema.default_constraint() {
                     <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[],
@@ -790,6 +791,7 @@
                 },
                 semantic_type,
                 comment,
+                datatype_extension: datatype.<span class="number">1</span>,
             })
         })
         .collect()

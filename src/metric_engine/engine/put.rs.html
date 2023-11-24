@@ -354,9 +354,6 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -374,9 +371,8 @@
 </span><span class="kw">use </span>std::hash::{BuildHasher, Hash, Hasher};
 
 <span class="kw">use </span>ahash::RandomState;
-<span class="kw">use </span>api::helper::to_column_data_type;
 <span class="kw">use </span>api::v1::value::ValueData;
-<span class="kw">use </span>api::v1::{ColumnSchema, Row, Rows, SemanticType};
+<span class="kw">use </span>api::v1::{ColumnDataType, ColumnSchema, Row, Rows, SemanticType};
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::{error, info};
 <span class="kw">use </span>datatypes::data_type::ConcreteDataType;
@@ -521,18 +517,16 @@
         <span class="comment">// add table_name column
         </span>rows.schema.push(ColumnSchema {
             column_name: DATA_SCHEMA_TABLE_ID_COLUMN_NAME.to_string(),
-            datatype: to_column_data_type(<span class="kw-2">&amp;</span>ConcreteDataType::uint32_datatype())
-                .unwrap()
-                .into(),
+            datatype: ColumnDataType::Uint32 <span class="kw">as </span>i32,
             semantic_type: SemanticType::Tag <span class="kw">as _</span>,
+            datatype_extension: <span class="prelude-val">None</span>,
         });
         <span class="comment">// add tsid column
         </span>rows.schema.push(ColumnSchema {
             column_name: DATA_SCHEMA_TSID_COLUMN_NAME.to_string(),
-            datatype: to_column_data_type(<span class="kw-2">&amp;</span>ConcreteDataType::uint64_datatype())
-                .unwrap()
-                .into(),
+            datatype: ColumnDataType::Uint64 <span class="kw">as </span>i32,
             semantic_type: SemanticType::Tag <span class="kw">as _</span>,
+            datatype_extension: <span class="prelude-val">None</span>,
         });
 
         <span class="comment">// fill internal columns

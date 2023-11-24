@@ -350,6 +350,8 @@
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
 <a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -566,11 +568,13 @@
                 column_name: <span class="string">&quot;tag&quot;</span>.to_string(),
                 datatype: ColumnDataType::String <span class="kw">as </span>i32,
                 semantic_type: SemanticType::Tag <span class="kw">as </span>i32,
+                ..Default::default()
             },
             ColumnSchema {
                 column_name: <span class="string">&quot;ts&quot;</span>.to_string(),
                 datatype: ColumnDataType::TimestampMillisecond <span class="kw">as </span>i32,
                 semantic_type: SemanticType::Timestamp <span class="kw">as </span>i32,
+                ..Default::default()
             },
         ];
 

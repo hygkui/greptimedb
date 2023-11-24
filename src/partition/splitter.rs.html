@@ -298,6 +298,13 @@
 <a href="#298" id="298">298</a>
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -417,7 +424,11 @@
                 .iter()
                 .map(|idx| {
                     idx.as_ref().map_or(Value::Null, |idx| {
-                        helper::pb_value_to_value_ref(<span class="kw-2">&amp;</span>row.values[<span class="kw-2">*</span>idx]).into()
+                        helper::pb_value_to_value_ref(
+                            <span class="kw-2">&amp;</span>row.values[<span class="kw-2">*</span>idx],
+                            <span class="kw-2">&amp;</span><span class="self">self</span>.schema[<span class="kw-2">*</span>idx].datatype_extension,
+                        )
+                        .into()
                     })
                 })
                 .collect()
@@ -444,16 +455,19 @@
                 column_name: <span class="string">&quot;id&quot;</span>.to_string(),
                 datatype: ColumnDataType::String <span class="kw">as </span>i32,
                 semantic_type: SemanticType::Tag <span class="kw">as </span>i32,
+                ..Default::default()
             },
             ColumnSchema {
                 column_name: <span class="string">&quot;name&quot;</span>.to_string(),
                 datatype: ColumnDataType::String <span class="kw">as </span>i32,
                 semantic_type: SemanticType::Tag <span class="kw">as </span>i32,
+                ..Default::default()
             },
             ColumnSchema {
                 column_name: <span class="string">&quot;age&quot;</span>.to_string(),
                 datatype: ColumnDataType::Uint32 <span class="kw">as </span>i32,
                 semantic_type: SemanticType::Field <span class="kw">as </span>i32,
+                ..Default::default()
             },
         ];
         <span class="kw">let </span>rows = <span class="macro">vec!</span>[

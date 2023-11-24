@@ -188,6 +188,11 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -202,7 +207,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">use </span>api::helper::value_to_grpc_value;
+</span><span class="kw">use </span>api::helper::{value_to_grpc_value, ColumnDataTypeWrapper};
 <span class="kw">use </span>api::v1::region::InsertRequests <span class="kw">as </span>RegionInsertRequests;
 <span class="kw">use </span>api::v1::{ColumnSchema <span class="kw">as </span>GrpcColumnSchema, Row, Rows, Value <span class="kw">as </span>GrpcValue};
 <span class="kw">use </span>catalog::CatalogManager;
@@ -215,10 +220,11 @@
 <span class="kw">use </span>sqlparser::ast::{ObjectName, Value <span class="kw">as </span>SqlValue};
 <span class="kw">use </span>table::TableRef;
 
-<span class="kw">use super</span>::{data_type, semantic_type};
+<span class="kw">use </span><span class="kw">super</span>::semantic_type;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    CatalogSnafu, ColumnDefaultValueSnafu, ColumnNoneDefaultValueSnafu, ColumnNotFoundSnafu,
-    InvalidSqlSnafu, MissingInsertBodySnafu, ParseSqlSnafu, <span class="prelude-ty">Result</span>, TableNotFoundSnafu,
+    CatalogSnafu, ColumnDataTypeSnafu, ColumnDefaultValueSnafu, ColumnNoneDefaultValueSnafu,
+    ColumnNotFoundSnafu, InvalidSqlSnafu, MissingInsertBodySnafu, ParseSqlSnafu, <span class="prelude-ty">Result</span>,
+    TableNotFoundSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::req_convert::common::partitioner::Partitioner;
 
@@ -284,13 +290,17 @@
                     msg: <span class="macro">format!</span>(<span class="string">&quot;Column {} not found in table {}&quot;</span>, column_name, <span class="kw-2">&amp;</span>table_name),
                 })<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>datatype = data_type(column_schema.data_type.clone())<span class="question-mark">?</span>;
+            <span class="kw">let </span>(datatype, datatype_extension) =
+                ColumnDataTypeWrapper::try_from(column_schema.data_type.clone())
+                    .context(ColumnDataTypeSnafu)<span class="question-mark">?
+                    </span>.to_parts();
             <span class="kw">let </span>semantic_type = semantic_type(<span class="kw-2">&amp;</span>table_info, column_name)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>grpc_column_schema = GrpcColumnSchema {
                 column_name: column_name.clone(),
                 datatype: datatype.into(),
                 semantic_type: semantic_type.into(),
+                datatype_extension,
             };
             schema.push(grpc_column_schema);
 

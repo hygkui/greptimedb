@@ -907,6 +907,30 @@
 <a href="#907" id="907">907</a>
 <a href="#908" id="908">908</a>
 <a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1016,6 +1040,16 @@
                 .fail()
             }
         }
+        ConcreteDataType::Decimal128(<span class="kw">_</span>) =&gt; {
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(val) = common_decimal::Decimal128::from_str(<span class="kw-2">&amp;</span>s) {
+                <span class="prelude-val">Ok</span>(Value::Decimal128(val))
+            } <span class="kw">else </span>{
+                ParseSqlValueSnafu {
+                    msg: <span class="macro">format!</span>(<span class="string">&quot;Fail to parse number {s} to Decimal128 value&quot;</span>),
+                }
+                .fail()
+            }
+        }
         <span class="kw">_ </span>=&gt; {
             <span class="macro">unreachable!</span>()
         }
@@ -1055,9 +1089,21 @@
                 <span class="kw">let </span>n  = parse_sql_number::&lt;i64&gt;(<span class="macro-nonterminal">$n</span>)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(Value::Timestamp(Timestamp::new(n, t.unit())))
             },
-            <span class="comment">// TODO(QuenKar): parse decimal128 string with precision and scale
+            <span class="comment">// TODO(QuenKar): This could need to be optimized
+            // if this from_str function is slow,
+            // we can implement parse decimal string with precision and scale manually.
+            </span>ConcreteDataType::Decimal128(<span class="kw">_</span>) =&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(val) = common_decimal::Decimal128::from_str(<span class="macro-nonterminal">$n</span>) {
+                    <span class="prelude-val">Ok</span>(Value::Decimal128(val))
+                } <span class="kw">else </span>{
+                    ParseSqlValueSnafu {
+                        msg: <span class="macro">format!</span>(<span class="string">&quot;Fail to parse number {}, invalid column type: {:?}&quot;</span>,
+                                        <span class="macro-nonterminal">$n</span>, <span class="macro-nonterminal">$data_type</span>)
+                    }.fail()
+                }
+            }
 
-            </span><span class="kw">_ </span>=&gt; ParseSqlValueSnafu {
+            <span class="kw">_ </span>=&gt; ParseSqlValueSnafu {
                 msg: <span class="macro">format!</span>(<span class="string">&quot;Fail to parse number {}, invalid column type: {:?}&quot;</span>,
                                 <span class="macro-nonterminal">$n</span>, <span class="macro-nonterminal">$data_type
                 </span>)}.fail(),
@@ -1265,18 +1311,20 @@
         </span>.map(ColumnDefaultConstraint::try_into) <span class="comment">// serialize default constraint to bytes
         </span>.transpose()
         .context(SerializeColumnDefaultConstraintSnafu)<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>data_type = ColumnDataTypeWrapper::try_from(data_type)
+    <span class="comment">// convert ConcreteDataType to grpc ColumnDataTypeWrapper
+    </span><span class="kw">let </span>(datatype, datatype_ext) = ColumnDataTypeWrapper::try_from(data_type.clone())
         .context(ConvertToGrpcDataTypeSnafu)<span class="question-mark">?
-        </span>.datatype() <span class="kw">as </span>i32;
+        </span>.to_parts();
+
     <span class="prelude-val">Ok</span>(api::v1::ColumnDef {
         name,
-        data_type,
+        data_type: datatype <span class="kw">as </span>i32,
         is_nullable,
         default_constraint: default_constraint.unwrap_or_default(),
         <span class="comment">// TODO(#1308): support adding new primary key columns
         </span>semantic_type: SemanticType::Field <span class="kw">as _</span>,
         comment: String::new(),
+        datatype_extension: datatype_ext,
     })
 }
 

@@ -652,6 +652,7 @@
 <a href="#652" id="652">652</a>
 <a href="#653" id="653">653</a>
 <a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1197,7 +1198,8 @@
         <span class="kw">for </span>column <span class="kw">in </span>column_defs {
             <span class="kw">let </span>column_name = <span class="kw-2">&amp;</span>column.name;
             <span class="kw">let </span>data_type = ConcreteDataType::from(
-                ColumnDataTypeWrapper::try_new(column.data_type).context(ColumnDataTypeSnafu)<span class="question-mark">?</span>,
+                ColumnDataTypeWrapper::try_new(column.data_type, column.datatype_extension.clone())
+                    .context(ColumnDataTypeSnafu)<span class="question-mark">?</span>,
             );
             column_name_and_type.push((column_name, data_type));
         }

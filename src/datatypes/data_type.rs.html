@@ -856,6 +856,8 @@
 <a href="#856" id="856">856</a>
 <a href="#857" id="857">857</a>
 <a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -1000,6 +1002,7 @@
                 | ConcreteDataType::Time(<span class="kw">_</span>)
                 | ConcreteDataType::Interval(<span class="kw">_</span>)
                 | ConcreteDataType::Duration(<span class="kw">_</span>)
+                | ConcreteDataType::Decimal128(<span class="kw">_</span>)
         )
     }
 
@@ -1534,6 +1537,7 @@
         <span class="macro">assert!</span>(ConcreteDataType::duration_millisecond_datatype().is_stringifiable());
         <span class="macro">assert!</span>(ConcreteDataType::duration_microsecond_datatype().is_stringifiable());
         <span class="macro">assert!</span>(ConcreteDataType::duration_nanosecond_datatype().is_stringifiable());
+        <span class="macro">assert!</span>(ConcreteDataType::decimal128_datatype(<span class="number">10</span>, <span class="number">2</span>).is_stringifiable());
     }
 
     <span class="attr">#[test]
