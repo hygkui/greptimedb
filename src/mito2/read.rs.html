@@ -929,6 +929,72 @@
 <a href="#929" id="929">929</a>
 <a href="#930" id="930">930</a>
 <a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -997,6 +1063,8 @@
     ///
     /// UInt8 type, not null.
     </span>op_types: Arc&lt;UInt8Vector&gt;,
+    <span class="doccomment">/// True if op types only contains put operations.
+    </span>put_only: bool,
     <span class="doccomment">/// Fields organized in columnar format.
     </span>fields: Vec&lt;BatchColumn&gt;,
 }
@@ -1126,6 +1194,7 @@
             sequences: Arc::new(<span class="self">self</span>.sequences.get_slice(offset, length)),
             op_types: Arc::new(<span class="self">self</span>.op_types.get_slice(offset, length)),
             fields,
+            put_only: <span class="self">self</span>.put_only,
         }
     }
 
@@ -1192,6 +1261,11 @@
 
     <span class="doccomment">/// Removes rows whose op type is delete.
     </span><span class="kw">pub fn </span>filter_deleted(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">if </span><span class="self">self</span>.put_only {
+            <span class="comment">// If there is only put operation, we can skip comparison and filtering.
+            </span><span class="kw">return </span><span class="prelude-val">Ok</span>(());
+        }
+
         <span class="comment">// Safety: op type column is not null.
         </span><span class="kw">let </span>array = <span class="self">self</span>.op_types.as_arrow();
         <span class="comment">// Find rows with non-delete op type.
@@ -1222,6 +1296,10 @@
             )
             .unwrap(),
         );
+        <span class="comment">// Also updates put_only field if it contains other ops.
+        </span><span class="kw">if </span>!<span class="self">self</span>.put_only {
+            <span class="self">self</span>.put_only = is_put_only(<span class="kw-2">&amp;</span><span class="self">self</span>.op_types);
+        }
         <span class="kw">for </span>batch_column <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.fields {
             batch_column.data = batch_column
                 .data
@@ -1342,6 +1420,10 @@
         <span class="kw">let </span>array = arrow::compute::take(<span class="self">self</span>.op_types.as_arrow(), indices.as_arrow(), <span class="prelude-val">None</span>)
             .context(ComputeArrowSnafu)<span class="question-mark">?</span>;
         <span class="self">self</span>.op_types = Arc::new(UInt8Vector::try_from_arrow_array(array).unwrap());
+        <span class="comment">// Also updates put_only field if it contains other ops.
+        </span><span class="kw">if </span>!<span class="self">self</span>.put_only {
+            <span class="self">self</span>.put_only = is_put_only(<span class="kw-2">&amp;</span><span class="self">self</span>.op_types);
+        }
         <span class="kw">for </span>batch_column <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.fields {
             batch_column.data = batch_column
                 .data
@@ -1373,6 +1455,16 @@
         <span class="comment">// Safety: sequences is not null so it actually returns Some.
         </span><span class="self">self</span>.sequences.get_data(index).unwrap()
     }
+}
+
+<span class="doccomment">/// Returns whether the op types vector only contains put operation.
+</span><span class="kw">fn </span>is_put_only(op_types: <span class="kw-2">&amp;</span>UInt8Vector) -&gt; bool {
+    <span class="comment">// Safety: Op types is not null.
+    </span>op_types
+        .as_arrow()
+        .values()
+        .iter()
+        .all(|v| <span class="kw-2">*</span>v == OpType::Put <span class="kw">as </span>u8)
 }
 
 <span class="doccomment">/// Len of timestamp in arrow row format.
@@ -1550,12 +1642,17 @@
             );
         }
 
+        <span class="comment">// Checks whether op types are put only. In the future, we may get this from statistics
+        // in memtables and SSTs.
+        </span><span class="kw">let </span>put_only = is_put_only(<span class="kw-2">&amp;</span>op_types);
+
         <span class="prelude-val">Ok</span>(Batch {
             primary_key: <span class="self">self</span>.primary_key,
             timestamps,
             sequences,
             op_types,
             fields: <span class="self">self</span>.fields,
+            put_only,
         })
     }
 }
@@ -1804,14 +1901,27 @@
             <span class="kw-2">&amp;</span>[OpType::Delete, OpType::Put, OpType::Delete, OpType::Put],
             <span class="kw-2">&amp;</span>[<span class="number">21</span>, <span class="number">22</span>, <span class="number">23</span>, <span class="number">24</span>],
         );
+        <span class="macro">assert!</span>(!batch.put_only);
         batch.filter_deleted().unwrap();
         <span class="kw">let </span>expect = new_batch(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>[<span class="number">12</span>, <span class="number">14</span>], <span class="kw-2">&amp;</span>[OpType::Put, OpType::Put], <span class="kw-2">&amp;</span>[<span class="number">22</span>, <span class="number">24</span>]);
+        <span class="macro">assert_eq!</span>(expect, batch);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>batch = new_batch(
+            <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],
+            <span class="kw-2">&amp;</span>[<span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>],
+            <span class="kw-2">&amp;</span>[OpType::Put, OpType::Put, OpType::Put, OpType::Put],
+            <span class="kw-2">&amp;</span>[<span class="number">21</span>, <span class="number">22</span>, <span class="number">23</span>, <span class="number">24</span>],
+        );
+        <span class="macro">assert!</span>(batch.put_only);
+        <span class="kw">let </span>expect = batch.clone();
+        batch.filter_deleted().unwrap();
         <span class="macro">assert_eq!</span>(expect, batch);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_filter() {
-        <span class="kw">let </span><span class="kw-2">mut </span>batch = new_batch(
+        <span class="comment">// Filters put only.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>batch = new_batch(
             <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],
             <span class="kw-2">&amp;</span>[<span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>],
             <span class="kw-2">&amp;</span>[OpType::Put, OpType::Put, OpType::Put, OpType::Put],
@@ -1822,7 +1932,19 @@
         <span class="kw">let </span>expect = new_batch(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>[<span class="number">13</span>, <span class="number">14</span>], <span class="kw-2">&amp;</span>[OpType::Put, OpType::Put], <span class="kw-2">&amp;</span>[<span class="number">23</span>, <span class="number">24</span>]);
         <span class="macro">assert_eq!</span>(expect, batch);
 
-        <span class="comment">// filter to empty.
+        <span class="comment">// Filters deletion.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>batch = new_batch(
+            <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>],
+            <span class="kw-2">&amp;</span>[<span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>],
+            <span class="kw-2">&amp;</span>[OpType::Put, OpType::Delete, OpType::Put, OpType::Put],
+            <span class="kw-2">&amp;</span>[<span class="number">21</span>, <span class="number">22</span>, <span class="number">23</span>, <span class="number">24</span>],
+        );
+        <span class="kw">let </span>predicate = BooleanVector::from_vec(<span class="macro">vec!</span>[<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>]);
+        batch.filter(<span class="kw-2">&amp;</span>predicate).unwrap();
+        <span class="kw">let </span>expect = new_batch(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">4</span>], <span class="kw-2">&amp;</span>[<span class="number">13</span>, <span class="number">14</span>], <span class="kw-2">&amp;</span>[OpType::Put, OpType::Put], <span class="kw-2">&amp;</span>[<span class="number">23</span>, <span class="number">24</span>]);
+        <span class="macro">assert_eq!</span>(expect, batch);
+
+        <span class="comment">// Filters to empty.
         </span><span class="kw">let </span>predicate = BooleanVector::from_vec(<span class="macro">vec!</span>[<span class="bool-val">false</span>, <span class="bool-val">false</span>]);
         batch.filter(<span class="kw-2">&amp;</span>predicate).unwrap();
         <span class="macro">assert!</span>(batch.is_empty());
@@ -1857,6 +1979,16 @@
             ],
             <span class="kw-2">&amp;</span>[<span class="number">23</span>, <span class="number">26</span>, <span class="number">22</span>, <span class="number">24</span>, <span class="number">25</span>],
         );
+        <span class="macro">assert_eq!</span>(expect, batch);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>batch = new_batch(
+            <span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>],
+            <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">6</span>, <span class="number">1</span>],
+            <span class="kw-2">&amp;</span>[OpType::Delete, OpType::Put, OpType::Put],
+            <span class="kw-2">&amp;</span>[<span class="number">21</span>, <span class="number">22</span>, <span class="number">23</span>],
+        );
+        batch.sort_and_dedup().unwrap();
+        <span class="kw">let </span>expect = new_batch(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">6</span>], <span class="kw-2">&amp;</span>[OpType::Put, OpType::Put], <span class="kw-2">&amp;</span>[<span class="number">23</span>, <span class="number">22</span>]);
         <span class="macro">assert_eq!</span>(expect, batch);
     }
 }
