@@ -289,6 +289,19 @@
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -315,7 +328,7 @@
 <span class="kw">use </span>object_store::ObjectStore;
 <span class="kw">use </span>snafu::{ensure, OptionExt};
 <span class="kw">use </span>store_api::metadata::RegionMetadataRef;
-<span class="kw">use </span>store_api::region_engine::{RegionEngine, RegionRole};
+<span class="kw">use </span>store_api::region_engine::{RegionEngine, RegionRole, SetReadonlyResponse};
 <span class="kw">use </span>store_api::region_request::{
     RegionCloseRequest, RegionCreateRequest, RegionDropRequest, RegionOpenRequest, RegionRequest,
 };
@@ -392,6 +405,19 @@
         <span class="self">self</span>.inner
             .set_writable(region_id, writable)
             .map_err(BoxedError::new)
+    }
+
+    <span class="kw">async fn </span>set_readonly_gracefully(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        region_id: RegionId,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SetReadonlyResponse, BoxedError&gt; {
+        <span class="kw">let </span>exists = <span class="self">self</span>.inner.get_region(region_id).<span class="kw">await</span>.is_some();
+
+        <span class="kw">if </span>exists {
+            <span class="prelude-val">Ok</span>(SetReadonlyResponse::success(<span class="prelude-val">None</span>))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(SetReadonlyResponse::NotFound)
+        }
     }
 
     <span class="kw">fn </span>role(<span class="kw-2">&amp;</span><span class="self">self</span>, region_id: RegionId) -&gt; <span class="prelude-ty">Option</span>&lt;RegionRole&gt; {
