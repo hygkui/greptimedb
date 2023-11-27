@@ -594,6 +594,9 @@
 <a href="#594" id="594">594</a>
 <a href="#595" id="595">595</a>
 <a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
 // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
@@ -935,7 +938,8 @@
         source: <span class="kw">crate</span>::http::pprof::nix::Error,
     },
 
-    <span class="attr">#[snafu(display(<span class="string">&quot;Failed to update jemalloc metrics&quot;</span>))]
+    <span class="attr">#[cfg(not(windows))]
+    #[snafu(display(<span class="string">&quot;Failed to update jemalloc metrics&quot;</span>))]
     </span>UpdateJemallocMetrics {
         <span class="attr">#[snafu(source)]
         </span>error: tikv_jemalloc_ctl::Error,
@@ -1008,8 +1012,10 @@
             | TcpIncoming { .. }
             | CatalogError { .. }
             | GrpcReflectionService { .. }
-            | BuildHttpResponse { .. }
-            | UpdateJemallocMetrics { .. } =&gt; StatusCode::Internal,
+            | BuildHttpResponse { .. } =&gt; StatusCode::Internal,
+
+            <span class="attr">#[cfg(not(windows))]
+            </span>UpdateJemallocMetrics { .. } =&gt; StatusCode::Internal,
 
             CollectRecordbatch { .. } =&gt; StatusCode::EngineExecuteQuery,
 
