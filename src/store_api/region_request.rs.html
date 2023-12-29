@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/store-api/src/region_request.rs`."><title>region_request.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="store_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (249624b50 2023-10-20)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/store-api/src/region_request.rs`."><title>region_request.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-804b98a1284a310a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="store_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (3f28fe133 2023-12-18)" data-channel="nightly" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -765,16 +766,38 @@
 <a href="#765" id="765">765</a>
 <a href="#766" id="766">766</a>
 <a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
-// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
@@ -788,12 +811,15 @@
 <span class="kw">use </span>snafu::{ensure, OptionExt};
 <span class="kw">use </span>strum::IntoStaticStr;
 
+<span class="kw">use </span><span class="kw">crate</span>::logstore::entry;
 <span class="kw">use </span><span class="kw">crate</span>::metadata::{
     ColumnMetadata, InvalidRawRegionRequestSnafu, InvalidRegionRequestSnafu, MetadataError,
     RegionMetadata, <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use </span><span class="kw">crate</span>::path_utils::region_dir;
 <span class="kw">use </span><span class="kw">crate</span>::storage::{ColumnId, RegionId, ScanRequest};
+
+<span class="kw">pub type </span>AffectedRows = usize;
 
 <span class="attr">#[derive(Debug, IntoStaticStr)]
 </span><span class="kw">pub enum </span>RegionRequest {
@@ -807,23 +833,25 @@
     Flush(RegionFlushRequest),
     Compact(RegionCompactRequest),
     Truncate(RegionTruncateRequest),
+    Catchup(RegionCatchupRequest),
 }
 
 <span class="kw">impl </span>RegionRequest {
     <span class="doccomment">/// Returns the type name of the [RegionRequest].
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>request_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    </span><span class="kw">pub fn </span>request_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self </span>{
-            RegionRequest::Put(<span class="kw">_</span>) =&gt; <span class="string">&quot;put&quot;</span>,
-            RegionRequest::Delete(<span class="kw">_</span>) =&gt; <span class="string">&quot;delete&quot;</span>,
-            RegionRequest::Create(<span class="kw">_</span>) =&gt; <span class="string">&quot;create&quot;</span>,
-            RegionRequest::Drop(<span class="kw">_</span>) =&gt; <span class="string">&quot;drop&quot;</span>,
-            RegionRequest::Open(<span class="kw">_</span>) =&gt; <span class="string">&quot;open&quot;</span>,
-            RegionRequest::Close(<span class="kw">_</span>) =&gt; <span class="string">&quot;close&quot;</span>,
-            RegionRequest::Alter(<span class="kw">_</span>) =&gt; <span class="string">&quot;alter&quot;</span>,
-            RegionRequest::Flush(<span class="kw">_</span>) =&gt; <span class="string">&quot;flush&quot;</span>,
-            RegionRequest::Compact(<span class="kw">_</span>) =&gt; <span class="string">&quot;compact&quot;</span>,
-            RegionRequest::Truncate(<span class="kw">_</span>) =&gt; <span class="string">&quot;truncate&quot;</span>,
+            RegionRequest::Put(<span class="kw">_</span>) =&gt; <span class="string">"put"</span>,
+            RegionRequest::Delete(<span class="kw">_</span>) =&gt; <span class="string">"delete"</span>,
+            RegionRequest::Create(<span class="kw">_</span>) =&gt; <span class="string">"create"</span>,
+            RegionRequest::Drop(<span class="kw">_</span>) =&gt; <span class="string">"drop"</span>,
+            RegionRequest::Open(<span class="kw">_</span>) =&gt; <span class="string">"open"</span>,
+            RegionRequest::Close(<span class="kw">_</span>) =&gt; <span class="string">"close"</span>,
+            RegionRequest::Alter(<span class="kw">_</span>) =&gt; <span class="string">"alter"</span>,
+            RegionRequest::Flush(<span class="kw">_</span>) =&gt; <span class="string">"flush"</span>,
+            RegionRequest::Compact(<span class="kw">_</span>) =&gt; <span class="string">"compact"</span>,
+            RegionRequest::Truncate(<span class="kw">_</span>) =&gt; <span class="string">"truncate"</span>,
+            RegionRequest::Catchup(<span class="kw">_</span>) =&gt; <span class="string">"catchup"</span>,
         }
     }
 
@@ -881,6 +909,7 @@
                         engine: open.engine,
                         region_dir,
                         options: open.options,
+                        skip_wal_replay: <span class="bool-val">false</span>,
                     }),
                 )])
             }
@@ -910,7 +939,7 @@
     }
 
     <span class="doccomment">/// Returns the type name of the request.
-    </span><span class="kw">pub fn </span>type_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    </span><span class="kw">pub fn </span>type_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
         <span class="self">self</span>.into()
     }
 }
@@ -946,15 +975,15 @@
     </span><span class="kw">pub </span>primary_key: Vec&lt;ColumnId&gt;,
     <span class="doccomment">/// Options of the created region.
     </span><span class="kw">pub </span>options: HashMap&lt;String, String&gt;,
-    <span class="doccomment">/// Directory for region&#39;s data home. Usually is composed by catalog and table id
+    <span class="doccomment">/// Directory for region's data home. Usually is composed by catalog and table id
     </span><span class="kw">pub </span>region_dir: String,
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="attr">#[derive(Debug, Clone, Default)]
 </span><span class="kw">pub struct </span>RegionDropRequest {}
 
 <span class="doccomment">/// Open region request.
-</span><span class="attr">#[derive(Debug)]
+</span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>RegionOpenRequest {
     <span class="doccomment">/// Region engine name
     </span><span class="kw">pub </span>engine: String,
@@ -962,6 +991,8 @@
     </span><span class="kw">pub </span>region_dir: String,
     <span class="doccomment">/// Options of the opened region.
     </span><span class="kw">pub </span>options: HashMap&lt;String, String&gt;,
+    <span class="doccomment">/// To skip replaying the WAL.
+    </span><span class="kw">pub </span>skip_wal_replay: bool,
 }
 
 <span class="doccomment">/// Close region request.
@@ -985,7 +1016,7 @@
             InvalidRegionRequestSnafu {
                 region_id: metadata.region_id,
                 err: <span class="macro">format!</span>(
-                    <span class="string">&quot;region schema version {} is not equal to request schema version {}&quot;</span>,
+                    <span class="string">"region schema version {} is not equal to request schema version {}"</span>,
                     metadata.schema_version, <span class="self">self</span>.schema_version
                 ),
             }
@@ -1010,7 +1041,7 @@
 
     <span class="kw">fn </span>try_from(value: AlterRequest) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>kind = value.kind.context(InvalidRawRegionRequestSnafu {
-            err: <span class="string">&quot;missing kind in AlterRequest&quot;</span>,
+            err: <span class="string">"missing kind in AlterRequest"</span>,
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>kind = AlterKind::try_from(kind)<span class="question-mark">?</span>;
@@ -1078,7 +1109,7 @@
             column.semantic_type == SemanticType::Field,
             InvalidRegionRequestSnafu {
                 region_id: metadata.region_id,
-                err: <span class="macro">format!</span>(<span class="string">&quot;column {} is not a field and could not be dropped&quot;</span>, name),
+                err: <span class="macro">format!</span>(<span class="string">"column {} is not a field and could not be dropped"</span>, name),
             }
         );
         <span class="prelude-val">Ok</span>(())
@@ -1133,7 +1164,7 @@
             InvalidRegionRequestSnafu {
                 region_id: metadata.region_id,
                 err: <span class="macro">format!</span>(
-                    <span class="string">&quot;no default value for column {}&quot;</span>,
+                    <span class="string">"no default value for column {}"</span>,
                     <span class="self">self</span>.column_metadata.column_schema.name
                 ),
             }
@@ -1158,7 +1189,7 @@
         <span class="kw">let </span>column_def = add_column
             .column_def
             .context(InvalidRawRegionRequestSnafu {
-                err: <span class="string">&quot;missing column_def in AddColumn&quot;</span>,
+                err: <span class="string">"missing column_def in AddColumn"</span>,
             })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>column_metadata = ColumnMetadata::try_from_column_def(column_def)<span class="question-mark">?</span>;
@@ -1215,19 +1246,33 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>RegionTruncateRequest {}
 
+<span class="doccomment">/// Catchup region request.
+///
+/// Makes a readonly region to catch up to leader region changes.
+/// There is no effect if it operating on a leader region.
+</span><span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>RegionCatchupRequest {
+    <span class="doccomment">/// Sets it to writable if it's available after it has caught up with all changes.
+    </span><span class="kw">pub </span>set_writable: bool,
+    <span class="doccomment">/// The `entry_id` that was expected to reply to.
+    /// `None` stands replaying to latest.
+    </span><span class="kw">pub </span>entry_id: <span class="prelude-ty">Option</span>&lt;entry::Id&gt;,
+}
+
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>RegionRequest {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            RegionRequest::Put(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Put&quot;</span>),
-            RegionRequest::Delete(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Delete&quot;</span>),
-            RegionRequest::Create(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Create&quot;</span>),
-            RegionRequest::Drop(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Drop&quot;</span>),
-            RegionRequest::Open(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Open&quot;</span>),
-            RegionRequest::Close(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Close&quot;</span>),
-            RegionRequest::Alter(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Alter&quot;</span>),
-            RegionRequest::Flush(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Flush&quot;</span>),
-            RegionRequest::Compact(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Compact&quot;</span>),
-            RegionRequest::Truncate(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Truncate&quot;</span>),
+            RegionRequest::Put(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Put"</span>),
+            RegionRequest::Delete(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Delete"</span>),
+            RegionRequest::Create(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Create"</span>),
+            RegionRequest::Drop(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Drop"</span>),
+            RegionRequest::Open(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Open"</span>),
+            RegionRequest::Close(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Close"</span>),
+            RegionRequest::Alter(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Alter"</span>),
+            RegionRequest::Flush(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Flush"</span>),
+            RegionRequest::Compact(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Compact"</span>),
+            RegionRequest::Truncate(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Truncate"</span>),
+            RegionRequest::Catchup(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Catchup"</span>),
         }
     }
 }
@@ -1246,26 +1291,26 @@
     </span><span class="kw">fn </span>test_from_proto_location() {
         <span class="kw">let </span>proto_location = v1::AddColumnLocation {
             location_type: LocationType::First <span class="kw">as </span>i32,
-            after_column_name: <span class="string">&quot;&quot;</span>.to_string(),
+            after_column_name: <span class="string">""</span>.to_string(),
         };
         <span class="kw">let </span>location = AddColumnLocation::try_from(proto_location).unwrap();
         <span class="macro">assert_eq!</span>(location, AddColumnLocation::First);
 
         <span class="kw">let </span>proto_location = v1::AddColumnLocation {
             location_type: <span class="number">10</span>,
-            after_column_name: <span class="string">&quot;&quot;</span>.to_string(),
+            after_column_name: <span class="string">""</span>.to_string(),
         };
         AddColumnLocation::try_from(proto_location).unwrap_err();
 
         <span class="kw">let </span>proto_location = v1::AddColumnLocation {
             location_type: LocationType::After <span class="kw">as </span>i32,
-            after_column_name: <span class="string">&quot;a&quot;</span>.to_string(),
+            after_column_name: <span class="string">"a"</span>.to_string(),
         };
         <span class="kw">let </span>location = AddColumnLocation::try_from(proto_location).unwrap();
         <span class="macro">assert_eq!</span>(
             location,
             AddColumnLocation::After {
-                column_name: <span class="string">&quot;a&quot;</span>.to_string()
+                column_name: <span class="string">"a"</span>.to_string()
             }
         );
     }
@@ -1295,7 +1340,7 @@
                 add_columns: <span class="macro">vec!</span>[v1::region::AddColumn {
                     column_def: <span class="prelude-val">Some</span>(RegionColumnDef {
                         column_def: <span class="prelude-val">Some</span>(ColumnDef {
-                            name: <span class="string">&quot;a&quot;</span>.to_string(),
+                            name: <span class="string">"a"</span>.to_string(),
                             data_type: ColumnDataType::String <span class="kw">as </span>i32,
                             is_nullable: <span class="bool-val">true</span>,
                             default_constraint: <span class="macro">vec!</span>[],
@@ -1307,7 +1352,7 @@
                     }),
                     location: <span class="prelude-val">Some</span>(v1::AddColumnLocation {
                         location_type: LocationType::First <span class="kw">as </span>i32,
-                        after_column_name: <span class="string">&quot;&quot;</span>.to_string(),
+                        after_column_name: <span class="string">""</span>.to_string(),
                     }),
                 }],
             })),
@@ -1322,7 +1367,7 @@
                     columns: <span class="macro">vec!</span>[AddColumn {
                         column_metadata: ColumnMetadata {
                             column_schema: ColumnSchema::new(
-                                <span class="string">&quot;a&quot;</span>,
+                                <span class="string">"a"</span>,
                                 ConcreteDataType::string_datatype(),
                                 <span class="bool-val">true</span>,
                             ),
@@ -1341,7 +1386,7 @@
         builder
             .push_column_metadata(ColumnMetadata {
                 column_schema: ColumnSchema::new(
-                    <span class="string">&quot;ts&quot;</span>,
+                    <span class="string">"ts"</span>,
                     ConcreteDataType::timestamp_millisecond_datatype(),
                     <span class="bool-val">false</span>,
                 ),
@@ -1350,7 +1395,7 @@
             })
             .push_column_metadata(ColumnMetadata {
                 column_schema: ColumnSchema::new(
-                    <span class="string">&quot;tag_0&quot;</span>,
+                    <span class="string">"tag_0"</span>,
                     ConcreteDataType::string_datatype(),
                     <span class="bool-val">true</span>,
                 ),
@@ -1359,7 +1404,7 @@
             })
             .push_column_metadata(ColumnMetadata {
                 column_schema: ColumnSchema::new(
-                    <span class="string">&quot;field_0&quot;</span>,
+                    <span class="string">"field_0"</span>,
                     ConcreteDataType::string_datatype(),
                     <span class="bool-val">true</span>,
                 ),
@@ -1376,7 +1421,7 @@
         <span class="kw">let </span>add_column = AddColumn {
             column_metadata: ColumnMetadata {
                 column_schema: ColumnSchema::new(
-                    <span class="string">&quot;tag_1&quot;</span>,
+                    <span class="string">"tag_1"</span>,
                     ConcreteDataType::string_datatype(),
                     <span class="bool-val">true</span>,
                 ),
@@ -1392,7 +1437,7 @@
         </span>AddColumn {
             column_metadata: ColumnMetadata {
                 column_schema: ColumnSchema::new(
-                    <span class="string">&quot;tag_1&quot;</span>,
+                    <span class="string">"tag_1"</span>,
                     ConcreteDataType::string_datatype(),
                     <span class="bool-val">false</span>,
                 ),
@@ -1408,7 +1453,7 @@
         </span><span class="kw">let </span>add_column = AddColumn {
             column_metadata: ColumnMetadata {
                 column_schema: ColumnSchema::new(
-                    <span class="string">&quot;tag_0&quot;</span>,
+                    <span class="string">"tag_0"</span>,
                     ConcreteDataType::string_datatype(),
                     <span class="bool-val">true</span>,
                 ),
@@ -1428,7 +1473,7 @@
                 AddColumn {
                     column_metadata: ColumnMetadata {
                         column_schema: ColumnSchema::new(
-                            <span class="string">&quot;tag_1&quot;</span>,
+                            <span class="string">"tag_1"</span>,
                             ConcreteDataType::string_datatype(),
                             <span class="bool-val">true</span>,
                         ),
@@ -1440,7 +1485,7 @@
                 AddColumn {
                     column_metadata: ColumnMetadata {
                         column_schema: ColumnSchema::new(
-                            <span class="string">&quot;tag_1&quot;</span>,
+                            <span class="string">"tag_1"</span>,
                             ConcreteDataType::string_datatype(),
                             <span class="bool-val">true</span>,
                         ),
@@ -1460,19 +1505,19 @@
     </span><span class="kw">fn </span>test_validate_drop_column() {
         <span class="kw">let </span>metadata = new_metadata();
         <span class="kw">let </span>kind = AlterKind::DropColumns {
-            names: <span class="macro">vec!</span>[<span class="string">&quot;xxxx&quot;</span>.to_string()],
+            names: <span class="macro">vec!</span>[<span class="string">"xxxx"</span>.to_string()],
         };
         kind.validate(<span class="kw-2">&amp;</span>metadata).unwrap();
         <span class="macro">assert!</span>(!kind.need_alter(<span class="kw-2">&amp;</span>metadata));
 
         AlterKind::DropColumns {
-            names: <span class="macro">vec!</span>[<span class="string">&quot;tag_0&quot;</span>.to_string()],
+            names: <span class="macro">vec!</span>[<span class="string">"tag_0"</span>.to_string()],
         }
         .validate(<span class="kw-2">&amp;</span>metadata)
         .unwrap_err();
 
         <span class="kw">let </span>kind = AlterKind::DropColumns {
-            names: <span class="macro">vec!</span>[<span class="string">&quot;field_0&quot;</span>.to_string()],
+            names: <span class="macro">vec!</span>[<span class="string">"field_0"</span>.to_string()],
         };
         kind.validate(<span class="kw-2">&amp;</span>metadata).unwrap();
         <span class="macro">assert!</span>(kind.need_alter(<span class="kw-2">&amp;</span>metadata));
@@ -1486,7 +1531,7 @@
         RegionAlterRequest {
             schema_version: <span class="number">1</span>,
             kind: AlterKind::DropColumns {
-                names: <span class="macro">vec!</span>[<span class="string">&quot;field_0&quot;</span>.to_string()],
+                names: <span class="macro">vec!</span>[<span class="string">"field_0"</span>.to_string()],
             },
         }
         .validate(<span class="kw-2">&amp;</span>metadata)
@@ -1500,7 +1545,7 @@
                 AddColumn {
                     column_metadata: ColumnMetadata {
                         column_schema: ColumnSchema::new(
-                            <span class="string">&quot;tag_1&quot;</span>,
+                            <span class="string">"tag_1"</span>,
                             ConcreteDataType::string_datatype(),
                             <span class="bool-val">true</span>,
                         ),
@@ -1512,7 +1557,7 @@
                 AddColumn {
                     column_metadata: ColumnMetadata {
                         column_schema: ColumnSchema::new(
-                            <span class="string">&quot;field_1&quot;</span>,
+                            <span class="string">"field_1"</span>,
                             ConcreteDataType::string_datatype(),
                             <span class="bool-val">true</span>,
                         ),

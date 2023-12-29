@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DowngradeLeaderRegion"]};
+window.SIDEBAR_ITEMS = {"constant":["DOWNGRADE_LEADER_REGION_TIMEOUT"],"struct":["DowngradeLeaderRegion"]};

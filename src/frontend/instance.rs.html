@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/frontend/src/instance.rs`."><title>instance.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="frontend" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (249624b50 2023-10-20)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/frontend/src/instance.rs`."><title>instance.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-804b98a1284a310a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="frontend" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (3f28fe133 2023-12-18)" data-channel="nightly" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -610,180 +611,22 @@
 <a href="#610" id="610">610</a>
 <a href="#611" id="611">611</a>
 <a href="#612" id="612">612</a>
-<a href="#613" id="613">613</a>
-<a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
-<a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
-<a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
-<a href="#629" id="629">629</a>
-<a href="#630" id="630">630</a>
-<a href="#631" id="631">631</a>
-<a href="#632" id="632">632</a>
-<a href="#633" id="633">633</a>
-<a href="#634" id="634">634</a>
-<a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
-<a href="#642" id="642">642</a>
-<a href="#643" id="643">643</a>
-<a href="#644" id="644">644</a>
-<a href="#645" id="645">645</a>
-<a href="#646" id="646">646</a>
-<a href="#647" id="647">647</a>
-<a href="#648" id="648">648</a>
-<a href="#649" id="649">649</a>
-<a href="#650" id="650">650</a>
-<a href="#651" id="651">651</a>
-<a href="#652" id="652">652</a>
-<a href="#653" id="653">653</a>
-<a href="#654" id="654">654</a>
-<a href="#655" id="655">655</a>
-<a href="#656" id="656">656</a>
-<a href="#657" id="657">657</a>
-<a href="#658" id="658">658</a>
-<a href="#659" id="659">659</a>
-<a href="#660" id="660">660</a>
-<a href="#661" id="661">661</a>
-<a href="#662" id="662">662</a>
-<a href="#663" id="663">663</a>
-<a href="#664" id="664">664</a>
-<a href="#665" id="665">665</a>
-<a href="#666" id="666">666</a>
-<a href="#667" id="667">667</a>
-<a href="#668" id="668">668</a>
-<a href="#669" id="669">669</a>
-<a href="#670" id="670">670</a>
-<a href="#671" id="671">671</a>
-<a href="#672" id="672">672</a>
-<a href="#673" id="673">673</a>
-<a href="#674" id="674">674</a>
-<a href="#675" id="675">675</a>
-<a href="#676" id="676">676</a>
-<a href="#677" id="677">677</a>
-<a href="#678" id="678">678</a>
-<a href="#679" id="679">679</a>
-<a href="#680" id="680">680</a>
-<a href="#681" id="681">681</a>
-<a href="#682" id="682">682</a>
-<a href="#683" id="683">683</a>
-<a href="#684" id="684">684</a>
-<a href="#685" id="685">685</a>
-<a href="#686" id="686">686</a>
-<a href="#687" id="687">687</a>
-<a href="#688" id="688">688</a>
-<a href="#689" id="689">689</a>
-<a href="#690" id="690">690</a>
-<a href="#691" id="691">691</a>
-<a href="#692" id="692">692</a>
-<a href="#693" id="693">693</a>
-<a href="#694" id="694">694</a>
-<a href="#695" id="695">695</a>
-<a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
-<a href="#698" id="698">698</a>
-<a href="#699" id="699">699</a>
-<a href="#700" id="700">700</a>
-<a href="#701" id="701">701</a>
-<a href="#702" id="702">702</a>
-<a href="#703" id="703">703</a>
-<a href="#704" id="704">704</a>
-<a href="#705" id="705">705</a>
-<a href="#706" id="706">706</a>
-<a href="#707" id="707">707</a>
-<a href="#708" id="708">708</a>
-<a href="#709" id="709">709</a>
-<a href="#710" id="710">710</a>
-<a href="#711" id="711">711</a>
-<a href="#712" id="712">712</a>
-<a href="#713" id="713">713</a>
-<a href="#714" id="714">714</a>
-<a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a>
-<a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
-<a href="#719" id="719">719</a>
-<a href="#720" id="720">720</a>
-<a href="#721" id="721">721</a>
-<a href="#722" id="722">722</a>
-<a href="#723" id="723">723</a>
-<a href="#724" id="724">724</a>
-<a href="#725" id="725">725</a>
-<a href="#726" id="726">726</a>
-<a href="#727" id="727">727</a>
-<a href="#728" id="728">728</a>
-<a href="#729" id="729">729</a>
-<a href="#730" id="730">730</a>
-<a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
-<a href="#743" id="743">743</a>
-<a href="#744" id="744">744</a>
-<a href="#745" id="745">745</a>
-<a href="#746" id="746">746</a>
-<a href="#747" id="747">747</a>
-<a href="#748" id="748">748</a>
-<a href="#749" id="749">749</a>
-<a href="#750" id="750">750</a>
-<a href="#751" id="751">751</a>
-<a href="#752" id="752">752</a>
-<a href="#753" id="753">753</a>
-<a href="#754" id="754">754</a>
-<a href="#755" id="755">755</a>
-<a href="#756" id="756">756</a>
-<a href="#757" id="757">757</a>
-<a href="#758" id="758">758</a>
-<a href="#759" id="759">759</a>
-<a href="#760" id="760">760</a>
-<a href="#761" id="761">761</a>
-<a href="#762" id="762">762</a>
-<a href="#763" id="763">763</a>
-<a href="#764" id="764">764</a>
-<a href="#765" id="765">765</a>
-<a href="#766" id="766">766</a>
-<a href="#767" id="767">767</a>
-<a href="#768" id="768">768</a>
-<a href="#769" id="769">769</a>
-<a href="#770" id="770">770</a>
-<a href="#771" id="771">771</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
-// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-</span><span class="kw">mod </span>grpc;
+</span><span class="kw">pub mod </span>builder;
+<span class="kw">mod </span>grpc;
 <span class="kw">mod </span>influxdb;
 <span class="kw">mod </span>opentsdb;
 <span class="kw">mod </span>otlp;
@@ -792,24 +635,16 @@
 <span class="kw">mod </span>script;
 <span class="kw">pub mod </span>standalone;
 
-<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>api::v1::meta::Role;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>auth::{PermissionChecker, PermissionCheckerRef, PermissionReq};
-<span class="kw">use </span>catalog::kvbackend::{CachedMetaKvBackend, KvBackendCatalogManager};
 <span class="kw">use </span>catalog::CatalogManagerRef;
-<span class="kw">use </span>client::client_manager::DatanodeClients;
 <span class="kw">use </span>common_base::Plugins;
 <span class="kw">use </span>common_config::KvBackendConfig;
 <span class="kw">use </span>common_error::ext::BoxedError;
 <span class="kw">use </span>common_grpc::channel_manager::{ChannelConfig, ChannelManager};
-<span class="kw">use </span>common_meta::cache_invalidator::DummyCacheInvalidator;
-<span class="kw">use </span>common_meta::ddl_manager::DdlManager;
-<span class="kw">use </span>common_meta::heartbeat::handler::parse_mailbox_message::ParseMailboxMessageHandler;
-<span class="kw">use </span>common_meta::heartbeat::handler::HandlerGroupExecutor;
-<span class="kw">use </span>common_meta::key::TableMetadataManager;
 <span class="kw">use </span>common_meta::kv_backend::KvBackendRef;
 <span class="kw">use </span>common_meta::state_store::KvStateStore;
 <span class="kw">use </span>common_procedure::local::{LocalManager, ManagerConfig};
@@ -818,22 +653,22 @@
 <span class="kw">use </span>common_query::Output;
 <span class="kw">use </span>common_telemetry::error;
 <span class="kw">use </span>common_telemetry::logging::info;
-<span class="kw">use </span>datanode::region_server::RegionServer;
 <span class="kw">use </span>log_store::raft_engine::RaftEngineBackend;
 <span class="kw">use </span>meta_client::client::{MetaClient, MetaClientBuilder};
-<span class="kw">use </span>operator::delete::{Deleter, DeleterRef};
-<span class="kw">use </span>operator::insert::{Inserter, InserterRef};
+<span class="kw">use </span>meta_client::MetaClientOptions;
+<span class="kw">use </span>operator::delete::DeleterRef;
+<span class="kw">use </span>operator::insert::InserterRef;
 <span class="kw">use </span>operator::statement::StatementExecutor;
-<span class="kw">use </span>operator::table::{table_idents_to_full_name, TableMutationOperator};
-<span class="kw">use </span>partition::manager::PartitionRuleManager;
+<span class="kw">use </span>operator::table::table_idents_to_full_name;
 <span class="kw">use </span>query::parser::{PromQuery, QueryLanguageParser, QueryStatement};
 <span class="kw">use </span>query::plan::LogicalPlan;
 <span class="kw">use </span>query::query_engine::options::{validate_catalog_and_schema, QueryOptions};
 <span class="kw">use </span>query::query_engine::DescribeResult;
-<span class="kw">use </span>query::{QueryEngineFactory, QueryEngineRef};
+<span class="kw">use </span>query::QueryEngineRef;
 <span class="kw">use </span>raft_engine::{Config, ReadableSize, RecoveryMode};
 <span class="kw">use </span>servers::error <span class="kw">as </span>server_error;
 <span class="kw">use </span>servers::error::{AuthSnafu, ExecuteQuerySnafu, ParsePromQLSnafu};
+<span class="kw">use </span>servers::export_metrics::{ExportMetricsOption, ExportMetricsTask};
 <span class="kw">use </span>servers::interceptor::{
     PromQueryInterceptor, PromQueryInterceptorRef, SqlQueryInterceptor, SqlQueryInterceptorRef,
 };
@@ -854,15 +689,12 @@
 <span class="kw">use </span>sqlparser::ast::ObjectName;
 <span class="kw">pub use </span>standalone::StandaloneDatanodeManager;
 
-<span class="kw">use </span><span class="self">self</span>::region_query::FrontendRegionQueryHandler;
-<span class="kw">use </span><span class="self">self</span>::standalone::StandaloneTableMetadataCreator;
 <span class="kw">use </span><span class="kw">crate</span>::error::{
-    <span class="self">self</span>, Error, ExecLogicalPlanSnafu, ExecutePromqlSnafu, ExternalSnafu, MissingMetasrvOptsSnafu,
-    ParseSqlSnafu, PermissionSnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>, SqlExecInterceptedSnafu,
+    <span class="self">self</span>, Error, ExecLogicalPlanSnafu, ExecutePromqlSnafu, ExternalSnafu, ParseSqlSnafu,
+    PermissionSnafu, PlanStatementSnafu, <span class="prelude-ty">Result</span>, SqlExecInterceptedSnafu, StartServerSnafu,
     TableOperationSnafu,
 };
 <span class="kw">use </span><span class="kw">crate</span>::frontend::{FrontendOptions, TomlSerializable};
-<span class="kw">use </span><span class="kw">crate</span>::heartbeat::handler::invalidate_table_cache::InvalidateTableCacheHandler;
 <span class="kw">use </span><span class="kw">crate</span>::heartbeat::HeartbeatTask;
 <span class="kw">use </span><span class="kw">crate</span>::metrics;
 <span class="kw">use </span><span class="kw">crate</span>::script::ScriptExecutor;
@@ -880,7 +712,7 @@
     + PrometheusHandler
     + Send
     + Sync
-    + <span class="lifetime">&#39;static
+    + <span class="lifetime">'static
 </span>{
     <span class="kw">async fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
 }
@@ -899,104 +731,15 @@
     heartbeat_task: <span class="prelude-ty">Option</span>&lt;HeartbeatTask&gt;,
     inserter: InserterRef,
     deleter: DeleterRef,
+    export_metrics_task: <span class="prelude-ty">Option</span>&lt;ExportMetricsTask&gt;,
 }
 
 <span class="kw">impl </span>Instance {
-    <span class="kw">pub async fn </span>try_new_distributed(opts: <span class="kw-2">&amp;</span>FrontendOptions, plugins: Plugins) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>meta_client = <span class="self">Self</span>::create_meta_client(opts).<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">let </span>datanode_clients = Arc::new(DatanodeClients::default());
-
-        <span class="self">Self</span>::try_new_distributed_with(meta_client, datanode_clients, plugins, opts).<span class="kw">await
-    </span>}
-
-    <span class="kw">pub async fn </span>try_new_distributed_with(
-        meta_client: Arc&lt;MetaClient&gt;,
-        datanode_clients: Arc&lt;DatanodeClients&gt;,
-        plugins: Plugins,
-        opts: <span class="kw-2">&amp;</span>FrontendOptions,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>meta_backend = Arc::new(CachedMetaKvBackend::new(meta_client.clone()));
-
-        <span class="kw">let </span>catalog_manager = KvBackendCatalogManager::new(
-            meta_backend.clone(),
-            meta_backend.clone(),
-            datanode_clients.clone(),
-        );
-        <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(meta_backend.clone()));
-
-        <span class="kw">let </span>region_query_handler = FrontendRegionQueryHandler::arc(
-            partition_manager.clone(),
-            catalog_manager.datanode_manager().clone(),
-        );
-
-        <span class="kw">let </span>inserter = Arc::new(Inserter::new(
-            catalog_manager.clone(),
-            partition_manager.clone(),
-            datanode_clients.clone(),
-        ));
-        <span class="kw">let </span>deleter = Arc::new(Deleter::new(
-            catalog_manager.clone(),
-            partition_manager,
-            datanode_clients,
-        ));
-
-        <span class="kw">let </span>table_mutation_handler = Arc::new(TableMutationOperator::new(
-            inserter.clone(),
-            deleter.clone(),
-        ));
-
-        <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
-            catalog_manager.clone(),
-            <span class="prelude-val">Some</span>(region_query_handler.clone()),
-            <span class="prelude-val">Some</span>(table_mutation_handler),
-            <span class="bool-val">true</span>,
-            plugins.clone(),
-        )
-        .query_engine();
-
-        <span class="kw">let </span>statement_executor = Arc::new(StatementExecutor::new(
-            catalog_manager.clone(),
-            query_engine.clone(),
-            meta_client.clone(),
-            meta_backend.clone(),
-            catalog_manager.clone(),
-            inserter.clone(),
-        ));
-
-        plugins.insert::&lt;StatementExecutorRef&gt;(statement_executor.clone());
-
-        <span class="kw">let </span>script_executor =
-            Arc::new(ScriptExecutor::new(catalog_manager.clone(), query_engine.clone()).<span class="kw">await</span><span class="question-mark">?</span>);
-
-        <span class="kw">let </span>handlers_executor = HandlerGroupExecutor::new(<span class="macro">vec!</span>[
-            Arc::new(ParseMailboxMessageHandler),
-            Arc::new(InvalidateTableCacheHandler::new(meta_backend)),
-        ]);
-
-        <span class="kw">let </span>heartbeat_task = <span class="prelude-val">Some</span>(HeartbeatTask::new(
-            meta_client.clone(),
-            opts.heartbeat.clone(),
-            Arc::new(handlers_executor),
-        ));
-
-        <span class="prelude-val">Ok</span>(Instance {
-            catalog_manager,
-            script_executor,
-            statement_executor,
-            query_engine,
-            plugins: plugins.clone(),
-            servers: Arc::new(HashMap::new()),
-            heartbeat_task,
-            inserter,
-            deleter,
-        })
-    }
-
-    <span class="kw">async fn </span>create_meta_client(opts: <span class="kw-2">&amp;</span>FrontendOptions) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;MetaClient&gt;&gt; {
-        <span class="kw">let </span>meta_client_options = opts.meta_client.as_ref().context(MissingMetasrvOptsSnafu)<span class="question-mark">?</span>;
+    <span class="kw">pub async fn </span>create_meta_client(
+        meta_client_options: <span class="kw-2">&amp;</span>MetaClientOptions,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;MetaClient&gt;&gt; {
         <span class="macro">info!</span>(
-            <span class="string">&quot;Creating Frontend instance in distributed mode with Meta server addr {:?}&quot;</span>,
+            <span class="string">"Creating Frontend instance in distributed mode with Meta server addr {:?}"</span>,
             meta_client_options.metasrv_addrs
         );
 
@@ -1056,79 +799,6 @@
         <span class="prelude-val">Ok</span>((kv_backend, procedure_manager))
     }
 
-    <span class="kw">pub async fn </span>try_new_standalone(
-        kv_backend: KvBackendRef,
-        procedure_manager: ProcedureManagerRef,
-        catalog_manager: CatalogManagerRef,
-        plugins: Plugins,
-        region_server: RegionServer,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>partition_manager = Arc::new(PartitionRuleManager::new(kv_backend.clone()));
-        <span class="kw">let </span>datanode_manager = Arc::new(StandaloneDatanodeManager(region_server));
-
-        <span class="kw">let </span>region_query_handler =
-            FrontendRegionQueryHandler::arc(partition_manager.clone(), datanode_manager.clone());
-
-        <span class="kw">let </span>inserter = Arc::new(Inserter::new(
-            catalog_manager.clone(),
-            partition_manager.clone(),
-            datanode_manager.clone(),
-        ));
-        <span class="kw">let </span>deleter = Arc::new(Deleter::new(
-            catalog_manager.clone(),
-            partition_manager,
-            datanode_manager.clone(),
-        ));
-        <span class="kw">let </span>table_mutation_handler = Arc::new(TableMutationOperator::new(
-            inserter.clone(),
-            deleter.clone(),
-        ));
-
-        <span class="kw">let </span>query_engine = QueryEngineFactory::new_with_plugins(
-            catalog_manager.clone(),
-            <span class="prelude-val">Some</span>(region_query_handler),
-            <span class="prelude-val">Some</span>(table_mutation_handler),
-            <span class="bool-val">true</span>,
-            plugins.clone(),
-        )
-        .query_engine();
-
-        <span class="kw">let </span>script_executor =
-            Arc::new(ScriptExecutor::new(catalog_manager.clone(), query_engine.clone()).<span class="kw">await</span><span class="question-mark">?</span>);
-
-        <span class="kw">let </span>table_metadata_manager = Arc::new(TableMetadataManager::new(kv_backend.clone()));
-
-        <span class="kw">let </span>cache_invalidator = Arc::new(DummyCacheInvalidator);
-        <span class="kw">let </span>ddl_executor = Arc::new(DdlManager::new(
-            procedure_manager,
-            datanode_manager,
-            cache_invalidator.clone(),
-            table_metadata_manager.clone(),
-            Arc::new(StandaloneTableMetadataCreator::new(kv_backend.clone())),
-        ));
-
-        <span class="kw">let </span>statement_executor = Arc::new(StatementExecutor::new(
-            catalog_manager.clone(),
-            query_engine.clone(),
-            ddl_executor,
-            kv_backend.clone(),
-            cache_invalidator,
-            inserter.clone(),
-        ));
-
-        <span class="prelude-val">Ok</span>(Instance {
-            catalog_manager: catalog_manager.clone(),
-            script_executor,
-            statement_executor,
-            query_engine,
-            plugins,
-            servers: Arc::new(HashMap::new()),
-            heartbeat_task: <span class="prelude-val">None</span>,
-            inserter,
-            deleter,
-        })
-    }
-
     <span class="kw">pub async fn </span>build_servers(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         opts: <span class="kw">impl </span>Into&lt;FrontendOptions&gt; + TomlSerializable,
@@ -1136,6 +806,12 @@
         <span class="kw">let </span>servers = Services::build(opts, Arc::new(<span class="self">self</span>.clone()), <span class="self">self</span>.plugins.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.servers = Arc::new(servers);
 
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>build_export_metrics_task(<span class="kw-2">&amp;mut </span><span class="self">self</span>, opts: <span class="kw-2">&amp;</span>ExportMetricsOption) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.export_metrics_task =
+            ExportMetricsTask::try_new(opts, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.plugins)).context(StartServerSnafu)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -1168,10 +844,17 @@
 
         <span class="self">self</span>.script_executor.start(<span class="self">self</span>)<span class="question-mark">?</span>;
 
-        futures::future::try_join_all(<span class="self">self</span>.servers.values().map(start_server))
-            .<span class="kw">await
-            </span>.context(error::StartServerSnafu)
-            .map(|<span class="kw">_</span>| ())
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(t) = <span class="self">self</span>.export_metrics_task.as_ref() {
+            t.start()
+        }
+
+        futures::future::try_join_all(<span class="self">self</span>.servers.iter().map(|(name, handler)| <span class="kw">async move </span>{
+            <span class="macro">info!</span>(<span class="string">"Starting service: {name}"</span>);
+            start_server(handler).<span class="kw">await
+        </span>}))
+        .<span class="kw">await
+        </span>.context(error::StartServerSnafu)
+        .map(|<span class="kw">_</span>| ())
     }
 }
 
@@ -1240,7 +923,7 @@
                         }
                         <span class="prelude-val">Err</span>(e) =&gt; {
                             <span class="kw">let </span>redacted = sql::util::redact_sql_secrets(query.as_ref());
-                            <span class="macro">error!</span>(e; <span class="string">&quot;Failed to execute query: {redacted}&quot;</span>);
+                            <span class="macro">error!</span>(e; <span class="string">"Failed to execute query: {redacted}"</span>);
 
                             results.push(<span class="prelude-val">Err</span>(e));
                             <span class="kw">break</span>;
@@ -1258,7 +941,7 @@
     <span class="kw">async fn </span>do_exec_plan(<span class="kw-2">&amp;</span><span class="self">self</span>, plan: LogicalPlan, query_ctx: QueryContextRef) -&gt; <span class="prelude-ty">Result</span>&lt;Output&gt; {
         <span class="kw">let </span>_timer = metrics::METRIC_EXEC_PLAN_ELAPSED.start_timer();
         <span class="comment">// plan should be prepared before exec
-        // we&#39;ll do check there
+        // we'll do check there
         </span><span class="self">self</span>.query_engine
             .execute(plan, query_ctx)
             .<span class="kw">await
@@ -1270,11 +953,11 @@
         query: <span class="kw-2">&amp;</span>PromQuery,
         query_ctx: QueryContextRef,
     ) -&gt; Vec&lt;<span class="prelude-ty">Result</span>&lt;Output&gt;&gt; {
-        <span class="comment">// check will be done in prometheus handler&#39;s do_query
+        <span class="comment">// check will be done in prometheus handler's do_query
         </span><span class="kw">let </span>result = PrometheusHandler::do_query(<span class="self">self</span>, query, query_ctx)
             .<span class="kw">await
             </span>.with_context(|<span class="kw">_</span>| ExecutePromqlSnafu {
-                query: <span class="macro">format!</span>(<span class="string">&quot;{query:?}&quot;</span>),
+                query: <span class="macro">format!</span>(<span class="string">"{query:?}"</span>),
             });
         <span class="macro">vec!</span>[result]
     }
@@ -1347,7 +1030,7 @@
             .<span class="kw">await
             </span>.map_err(BoxedError::new)
             .with_context(|<span class="kw">_</span>| ExecuteQuerySnafu {
-                query: <span class="macro">format!</span>(<span class="string">&quot;{query:?}&quot;</span>),
+                query: <span class="macro">format!</span>(<span class="string">"{query:?}"</span>),
             })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(interceptor.post_execute(output, query_ctx)<span class="question-mark">?</span>)
@@ -1375,7 +1058,7 @@
     <span class="kw">match </span>stmt {
         <span class="comment">// These are executed by query engine, and will be checked there.
         </span>Statement::Query(<span class="kw">_</span>) | Statement::Explain(<span class="kw">_</span>) | Statement::Tql(<span class="kw">_</span>) | Statement::Delete(<span class="kw">_</span>) =&gt; {}
-        <span class="comment">// database ops won&#39;t be checked
+        <span class="comment">// database ops won't be checked
         </span>Statement::CreateDatabase(<span class="kw">_</span>) | Statement::ShowDatabases(<span class="kw">_</span>) =&gt; {}
         <span class="comment">// show create table and alter are not supported yet
         </span>Statement::ShowCreateTable(<span class="kw">_</span>) | Statement::CreateExternalTable(<span class="kw">_</span>) | Statement::Alter(<span class="kw">_</span>) =&gt; {
@@ -1446,12 +1129,12 @@
             disallow_cross_schema_query: <span class="bool-val">true</span>,
         });
 
-        <span class="kw">let </span>sql = <span class="string">r#&quot;
+        <span class="kw">let </span>sql = <span class="string">r#"
         SELECT * FROM demo;
         EXPLAIN SELECT * FROM demo;
         CREATE DATABASE test_database;
         SHOW DATABASES;
-        &quot;#</span>;
+        "#</span>;
         <span class="kw">let </span>stmts = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="macro">assert_eq!</span>(stmts.len(), <span class="number">4</span>);
         <span class="kw">for </span>stmt <span class="kw">in </span>stmts {
@@ -1459,10 +1142,10 @@
             re.unwrap();
         }
 
-        <span class="kw">let </span>sql = <span class="string">r#&quot;
+        <span class="kw">let </span>sql = <span class="string">r#"
         SHOW CREATE TABLE demo;
         ALTER TABLE demo ADD COLUMN new_col INT;
-        &quot;#</span>;
+        "#</span>;
         <span class="kw">let </span>stmts = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="macro">assert_eq!</span>(stmts.len(), <span class="number">2</span>);
         <span class="kw">for </span>stmt <span class="kw">in </span>stmts {
@@ -1472,17 +1155,17 @@
 
         <span class="kw">fn </span>replace_test(template_sql: <span class="kw-2">&amp;</span>str, plugins: Plugins, query_ctx: <span class="kw-2">&amp;</span>QueryContextRef) {
             <span class="comment">// test right
-            </span><span class="kw">let </span>right = <span class="macro">vec!</span>[(<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>), (<span class="string">&quot;&quot;</span>, <span class="string">&quot;public.&quot;</span>), (<span class="string">&quot;greptime.&quot;</span>, <span class="string">&quot;public.&quot;</span>)];
+            </span><span class="kw">let </span>right = <span class="macro">vec!</span>[(<span class="string">""</span>, <span class="string">""</span>), (<span class="string">""</span>, <span class="string">"public."</span>), (<span class="string">"greptime."</span>, <span class="string">"public."</span>)];
             <span class="kw">for </span>(catalog, schema) <span class="kw">in </span>right {
                 <span class="kw">let </span>sql = do_fmt(template_sql, catalog, schema);
                 do_test(<span class="kw-2">&amp;</span>sql, plugins.clone(), query_ctx, <span class="bool-val">true</span>);
             }
 
             <span class="kw">let </span>wrong = <span class="macro">vec!</span>[
-                (<span class="string">&quot;&quot;</span>, <span class="string">&quot;wrongschema.&quot;</span>),
-                (<span class="string">&quot;greptime.&quot;</span>, <span class="string">&quot;wrongschema.&quot;</span>),
-                (<span class="string">&quot;wrongcatalog.&quot;</span>, <span class="string">&quot;public.&quot;</span>),
-                (<span class="string">&quot;wrongcatalog.&quot;</span>, <span class="string">&quot;wrongschema.&quot;</span>),
+                (<span class="string">""</span>, <span class="string">"wrongschema."</span>),
+                (<span class="string">"greptime."</span>, <span class="string">"wrongschema."</span>),
+                (<span class="string">"wrongcatalog."</span>, <span class="string">"public."</span>),
+                (<span class="string">"wrongcatalog."</span>, <span class="string">"wrongschema."</span>),
             ];
             <span class="kw">for </span>(catalog, schema) <span class="kw">in </span>wrong {
                 <span class="kw">let </span>sql = do_fmt(template_sql, catalog, schema);
@@ -1492,8 +1175,8 @@
 
         <span class="kw">fn </span>do_fmt(template: <span class="kw-2">&amp;</span>str, catalog: <span class="kw-2">&amp;</span>str, schema: <span class="kw-2">&amp;</span>str) -&gt; String {
             <span class="kw">let </span>vars = HashMap::from([
-                (<span class="string">&quot;catalog&quot;</span>.to_string(), catalog),
-                (<span class="string">&quot;schema&quot;</span>.to_string(), schema),
+                (<span class="string">"catalog"</span>.to_string(), catalog),
+                (<span class="string">"schema"</span>.to_string(), schema),
             ]);
             template.format(<span class="kw-2">&amp;</span>vars).unwrap()
         }
@@ -1509,34 +1192,34 @@
         }
 
         <span class="comment">// test insert
-        </span><span class="kw">let </span>sql = <span class="string">&quot;INSERT INTO {catalog}{schema}monitor(host) VALUES (&#39;host1&#39;);&quot;</span>;
+        </span><span class="kw">let </span>sql = <span class="string">"INSERT INTO {catalog}{schema}monitor(host) VALUES ('host1');"</span>;
         replace_test(sql, plugins.clone(), <span class="kw-2">&amp;</span>query_ctx);
 
         <span class="comment">// test create table
-        </span><span class="kw">let </span>sql = <span class="string">r#&quot;CREATE TABLE {catalog}{schema}demo(
+        </span><span class="kw">let </span>sql = <span class="string">r#"CREATE TABLE {catalog}{schema}demo(
                             host STRING,
                             ts TIMESTAMP,
                             TIME INDEX (ts),
                             PRIMARY KEY(host)
-                        ) engine=mito with(regions=1);&quot;#</span>;
+                        ) engine=mito with(regions=1);"#</span>;
         replace_test(sql, plugins.clone(), <span class="kw-2">&amp;</span>query_ctx);
 
         <span class="comment">// test drop table
-        </span><span class="kw">let </span>sql = <span class="string">&quot;DROP TABLE {catalog}{schema}demo;&quot;</span>;
+        </span><span class="kw">let </span>sql = <span class="string">"DROP TABLE {catalog}{schema}demo;"</span>;
         replace_test(sql, plugins.clone(), <span class="kw-2">&amp;</span>query_ctx);
 
         <span class="comment">// test show tables
-        </span><span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES FROM public&quot;</span>;
+        </span><span class="kw">let </span>sql = <span class="string">"SHOW TABLES FROM public"</span>;
         <span class="kw">let </span>stmt = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx).unwrap();
 
-        <span class="kw">let </span>sql = <span class="string">&quot;SHOW TABLES FROM wrongschema&quot;</span>;
+        <span class="kw">let </span>sql = <span class="string">"SHOW TABLES FROM wrongschema"</span>;
         <span class="kw">let </span>stmt = parse_stmt(sql, <span class="kw-2">&amp;</span>GreptimeDbDialect {}).unwrap();
         <span class="kw">let </span>re = check_permission(plugins.clone(), <span class="kw-2">&amp;</span>stmt[<span class="number">0</span>], <span class="kw-2">&amp;</span>query_ctx);
         <span class="macro">assert!</span>(re.is_err());
 
         <span class="comment">// test describe table
-        </span><span class="kw">let </span>sql = <span class="string">&quot;DESC TABLE {catalog}{schema}demo;&quot;</span>;
+        </span><span class="kw">let </span>sql = <span class="string">"DESC TABLE {catalog}{schema}demo;"</span>;
         replace_test(sql, plugins, <span class="kw-2">&amp;</span>query_ctx);
     }
 }

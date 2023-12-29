@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["blob","footer"],"trait":["InvertedIndexReader"],"type":["FstMap"]};
+window.SIDEBAR_ITEMS = {"mod":["__mock_MockInvertedIndexReader","__mock_MockInvertedIndexReader_InvertedIndexReader","blob","footer"],"struct":["InvertedIndexBlobReader","MockInvertedIndexReader","MockInvertedIndexReader_InvertedIndexReader"],"trait":["InvertedIndexReader"]};

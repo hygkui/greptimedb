@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/common/meta/src/key.rs`."><title>key.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="common_meta" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (249624b50 2023-10-20)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/common/meta/src/key.rs`."><title>key.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-804b98a1284a310a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="common_meta" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (3f28fe133 2023-12-18)" data-channel="nightly" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1245,16 +1246,91 @@
 <a href="#1245" id="1245">1245</a>
 <a href="#1246" id="1246">1246</a>
 <a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
+<a href="#1255" id="1255">1255</a>
+<a href="#1256" id="1256">1256</a>
+<a href="#1257" id="1257">1257</a>
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
+<a href="#1260" id="1260">1260</a>
+<a href="#1261" id="1261">1261</a>
+<a href="#1262" id="1262">1262</a>
+<a href="#1263" id="1263">1263</a>
+<a href="#1264" id="1264">1264</a>
+<a href="#1265" id="1265">1265</a>
+<a href="#1266" id="1266">1266</a>
+<a href="#1267" id="1267">1267</a>
+<a href="#1268" id="1268">1268</a>
+<a href="#1269" id="1269">1269</a>
+<a href="#1270" id="1270">1270</a>
+<a href="#1271" id="1271">1271</a>
+<a href="#1272" id="1272">1272</a>
+<a href="#1273" id="1273">1273</a>
+<a href="#1274" id="1274">1274</a>
+<a href="#1275" id="1275">1275</a>
+<a href="#1276" id="1276">1276</a>
+<a href="#1277" id="1277">1277</a>
+<a href="#1278" id="1278">1278</a>
+<a href="#1279" id="1279">1279</a>
+<a href="#1280" id="1280">1280</a>
+<a href="#1281" id="1281">1281</a>
+<a href="#1282" id="1282">1282</a>
+<a href="#1283" id="1283">1283</a>
+<a href="#1284" id="1284">1284</a>
+<a href="#1285" id="1285">1285</a>
+<a href="#1286" id="1286">1286</a>
+<a href="#1287" id="1287">1287</a>
+<a href="#1288" id="1288">1288</a>
+<a href="#1289" id="1289">1289</a>
+<a href="#1290" id="1290">1290</a>
+<a href="#1291" id="1291">1291</a>
+<a href="#1292" id="1292">1292</a>
+<a href="#1293" id="1293">1293</a>
+<a href="#1294" id="1294">1294</a>
+<a href="#1295" id="1295">1295</a>
+<a href="#1296" id="1296">1296</a>
+<a href="#1297" id="1297">1297</a>
+<a href="#1298" id="1298">1298</a>
+<a href="#1299" id="1299">1299</a>
+<a href="#1300" id="1300">1300</a>
+<a href="#1301" id="1301">1301</a>
+<a href="#1302" id="1302">1302</a>
+<a href="#1303" id="1303">1303</a>
+<a href="#1304" id="1304">1304</a>
+<a href="#1305" id="1305">1305</a>
+<a href="#1306" id="1306">1306</a>
+<a href="#1307" id="1307">1307</a>
+<a href="#1308" id="1308">1308</a>
+<a href="#1309" id="1309">1309</a>
+<a href="#1310" id="1310">1310</a>
+<a href="#1311" id="1311">1311</a>
+<a href="#1312" id="1312">1312</a>
+<a href="#1313" id="1313">1313</a>
+<a href="#1314" id="1314">1314</a>
+<a href="#1315" id="1315">1315</a>
+<a href="#1316" id="1316">1316</a>
+<a href="#1317" id="1317">1317</a>
+<a href="#1318" id="1318">1318</a>
+<a href="#1319" id="1319">1319</a>
+<a href="#1320" id="1320">1320</a>
+<a href="#1321" id="1321">1321</a>
+<a href="#1322" id="1322">1322</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2023 Greptime Team
 //
-// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
@@ -1286,9 +1362,9 @@
 //! All keys have related managers. The managers take care of the serialization and deserialization
 //! of keys and values, and the interaction with the underlying KV store backend.
 //!
-//! To simplify the managers used in struct fields and function parameters, we define a &quot;unify&quot;
+//! To simplify the managers used in struct fields and function parameters, we define a "unify"
 //! table metadata manager: [TableMetadataManager]. It contains all the managers defined above.
-//! It&#39;s recommended to just use this manager only.
+//! It's recommended to just use this manager only.
 
 </span><span class="kw">pub mod </span>catalog_name;
 <span class="kw">pub mod </span>datanode_table;
@@ -1301,7 +1377,7 @@
 <span class="comment">// TODO(weny): removes it.
 </span><span class="attr">#[allow(deprecated)]
 </span><span class="kw">pub mod </span>table_route;
-<span class="attr">#[cfg(any(test, feature = <span class="string">&quot;testing&quot;</span>))]
+<span class="attr">#[cfg(any(test, feature = <span class="string">"testing"</span>))]
 </span><span class="kw">pub mod </span>test_utils;
 
 <span class="kw">use </span>std::collections::{BTreeMap, HashMap};
@@ -1310,7 +1386,9 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>bytes::Bytes;
-<span class="kw">use </span>common_catalog::consts::{DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME};
+<span class="kw">use </span>common_catalog::consts::{
+    DEFAULT_CATALOG_NAME, DEFAULT_PRIVATE_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, INFORMATION_SCHEMA_NAME,
+};
 <span class="kw">use </span>common_telemetry::warn;
 <span class="kw">use </span>datanode_table::{DatanodeTableKey, DatanodeTableManager, DatanodeTableValue};
 <span class="kw">use </span>lazy_static::lazy_static;
@@ -1334,18 +1412,18 @@
 <span class="kw">use </span><span class="kw">crate</span>::rpc::router::{region_distribution, RegionRoute, RegionStatus};
 <span class="kw">use </span><span class="kw">crate</span>::DatanodeId;
 
-<span class="kw">pub const </span>REMOVED_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__removed&quot;</span>;
+<span class="kw">pub const </span>REMOVED_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__removed"</span>;
 
-<span class="kw">const </span>NAME_PATTERN: <span class="kw-2">&amp;</span>str = <span class="string">r&quot;[a-zA-Z_:-][a-zA-Z0-9_:\-\.]*&quot;</span>;
+<span class="kw">pub const </span>NAME_PATTERN: <span class="kw-2">&amp;</span>str = <span class="string">r"[a-zA-Z_:-][a-zA-Z0-9_:\-\.]*"</span>;
 
-<span class="kw">const </span>DATANODE_TABLE_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__dn_table&quot;</span>;
-<span class="kw">const </span>TABLE_REGION_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_region&quot;</span>;
+<span class="kw">const </span>DATANODE_TABLE_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__dn_table"</span>;
+<span class="kw">const </span>TABLE_REGION_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__table_region"</span>;
 
-<span class="kw">pub const </span>TABLE_INFO_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_info&quot;</span>;
-<span class="kw">pub const </span>TABLE_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_name&quot;</span>;
-<span class="kw">pub const </span>CATALOG_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__catalog_name&quot;</span>;
-<span class="kw">pub const </span>SCHEMA_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__schema_name&quot;</span>;
-<span class="kw">pub const </span>TABLE_ROUTE_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;__table_route&quot;</span>;
+<span class="kw">pub const </span>TABLE_INFO_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__table_info"</span>;
+<span class="kw">pub const </span>TABLE_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__table_name"</span>;
+<span class="kw">pub const </span>CATALOG_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__catalog_name"</span>;
+<span class="kw">pub const </span>SCHEMA_NAME_KEY_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__schema_name"</span>;
+<span class="kw">pub const </span>TABLE_ROUTE_PREFIX: <span class="kw-2">&amp;</span>str = <span class="string">"__table_route"</span>;
 
 <span class="kw">pub const </span>CACHE_KEY_PREFIXES: [<span class="kw-2">&amp;</span>str; <span class="number">4</span>] = [
     TABLE_NAME_KEY_PREFIX,
@@ -1358,12 +1436,12 @@
 
 <span class="macro">lazy_static! </span>{
     <span class="kw">static </span><span class="kw-2">ref </span>DATANODE_TABLE_KEY_PATTERN: Regex =
-        Regex::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;^{DATANODE_TABLE_KEY_PREFIX}/([0-9])/([0-9])$&quot;</span>)).unwrap();
+        Regex::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"^{DATANODE_TABLE_KEY_PREFIX}/([0-9])/([0-9])$"</span>)).unwrap();
 }
 
 <span class="macro">lazy_static! </span>{
     <span class="kw">static </span><span class="kw-2">ref </span>TABLE_NAME_KEY_PATTERN: Regex = Regex::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-        <span class="string">&quot;^{TABLE_NAME_KEY_PREFIX}/({NAME_PATTERN})/({NAME_PATTERN})/({NAME_PATTERN})$&quot;
+        <span class="string">"^{TABLE_NAME_KEY_PREFIX}/({NAME_PATTERN})/({NAME_PATTERN})/({NAME_PATTERN})$"
     </span>))
     .unwrap();
 }
@@ -1371,7 +1449,7 @@
 <span class="macro">lazy_static! </span>{
     <span class="doccomment">/// CATALOG_NAME_KEY: {CATALOG_NAME_KEY_PREFIX}/{catalog_name}
     </span><span class="kw">static </span><span class="kw-2">ref </span>CATALOG_NAME_KEY_PATTERN: Regex = Regex::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-        <span class="string">&quot;^{CATALOG_NAME_KEY_PREFIX}/({NAME_PATTERN})$&quot;
+        <span class="string">"^{CATALOG_NAME_KEY_PREFIX}/({NAME_PATTERN})$"
     </span>))
     .unwrap();
 }
@@ -1379,17 +1457,25 @@
 <span class="macro">lazy_static! </span>{
     <span class="doccomment">/// SCHEMA_NAME_KEY: {SCHEMA_NAME_KEY_PREFIX}/{catalog_name}/{schema_name}
     </span><span class="kw">static </span><span class="kw-2">ref </span>SCHEMA_NAME_KEY_PATTERN:Regex=Regex::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-        <span class="string">&quot;^{SCHEMA_NAME_KEY_PREFIX}/({NAME_PATTERN})/({NAME_PATTERN})$&quot;
+        <span class="string">"^{SCHEMA_NAME_KEY_PREFIX}/({NAME_PATTERN})/({NAME_PATTERN})$"
     </span>))
     .unwrap();
 }
 
 <span class="kw">pub fn </span>to_removed_key(key: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;{REMOVED_PREFIX}-{key}&quot;</span>)
+    <span class="macro">format!</span>(<span class="string">"{REMOVED_PREFIX}-{key}"</span>)
 }
 
 <span class="kw">pub trait </span>TableMetaKey {
     <span class="kw">fn </span>as_raw_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt;;
+}
+
+<span class="kw">pub trait </span>TableMetaValue {
+    <span class="kw">fn </span>try_from_raw_value(raw_value: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: Sized;
+
+    <span class="kw">fn </span>try_as_raw_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt;;
 }
 
 <span class="kw">pub type </span>TableMetadataManagerRef = Arc&lt;TableMetadataManager&gt;;
@@ -1410,7 +1496,7 @@
             <span class="macro-nonterminal">$got </span>== <span class="macro-nonterminal">$expected_value</span>,
             error::UnexpectedSnafu {
                 err_msg: <span class="macro">format!</span>(
-                    <span class="string">&quot;Reads the different value: {:?} during {}, expected: {:?}&quot;</span>,
+                    <span class="string">"Reads the different value: {:?} during {}, expected: {:?}"</span>,
                     <span class="macro-nonterminal">$got</span>, <span class="macro-nonterminal">$name</span>, <span class="macro-nonterminal">$expected_value
                 </span>)
             }
@@ -1443,10 +1529,10 @@
 }
 
 <span class="kw">impl</span>&lt;T: DeserializeOwned + Serialize + Debug&gt; Debug <span class="kw">for </span>DeserializedValueWithBytes&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;DeserializedValueWithBytes(inner: {:?}, bytes: {:?})&quot;</span>,
+            <span class="string">"DeserializedValueWithBytes(inner: {:?}, bytes: {:?})"</span>,
             <span class="self">self</span>.inner, <span class="self">self</span>.bytes
         )
     }
@@ -1461,18 +1547,20 @@
         </span>S: serde::Serializer,
     {
         <span class="comment">// Safety: The original bytes are always JSON encoded.
-        // It&#39;s more efficiently than `serialize_bytes`.
+        // It's more efficiently than `serialize_bytes`.
         </span>serializer.serialize_str(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.bytes))
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, T: DeserializeOwned + Serialize&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>DeserializedValueWithBytes&lt;T&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>, T: DeserializeOwned + Serialize + TableMetaValue&gt; Deserialize&lt;<span class="lifetime">'de</span>&gt;
+    <span class="kw">for </span>DeserializedValueWithBytes&lt;T&gt;
+{
     <span class="doccomment">/// - Deserialize behaviors:
     ///
     /// The `inner` field will be deserialized from the `bytes` field.
     </span><span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; std::result::Result&lt;<span class="self">Self</span>, D::Error&gt;
     <span class="kw">where
-        </span>D: serde::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
+        </span>D: serde::Deserializer&lt;<span class="lifetime">'de</span>&gt;,
     {
         <span class="kw">let </span>buf = String::deserialize(deserializer)<span class="question-mark">?</span>;
         <span class="kw">let </span>bytes = Bytes::from(buf);
@@ -1493,11 +1581,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T: Serialize + DeserializeOwned&gt; DeserializedValueWithBytes&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: Serialize + DeserializeOwned + TableMetaValue&gt; DeserializedValueWithBytes&lt;T&gt; {
     <span class="doccomment">/// Returns a struct containing a deserialized value and an original `bytes`.
     /// It accepts original bytes of inner.
     </span><span class="kw">pub fn </span>from_inner_bytes(bytes: Bytes) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>inner = serde_json::from_slice(<span class="kw-2">&amp;</span>bytes).context(error::SerdeJsonSnafu)<span class="question-mark">?</span>;
+        <span class="kw">let </span>inner = T::try_from_raw_value(<span class="kw-2">&amp;</span>bytes)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ bytes, inner })
     }
 
@@ -1542,12 +1630,20 @@
 
     <span class="kw">pub async fn </span>init(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>catalog_name = CatalogNameKey::new(DEFAULT_CATALOG_NAME);
-        <span class="kw">let </span>schema_name = SchemaNameKey::new(DEFAULT_CATALOG_NAME, DEFAULT_SCHEMA_NAME);
 
         <span class="self">self</span>.catalog_manager().create(catalog_name, <span class="bool-val">true</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="self">self</span>.schema_manager()
-            .create(schema_name, <span class="prelude-val">None</span>, <span class="bool-val">true</span>)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>internal_schemas = [
+            DEFAULT_SCHEMA_NAME,
+            INFORMATION_SCHEMA_NAME,
+            DEFAULT_PRIVATE_SCHEMA_NAME,
+        ];
+
+        <span class="kw">for </span>schema_name <span class="kw">in </span>internal_schemas {
+            <span class="kw">let </span>schema_key = SchemaNameKey::new(DEFAULT_CATALOG_NAME, schema_name);
+
+            <span class="self">self</span>.schema_manager().create(schema_key, <span class="prelude-val">None</span>, <span class="bool-val">true</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        }
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1576,7 +1672,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.table_route_manager
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;testing&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"testing"</span>)]
     </span><span class="kw">pub fn </span>kv_backend(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>KvBackendRef {
         <span class="kw-2">&amp;</span><span class="self">self</span>.kv_backend
     }
@@ -1610,12 +1706,10 @@
     </span><span class="kw">pub async fn </span>create_table_metadata(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="kw-2">mut </span>table_info: RawTableInfo,
-        region_routes: Vec&lt;RegionRoute&gt;,
+        table_route_value: TableRouteValue,
+        region_wal_options: HashMap&lt;RegionNumber, String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>region_numbers = region_routes
-            .iter()
-            .map(|region| region.region.id.region_number())
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>region_numbers = table_route_value.region_numbers();
         table_info.meta.region_numbers = region_numbers;
         <span class="kw">let </span>table_id = table_info.ident.table_id;
         <span class="kw">let </span>engine = table_info.meta.engine.clone();
@@ -1639,28 +1733,27 @@
             </span>.table_info_manager()
             .build_create_txn(table_id, <span class="kw-2">&amp;</span>table_info_value)<span class="question-mark">?</span>;
 
-        <span class="comment">// Creates datanode table key value pairs.
-        </span><span class="kw">let </span>distribution = region_distribution(<span class="kw-2">&amp;</span>region_routes)<span class="question-mark">?</span>;
-        <span class="kw">let </span>create_datanode_table_txn = <span class="self">self</span>.datanode_table_manager().build_create_txn(
-            table_id,
-            <span class="kw-2">&amp;</span>engine,
-            <span class="kw-2">&amp;</span>region_storage_path,
-            region_options,
-            distribution,
-        )<span class="question-mark">?</span>;
-
-        <span class="comment">// Creates table route.
-        </span><span class="kw">let </span>table_route_value = TableRouteValue::new(region_routes);
         <span class="kw">let </span>(create_table_route_txn, on_create_table_route_failure) = <span class="self">self
             </span>.table_route_manager()
             .build_create_txn(table_id, <span class="kw-2">&amp;</span>table_route_value)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>txn = Txn::merge_all(<span class="macro">vec!</span>[
+        <span class="kw">let </span><span class="kw-2">mut </span>txn = Txn::merge_all(<span class="macro">vec!</span>[
             create_table_name_txn,
             create_table_info_txn,
-            create_datanode_table_txn,
             create_table_route_txn,
         ]);
+
+        <span class="kw">if let </span>TableRouteValue::Physical(x) = <span class="kw-2">&amp;</span>table_route_value {
+            <span class="kw">let </span>create_datanode_table_txn = <span class="self">self</span>.datanode_table_manager().build_create_txn(
+                table_id,
+                <span class="kw-2">&amp;</span>engine,
+                <span class="kw-2">&amp;</span>region_storage_path,
+                region_options,
+                region_wal_options,
+                region_distribution(<span class="kw-2">&amp;</span>x.region_routes)<span class="question-mark">?</span>,
+            )<span class="question-mark">?</span>;
+            txn = txn.merge(create_datanode_table_txn);
+        }
 
         <span class="kw">let </span>r = <span class="self">self</span>.kv_backend.txn(txn).<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1668,17 +1761,17 @@
         </span><span class="kw">if </span>!r.succeeded {
             <span class="kw">let </span>remote_table_info = on_create_table_info_failure(<span class="kw-2">&amp;</span>r.responses)<span class="question-mark">?
                 </span>.context(error::UnexpectedSnafu {
-                    err_msg: <span class="string">&quot;Reads the empty table info during the create table metadata&quot;</span>,
+                    err_msg: <span class="string">"Reads the empty table info during the create table metadata"</span>,
                 })<span class="question-mark">?
                 </span>.into_inner();
 
             <span class="kw">let </span>remote_table_route = on_create_table_route_failure(<span class="kw-2">&amp;</span>r.responses)<span class="question-mark">?
                 </span>.context(error::UnexpectedSnafu {
-                    err_msg: <span class="string">&quot;Reads the empty table route during the create table metadata&quot;</span>,
+                    err_msg: <span class="string">"Reads the empty table route during the create table metadata"</span>,
                 })<span class="question-mark">?
                 </span>.into_inner();
 
-            <span class="kw">let </span>op_name = <span class="string">&quot;the creating table metadata&quot;</span>;
+            <span class="kw">let </span>op_name = <span class="string">"the creating table metadata"</span>;
             <span class="macro">ensure_values!</span>(remote_table_info, table_info_value, op_name);
             <span class="macro">ensure_values!</span>(remote_table_route, table_route_value, op_name);
         }
@@ -1713,7 +1806,7 @@
             .build_delete_txn(table_id, table_info_value)<span class="question-mark">?</span>;
 
         <span class="comment">// Deletes datanode table key value pairs.
-        </span><span class="kw">let </span>distribution = region_distribution(<span class="kw-2">&amp;</span>table_route_value.region_routes)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>distribution = region_distribution(table_route_value.region_routes())<span class="question-mark">?</span>;
         <span class="kw">let </span>delete_datanode_txn = <span class="self">self
             </span>.datanode_table_manager()
             .build_delete_txn(table_id, distribution)<span class="question-mark">?</span>;
@@ -1730,7 +1823,7 @@
             delete_table_route_txn,
         ]);
 
-        <span class="comment">// It&#39;s always successes.
+        <span class="comment">// It's always successes.
         </span><span class="kw">let _ </span>= <span class="self">self</span>.kv_backend.txn(txn).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
@@ -1785,11 +1878,11 @@
         </span><span class="kw">if </span>!r.succeeded {
             <span class="kw">let </span>remote_table_info = on_update_table_info_failure(<span class="kw-2">&amp;</span>r.responses)<span class="question-mark">?
                 </span>.context(error::UnexpectedSnafu {
-                    err_msg: <span class="string">&quot;Reads the empty table info during the rename table metadata&quot;</span>,
+                    err_msg: <span class="string">"Reads the empty table info during the rename table metadata"</span>,
                 })<span class="question-mark">?
                 </span>.into_inner();
 
-            <span class="kw">let </span>op_name = <span class="string">&quot;the renaming table metadata&quot;</span>;
+            <span class="kw">let </span>op_name = <span class="string">"the renaming table metadata"</span>;
             <span class="macro">ensure_values!</span>(remote_table_info, new_table_info_value, op_name);
         }
 
@@ -1817,11 +1910,11 @@
         </span><span class="kw">if </span>!r.succeeded {
             <span class="kw">let </span>remote_table_info = on_update_table_info_failure(<span class="kw-2">&amp;</span>r.responses)<span class="question-mark">?
                 </span>.context(error::UnexpectedSnafu {
-                    err_msg: <span class="string">&quot;Reads the empty table info during the updating table info&quot;</span>,
+                    err_msg: <span class="string">"Reads the empty table info during the updating table info"</span>,
                 })<span class="question-mark">?
                 </span>.into_inner();
 
-            <span class="kw">let </span>op_name = <span class="string">&quot;the updating table info&quot;</span>;
+            <span class="kw">let </span>op_name = <span class="string">"the updating table info"</span>;
             <span class="macro">ensure_values!</span>(remote_table_info, new_table_info_value, op_name);
         }
         <span class="prelude-val">Ok</span>(())
@@ -1831,13 +1924,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         table_id: TableId,
         region_info: RegionInfo,
-        current_table_route_value: DeserializedValueWithBytes&lt;TableRouteValue&gt;,
+        current_table_route_value: <span class="kw-2">&amp;</span>DeserializedValueWithBytes&lt;TableRouteValue&gt;,
         new_region_routes: Vec&lt;RegionRoute&gt;,
         new_region_options: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;,
+        new_region_wal_options: <span class="kw-2">&amp;</span>HashMap&lt;String, String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// Updates the datanode table key value pairs.
         </span><span class="kw">let </span>current_region_distribution =
-            region_distribution(<span class="kw-2">&amp;</span>current_table_route_value.region_routes)<span class="question-mark">?</span>;
+            region_distribution(current_table_route_value.region_routes())<span class="question-mark">?</span>;
         <span class="kw">let </span>new_region_distribution = region_distribution(<span class="kw-2">&amp;</span>new_region_routes)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>update_datanode_table_txn = <span class="self">self</span>.datanode_table_manager().build_update_txn(
@@ -1846,6 +1940,7 @@
             current_region_distribution,
             new_region_distribution,
             new_region_options,
+            new_region_wal_options,
         )<span class="question-mark">?</span>;
 
         <span class="comment">// Updates the table_route.
@@ -1853,7 +1948,7 @@
 
         <span class="kw">let </span>(update_table_route_txn, on_update_table_route_failure) = <span class="self">self
             </span>.table_route_manager()
-            .build_update_txn(table_id, <span class="kw-2">&amp;</span>current_table_route_value, <span class="kw-2">&amp;</span>new_table_route_value)<span class="question-mark">?</span>;
+            .build_update_txn(table_id, current_table_route_value, <span class="kw-2">&amp;</span>new_table_route_value)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>txn = Txn::merge_all(<span class="macro">vec!</span>[update_datanode_table_txn, update_table_route_txn]);
 
@@ -1863,11 +1958,11 @@
         </span><span class="kw">if </span>!r.succeeded {
             <span class="kw">let </span>remote_table_route = on_update_table_route_failure(<span class="kw-2">&amp;</span>r.responses)<span class="question-mark">?
                 </span>.context(error::UnexpectedSnafu {
-                    err_msg: <span class="string">&quot;Reads the empty table route during the updating table route&quot;</span>,
+                    err_msg: <span class="string">"Reads the empty table route during the updating table route"</span>,
                 })<span class="question-mark">?
                 </span>.into_inner();
 
-            <span class="kw">let </span>op_name = <span class="string">&quot;the updating table route&quot;</span>;
+            <span class="kw">let </span>op_name = <span class="string">"the updating table route"</span>;
             <span class="macro">ensure_values!</span>(remote_table_route, new_table_route_value, op_name);
         }
 
@@ -1884,7 +1979,7 @@
     <span class="kw">where
         </span>F: Fn(<span class="kw-2">&amp;</span>RegionRoute) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;RegionStatus&gt;&gt;,
     {
-        <span class="kw">let </span><span class="kw-2">mut </span>new_region_routes = current_table_route_value.region_routes.clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>new_region_routes = current_table_route_value.region_routes().clone();
 
         <span class="kw">let </span><span class="kw-2">mut </span>updated = <span class="number">0</span>;
         <span class="kw">for </span>route <span class="kw">in </span><span class="kw-2">&amp;mut </span>new_region_routes {
@@ -1896,7 +1991,7 @@
         }
 
         <span class="kw">if </span>updated == <span class="number">0 </span>{
-            <span class="macro">warn!</span>(<span class="string">&quot;No leader status updated&quot;</span>);
+            <span class="macro">warn!</span>(<span class="string">"No leader status updated"</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
 
@@ -1913,11 +2008,11 @@
         </span><span class="kw">if </span>!r.succeeded {
             <span class="kw">let </span>remote_table_route = on_update_table_route_failure(<span class="kw-2">&amp;</span>r.responses)<span class="question-mark">?
                 </span>.context(error::UnexpectedSnafu {
-                    err_msg: <span class="string">&quot;Reads the empty table route during the updating leader region status&quot;</span>,
+                    err_msg: <span class="string">"Reads the empty table route during the updating leader region status"</span>,
                 })<span class="question-mark">?
                 </span>.into_inner();
 
-            <span class="kw">let </span>op_name = <span class="string">&quot;the updating leader region status&quot;</span>;
+            <span class="kw">let </span>op_name = <span class="string">"the updating leader region status"</span>;
             <span class="macro">ensure_values!</span>(remote_table_route, new_table_route_value, op_name);
         }
 
@@ -1930,26 +2025,26 @@
     ($(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {
         $(
             <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span><span class="macro-nonterminal">$val_ty </span>{
-                <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-                    <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.as_raw_key()))
+                <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+                    <span class="macro">write!</span>(f, <span class="string">"{}"</span>, String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.as_raw_key()))
                 }
             }
         )*
     }
 }
 
-<span class="macro">impl_table_meta_key!</span>(TableNameKey&lt;<span class="lifetime">&#39;_</span>&gt;, TableInfoKey, DatanodeTableKey);
+<span class="macro">impl_table_meta_key!</span>(TableNameKey&lt;<span class="lifetime">'_</span>&gt;, TableInfoKey, DatanodeTableKey);
 
 <span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>impl_table_meta_value {
     ($(<span class="macro-nonterminal">$val_ty</span>: ty), <span class="kw-2">*</span>) =&gt; {
         $(
-            <span class="kw">impl </span><span class="macro-nonterminal">$val_ty </span>{
-                <span class="kw">pub fn </span>try_from_raw_value(raw_value: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+            <span class="kw">impl </span><span class="macro-nonterminal">$crate::key::TableMetaValue </span><span class="kw">for </span><span class="macro-nonterminal">$val_ty </span>{
+                <span class="kw">fn </span>try_from_raw_value(raw_value: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
                     serde_json::from_slice(raw_value).context(SerdeJsonSnafu)
                 }
 
-                <span class="kw">pub fn </span>try_as_raw_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+                <span class="kw">fn </span>try_as_raw_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
                     serde_json::to_vec(<span class="self">self</span>).context(SerdeJsonSnafu)
                 }
             }
@@ -1977,8 +2072,7 @@
 <span class="macro">impl_table_meta_value! </span>{
     TableNameValue,
     TableInfoValue,
-    DatanodeTableValue,
-    TableRouteValue
+    DatanodeTableValue
 }
 
 <span class="macro">impl_optional_meta_value! </span>{
@@ -1998,6 +2092,7 @@
     <span class="kw">use </span><span class="kw">super</span>::datanode_table::DatanodeTableKey;
     <span class="kw">use </span><span class="kw">super</span>::test_utils;
     <span class="kw">use </span><span class="kw">crate</span>::ddl::utils::region_storage_path;
+    <span class="kw">use </span><span class="kw">crate</span>::error::Result;
     <span class="kw">use </span><span class="kw">crate</span>::key::datanode_table::RegionInfo;
     <span class="kw">use </span><span class="kw">crate</span>::key::table_info::TableInfoValue;
     <span class="kw">use </span><span class="kw">crate</span>::key::table_name::TableNameKey;
@@ -2013,14 +2108,14 @@
         <span class="kw">let </span>region_routes = <span class="macro">vec!</span>[region_route.clone()];
 
         <span class="kw">let </span>expected_region_routes =
-            TableRouteValue::new(<span class="macro">vec!</span>[region_route.clone(), region_route.clone()]);
+            TableRouteValue::physical(<span class="macro">vec!</span>[region_route.clone(), region_route.clone()]);
         <span class="kw">let </span>expected = serde_json::to_vec(<span class="kw-2">&amp;</span>expected_region_routes).unwrap();
 
         <span class="comment">// Serialize behaviors:
         // The inner field will be ignored.
         </span><span class="kw">let </span>value = DeserializedValueWithBytes {
             <span class="comment">// ignored
-            </span>inner: TableRouteValue::new(region_routes.clone()),
+            </span>inner: TableRouteValue::physical(region_routes.clone()),
             bytes: Bytes::from(expected.clone()),
         };
 
@@ -2037,8 +2132,8 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_to_removed_key() {
-        <span class="kw">let </span>key = <span class="string">&quot;test_key&quot;</span>;
-        <span class="kw">let </span>removed = <span class="string">&quot;__removed-test_key&quot;</span>;
+        <span class="kw">let </span>key = <span class="string">"test_key"</span>;
+        <span class="kw">let </span>removed = <span class="string">"__removed-test_key"</span>;
         <span class="macro">assert_eq!</span>(removed, to_removed_key(key));
     }
 
@@ -2050,11 +2145,11 @@
         RegionRoute {
             region: Region {
                 id: region_id.into(),
-                name: <span class="string">&quot;r1&quot;</span>.to_string(),
+                name: <span class="string">"r1"</span>.to_string(),
                 partition: <span class="prelude-val">None</span>,
                 attrs: BTreeMap::new(),
             },
-            leader_peer: <span class="prelude-val">Some</span>(Peer::new(datanode, <span class="string">&quot;a2&quot;</span>)),
+            leader_peer: <span class="prelude-val">Some</span>(Peer::new(datanode, <span class="string">"a2"</span>)),
             follower_peers: <span class="macro">vec!</span>[],
             leader_status: <span class="prelude-val">None</span>,
         }
@@ -2064,31 +2159,56 @@
         test_utils::new_test_table_info(<span class="number">10</span>, region_numbers)
     }
 
+    <span class="kw">async fn </span>create_physical_table_metadata(
+        table_metadata_manager: <span class="kw-2">&amp;</span>TableMetadataManager,
+        table_info: RawTableInfo,
+        region_routes: Vec&lt;RegionRoute&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        table_metadata_manager
+            .create_table_metadata(
+                table_info,
+                TableRouteValue::physical(region_routes),
+                HashMap::default(),
+            )
+            .<span class="kw">await
+    </span>}
+
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_create_table_metadata() {
         <span class="kw">let </span>mem_kv = Arc::new(MemoryKvBackend::default());
         <span class="kw">let </span>table_metadata_manager = TableMetadataManager::new(mem_kv);
         <span class="kw">let </span>region_route = new_test_region_route();
-        <span class="kw">let </span>region_routes = <span class="macro">vec!</span>[region_route.clone()];
+        <span class="kw">let </span>region_routes = <span class="kw-2">&amp;</span><span class="macro">vec!</span>[region_route.clone()];
         <span class="kw">let </span>table_info: RawTableInfo =
             new_test_table_info(region_routes.iter().map(|r| r.region.id.region_number())).into();
         <span class="comment">// creates metadata.
-        </span>table_metadata_manager
-            .create_table_metadata(table_info.clone(), region_routes.clone())
-            .<span class="kw">await
-            </span>.unwrap();
+        </span>create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            region_routes.clone(),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
+
         <span class="comment">// if metadata was already created, it should be ok.
-        </span>table_metadata_manager
-            .create_table_metadata(table_info.clone(), region_routes.clone())
-            .<span class="kw">await
-            </span>.unwrap();
+        </span><span class="macro">assert!</span>(create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            region_routes.clone(),
+        )
+        .<span class="kw">await
+        </span>.is_ok());
+
         <span class="kw">let </span><span class="kw-2">mut </span>modified_region_routes = region_routes.clone();
         modified_region_routes.push(region_route.clone());
         <span class="comment">// if remote metadata was exists, it should return an error.
-        </span><span class="macro">assert!</span>(table_metadata_manager
-            .create_table_metadata(table_info.clone(), modified_region_routes)
-            .<span class="kw">await
-            </span>.is_err());
+        </span><span class="macro">assert!</span>(create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            modified_region_routes
+        )
+        .<span class="kw">await
+        </span>.is_err());
 
         <span class="kw">let </span>(remote_table_info, remote_table_route) = table_metadata_manager
             .get_full_table_info(<span class="number">10</span>)
@@ -2100,7 +2220,7 @@
             table_info
         );
         <span class="macro">assert_eq!</span>(
-            remote_table_route.unwrap().into_inner().region_routes,
+            remote_table_route.unwrap().into_inner().region_routes(),
             region_routes
         );
     }
@@ -2110,19 +2230,23 @@
         <span class="kw">let </span>mem_kv = Arc::new(MemoryKvBackend::default());
         <span class="kw">let </span>table_metadata_manager = TableMetadataManager::new(mem_kv);
         <span class="kw">let </span>region_route = new_test_region_route();
-        <span class="kw">let </span>region_routes = <span class="macro">vec!</span>[region_route.clone()];
+        <span class="kw">let </span>region_routes = <span class="kw-2">&amp;</span><span class="macro">vec!</span>[region_route.clone()];
         <span class="kw">let </span>table_info: RawTableInfo =
             new_test_table_info(region_routes.iter().map(|r| r.region.id.region_number())).into();
         <span class="kw">let </span>table_id = table_info.ident.table_id;
         <span class="kw">let </span>datanode_id = <span class="number">2</span>;
-        <span class="kw">let </span>table_route_value =
-            DeserializedValueWithBytes::from_inner(TableRouteValue::new(region_routes.clone()));
+        <span class="kw">let </span>table_route_value = DeserializedValueWithBytes::from_inner(TableRouteValue::physical(
+            region_routes.clone(),
+        ));
 
         <span class="comment">// creates metadata.
-        </span>table_metadata_manager
-            .create_table_metadata(table_info.clone(), region_routes.clone())
-            .<span class="kw">await
-            </span>.unwrap();
+        </span>create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            region_routes.clone(),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
 
         <span class="kw">let </span>table_info_value =
             DeserializedValueWithBytes::from_inner(TableInfoValue::new(table_info.clone()));
@@ -2177,7 +2301,7 @@
             </span>.unwrap()
             .unwrap()
             .into_inner();
-        <span class="macro">assert_eq!</span>(removed_table_route.region_routes, region_routes);
+        <span class="macro">assert_eq!</span>(removed_table_route.region_routes(), region_routes);
     }
 
     <span class="attr">#[tokio::test]
@@ -2190,11 +2314,15 @@
             new_test_table_info(region_routes.iter().map(|r| r.region.id.region_number())).into();
         <span class="kw">let </span>table_id = table_info.ident.table_id;
         <span class="comment">// creates metadata.
-        </span>table_metadata_manager
-            .create_table_metadata(table_info.clone(), region_routes.clone())
-            .<span class="kw">await
-            </span>.unwrap();
-        <span class="kw">let </span>new_table_name = <span class="string">&quot;another_name&quot;</span>.to_string();
+        </span>create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            region_routes.clone(),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
+
+        <span class="kw">let </span>new_table_name = <span class="string">"another_name"</span>.to_string();
         <span class="kw">let </span>table_info_value =
             DeserializedValueWithBytes::from_inner(TableInfoValue::new(table_info.clone()));
 
@@ -2208,7 +2336,7 @@
             .<span class="kw">await
             </span>.unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>modified_table_info = table_info.clone();
-        modified_table_info.name = <span class="string">&quot;hi&quot;</span>.to_string();
+        modified_table_info.name = <span class="string">"hi"</span>.to_string();
         <span class="kw">let </span>modified_table_info_value =
             DeserializedValueWithBytes::from_inner(table_info_value.update(modified_table_info));
         <span class="comment">// if the table_info_value is wrong, it should return an error.
@@ -2258,12 +2386,16 @@
             new_test_table_info(region_routes.iter().map(|r| r.region.id.region_number())).into();
         <span class="kw">let </span>table_id = table_info.ident.table_id;
         <span class="comment">// creates metadata.
-        </span>table_metadata_manager
-            .create_table_metadata(table_info.clone(), region_routes.clone())
-            .<span class="kw">await
-            </span>.unwrap();
+        </span>create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            region_routes.clone(),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
+
         <span class="kw">let </span><span class="kw-2">mut </span>new_table_info = table_info.clone();
-        new_table_info.name = <span class="string">&quot;hi&quot;</span>.to_string();
+        new_table_info.name = <span class="string">"hi"</span>.to_string();
         <span class="kw">let </span>current_table_info_value =
             DeserializedValueWithBytes::from_inner(TableInfoValue::new(table_info.clone()));
         <span class="comment">// should be ok.
@@ -2288,7 +2420,7 @@
         <span class="macro">assert_eq!</span>(updated_table_info.table_info, new_table_info);
 
         <span class="kw">let </span><span class="kw-2">mut </span>wrong_table_info = table_info.clone();
-        wrong_table_info.name = <span class="string">&quot;wrong&quot;</span>.to_string();
+        wrong_table_info.name = <span class="string">"wrong"</span>.to_string();
         <span class="kw">let </span>wrong_table_info_value = DeserializedValueWithBytes::from_inner(
             current_table_info_value.update(wrong_table_info),
         );
@@ -2309,22 +2441,22 @@
             RegionRoute {
                 region: Region {
                     id: <span class="number">1</span>.into(),
-                    name: <span class="string">&quot;r1&quot;</span>.to_string(),
+                    name: <span class="string">"r1"</span>.to_string(),
                     partition: <span class="prelude-val">None</span>,
                     attrs: BTreeMap::new(),
                 },
-                leader_peer: <span class="prelude-val">Some</span>(Peer::new(datanode, <span class="string">&quot;a2&quot;</span>)),
+                leader_peer: <span class="prelude-val">Some</span>(Peer::new(datanode, <span class="string">"a2"</span>)),
                 leader_status: <span class="prelude-val">Some</span>(RegionStatus::Downgraded),
                 follower_peers: <span class="macro">vec!</span>[],
             },
             RegionRoute {
                 region: Region {
                     id: <span class="number">2</span>.into(),
-                    name: <span class="string">&quot;r2&quot;</span>.to_string(),
+                    name: <span class="string">"r2"</span>.to_string(),
                     partition: <span class="prelude-val">None</span>,
                     attrs: BTreeMap::new(),
                 },
-                leader_peer: <span class="prelude-val">Some</span>(Peer::new(datanode, <span class="string">&quot;a1&quot;</span>)),
+                leader_peer: <span class="prelude-val">Some</span>(Peer::new(datanode, <span class="string">"a1"</span>)),
                 leader_status: <span class="prelude-val">None</span>,
                 follower_peers: <span class="macro">vec!</span>[],
             },
@@ -2332,13 +2464,18 @@
         <span class="kw">let </span>table_info: RawTableInfo =
             new_test_table_info(region_routes.iter().map(|r| r.region.id.region_number())).into();
         <span class="kw">let </span>table_id = table_info.ident.table_id;
-        <span class="kw">let </span>current_table_route_value =
-            DeserializedValueWithBytes::from_inner(TableRouteValue::new(region_routes.clone()));
+        <span class="kw">let </span>current_table_route_value = DeserializedValueWithBytes::from_inner(
+            TableRouteValue::physical(region_routes.clone()),
+        );
+
         <span class="comment">// creates metadata.
-        </span>table_metadata_manager
-            .create_table_metadata(table_info.clone(), region_routes.clone())
-            .<span class="kw">await
-            </span>.unwrap();
+        </span>create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            region_routes.clone(),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
 
         table_metadata_manager
             .update_leader_region_status(table_id, <span class="kw-2">&amp;</span>current_table_route_value, |region_route| {
@@ -2359,11 +2496,11 @@
             .unwrap();
 
         <span class="macro">assert_eq!</span>(
-            updated_route_value.region_routes[<span class="number">0</span>].leader_status,
+            updated_route_value.region_routes()[<span class="number">0</span>].leader_status,
             <span class="prelude-val">Some</span>(RegionStatus::Downgraded)
         );
         <span class="macro">assert_eq!</span>(
-            updated_route_value.region_routes[<span class="number">1</span>].leader_status,
+            updated_route_value.region_routes()[<span class="number">1</span>].leader_status,
             <span class="prelude-val">Some</span>(RegionStatus::Downgraded)
         );
     }
@@ -2398,13 +2535,19 @@
         <span class="kw">let </span>engine = table_info.meta.engine.as_str();
         <span class="kw">let </span>region_storage_path =
             region_storage_path(<span class="kw-2">&amp;</span>table_info.catalog_name, <span class="kw-2">&amp;</span>table_info.schema_name);
-        <span class="kw">let </span>current_table_route_value =
-            DeserializedValueWithBytes::from_inner(TableRouteValue::new(region_routes.clone()));
+        <span class="kw">let </span>current_table_route_value = DeserializedValueWithBytes::from_inner(
+            TableRouteValue::physical(region_routes.clone()),
+        );
+
         <span class="comment">// creates metadata.
-        </span>table_metadata_manager
-            .create_table_metadata(table_info.clone(), region_routes.clone())
-            .<span class="kw">await
-            </span>.unwrap();
+        </span>create_physical_table_metadata(
+            <span class="kw-2">&amp;</span>table_metadata_manager,
+            table_info.clone(),
+            region_routes.clone(),
+        )
+        .<span class="kw">await
+        </span>.unwrap();
+
         assert_datanode_table(<span class="kw-2">&amp;</span>table_metadata_manager, table_id, <span class="kw-2">&amp;</span>region_routes).<span class="kw">await</span>;
         <span class="kw">let </span>new_region_routes = <span class="macro">vec!</span>[
             new_region_route(<span class="number">1</span>, <span class="number">1</span>),
@@ -2419,9 +2562,11 @@
                     engine: engine.to_string(),
                     region_storage_path: region_storage_path.to_string(),
                     region_options: HashMap::new(),
+                    region_wal_options: HashMap::new(),
                 },
-                current_table_route_value.clone(),
+                <span class="kw-2">&amp;</span>current_table_route_value,
                 new_region_routes.clone(),
+                <span class="kw-2">&amp;</span>HashMap::new(),
                 <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
@@ -2436,9 +2581,11 @@
                     engine: engine.to_string(),
                     region_storage_path: region_storage_path.to_string(),
                     region_options: HashMap::new(),
+                    region_wal_options: HashMap::new(),
                 },
-                current_table_route_value.clone(),
+                <span class="kw-2">&amp;</span>current_table_route_value,
                 new_region_routes.clone(),
+                <span class="kw-2">&amp;</span>HashMap::new(),
                 <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
@@ -2458,9 +2605,11 @@
                     engine: engine.to_string(),
                     region_storage_path: region_storage_path.to_string(),
                     region_options: HashMap::new(),
+                    region_wal_options: HashMap::new(),
                 },
-                current_table_route_value.clone(),
+                <span class="kw-2">&amp;</span>current_table_route_value,
                 new_region_routes.clone(),
+                <span class="kw-2">&amp;</span>HashMap::new(),
                 <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
@@ -2483,9 +2632,11 @@
                     engine: engine.to_string(),
                     region_storage_path: region_storage_path.to_string(),
                     region_options: HashMap::new(),
+                    region_wal_options: HashMap::new(),
                 },
-                wrong_table_route_value,
+                <span class="kw-2">&amp;</span>wrong_table_route_value,
                 new_region_routes,
+                <span class="kw-2">&amp;</span>HashMap::new(),
                 <span class="kw-2">&amp;</span>HashMap::new(),
             )
             .<span class="kw">await
